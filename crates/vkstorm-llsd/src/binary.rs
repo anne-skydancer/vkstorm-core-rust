@@ -75,9 +75,7 @@ pub fn parse<S: Sink>(r: &mut Reader<'_>, sink: &mut S, limits: Limits) -> i32 {
 
 fn read_padded<const N: usize>(r: &mut Reader<'_>) -> ([u8; N], bool) {
     let mut b = [0u8; N];
-    let mut tmp = Vec::with_capacity(N);
-    let n = r.read_exact(N, &mut tmp);
-    b[..n].copy_from_slice(&tmp);
+    let n = r.read_into(&mut b);
     (b, n == N)
 }
 

@@ -47,7 +47,7 @@ impl Source for SliceSource<'_> {
     }
 }
 
-const INITIAL_BUFFER: usize = 16 * 1024;
+const INITIAL_BUFFER: usize = 4 * 1024;
 const READ_CHUNK: usize = 64 * 1024;
 
 /// Buffered access to a [`Source`] with the position bookkeeping the parsers need.
@@ -226,6 +226,48 @@ impl<'a> Reader<'a> {
             self.end += 1;
         }
         self.consumed -= 1;
+    }
+
+    /// Fills `out` from the input, returning how many bytes were filled;
+    /// short only at end of input. No allocation: the buffered window first,
+    /// then the source directly.
+    pub fn read_into(&mut self, out: &mut [u8]) -> usize {
+        let n = out.len();
+        let avail = self.end - self.pos;
+        if avail >= n {
+            out.copy_from_slice(&self.buf[self.pos..self.pos + n]);
+            self.pos += n;
+            self.consumed += n;
+            return n;
+        }
+        let mut got = 0;
+        if avail > 0 {
+            out[..avail].copy_from_slice(&self.buf[self.pos..self.end]);
+            self.pos = self.end;
+            self.consumed += avail;
+            got = avail;
+        }
+        while got < n && !self.eof {
+            if self.exact {
+                let r = self.src.read(&mut out[got..]);
+                if r == 0 {
+                    self.eof = true;
+                    break;
+                }
+                self.consumed += r;
+                got += r;
+            } else {
+                if self.refill(n - got) == 0 {
+                    break;
+                }
+                let take = (self.end - self.pos).min(n - got);
+                out[got..got + take].copy_from_slice(&self.buf[self.pos..self.pos + take]);
+                self.pos += take;
+                self.consumed += take;
+                got += take;
+            }
+        }
+        got
     }
 
     /// Appends up to `n` bytes to `out`, returning how many were read. Short
