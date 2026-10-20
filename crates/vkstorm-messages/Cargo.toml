@@ -1,0 +1,21 @@
+[package]
+name = "vkstorm-messages"
+description = "The viewer's UDP message template system for Vulkanstorm: template parsing, message packing and unpacking, zero-coding and the data packers, byte-compatible with the C++ LLTemplateMessageBuilder/Reader and LLDataPacker"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[features]
+default = []
+# OpenSim grid support: the legacy UDP protocol paths a Second Life-only
+# build does not contain. The grid profile is chosen at login and fixed for
+# the session (see the workspace README). Mirrors the viewer's CMake OPENSIM
+# option.
+opensim = []
+
+[dependencies]
+
+[[bench]]
+name = "hot_paths"
+harness = false

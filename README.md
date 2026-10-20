@@ -23,8 +23,9 @@ vkstorm-aleph under `docs/upstream-study/`.
 | `vkstorm-llsd` | LLSD serialization: the notation, binary and XML parsers and formatters, byte-compatible with the viewer's C++ `LLSDSerialize`, streaming into a sink so the viewer keeps its own `LLSD` class. |
 | `vkstorm-image` | The other raster codecs behind the viewer's `LLImageFormatted` classes: PNG (libpng-equivalent transformations and gamma, libpng-equivalent encoding), TGA, BMP and DXT ports, and the measured JPEG candidate (feature `jpeg`, not adopted). |
 | `vkstorm-volume` | The parametric prim mesher behind `LLVolume`: profile and path generation, the mesh sweep, side and cap faces, tangents; float-identical to the viewer's C++ on the recorded corpus. |
+| `vkstorm-messages` | The UDP message system's data side behind `LLTemplateParser`, `LLTemplateMessageBuilder`, `LLTemplateMessageReader` and `LLDataPacker`: the template language, packing and unpacking of every variable type with the block and size rules, zero-coding both ways, the binary and text data packers; byte-identical to the viewer's C++ on the recorded corpus. Carries the `opensim` feature. |
 
-Planned, in port order: `vkstorm-messages`, `vkstorm-http`, `vkstorm-assets`,
+Planned, in port order: `vkstorm-http`, `vkstorm-assets`,
 `vkstorm-audio`, `vkstorm-inventory`, `vkstorm-world`, `vkstorm-avatar`,
 `vkstorm-comms`, `vkstorm-rlv`, `vkstorm-scripting`.
 
