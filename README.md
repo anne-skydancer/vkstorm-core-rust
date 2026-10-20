@@ -38,6 +38,9 @@ mixed in one session, and nothing is negotiated per region on Second Life.
 
 - `tools/j2c-eval`: the decoder evaluation harness comparing the Vulkanstorm
   OpenJPEG fork with the pure-Rust decoders. See its README.
+- `tools/llsd-fixtures`: regenerates the `vkstorm-llsd` test fixtures from the
+  viewer's former C++ LLSD implementation (its `llsdserialize_tool`). See its
+  README.
 
 ## Licence
 
