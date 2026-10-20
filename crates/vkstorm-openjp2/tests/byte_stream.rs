@@ -2,7 +2,7 @@ use std::ffi::*;
 use std::fs::*;
 use std::io::*;
 
-use openjp2::openjpeg::*;
+use vkstorm_openjp2::openjpeg::*;
 
 extern "C" fn log_info(msg: *const c_char, _data: *mut c_void) {
   unsafe {
@@ -109,7 +109,7 @@ fn decode_byte_stream() {
   let mut params = opj_dparameters_t::default();
 
   // Read file.
-  let mut file = File::open("samples/Hadley_Crater.jp2").expect("Open file");
+  let mut file = File::open("../vkstorm-j2c/tests/fixtures/synth_256.j2c").expect("Open fixture");
   let mut bytes = Vec::new();
   file.read_to_end(&mut bytes).expect("Read file");
   let len = bytes.len();
@@ -127,7 +127,7 @@ fn decode_byte_stream() {
   };
 
   // Create decoder.
-  let codec = opj_create_decompress(OPJ_CODEC_JP2);
+  let codec = opj_create_decompress(OPJ_CODEC_J2K);
 
   unsafe {
     let null = core::ptr::null_mut();
@@ -148,6 +148,11 @@ fn decode_byte_stream() {
   // Decode the image.
   let ret = unsafe { opj_decode(codec, stream, image) };
   assert!(ret != 0);
+  unsafe {
+    assert_eq!((*image).numcomps, 3);
+    assert_eq!((*image).x1, 256);
+    assert_eq!((*image).y1, 256);
+  }
 
   // End Decode.
   let ret = unsafe { opj_end_decompress(codec, stream) };

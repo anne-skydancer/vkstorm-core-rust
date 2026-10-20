@@ -828,6 +828,10 @@ pub(crate) struct opj_tcd_cblk_dec {
   pub numchunksalloc: OPJ_UINT32,
   pub decoded_data: *mut OPJ_INT32,
   pub decoded_data_layout: Layout,
+  /// Set once a packet for this code-block ran past the available data
+  /// (OpenJPEG 2.5.3+): the block then decodes as zeros for the rest of the
+  /// tile instead of mixing stale segments with later layers.
+  pub corrupted: OPJ_BOOL,
 }
 pub(crate) type opj_tcd_cblk_dec_t = opj_tcd_cblk_dec;
 

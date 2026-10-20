@@ -1442,13 +1442,15 @@ fn opj_t2_read_packet_data(
         cblkno = 0 as OPJ_UINT32;
         while cblkno < l_nb_code_blocks {
           let mut l_seg = core::ptr::null_mut::<opj_tcd_seg_t>();
-          // if we have a partial data stream, set numchunks to zero
-          // since we have no data to actually decode.
-          if partial_buffer != 0 {
-            (*l_cblk).numchunks = 0 as OPJ_UINT32
-          }
           if (*l_cblk).numnewpasses == 0 {
             /* nothing to do */
+            l_cblk = l_cblk.offset(1)
+          } else if partial_buffer != 0 || (*l_cblk).corrupted != 0 {
+            // The packet ran out of data before this code-block, or the
+            // block was already cut short in an earlier layer: it has no
+            // usable data for the rest of the tile (OpenJPEG 2.5.3+).
+            (*l_cblk).numchunks = 0 as OPJ_UINT32;
+            (*l_cblk).corrupted = 1i32;
             l_cblk = l_cblk.offset(1)
           } else {
             if (*l_cblk).numsegs == 0 {
@@ -1488,18 +1490,9 @@ fn opj_t2_read_packet_data(
                                                 (*p_pi).resno, (*p_pi).compno);
                   // skip this codeblock since it is a partial read
                   partial_buffer = 1i32;
+                  (*l_cblk).corrupted = 1i32;
                   (*l_cblk).numchunks = 0 as OPJ_UINT32;
-                  (*l_seg).numpasses = ((*l_seg).numpasses as core::ffi::c_uint)
-                    .wrapping_add((*l_seg).numnewpasses)
-                    as OPJ_UINT32;
-                  (*l_cblk).numnewpasses = ((*l_cblk).numnewpasses as core::ffi::c_uint)
-                    .wrapping_sub((*l_seg).numnewpasses)
-                    as OPJ_UINT32;
-                  if (*l_cblk).numnewpasses > 0u32 {
-                    l_seg = l_seg.offset(1);
-                    (*l_cblk).numsegs = (*l_cblk).numsegs.wrapping_add(1);
-                    break;
-                  }
+                  break;
                 }
               } else {
                 /* USE_JPWL */

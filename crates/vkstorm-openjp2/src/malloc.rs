@@ -45,7 +45,19 @@ mod guard {
     Layout::from_size_align(HEAD + size + TAIL, 16).unwrap()
   }
 
+  // Uninitialised memory is poisoned so that reads of it differ from a
+  // zero-filled heap, which exposes them when comparing against the C fork.
+  const POISON: u8 = 0xA5;
+
   pub unsafe fn malloc(size: usize) -> *mut c_void {
+    let p = calloc(size);
+    if !p.is_null() {
+      core::ptr::write_bytes(p as *mut u8, POISON, size);
+    }
+    p
+  }
+
+  pub unsafe fn calloc(size: usize) -> *mut c_void {
     let base = alloc_zeroed(layout(size));
     if base.is_null() { return core::ptr::null_mut(); }
     *(base as *mut u64) = size as u64;
@@ -96,7 +108,7 @@ pub(crate) fn opj_malloc(size: usize) -> *mut c_void {
 #[cfg(feature = "guard-alloc")]
 pub(crate) fn opj_calloc(num: usize, size: usize) -> *mut c_void {
   if num == 0 || size == 0 { return core::ptr::null_mut(); }
-  unsafe { guard::malloc(num * size) } // alloc_zeroed
+  unsafe { guard::calloc(num * size) }
 }
 #[cfg(feature = "guard-alloc")]
 pub(crate) fn opj_realloc(ptr: *mut c_void, new_size: usize) -> *mut c_void {

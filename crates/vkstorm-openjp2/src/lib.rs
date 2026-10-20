@@ -135,6 +135,7 @@ mod bio;
 mod cio;
 mod codec;
 mod dwt;
+mod dwt53;
 mod function_list;
 mod ht_dec;
 mod invert;

@@ -12,3 +12,6 @@ image = { version = "0.25", default-features = false, features = ["png"] }
 j2k = { workspace = true }
 openjp2 = "0.6"
 jpeg2k = { version = "0.10", default-features = false, features = ["file-io", "openjp2"] }
+
+[features]
+guard-alloc = ["vkstorm-j2c/guard-alloc"]

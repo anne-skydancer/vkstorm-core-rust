@@ -2279,11 +2279,14 @@ fn opj_t1_decode_cblk(
     opj_mqc_setstate(&mut t1.mqc, T1_CTXNO_UNI, 0, 46);
     opj_mqc_setstate(&mut t1.mqc, T1_CTXNO_AGG, 0, 3);
     opj_mqc_setstate(&mut t1.mqc, T1_CTXNO_ZC, 0, 4);
-
+    if (*cblk).corrupted != 0 {
+      debug_assert!((*cblk).numchunks == 0);
+      return 1i32;
+    }
     /* Even if we have a single chunk, in multi-threaded decoding */
     /* the insertion of our synthetic marker might potentially override */
     /* valid codestream of other codeblocks decoded in parallel. */
-    if (*cblk).numchunks > 1 || t1.mustuse_cblkdatabuffer != 0 {
+    if (*cblk).numchunks > 1 || (t1.mustuse_cblkdatabuffer != 0 && (*cblk).numchunks > 0) {
       let mut i: OPJ_UINT32 = 0;
       let mut cblk_len: OPJ_UINT32 = 0;
       /* Compute whole codeblock length from chunk lengths */

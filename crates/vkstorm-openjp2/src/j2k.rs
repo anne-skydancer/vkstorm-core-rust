@@ -4696,6 +4696,12 @@ fn opj_j2k_read_sod(
       l_current_read_size = 0 as OPJ_SIZE_T
     }
     if l_current_read_size != p_j2k.m_specific_param.m_decoder.m_sot_length as usize {
+      if l_current_read_size == usize::MAX {
+        /* Avoid issue of https://github.com/uclouvain/openjpeg/issues/1533 */
+        event_msg!(p_manager, EVT_ERROR, "Stream too short
+",);
+        return 0i32;
+      }
       p_j2k.m_specific_param.m_decoder.m_state = J2KState::NEOC
     } else {
       p_j2k.m_specific_param.m_decoder.m_state = J2KState::TPHSOT

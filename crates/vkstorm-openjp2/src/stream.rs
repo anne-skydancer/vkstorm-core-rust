@@ -377,27 +377,33 @@ impl Stream {
     self.m_stream_length = len;
   }
 
+  /// Reads up to `buf.len()` bytes, like `opj_stream_read_data`: the count
+  /// actually read (short at end of stream), or an error only when nothing
+  /// could be read.
+  ///
+  /// Port defect fixed: this used `read_exact` and, when that hit the end of
+  /// the stream after copying part of the data, retried with a plain `read`
+  /// that then failed; the caller saw (size_t)-1 while the bytes were already
+  /// in its buffer, so a truncated tile-part was decoded with a wrapped
+  /// length over whatever followed the buffer on the heap.
   pub fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-    let len = buf.len();
-    match self.m_inner.read_exact(buf) {
-      Ok(_) => {
-        self.m_byte_offset += len as i64;
-        Ok(len)
-      }
-      Err(_err) => {
-        // Maybe EOF, do a partial read.
-        match self.m_inner.read(buf) {
-          Ok(nb) => {
-            self.m_byte_offset += nb as i64;
-            Ok(nb)
-          }
-          Err(err) => {
+    let mut total = 0usize;
+    while total < buf.len() {
+      match self.m_inner.read(&mut buf[total..]) {
+        Ok(0) => break,
+        Ok(n) => total += n,
+        Err(err) if err.kind() == std::io::ErrorKind::Interrupted => continue,
+        Err(err) => {
+          if total == 0 {
             log::trace!("Failed to read from stream: {err}");
-            Err(err)
+            return Err(err);
           }
+          break;
         }
       }
     }
+    self.m_byte_offset += total as i64;
+    Ok(total)
   }
 
   pub fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {

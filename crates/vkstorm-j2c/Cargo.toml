@@ -8,3 +8,6 @@ repository.workspace = true
 
 [dependencies]
 vkstorm-openjp2 = { path = "../vkstorm-openjp2", default-features = false, features = ["std"] }
+
+[features]
+guard-alloc = ["vkstorm-openjp2/guard-alloc"]

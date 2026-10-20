@@ -43,7 +43,7 @@ pub type opj_encode_and_deinterleave_v_fnptr_type = Option<
 
 pub const VREG_INT_COUNT: usize = 4;
 
-pub const PARALLEL_COLS_53: usize = 2 * VREG_INT_COUNT;
+pub const PARALLEL_COLS_53: usize = super::dwt53::PARALLEL_COLS_MAX;
 
 pub type opj_dwt_t = dwt_local;
 #[derive(Copy, Clone)]
@@ -466,16 +466,8 @@ fn opj_dwt_interleave_v(mut v: &opj_dwt_t, mut a: *mut OPJ_INT32, mut x: OPJ_INT
 /* </summary>                           */
 /* Performs interleave, inverse wavelet transform and copy back to buffer */
 fn opj_idwt53_h(mut dwt: &opj_dwt_t, mut tiledp: *mut OPJ_INT32) {
-  unsafe {
-    /* For documentation purpose */
-    opj_dwt_interleave_h(dwt, tiledp);
-    dwt.decode_1();
-    memcpy(
-      tiledp as *mut core::ffi::c_void,
-      dwt.mem as *const core::ffi::c_void,
-      ((dwt.sn + dwt.dn) as OPJ_UINT32 as usize).wrapping_mul(core::mem::size_of::<OPJ_INT32>()),
-    );
-  }
+  // Fast single-pass lifting (AVX2 batch when available); see dwt53.rs.
+  unsafe { super::dwt53::idwt53_h(dwt.mem, dwt.sn, dwt.dn, dwt.cas, tiledp) }
 }
 
 /* <summary>                            */
@@ -488,24 +480,9 @@ fn opj_idwt53_v(
   mut stride: OPJ_SIZE_T,
   mut nb_cols: OPJ_INT32,
 ) {
-  unsafe {
-    /* For documentation purpose */
-    let mut k = 0i32;
-    let mut c = 0i32;
-    while c < nb_cols {
-      opj_dwt_interleave_v(dwt, tiledp_col.offset(c as isize), stride as OPJ_INT32);
-      dwt.decode_1();
-      k = 0;
-      while k < dwt.sn + dwt.dn {
-        *tiledp_col.add((c as usize).wrapping_add((k as usize).wrapping_mul(stride))) =
-          *dwt.mem.offset(k as isize);
-        k += 1
-      }
-      c += 1
-    }
-  }
+  // Fast lifting, SIMD across columns when nb_cols is the machine batch; see dwt53.rs.
+  unsafe { super::dwt53::idwt53_v(dwt.mem, dwt.sn, dwt.dn, dwt.cas, tiledp_col, stride, nb_cols) }
 }
-
 fn opj_dwt_encode_step1_combined(
   mut fw: *mut OPJ_FLOAT32,
   mut iters_c1: OPJ_UINT32,
@@ -1544,15 +1521,16 @@ fn opj_dwt_decode_tile(mut tilec: *mut opj_tcd_tilecomp_t, mut numres: OPJ_UINT3
       }
       v.dn = rh.wrapping_sub(v.sn as OPJ_UINT32) as OPJ_INT32;
       v.cas = (*tr).y0 % 2i32;
+      let pc = super::dwt53::parallel_cols() as OPJ_UINT32;
       j = 0 as OPJ_UINT32;
-      while j.wrapping_add((2i32 * 4i32) as core::ffi::c_uint) <= rw {
+      while j.wrapping_add(pc) <= rw {
         opj_idwt53_v(
           &v,
           &mut *tiledp.offset(j as isize),
           w as OPJ_SIZE_T,
-          2i32 * 4i32,
+          pc as OPJ_INT32,
         );
-        j = (j as core::ffi::c_uint).wrapping_add((2i32 * 4i32) as core::ffi::c_uint) as OPJ_UINT32
+        j = j.wrapping_add(pc)
       }
       if j < rw {
         opj_idwt53_v(
