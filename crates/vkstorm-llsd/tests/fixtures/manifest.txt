@@ -130,7 +130,7 @@ parse p_n_real_e_sign 0 4 -1 0 -1
 parse p_n_real_inf 0 4 -1 0 -1
 parse p_n_real_nan 0 4 -1 0 -1
 parse p_n_real_overflow 0 6 -1 0 -1
-parse p_n_real_underflow 0 7 -1 0 -1
+parse p_n_real_underflow 0 7 -1 0 1
 parse p_n_real_denormal 0 7 -1 0 1
 parse p_n_real_sign_only 0 2 -1 0 -1
 parse p_n_real_empty 0 1 -1 0 -1
@@ -322,7 +322,7 @@ parse p_x_real_trailing_space 2 -1 -1 0 1
 parse p_x_real_leading_space 2 -1 -1 0 1
 parse p_x_real_inf 2 -1 -1 0 1
 parse p_x_real_nan 2 -1 -1 0 1
-parse p_x_real_overflow 2 -1 -1 0 1
+parse p_x_real_overflow 2 31 -1 0 1
 parse p_x_real_underflow 2 -1 -1 0 1
 parse p_x_real_neg_zero 2 -1 -1 0 1
 parse p_x_real_exp 2 -1 -1 0 1

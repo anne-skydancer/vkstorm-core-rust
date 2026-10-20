@@ -639,6 +639,9 @@ fn notation_parse_scalars() {
         None,
         PARSE_FAILURE,
     );
+    notation_case("real underflow", "r1e-999", Some(Value::Real(0.0)), 1);
+    notation_case("real overflow", "r1e999", None, PARSE_FAILURE);
+    notation_case("real hex", "r0x1p3", Some(Value::Real(8.0)), 1);
     notation_case("empty input", "", None, 0);
     notation_case("whitespace input", "  \n", None, 0);
 }

@@ -237,6 +237,12 @@ pub fn extract_real(r: &mut Reader<'_>) -> Option<f64> {
 
 /// As [`extract_real`], also returning the value the C++ extraction stores
 /// when it fails: +/-infinity on overflow, otherwise 0.
+///
+/// A mantissa that underflows (`1e-999`) is accepted with the value
+/// `strtod` gives (0 or a denormal), as glibc's extraction does; the MSVC
+/// runtime rejected it. Accepting it is the product behaviour on every
+/// platform: failing a whole document over an underflowing real is the
+/// worse outcome, and no formatter produces such a value.
 pub fn extract_real_stored(r: &mut Reader<'_>) -> (f64, bool) {
     skip_ws(r);
     let mut text: Vec<u8> = Vec::with_capacity(32);
@@ -312,11 +318,7 @@ pub fn extract_real_stored(r: &mut Reader<'_>) -> (f64, bool) {
     if v.is_infinite() {
         return fail(v);
     }
-    if v == 0.0 && mantissa_nonzero {
-        // A non-zero mantissa that underflows to zero sets ERANGE (failbit)
-        // in the C runtime.
-        return fail(0.0);
-    }
+    let _ = mantissa_nonzero; // underflow is accepted; see above
     (v, true)
 }
 
@@ -909,6 +911,12 @@ mod tests {
         assert_eq!(string_as_real(b"1e999"), f64::INFINITY);
         assert_eq!(string_as_real(b"-1e999"), f64::NEG_INFINITY);
         assert_eq!(string_as_real(b"1e-999"), 0.0);
+        let mut src = SliceSource::new(b"1e-999");
+        let mut r = Reader::new(&mut src);
+        assert_eq!(extract_real(&mut r), Some(0.0));
+        let mut src = SliceSource::new(b"5e-324");
+        let mut r = Reader::new(&mut src);
+        assert_eq!(extract_real(&mut r), Some(5e-324));
         assert_eq!(string_as_real(b"2.5e"), 0.0);
         assert_eq!(strtol0(b"0x10"), 16);
         assert_eq!(strtol0(b"010"), 8);
