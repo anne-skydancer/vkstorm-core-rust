@@ -146,6 +146,10 @@ parse p_n_map_no_colon 0 7 -1 0 2
 parse p_n_map_no_comma 0 15 -1 0 3
 parse p_n_map_trailing_comma 0 9 -1 0 2
 parse p_n_map_dup_keys 0 15 -1 0 3
+parse p_n_nested_dup_keys 0 41 -1 0 7
+parse p_n_nested_dup_keys_container_first 0 41 -1 0 7
+parse p_n_nested_dup_keys_arrays 0 99 -1 0 20
+parse p_n_dup_keys_scalar_after_dup_map 0 74 -1 0 12
 parse p_n_map_two_strings 0 12 -1 0 2
 parse p_n_map_raw_key 0 12 -1 0 2
 parse p_n_map_empty_key 0 7 -1 0 2
@@ -221,6 +225,9 @@ parse p_b_map_negative_size 1 6 -1 0 1
 parse p_b_map_quoted_keys 1 26 -1 0 3
 parse p_b_map_unknown_key_tag 1 12 -1 0 2
 parse p_b_map_dup_keys 1 28 -1 0 3
+parse p_b_nested_dup_keys 1 74 -1 0 7
+parse p_b_nested_dup_keys_container_first 1 74 -1 0 7
+parse p_b_nested_dup_keys_arrays 1 182 -1 0 20
 parse p_b_map_value_fails 1 13 -1 0 -1
 parse p_b_map_value_eof 1 12 -1 0 -1
 parse p_b_map_nested 1 36 -1 0 5
@@ -378,6 +385,8 @@ parse p_x_dangling_key 2 -1 -1 0 2
 parse p_x_dangling_key_inner 2 -1 -1 0 3
 parse p_x_key_key 2 -1 -1 0 2
 parse p_x_dup_keys 2 -1 -1 0 3
+parse p_x_nested_dup_keys 2 -1 -1 0 7
+parse p_x_nested_dup_keys_container_first 2 -1 -1 0 7
 parse p_x_map_text 2 -1 -1 0 2
 parse p_x_scalar_nested 2 -1 -1 0 1
 parse p_x_unknown_root_value 2 -1 -1 0 1
@@ -518,6 +527,8 @@ parse p_x_dangling_key__lines_ 2 -1 -1 1 2
 parse p_x_dangling_key_inner__lines_ 2 -1 -1 1 3
 parse p_x_key_key__lines_ 2 -1 -1 1 2
 parse p_x_dup_keys__lines_ 2 -1 -1 1 3
+parse p_x_nested_dup_keys__lines_ 2 -1 -1 1 7
+parse p_x_nested_dup_keys_container_first__lines_ 2 -1 -1 1 7
 parse p_x_map_text__lines_ 2 -1 -1 1 2
 parse p_x_scalar_nested__lines_ 2 -1 -1 1 1
 parse p_x_unknown_root_value__lines_ 2 -1 -1 1 1
