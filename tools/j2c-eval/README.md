@@ -11,10 +11,16 @@ the vkstorm-aleph study, [docs/upstream-study/07-j2c-decoder-evaluation.md](http
 ## Layout
 
 - `src/main.rs`: Rust harness. Decode subcommands `vks` (this repository's
-  codec, `vkstorm-j2c` on `vkstorm-openjp2`), `openjp2` (the upstream crate the
-  port started from, via `jpeg2k`), `hayro`, `j2k` (single-threaded) and
-  `j2k-auto` (crate-chosen parallelism), plus `compare` for raw output diffs
-  (max abs, mean abs, PSNR).
+  codec, `vkstorm-j2c` on `vkstorm-openjp2`, including the conversion to the
+  viewer's 8-bit layout), `vksdec` (the codec alone, which is what
+  `c/opj_bench.c` times, so use it for like-for-like ratios), `openjp2` (the
+  upstream crate the port started from, via `jpeg2k`), `hayro`, `j2k`
+  (single-threaded) and `j2k-auto` (crate-chosen parallelism), plus `compare`
+  for raw output diffs (max abs, mean abs, PSNR).
+- `examples/encode_bench.rs`: times `vkstorm_j2c::encode` on the synthetic
+  pattern shared with `c/opj_enc.c`, which times the same work when
+  `OPJ_ENC_ITERS=<n>` is set; both print `<bytes> <best_ms>` and write the
+  codestream, so speed and byte parity come from one run per case.
 - `c/opj_bench.c`: C harness that mirrors `LLImageJ2COJ::decode` (memory stream
   truncated to `max_bytes`, `opj_decoder_set_strict_mode(false)`,
   `opj_set_decoded_resolution_factor`).
