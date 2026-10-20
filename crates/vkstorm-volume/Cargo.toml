@@ -1,0 +1,13 @@
+[package]
+name = "vkstorm-volume"
+description = "Parametric prim mesher for Vulkanstorm: profile and path generation, the mesh sweep, face building and tangents, bit-compatible with the viewer's C++ LLVolume"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+
+[[bench]]
+name = "mesher"
+harness = false
