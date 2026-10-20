@@ -10,3 +10,6 @@ repository = "https://github.com/anne-skydancer/vkstorm-core-rust"
 
 [workspace.dependencies]
 hayro-jpeg2000 = "0.4"
+
+[patch.crates-io]
+hayro-jpeg2000 = { path = "vendor/hayro-jpeg2000" }
