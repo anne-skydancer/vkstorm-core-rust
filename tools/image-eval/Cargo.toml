@@ -1,0 +1,10 @@
+[package]
+name = "image-eval"
+description = "Benchmark and comparison harness for vkstorm-image against the viewer's C++ codecs (see c/image_oracle.cpp)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+vkstorm-image = { path = "../../crates/vkstorm-image", features = ["jpeg"] }

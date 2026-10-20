@@ -21,6 +21,8 @@ vkstorm-aleph under `docs/upstream-study/`.
 | `vkstorm-openjp2` | The JPEG 2000 codec core: a port of OpenJPEG (from the `openjp2` crate, c2rust lineage) maintained and optimised here. See `docs/j2c-port-plan.md`. |
 | `vkstorm-j2c` | The viewer-facing JPEG 2000 contract on that core: metadata, discard-level and truncated-stream decode, upload encoding with the viewer's rules. |
 | `vkstorm-llsd` | LLSD serialization: the notation, binary and XML parsers and formatters, byte-compatible with the viewer's C++ `LLSDSerialize`, streaming into a sink so the viewer keeps its own `LLSD` class. |
+| `vkstorm-image` | The other raster codecs behind the viewer's `LLImageFormatted` classes: PNG (libpng-equivalent transformations and gamma, libpng-equivalent encoding), TGA, BMP and DXT ports, and the measured JPEG candidate (feature `jpeg`, not adopted). |
+| `vkstorm-volume` | The parametric prim mesher behind `LLVolume`: profile and path generation, the mesh sweep, side and cap faces, tangents; float-identical to the viewer's C++ on the recorded corpus. |
 
 Planned, in port order: `vkstorm-messages`, `vkstorm-http`, `vkstorm-assets`,
 `vkstorm-audio`, `vkstorm-inventory`, `vkstorm-world`, `vkstorm-avatar`,
@@ -41,6 +43,8 @@ mixed in one session, and nothing is negotiated per region on Second Life.
 - `tools/llsd-fixtures`: regenerates the `vkstorm-llsd` test fixtures from the
   viewer's former C++ LLSD implementation (its `llsdserialize_tool`). See its
   README.
+- `tools/image-eval`: the parity oracle (the viewer's C++ raster codecs,
+  standalone) and timing harness for `vkstorm-image`. See its README.
 
 ## Licence
 
