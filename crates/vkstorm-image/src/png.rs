@@ -377,8 +377,8 @@ const ZBUF_SIZE: usize = 8192;
 /// window rule in `window_bits` determine the output size and the encode
 /// time; they are deliberate and must not follow a dependency's defaults.
 /// The gate for the encoder (viewer doc/rust_port.md, rung two) is
-/// decoded-identical output within 20% of libpng's size per file and no
-/// growth of a corpus total; re-measure with tools/image-eval after any
+/// decoded-identical output within 20% (or 128 bytes) of libpng's size per
+/// file and no growth of a corpus total; re-measure with tools/image-eval after any
 /// change here or any zlib-rs upgrade.
 pub const DEFLATE_LEVEL: i32 = 6;
 pub const DEFLATE_STRATEGY: Strategy = Strategy::Filtered;
