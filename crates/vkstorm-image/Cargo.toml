@@ -9,10 +9,14 @@ repository.workspace = true
 [dependencies]
 # PNG: chunk parsing, unfiltering and inflate (fdeflate); the viewer's libpng
 # transformations (expand, gray to RGB, tRNS, strip 16, gamma) are applied here.
-png = { version = "0.18", default-features = false }
+# Exact pins: the decoder's output is lossless, but a png upgrade can change
+# decode speed and a zlib-rs upgrade can change the PNG encoder's output size
+# and speed. On either upgrade rerun tools/image-eval (parity, the PNG
+# re-encode survey, the benchmark) and re-record tools/image-eval/results.
+png = { version = "=0.18.1", default-features = false }
 # PNG encoding deflates with zlib-rs, the Rust port of zlib-ng (the deflate the
-# viewer's libpng links), at libpng's settings.
-zlib-rs = "0.6"
+# viewer's libpng links), at libpng's settings (see png::DEFLATE_LEVEL).
+zlib-rs = "=0.6.8"
 # The JPEG candidate (feature `jpeg`): measured against libjpeg-turbo and not
 # adopted by the viewer (see the viewer's doc/rust_port.md). Decoding is
 # zune-jpeg (SIMD IDCT, upsampling and colour conversion on x86), encoding

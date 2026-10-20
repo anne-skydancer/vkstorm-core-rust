@@ -371,6 +371,22 @@ fn reduce16(v: u16, table: Option<&[u8]>, shift: u32) -> u8 {
 /// libpng's IDAT buffer size.
 const ZBUF_SIZE: usize = 8192;
 
+/// The encoder's deflate settings, pinned to what the viewer's libpng used
+/// (`PNG_Z_DEFAULT_COMPRESSION` = 6, `Z_FILTERED` because rows are filtered,
+/// memory level 8). These, the filter heuristic in [`filter_row`] and the
+/// window rule in `window_bits` determine the output size and the encode
+/// time; they are deliberate and must not follow a dependency's defaults.
+/// The gate for the encoder (viewer doc/rust_port.md, rung two) is
+/// decoded-identical output within 20% of libpng's size per file and no
+/// growth of a corpus total; re-measure with tools/image-eval after any
+/// change here or any zlib-rs upgrade.
+pub const DEFLATE_LEVEL: i32 = 6;
+pub const DEFLATE_STRATEGY: Strategy = Strategy::Filtered;
+pub const DEFLATE_MEM_LEVEL: i32 = 8;
+/// The per-row filter choice: libpng's minimum sum of absolute differences
+/// over none, sub, up, average and Paeth, first strictly smallest wins.
+pub const FILTER_HEURISTIC: &str = "libpng minimum-sum-of-absolute-differences";
+
 fn chunk(out: &mut Vec<u8>, kind: &[u8; 4], body: &[u8]) {
     out.extend_from_slice(&(body.len() as u32).to_be_bytes());
     let start = out.len();
@@ -495,11 +511,11 @@ pub fn encode(raster: &Raster) -> Result<Vec<u8>, Error> {
     // as libpng's 8192-byte buffer would have.
     let wbits = window_bits(filtered.len());
     let config = DeflateConfig {
-        level: 6,
+        level: DEFLATE_LEVEL,
         method: Method::Deflated,
         window_bits: wbits,
-        mem_level: 8,
-        strategy: Strategy::Filtered,
+        mem_level: DEFLATE_MEM_LEVEL,
+        strategy: DEFLATE_STRATEGY,
     };
     let mut deflate = Deflate::new_with_config(config);
     let mut stream = vec![0u8; filtered.len() / 2 + 1024];
@@ -569,6 +585,23 @@ mod tests {
         assert_eq!(window_bits(392), 9);
         assert_eq!(window_bits(145), 8);
         assert_eq!(window_bits(2), 8);
+    }
+
+    // The pins behind the encoder's size and speed: a change here is a
+    // deliberate re-qualification (see DEFLATE_LEVEL).
+    #[test]
+    fn encoder_settings_are_pinned() {
+        assert_eq!(DEFLATE_LEVEL, 6);
+        assert_eq!(DEFLATE_STRATEGY, Strategy::Filtered);
+        assert_eq!(DEFLATE_MEM_LEVEL, 8);
+        assert_eq!(FILTER_HEURISTIC, "libpng minimum-sum-of-absolute-differences");
+        assert_eq!(ZBUF_SIZE, 8192);
+        // The one-pixel fixture encodes to the very bytes libpng wrote (an
+        // 8-bit window, zlib header 0x08 0x1d).
+        let raw: &[u8] = include_bytes!("../tests/fixtures/raw_1x1_c3.raw");
+        let r = Raster { width: 1, height: 1, components: 3, data: raw[16..19].to_vec() };
+        let out = encode(&r).unwrap();
+        assert_eq!(out, include_bytes!("../tests/fixtures/raw_1x1_c3.raw.png"));
     }
 
     #[test]

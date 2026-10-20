@@ -220,6 +220,8 @@ fn encode_matches_oracle() {
     let mut jpeg_worst = 0u8;
     let mut jpeg_sizes: Vec<(String, usize, usize)> = Vec::new();
     let mut png_sizes: Vec<(String, usize, usize)> = Vec::new();
+    let mut png_total_ours = 0usize;
+    let mut png_total_libpng = 0usize;
     for line in manifest() {
         match line[0].as_str() {
             "encode" => {
@@ -231,6 +233,24 @@ fn encode_matches_oracle() {
                 let src = read_raw(raw);
                 let expected = read(out);
                 let got = encode(codec, &src, quality).unwrap_or_else(|e| panic!("{out}: {e}"));
+                if codec == "png" {
+                    // The PNG encode gate (viewer doc/rust_port.md, rung two): the
+                    // file decodes to the same raster as libpng's, is within 20% of
+                    // its size, and the corpus does not grow in total.
+                    let a = png::decode(&got).unwrap();
+                    let b = png::decode(&expected).unwrap();
+                    assert!(a == b, "{out}: PNG re-encode does not decode identically");
+                    assert!(a == src || src.components < 3, "{out}: PNG re-encode does not decode to the source");
+                    png_total_ours += got.len();
+                    png_total_libpng += expected.len();
+                    let ratio = got.len() as f64 / expected.len() as f64;
+                    assert!(ratio <= 1.20, "{out}: PNG {:.1}% larger than libpng's", (ratio - 1.0) * 100.0);
+                    if got != expected {
+                        println!("png encode {out:40} differs: {} vs {} bytes ({:+.2}%)", got.len(), expected.len(), (ratio - 1.0) * 100.0);
+                        png_sizes.push((out.clone(), got.len(), expected.len()));
+                        continue;
+                    }
+                }
                 if got == expected {
                     *identical.entry(codec.clone()).or_insert(0) += 1;
                     continue;
@@ -243,19 +263,6 @@ fn encode_matches_oracle() {
                     println!("jpeg encode {out:40} differs: {} vs {} bytes, decoded max {max} mean {mean:.4}", got.len(), expected.len());
                     jpeg_worst = jpeg_worst.max(max);
                     jpeg_sizes.push((out.clone(), got.len(), expected.len()));
-                    continue;
-                }
-                if codec == "png" {
-                    // zlib-rs and the viewer's zlib-ng 2.2.3 choose different
-                    // matches on long runs: the file must still decode to the
-                    // same raster and stay within the size margin.
-                    let a = png::decode(&got).unwrap();
-                    let b = png::decode(&expected).unwrap();
-                    assert!(a == b, "{out}: PNG re-encode does not decode identically");
-                    let ratio = got.len() as f64 / expected.len() as f64;
-                    println!("png encode {out:40} differs: {} vs {} bytes ({:+.2}%)", got.len(), expected.len(), (ratio - 1.0) * 100.0);
-                    png_sizes.push((out.clone(), got.len(), expected.len()));
-                    assert!(ratio <= 1.05, "{out}: PNG {:.1}% larger than libpng's", (ratio - 1.0) * 100.0);
                     continue;
                 }
                 let first = got.iter().zip(&expected).position(|(a, b)| a != b).unwrap_or(got.len().min(expected.len()));
@@ -282,7 +289,9 @@ fn encode_matches_oracle() {
     for (name, ours, theirs) in &jpeg_sizes {
         println!("  {name}: {ours} bytes vs {theirs} ({:+.2}%)", (*ours as f64 / *theirs as f64 - 1.0) * 100.0);
     }
-    assert!(identical.get("png").copied().unwrap_or(0) > 10, "PNG encodes must be byte-identical");
+    println!("png corpus: {png_total_ours} bytes vs libpng {png_total_libpng} ({:+.2}%)", (png_total_ours as f64 / png_total_libpng as f64 - 1.0) * 100.0);
+    assert!(png_total_ours > 0 && png_total_ours <= png_total_libpng, "PNG corpus grew: {png_total_ours} vs {png_total_libpng}");
+    assert!(identical.get("png").copied().unwrap_or(0) > 10, "PNG encodes of the synthetic rasters must be byte-identical");
     // The JPEG encoder candidate is not used by the viewer; its distance is reported above.
     println!("jpeg encode: worst decoded difference {jpeg_worst}");
 }
