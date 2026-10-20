@@ -20,6 +20,7 @@ vkstorm-aleph under `docs/upstream-study/`.
 | `vkstorm-core` | LLSD and codecs, UUID, coordinate frames, asset and inventory enums, binary packers. Carries the `opensim` feature. |
 | `vkstorm-openjp2` | The JPEG 2000 codec core: a port of OpenJPEG (from the `openjp2` crate, c2rust lineage) maintained and optimised here. See `docs/j2c-port-plan.md`. |
 | `vkstorm-j2c` | The viewer-facing JPEG 2000 contract on that core: metadata, discard-level and truncated-stream decode, upload encoding with the viewer's rules. |
+| `vkstorm-llsd` | LLSD serialization: the notation, binary and XML parsers and formatters, byte-compatible with the viewer's C++ `LLSDSerialize`, streaming into a sink so the viewer keeps its own `LLSD` class. |
 
 Planned, in port order: `vkstorm-messages`, `vkstorm-http`, `vkstorm-assets`,
 `vkstorm-audio`, `vkstorm-inventory`, `vkstorm-world`, `vkstorm-avatar`,
