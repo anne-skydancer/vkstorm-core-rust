@@ -1111,6 +1111,8 @@ fn data_packer_parity() {
                     datapacker::format_value(kind, &ints, &floats, &bytes, &mut text);
                 }
                 m.bytes(&format!("{tag} packed"), &d.packed, &text);
+                // the text the reader was given (a case may cut it)
+                text.truncate(d.unpack_size as usize);
                 // reading: one getline of at most 511 bytes per value;
                 // a longer line leaves the stream failed
                 let mut pos = 0usize;
