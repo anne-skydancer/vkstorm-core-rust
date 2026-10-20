@@ -203,10 +203,16 @@ impl<S: Sink> Parser<'_, '_, S> {
         }
         while !self.graceful_stop {
             let Some(b) = self.r.peek() else { break };
-            if b == b'<' {
-                self.markup()?;
+            let step = if b == b'<' {
+                self.markup()
             } else {
-                self.text()?;
+                self.text()
+            };
+            if step.is_err() {
+                // The C++ parser had fed expat the whole line (or 1024-byte
+                // chunk) the error is in; it is consumed either way.
+                self.discard_rest_of_line();
+                return Err(());
             }
         }
         if self.graceful_stop {

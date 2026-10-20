@@ -225,18 +225,31 @@ pub fn extract_int(r: &mut Reader<'_>) -> Option<i32> {
 }
 
 /// `istream >> double` ("C" locale): skips whitespace, then an optional sign,
-/// digits with an optional point, and an optional exponent. `None` sets the
-/// failbit in C++: no mantissa digit, an exponent marker without digits, or a
-/// value outside the finite range.
+/// digits with an optional point, and an optional exponent; a `0x` prefix
+/// starts a hexadecimal mantissa with a binary `p` exponent, as the MSVC
+/// runtime's extraction accepts. `None` sets the failbit in C++: no mantissa
+/// digit, an exponent marker without digits, or a value outside the finite
+/// range.
 pub fn extract_real(r: &mut Reader<'_>) -> Option<f64> {
     skip_ws(r);
     let mut text: Vec<u8> = Vec::with_capacity(32);
+    let mut negative = false;
     if let Some(b @ (b'-' | b'+')) = r.peek() {
+        negative = b == b'-';
         text.push(b);
         r.get();
     }
     let mut mantissa_digits = 0;
     let mut mantissa_nonzero = false;
+    if r.peek() == Some(b'0') {
+        r.get();
+        if matches!(r.peek(), Some(b'x' | b'X')) {
+            r.get();
+            return extract_hex_real(r, negative);
+        }
+        text.push(b'0');
+        mantissa_digits += 1;
+    }
     while let Some(b) = r.peek() {
         if !b.is_ascii_digit() {
             break;
@@ -293,6 +306,64 @@ pub fn extract_real(r: &mut Reader<'_>) -> Option<f64> {
         return None;
     }
     Some(v)
+}
+
+/// The hexadecimal form after `0x`: hex digits with an optional point, then
+/// an optional `p` exponent in decimal.
+fn extract_hex_real(r: &mut Reader<'_>, negative: bool) -> Option<f64> {
+    let mut mantissa = 0.0f64;
+    let mut digits = 0;
+    let mut frac_digits = 0i32;
+    let mut in_frac = false;
+    loop {
+        match r.peek() {
+            Some(b) if b.is_ascii_hexdigit() => {
+                r.get();
+                mantissa = mantissa * 16.0 + hex_nybble(b) as f64;
+                digits += 1;
+                if in_frac {
+                    frac_digits += 1;
+                }
+            }
+            Some(b'.') if !in_frac => {
+                r.get();
+                in_frac = true;
+            }
+            _ => break,
+        }
+    }
+    if digits == 0 {
+        return None;
+    }
+    let mut exp: i32 = 0;
+    if let Some(b'p' | b'P') = r.peek() {
+        r.get();
+        let mut exp_negative = false;
+        if let Some(b @ (b'-' | b'+')) = r.peek() {
+            exp_negative = b == b'-';
+            r.get();
+        }
+        let mut exp_digits = 0;
+        while let Some(b) = r.peek() {
+            if !b.is_ascii_digit() {
+                break;
+            }
+            r.get();
+            exp = exp.saturating_mul(10).saturating_add((b - b'0') as i32);
+            exp_digits += 1;
+        }
+        if exp_digits == 0 {
+            return None;
+        }
+        if exp_negative {
+            exp = -exp;
+        }
+    }
+    let v = mantissa * 2f64.powi(exp.saturating_sub(4 * frac_digits));
+    if v.is_infinite() {
+        return None;
+    }
+    Some(if negative { -v } else { v })
 }
 
 /// `LLSD(string).asReal()`: `istringstream >> v` must then be at end of
@@ -795,6 +866,13 @@ mod tests {
         let mut src = SliceSource::new(b"2147483648");
         let mut r = Reader::new(&mut src);
         assert_eq!(extract_int(&mut r), None);
+        let mut src = SliceSource::new(b"0x1.8p1q");
+        let mut r = Reader::new(&mut src);
+        assert_eq!(extract_real(&mut r), Some(3.0));
+        assert_eq!(r.peek(), Some(b'q'));
+        assert_eq!(string_as_real(b"0x1p3"), 8.0);
+        assert_eq!(string_as_real(b"0x10"), 16.0);
+        assert_eq!(string_as_real(b"007.5"), 7.5);
         let mut src = SliceSource::new(b"1.5e3xyz");
         let mut r = Reader::new(&mut src);
         assert_eq!(extract_real(&mut r), Some(1500.0));

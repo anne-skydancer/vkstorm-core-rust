@@ -133,8 +133,19 @@ fn xml_formatter_containers() {
 
 #[test]
 fn xml_formatter_pretty() {
-    let v = map(&[("a", Value::Array(vec![Value::Integer(1)])), ("b", Value::string("c"))]);
-    let out = format(Format::Xml, &v, Options { pretty: true, ..Options::default() }).0;
+    let v = map(&[
+        ("a", Value::Array(vec![Value::Integer(1)])),
+        ("b", Value::string("c")),
+    ]);
+    let out = format(
+        Format::Xml,
+        &v,
+        Options {
+            pretty: true,
+            ..Options::default()
+        },
+    )
+    .0;
     assert_eq!(
         String::from_utf8(out).unwrap(),
         "<llsd>
