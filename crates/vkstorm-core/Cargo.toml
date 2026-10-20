@@ -1,0 +1,14 @@
+[package]
+name = "vkstorm-core"
+description = "Vulkanstorm core types: LLSD, UUID, coordinate frames, asset and inventory enums, binary packers"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[features]
+default = []
+# OpenSim grid support. Off: a Second Life-only build with no OpenSim grid profile
+# and none of the legacy UDP paths. On: the grid profile is chosen at login and
+# fixed for the session.
+opensim = []

@@ -1,0 +1,18 @@
+--- a/src/j2c/tile.rs	2006-07-24 02:21:28.000000000 +0100
++++ b/src/j2c/tile.rs	2026-10-20 08:21:33.401139200 +0100
+@@ -298,6 +298,15 @@
+         headers.push(BitReader::new(ppm_marker.data));
+     }
+ 
++    // Experimental (vkstorm-aleph evaluation): in non-strict mode accept a tile-part whose
++    // declared length (Psot) exceeds the bytes actually present, i.e. a truncated codestream
++    // from a progressive fetch. Decode whatever packets are available, as OpenJPEG does.
++    let available = reader.tail().map(|t| t.len()).unwrap_or(0);
++    let remaining_bytes = if !main_header.strict && remaining_bytes > available {
++        available
++    } else {
++        remaining_bytes
++    };
+     let data = reader
+         .read_bytes(remaining_bytes)
+         .ok_or(TileError::Invalid)?;

@@ -1,0 +1,10 @@
+[package]
+name = "vkstorm-j2c"
+description = "JPEG 2000 texture decoding for Vulkanstorm (hayro-jpeg2000 behind the viewer's decode contract)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+hayro-jpeg2000 = { workspace = true }

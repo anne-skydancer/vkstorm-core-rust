@@ -1,0 +1,111 @@
+diff -ru hayro-jpeg2000-0.4.1/src/j2c/decode.rs /c/Dev/hayro-patch/src/j2c/decode.rs
+--- a/src/j2c/decode.rs	2006-07-24 02:21:28.000000000 +0100
++++ b/src/j2c/decode.rs	2026-10-20 08:29:10.085826000 +0100
+@@ -29,6 +29,13 @@
+ use crate::reader::BitReader;
+ use core::ops::Range;
+ 
++pub(crate) static T_BUILD: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
++pub(crate) static T_SEG: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
++pub(crate) static T_T1: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
++pub(crate) static T_IDWT: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
++pub(crate) static T_MCT: core::sync::atomic::AtomicU64 = core::sync::atomic::AtomicU64::new(0);
++fn acc(a: &core::sync::atomic::AtomicU64, t: std::time::Instant) { a.fetch_add(t.elapsed().as_nanos() as u64, core::sync::atomic::Ordering::Relaxed); }
++
+ pub(crate) fn decode<'a>(
+     data: &'a [u8],
+     header: &'a Header<'a>,
+@@ -91,7 +98,9 @@
+     // In theory, only some could have it... But hopefully no such cursed
+     // images exist!
+     if tiles[0].mct {
++        let _t = std::time::Instant::now();
+         mct::apply_inverse(&mut ctx.channel_data, &tiles[0].component_infos, header)?;
++        acc(&T_MCT, _t);
+     }
+ 
+     apply_sign_shift(&mut ctx.channel_data, &header.component_infos);
+@@ -143,9 +152,13 @@
+ 
+     // First, we build the decompositions, including their sub-bands, precincts
+     // and code blocks.
++    let _t = std::time::Instant::now();
+     build::build(tile, storage, header.skipped_resolution_levels)?;
++    acc(&T_BUILD, _t);
+     // Next, we parse the layers/segments for each code block.
++    let _t = std::time::Instant::now();
+     segment::parse(tile, progression_iterator, header, storage)?;
++    acc(&T_SEG, _t);
+ 
+     // Interleave bitplane decoding, IDWT, and storage for each component tile
+     // so we can reuse the coefficient and IDWT buffers.
+@@ -156,8 +169,11 @@
+         }
+         // We then decode the bitplanes of each code block, yielding the
+         // (possibly dequantized) coefficients of each code block.
++        let _t = std::time::Instant::now();
+         decode_component_tile_bit_planes(idx, tile, tile_ctx, storage, header)?;
++        acc(&T_T1, _t);
+         // Next, we apply the inverse discrete wavelet transform.
++        let _t = std::time::Instant::now();
+         idwt::apply(
+             storage,
+             tile_ctx,
+@@ -165,6 +181,7 @@
+             header,
+             component_info.wavelet_transform(),
+         );
++        acc(&T_IDWT, _t);
+         // Finally, we store the raw samples for the tile area in the correct
+         // location. Note that in case we have MCT, we are not applying it yet.
+         // It will be applied in the very end once all tiles have been processed.
+diff -ru hayro-jpeg2000-0.4.1/src/j2c/mod.rs /c/Dev/hayro-patch/src/j2c/mod.rs
+--- a/src/j2c/mod.rs	2006-07-24 02:21:28.000000000 +0100
++++ b/src/j2c/mod.rs	2026-10-20 08:29:22.224735800 +0100
+@@ -2,7 +2,7 @@
+ mod bitplane;
+ mod build;
+ mod codestream;
+-mod decode;
++pub(crate) mod decode;
+ mod idwt;
+ mod mct;
+ mod progression;
+diff -ru hayro-jpeg2000-0.4.1/src/j2c/tile.rs /c/Dev/hayro-patch/src/j2c/tile.rs
+--- a/src/j2c/tile.rs	2006-07-24 02:21:28.000000000 +0100
++++ b/src/j2c/tile.rs	2026-10-20 08:21:33.401139200 +0100
+@@ -298,6 +298,15 @@
+         headers.push(BitReader::new(ppm_marker.data));
+     }
+ 
++    // Experimental (vkstorm-aleph evaluation): in non-strict mode accept a tile-part whose
++    // declared length (Psot) exceeds the bytes actually present, i.e. a truncated codestream
++    // from a progressive fetch. Decode whatever packets are available, as OpenJPEG does.
++    let available = reader.tail().map(|t| t.len()).unwrap_or(0);
++    let remaining_bytes = if !main_header.strict && remaining_bytes > available {
++        available
++    } else {
++        remaining_bytes
++    };
+     let data = reader
+         .read_bytes(remaining_bytes)
+         .ok_or(TileError::Invalid)?;
+diff -ru hayro-jpeg2000-0.4.1/src/lib.rs /c/Dev/hayro-patch/src/lib.rs
+--- a/src/lib.rs	2006-07-24 02:21:28.000000000 +0100
++++ b/src/lib.rs	2026-10-20 08:29:10.086325900 +0100
+@@ -201,7 +201,15 @@
+         decoder_context: &'b mut DecoderContext<'a>,
+     ) -> Result<DecodedImage<'b>> {
+         let settings = &self.settings;
++        let _t0 = std::time::Instant::now();
+         j2c::decode(self.codestream, &self.header, decoder_context)?;
++        if std::env::var_os("HAYRO_STAGE_TIMING").is_some() {
++            use core::sync::atomic::Ordering::Relaxed;
++            use crate::j2c::decode::{T_BUILD, T_SEG, T_T1, T_IDWT, T_MCT};
++            let ms = |a: &core::sync::atomic::AtomicU64| a.swap(0, Relaxed) as f64 / 1e6;
++            eprintln!("stages_ms total={:.2} build={:.2} segment={:.2} tier1={:.2} idwt={:.2} mct={:.2}",
++                _t0.elapsed().as_secs_f64()*1e3, ms(&T_BUILD), ms(&T_SEG), ms(&T_T1), ms(&T_IDWT), ms(&T_MCT));
++        }
+         let mut decoded_image = DecodedImage {
+             decoded_components: &mut decoder_context.channel_data,
+             boxes: self.boxes.clone(),
