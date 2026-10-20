@@ -8,12 +8,22 @@
  * usage: opj_enc synth <w> <h> <c> <reversible 0|1> <out.j2c> [comment]
  *        opj_enc raw <in.raw bottom-up interleaved> <w> <h> <c> <reversible> <out.j2c> [comment]
  * The synthetic pattern matches tools/j2c-eval/examples/encode_probe.rs.
+ * With OPJ_ENC_ITERS=<n> in the environment the encode (image fill through
+ * opj_end_compress, the work of vkstorm_j2c::encode) runs n times and the
+ * best time in ms is printed after the size.
  */
 #include <openjpeg.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+#include <windows.h>
+static double now_ms(void) { LARGE_INTEGER f, t; QueryPerformanceFrequency(&f); QueryPerformanceCounter(&t); return 1000.0 * (double)t.QuadPart / (double)f.QuadPart; }
+#else
+#include <time.h>
+static double now_ms(void) { struct timespec t; clock_gettime(CLOCK_MONOTONIC, &t); return t.tv_sec * 1000.0 + t.tv_nsec / 1e6; }
+#endif
 
 typedef struct { unsigned char* buf; size_t len; size_t cap; size_t pos; } mem_dst;
 
@@ -54,6 +64,11 @@ int main(int argc, char** argv) {
     { unsigned wt = w >> 6, ht = h >> 6; if (wt == 0 && w >= 4) wt = 1; if (ht == 0 && h >= 4) ht = 1;
       if (wt == 1 || ht == 1) { unsigned md = w < h ? w : h; p.numresolution = 1 + (int)floor(log2((double)md)); } }
 
+    const char* iters_env = getenv("OPJ_ENC_ITERS");
+    int iters = iters_env ? atoi(iters_env) : 1; if (iters < 1) iters = 1;
+    double best = 1e30; mem_dst m = { 0 };
+    for (int it = 0; it < iters; it++) {
+    double t0 = now_ms();
     opj_image_cmptparm_t* cp = (opj_image_cmptparm_t*)calloc(c, sizeof(*cp));
     for (unsigned k = 0; k < c; k++) { cp[k].prec = 8; cp[k].sgnd = 0; cp[k].dx = p.subsampling_dx; cp[k].dy = p.subsampling_dy; cp[k].w = w; cp[k].h = h; }
     opj_image_t* img = opj_image_create(c, cp, OPJ_CLRSPC_SRGB); img->x1 = w; img->y1 = h;
@@ -62,12 +77,15 @@ int main(int argc, char** argv) {
     opj_codec_t* enc = opj_create_compress(OPJ_CODEC_J2K);
     opj_set_error_handler(enc, quiet, NULL); opj_set_warning_handler(enc, quiet, NULL); opj_set_info_handler(enc, quiet, NULL);
     if (!opj_setup_encoder(enc, &p, img)) { fprintf(stderr, "setup failed\n"); return 1; }
-    mem_dst m = { 0 }; opj_stream_t* st = opj_stream_default_create(OPJ_FALSE);
+    if (it > 0) { free(m.buf); memset(&m, 0, sizeof m); }
+    opj_stream_t* st = opj_stream_default_create(OPJ_FALSE);
     opj_stream_set_user_data(st, &m, NULL); opj_stream_set_write_function(st, mem_write);
     opj_stream_set_skip_function(st, mem_skip); opj_stream_set_seek_function(st, mem_seek);
     if (!opj_start_compress(enc, img, st) || !opj_encode(enc, st) || !opj_end_compress(enc, st)) { fprintf(stderr, "encode failed\n"); return 1; }
-    opj_stream_destroy(st); opj_destroy_codec(enc); opj_image_destroy(img);
+    opj_stream_destroy(st); opj_destroy_codec(enc); opj_image_destroy(img); free(cp);
+    double dt = now_ms() - t0; if (dt < best) best = dt;
+    }
     FILE* o = fopen(out_path, "wb"); fwrite(m.buf, 1, m.len, o); fclose(o);
-    printf("%zu\n", m.len);
+    if (iters_env) printf("%zu %.3f\n", m.len, best); else printf("%zu\n", m.len);
     return 0;
 }

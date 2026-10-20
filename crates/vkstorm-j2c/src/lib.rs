@@ -240,6 +240,38 @@ pub fn decode(
         if channels == 0 {
             return Err(Error::NoChannels { components, first_channel });
         }
+        run_decode(&h, discard_level)?;
+        let (width, height, data) = convert(&*h.image, first_channel as usize, channels as usize)?;
+        Ok(Decoded { width, height, channels, components, data })
+    }
+}
+
+/// Dimensions of a decode without the samples, from [`decode_only`].
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Dimensions {
+    pub width: u32,
+    pub height: u32,
+    pub components: u32,
+}
+
+/// Run the codec alone and discard the samples. This times the same work as
+/// an OpenJPEG `opj_decode` call, for like-for-like benchmarks against the C
+/// library; [`decode`] adds the conversion to the viewer's 8-bit layout.
+pub fn decode_only(data: &[u8], max_bytes: usize, discard_level: u32) -> Result<Dimensions, Error> {
+    let data = if max_bytes > 0 && max_bytes < data.len() { &data[..max_bytes] } else { data };
+    let mut mem = ReadMem { data, pos: 0 };
+    let h = open_decoder(&mut mem, discard_level)?;
+    unsafe {
+        run_decode(&h, discard_level)?;
+        let img = &*h.image;
+        let comps = std::slice::from_raw_parts(img.comps, img.numcomps as usize);
+        Ok(Dimensions { width: comps[0].w, height: comps[0].h, components: img.numcomps })
+    }
+}
+
+/// Apply the discard level and decode the codestream into the image planes.
+unsafe fn run_decode(h: &Handles, discard_level: u32) -> Result<(), Error> {
+    unsafe {
         if discard_level > 0 && opj_set_decoded_resolution_factor(h.codec, discard_level) == 0 {
             return Err(Error::Decode(format!("discard level {discard_level} not available")));
         }
@@ -247,36 +279,46 @@ pub fn decode(
             return Err(Error::Decode("decode failed".into()));
         }
         opj_end_decompress(h.codec, h.stream);
+    }
+    Ok(())
+}
 
-        let img = &*h.image;
-        let comps = std::slice::from_raw_parts(img.comps, img.numcomps as usize);
-        let (w, h_) = (comps[0].w as usize, comps[0].h as usize);
-        let c = channels as usize;
-        let fc = first_channel as usize;
-        let mut out = vec![0u8; w * h_ * c];
-        for (dst, comp) in comps[fc..fc + c].iter().enumerate() {
-            if comp.data.is_null() {
-                return Err(Error::Decode("component without data".into()));
-            }
-            let d = std::slice::from_raw_parts(comp.data, w * h_);
-            let prec = comp.prec;
-            let offset = if comp.sgnd != 0 { 1i32 << (prec - 1) } else { 0 };
-            for y in 0..h_ {
-                let src_row = &d[y * w..(y + 1) * w];
-                let dst_row = &mut out[(h_ - 1 - y) * w * c..(h_ - y) * w * c];
+/// Interleave `c` planes starting at component `fc` into 8-bit bottom-up rows.
+/// Samples above 8 bits are shifted down, signed samples offset, and the
+/// result clamped, as `LLImageJ2COJ::decodeImpl` does.
+unsafe fn convert(img: &opj_image_t, fc: usize, c: usize) -> Result<(u32, u32, Vec<u8>), Error> {
+    let comps = unsafe { std::slice::from_raw_parts(img.comps, img.numcomps as usize) };
+    let (w, h) = (comps[0].w as usize, comps[0].h as usize);
+    let mut out = vec![0u8; w * h * c];
+    for (k, comp) in comps[fc..fc + c].iter().enumerate() {
+        if comp.data.is_null() {
+            return Err(Error::Decode("component without data".into()));
+        }
+        if comp.w as usize != w || comp.h as usize != h {
+            return Err(Error::Decode("subsampled component".into()));
+        }
+        let d = unsafe { std::slice::from_raw_parts(comp.data, w * h) };
+        let prec = comp.prec;
+        let offset = if comp.sgnd != 0 { 1i32 << (prec - 1) } else { 0 };
+        let (shr, shl) = if prec > 8 { (prec - 8, 0) } else { (0, 8 - prec) };
+        for y in 0..h {
+            let src = &d[y * w..(y + 1) * w];
+            let dst = &mut out[(h - 1 - y) * w * c..(h - y) * w * c];
+            debug_assert!(src.len() == w && dst.len() == w * c);
+            // SAFETY: src has w samples and dst w * c bytes, so x < w and
+            // k < c keep both indices in range; the checked slicing above is
+            // what the loop relies on.
+            unsafe {
+                let s = src.as_ptr();
+                let o = dst.as_mut_ptr().add(k);
                 for x in 0..w {
-                    let mut v = src_row[x] + offset;
-                    if prec > 8 {
-                        v >>= prec - 8;
-                    } else if prec < 8 {
-                        v <<= 8 - prec;
-                    }
-                    dst_row[x * c + dst] = v.clamp(0, 255) as u8;
+                    let v = ((*s.add(x) + offset) >> shr) << shl;
+                    *o.add(x * c) = v.clamp(0, 255) as u8;
                 }
             }
         }
-        Ok(Decoded { width: w as u32, height: h_ as u32, channels, components, data: out })
     }
+    Ok((w as u32, h as u32, out))
 }
 
 /// The COM marker comment in the first 1024 bytes, with the viewer's sanity
