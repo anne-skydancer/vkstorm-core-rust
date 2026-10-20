@@ -201,6 +201,9 @@ pub fn generate_profile(
 
     out.points.clear();
     out.faces.clear();
+    // A fresh LLProfile starts with mTotalOut = 0 and only addHole sets it;
+    // this profile may be reused across volumes.
+    out.total_out = 0;
 
     let begin = params.begin;
     let end = params.end;
