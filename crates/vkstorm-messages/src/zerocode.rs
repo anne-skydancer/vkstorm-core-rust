@@ -144,17 +144,13 @@ pub fn zero_code_expand(packet: &[u8], out: &mut [u8]) -> Expanded {
 fn expand(packet: &[u8], out: &mut [u8], overruns: &mut u32) -> Result<usize, ExpandError> {
     let max = out.len();
     let n = packet.len();
-    let mut count: i64 = n as i64;
     let mut i = 0usize;
     let mut o = 0usize;
     // the packet id field
     let id = PACKET_ID_SIZE.min(n).min(max);
-    while i < id {
-        out[o] = packet[i];
-        o += 1;
-        i += 1;
-        count -= 1;
-    }
+    out[..id].copy_from_slice(&packet[..id]);
+    i += id;
+    o += id;
     if o > 0 {
         out[0] &= !ZERO_CODE_FLAG;
     }
@@ -165,90 +161,83 @@ fn expand(packet: &[u8], out: &mut [u8], overruns: &mut u32) -> Result<usize, Ex
         // such a packet here (it is rejected as too short beforehand)
         return Ok(o);
     }
-    // The C++ `while (count--)` tests the old value and decrements before
-    // the body, so count is -1 after the last byte.
-    loop {
-        if count <= 0 {
-            break;
-        }
-        // a run of literal bytes, copied up to the next zero (the C++ copied
-        // them one by one through the same count); case 1 when it would
-        // pass the end of the buffer
-        let remaining = (count as usize).min(n - i);
-        let room = remaining.min(max - o);
+    // The C++ counted the input bytes down (`while (count--)`), consuming
+    // one per byte copied or per count byte read; `n - i` is that count.
+    while i < n {
+        // a run of literal bytes, copied up to the next zero: whole words
+        // without a zero byte first, then the rest (the C++ copied them one
+        // by one); case 1 when it would pass the end of the buffer
+        let room = (n - i).min(max - o);
         let src = &packet[i..i + room];
         let dst = &mut out[o..o + room];
         let mut k = 0;
+        while k + 8 <= room {
+            let w = u64::from_le_bytes(src[k..k + 8].try_into().unwrap());
+            if (w.wrapping_sub(0x0101_0101_0101_0101) & !w & 0x8080_8080_8080_8080) != 0 {
+                break;
+            }
+            dst[k..k + 8].copy_from_slice(&src[k..k + 8]);
+            k += 8;
+        }
         while k < room && src[k] != 0 {
             dst[k] = src[k];
             k += 1;
         }
         o += k;
         i += k;
-        count -= k as i64;
-        if count <= 0 {
+        if i >= n {
             break;
         }
-        if k == room && i < n && packet[i] != 0 {
-            // out of room in the middle of a literal run
-            return Err(ExpandError::PastEnd1);
-        }
-        if o > max - 1 || i >= n {
-            // case 1 (o past the end), or input exhausted on a malformed
-            // count: the C++ read past its buffer here; treated as the
-            // same overrun
+        if packet[i] != 0 || o >= max {
+            // out of room in the middle of a literal run, or for the zero
             return Err(ExpandError::PastEnd1);
         }
         // the zero byte of a run
-        count -= 1;
         out[o] = 0;
         o += 1;
         i += 1;
-        {
-            // `while ((count--) && (!(*inptr)))`
-            loop {
-                let c = count;
-                count -= 1;
-                if c == 0 {
-                    break;
-                }
-                if i >= n {
-                    return Err(ExpandError::PastEnd1);
-                }
-                if packet[i] != 0 {
-                    break;
-                }
-                // a 0 count byte: 256 zeros (the copied zero plus 255)
-                if o >= max {
-                    return Err(ExpandError::PastEnd2);
-                }
-                out[o] = packet[i];
-                o += 1;
-                i += 1;
-                if o > max - 256 {
-                    return Err(ExpandError::PastEnd2);
-                }
-                out[o..o + 255].fill(0);
-                o += 255;
-            }
-            if count < 0 {
+        // `while ((count--) && (!(*inptr)))`: each count byte of 0 is a wrap
+        // of 256 zeros (the copied zero plus 255)
+        let mut exhausted = false;
+        loop {
+            if i >= n {
+                // the C++ decremented its count past zero here and left
+                // the main loop
+                exhausted = true;
                 break;
             }
-            // the count byte
-            let run = packet[i] as usize;
-            if o > max - run {
-                // case 3: reported, write position reset, decoding continues
-                *overruns += 1;
-                o = 0;
+            if packet[i] != 0 {
+                break;
             }
-            let zeros = run.saturating_sub(1);
-            if o + zeros > max {
+            if o >= max {
                 return Err(ExpandError::PastEnd2);
             }
-            out[o..o + zeros].fill(0);
-            o += zeros;
+            out[o] = 0;
+            o += 1;
             i += 1;
+            if o > max - 256 {
+                return Err(ExpandError::PastEnd2);
+            }
+            out[o..o + 255].fill(0);
+            o += 255;
         }
+        if exhausted {
+            break;
+        }
+        // the count byte
+        let run = packet[i] as usize;
+        if o > max - run {
+            // case 3: reported, write position reset, decoding continues
+            *overruns += 1;
+            o = 0;
+        }
+        let zeros = run - 1;
+        if o + zeros > max {
+            return Err(ExpandError::PastEnd2);
+        }
+        out[o..o + zeros].fill(0);
+        o += zeros;
+        i += 1;
     }
     Ok(o)
 }
