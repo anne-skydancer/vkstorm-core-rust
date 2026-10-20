@@ -231,12 +231,9 @@ pub fn extract_int(r: &mut Reader<'_>) -> Option<i32> {
 pub fn extract_real(r: &mut Reader<'_>) -> Option<f64> {
     skip_ws(r);
     let mut text: Vec<u8> = Vec::with_capacity(32);
-    match r.peek() {
-        Some(b @ (b'-' | b'+')) => {
-            text.push(b);
-            r.get();
-        }
-        _ => {}
+    if let Some(b @ (b'-' | b'+')) = r.peek() {
+        text.push(b);
+        r.get();
     }
     let mut mantissa_digits = 0;
     let mut mantissa_nonzero = false;
@@ -567,14 +564,13 @@ const B64: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012
 
 /// `apr_base64_encode_binary`: standard alphabet, `=` padding, no line breaks.
 pub fn base64_encode(data: &[u8], out: &mut Vec<u8>) {
-    let mut chunks = data.chunks_exact(3);
-    for c in &mut chunks {
+    let (chunks, rest) = data.as_chunks::<3>();
+    for c in chunks {
         out.push(B64[(c[0] >> 2) as usize]);
         out.push(B64[(((c[0] & 3) << 4) | (c[1] >> 4)) as usize]);
         out.push(B64[(((c[1] & 15) << 2) | (c[2] >> 6)) as usize]);
         out.push(B64[(c[2] & 63) as usize]);
     }
-    let rest = chunks.remainder();
     match rest.len() {
         1 => {
             out.push(B64[(rest[0] >> 2) as usize]);
@@ -707,7 +703,7 @@ mod tests {
         assert_eq!(g(1e20, 25), "100000000000000000000");
         assert_eq!(g(1.5e300, 6), "1.5e+300");
         assert_eq!(g(123456789.0, 6), "1.23457e+08");
-        assert_eq!(g(3.14, 6), "3.14");
+        assert_eq!(g(3.25, 6), "3.25");
         assert_eq!(g(-34379.0438, 25), "-34379.04379999999946448952");
         assert_eq!(g(f64::INFINITY, 6), "inf");
         assert_eq!(g(f64::NEG_INFINITY, 6), "-inf");

@@ -148,15 +148,14 @@ impl<O: Out> Formatter<O> {
     /// Bookkeeping before any value: counting, and the notation array comma.
     fn begin_value(&mut self) -> u32 {
         self.count += 1;
-        if self.format == Format::Notation {
-            if let Some(f) = self.stack.last_mut() {
-                if !f.map {
-                    if !f.first {
-                        self.buf.push(b',');
-                    }
-                    f.first = false;
-                }
+        if self.format == Format::Notation
+            && let Some(f) = self.stack.last_mut()
+            && !f.map
+        {
+            if !f.first {
+                self.buf.push(b',');
             }
+            f.first = false;
         }
         self.level()
     }
@@ -475,7 +474,7 @@ impl<O: Out> Formatter<O> {
                 self.buf.extend_from_slice(b"':");
             }
             Format::Xml => {
-                self.pre(level + 1);
+                self.pre(level);
                 self.buf.extend_from_slice(b"<key>");
                 text::xml_escape(k, &mut self.buf);
                 self.buf.extend_from_slice(b"</key>");

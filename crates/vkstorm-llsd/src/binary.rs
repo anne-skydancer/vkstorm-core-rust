@@ -57,7 +57,7 @@ type R<T> = Result<T, ()>;
 struct Parser<'r, 'a, S: Sink> {
     r: &'r mut Reader<'a>,
     sink: &'r mut S,
-    max_bytes: Option<usize>,
+    max_bytes: Option<i64>,
     scratch: Vec<u8>,
 }
 
@@ -92,7 +92,7 @@ fn read_i32(r: &mut Reader<'_>) -> R<i32> {
 
 impl<S: Sink> Parser<'_, '_, S> {
     fn bytes_left(&self) -> Option<i64> {
-        self.max_bytes.map(|m| m as i64 - self.r.consumed() as i64)
+        self.max_bytes.map(|m| m - self.r.consumed() as i64)
     }
 
     fn run(&mut self, max_depth: i32) -> R<i32> {
@@ -181,7 +181,7 @@ impl<S: Sink> Parser<'_, '_, S> {
         r: &mut Reader<'_>,
         sink: &mut S,
         scratch: &mut Vec<u8>,
-        max_bytes: Option<usize>,
+        max_bytes: Option<i64>,
         depth: i32,
         size: i32,
         count: &mut i32,
@@ -230,10 +230,10 @@ impl<S: Sink> Parser<'_, '_, S> {
     }
 
     /// `parseString`: a 4-byte size and that many bytes.
-    fn parse_string(r: &mut Reader<'_>, max_bytes: Option<usize>, out: &mut Vec<u8>) -> R<()> {
+    fn parse_string(r: &mut Reader<'_>, max_bytes: Option<i64>, out: &mut Vec<u8>) -> R<()> {
         let size = read_i32(r)?;
         if let Some(m) = max_bytes {
-            let left = m as i64 - r.consumed() as i64;
+            let left = m - r.consumed() as i64;
             if size as i64 > left {
                 return Err(());
             }
@@ -314,10 +314,10 @@ impl<S: Sink> Parser<'_, '_, S> {
             }
             b'b' => {
                 let size = read_i32(self.r)?;
-                if let Some(left) = self.bytes_left() {
-                    if size as i64 > left {
-                        return Err(());
-                    }
+                if let Some(left) = self.bytes_left()
+                    && size as i64 > left
+                {
+                    return Err(());
                 }
                 let mut data = Vec::new();
                 if size > 0 {
@@ -349,7 +349,7 @@ mod tests {
             &mut r,
             &mut b,
             Limits {
-                max_bytes: Some(input.len()),
+                max_bytes: Some(input.len() as i64),
                 max_depth: -1,
             },
         );

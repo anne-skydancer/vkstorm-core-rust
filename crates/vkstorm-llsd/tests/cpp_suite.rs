@@ -132,6 +132,26 @@ fn xml_formatter_containers() {
 }
 
 #[test]
+fn xml_formatter_pretty() {
+    let v = map(&[("a", Value::Array(vec![Value::Integer(1)])), ("b", Value::string("c"))]);
+    let out = format(Format::Xml, &v, Options { pretty: true, ..Options::default() }).0;
+    assert_eq!(
+        String::from_utf8(out).unwrap(),
+        "<llsd>
+    <map>
+    <key>a</key>
+        <array>
+            <integer>1</integer>
+        </array>
+    <key>b</key>
+        <string>c</string>
+    </map>
+</llsd>
+"
+    );
+}
+
+#[test]
 fn xml_formatter_binary_blob() {
     let blob = b"6|6|asdfhappybox|60e44ec5-305c-43c2-9a19-b4b89b1ae2a6|60e44ec5-305c-43c2-9a19-b4b89b1ae2a6|60e44ec5-305c-43c2-9a19-b4b89b1ae2a6|00000000-0000-0000-0000-000000000000|7fffffff|7fffffff|0|0|82000|450fe394-2904-c9ad-214c-a07eb7feec29|(No Description)|0|10|0";
     assert_eq!(
@@ -358,7 +378,7 @@ fn ensure_parse(
         fmt,
         input,
         Limits {
-            max_bytes: Some(input.len()),
+            max_bytes: Some(input.len() as i64),
             max_depth: depth,
         },
     );

@@ -57,7 +57,7 @@ enum Frame {
 struct Parser<'r, 'a, S: Sink> {
     r: &'r mut Reader<'a>,
     sink: &'r mut S,
-    max_bytes: Option<usize>,
+    max_bytes: Option<i64>,
     /// Bytes consumed by `istream >>` extractions, which the C++ parser never
     /// subtracted from its byte budget.
     unaccounted: usize,
@@ -127,7 +127,7 @@ impl<S: Sink> Parser<'_, '_, S> {
     fn bytes_left_cpp(&self) -> i64 {
         match self.max_bytes {
             None => -1,
-            Some(m) => m as i64 - (self.r.consumed() - self.unaccounted) as i64,
+            Some(m) => m - (self.r.consumed() - self.unaccounted) as i64,
         }
     }
 
@@ -213,7 +213,7 @@ impl<S: Sink> Parser<'_, '_, S> {
         r: &mut Reader<'_>,
         sink: &mut S,
         scratch: &mut Vec<u8>,
-        max_bytes: Option<usize>,
+        max_bytes: Option<i64>,
         unaccounted: &mut usize,
         depth: i32,
         count: i32,
@@ -233,7 +233,7 @@ impl<S: Sink> Parser<'_, '_, S> {
                     name.clear();
                     let left = match max_bytes {
                         None => -1,
-                        Some(m) => m as i64 - (r.consumed() - *unaccounted) as i64,
+                        Some(m) => m - (r.consumed() - *unaccounted) as i64,
                     };
                     Self::deserialize_string(r, scratch, left, name)?;
                 }

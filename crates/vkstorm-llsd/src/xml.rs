@@ -393,8 +393,7 @@ impl<S: Sink> Parser<'_, '_, S> {
         if !is_name_start(first) {
             return Err(());
         }
-        loop {
-            let Some(b) = self.r.peek() else { break };
+        while let Some(b) = self.r.peek() {
             if b >= 0x80 {
                 let len = self.utf8_char()?;
                 let w = self.r.window();
@@ -457,16 +456,12 @@ impl<S: Sink> Parser<'_, '_, S> {
             self.r.advance(2);
             let (s, l) = self.name()?;
             let target = &self.names[s..s + l];
-            if target.eq_ignore_ascii_case(b"xml") {
-                if target != b"xml" || at != self.doc_start {
-                    return Err(());
-                }
+            if target.eq_ignore_ascii_case(b"xml") && (target != b"xml" || at != self.doc_start) {
+                return Err(());
             }
             self.names.truncate(s);
-            if self.skip_ws() == 0 {
-                if !self.r.ensure(2) || !self.r.window().starts_with(b"?>") {
-                    return Err(());
-                }
+            if self.skip_ws() == 0 && (!self.r.ensure(2) || !self.r.window().starts_with(b"?>")) {
+                return Err(());
             }
             return self.skip_through(b"?>", false);
         }
@@ -555,7 +550,8 @@ impl<S: Sink> Parser<'_, '_, S> {
             }
         }
         self.seen_root = true;
-        let element = self.start_element(&self.names[s..s + l].to_vec());
+        let name_copy = self.names[s..s + l].to_vec();
+        let element = self.start_element(&name_copy);
         if self_closing {
             self.names.truncate(s);
             if self.open.is_empty() {
@@ -698,11 +694,11 @@ impl<S: Sink> Parser<'_, '_, S> {
                 return Some(element);
             }
             Element::Binary => {
-                if let Some((_, enc)) = self.attrs.iter().find(|(n, _)| n == b"encoding") {
-                    if enc != b"base64" {
-                        self.start_skipping();
-                        return None;
-                    }
+                if let Some((_, enc)) = self.attrs.iter().find(|(n, _)| n == b"encoding")
+                    && enc != b"base64"
+                {
+                    self.start_skipping();
+                    return None;
                 }
             }
             _ => {}

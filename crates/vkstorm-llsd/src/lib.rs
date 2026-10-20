@@ -38,11 +38,13 @@ pub const BINARY_HEADER: &str = "LLSD/Binary";
 pub const XML_HEADER: &str = "LLSD/XML";
 pub const NOTATION_HEADER: &str = "llsd/notation";
 
-/// Parse limits: `max_bytes` (`None` for `SIZE_UNLIMITED`) and `max_depth`
-/// (-1 for unlimited), with the viewer's semantics.
+/// Parse limits with the viewer's semantics: `max_bytes` is `None` for
+/// `SIZE_UNLIMITED` (-1), otherwise the byte budget, which the C++ parsers
+/// also accepted negative (any other negative value limits everything);
+/// `max_depth` is -1 for unlimited.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Limits {
-    pub max_bytes: Option<usize>,
+    pub max_bytes: Option<i64>,
     pub max_depth: i32,
 }
 
@@ -55,8 +57,20 @@ impl Limits {
     /// Limits for a complete in-memory document of `len` bytes.
     pub fn for_len(len: usize) -> Limits {
         Limits {
-            max_bytes: Some(len),
+            max_bytes: Some(len as i64),
             max_depth: -1,
+        }
+    }
+
+    /// Limits from the C++ arguments: `max_bytes` -1 is unlimited.
+    pub fn from_cpp(max_bytes: i64, max_depth: i32) -> Limits {
+        Limits {
+            max_bytes: if max_bytes == -1 {
+                None
+            } else {
+                Some(max_bytes)
+            },
+            max_depth,
         }
     }
 }
