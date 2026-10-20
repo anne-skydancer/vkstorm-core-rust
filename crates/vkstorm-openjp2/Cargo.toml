@@ -14,6 +14,8 @@ default = ["std"]
 std = ["log/std"]
 # Upstream file-stream helpers; the viewer never uses them.
 file-io = ["dep:libc"]
+# Prints per-stage decode times to stderr (development only).
+stage-timing = []
 # Development aid: canary-checked allocations to localise heap corruption.
 guard-alloc = []
 jpspec = []

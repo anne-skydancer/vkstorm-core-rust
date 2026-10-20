@@ -31,7 +31,7 @@ pub(crate) fn parallel_cols() -> usize {
 
 #[cfg(target_arch = "x86_64")]
 #[inline]
-fn has_avx2() -> bool {
+pub(crate) fn has_avx2() -> bool {
     use core::sync::atomic::{AtomicU8, Ordering};
     static CACHED: AtomicU8 = AtomicU8::new(0); // 0 unknown, 1 no, 2 yes
     match CACHED.load(Ordering::Relaxed) {

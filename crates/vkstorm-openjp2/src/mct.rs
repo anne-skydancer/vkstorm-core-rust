@@ -168,22 +168,7 @@ pub(crate) fn opj_mct_decode_real(
   mut c2: *mut OPJ_FLOAT32,
   mut n: OPJ_SIZE_T,
 ) {
-  unsafe {
-    let mut i: OPJ_SIZE_T = 0;
-    i = 0 as OPJ_SIZE_T;
-    while i < n {
-      let mut y = *c0.add(i);
-      let mut u = *c1.add(i);
-      let mut v = *c2.add(i);
-      let mut r = y + v * 1.402f32;
-      let mut g = y - u * 0.34413f32 - v * 0.71414f32;
-      let mut b = y + u * 1.772f32;
-      *c0.add(i) = r;
-      *c1.add(i) = g;
-      *c2.add(i) = b;
-      i += 1;
-    }
-  }
+  unsafe { super::simd::mct_decode_real(c0, c1, c2, n) }
 }
 /* <summary> */
 /* Get norm of basis function of irreversible MCT. */

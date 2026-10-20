@@ -15,3 +15,4 @@ jpeg2k = { version = "0.10", default-features = false, features = ["file-io", "o
 
 [features]
 guard-alloc = ["vkstorm-j2c/guard-alloc"]
+stage-timing = ["vkstorm-j2c/stage-timing"]

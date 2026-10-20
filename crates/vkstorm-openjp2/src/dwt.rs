@@ -2364,31 +2364,7 @@ fn opj_v8dwt_decode_step1(
   mut end: OPJ_UINT32,
   c: OPJ_FLOAT32,
 ) {
-  unsafe {
-    let mut fw = w as *mut OPJ_FLOAT32;
-    let mut i: OPJ_UINT32 = 0;
-    /* To be adapted if NB_ELTS_V8 changes */
-    i = start;
-    while i < end {
-      *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32) as isize) =
-        *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32) as isize) * c;
-      *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32).wrapping_add(1u32) as isize) =
-        *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32).wrapping_add(1u32) as isize) * c;
-      *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32).wrapping_add(2u32) as isize) =
-        *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32).wrapping_add(2u32) as isize) * c;
-      *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32).wrapping_add(3u32) as isize) =
-        *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32).wrapping_add(3u32) as isize) * c;
-      *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32).wrapping_add(4u32) as isize) =
-        *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32).wrapping_add(4u32) as isize) * c;
-      *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32).wrapping_add(5u32) as isize) =
-        *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32).wrapping_add(5u32) as isize) * c;
-      *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32).wrapping_add(6u32) as isize) =
-        *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32).wrapping_add(6u32) as isize) * c;
-      *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32).wrapping_add(7u32) as isize) =
-        *fw.offset(i.wrapping_mul(2u32).wrapping_mul(8u32).wrapping_add(7u32) as isize) * c;
-      i += 1;
-    }
-  }
+  unsafe { super::simd::v8dwt_decode_step1(w as *mut OPJ_FLOAT32, start, end, c) }
 }
 
 fn opj_v8dwt_decode_step2(
@@ -2400,49 +2376,14 @@ fn opj_v8dwt_decode_step2(
   mut c: OPJ_FLOAT32,
 ) {
   unsafe {
-    let mut fl = l as *mut OPJ_FLOAT32;
-    let mut fw = w as *mut OPJ_FLOAT32;
-    let mut i: OPJ_UINT32 = 0;
-    let mut imax = opj_uint_min(end, m);
-    if start > 0u32 {
-      fw = fw.offset((2 * NB_ELTS_V8 * start) as isize);
-      fl = fw.offset(-((2 * NB_ELTS_V8) as isize))
-    }
-    /* To be adapted if NB_ELTS_V8 changes */
-    i = start;
-    while i < imax {
-      *fw.offset(-(8i32) as isize) =
-        *fw.offset(-(8i32) as isize) + (*fl.offset(0) + *fw.offset(0)) * c;
-      *fw.offset(-(7i32) as isize) =
-        *fw.offset(-(7i32) as isize) + (*fl.offset(1) + *fw.offset(1)) * c;
-      *fw.offset(-(6i32) as isize) =
-        *fw.offset(-(6i32) as isize) + (*fl.offset(2) + *fw.offset(2)) * c;
-      *fw.offset(-(5i32) as isize) =
-        *fw.offset(-(5i32) as isize) + (*fl.offset(3) + *fw.offset(3)) * c;
-      *fw.offset(-(4i32) as isize) =
-        *fw.offset(-(4i32) as isize) + (*fl.offset(4) + *fw.offset(4)) * c;
-      *fw.offset(-(3i32) as isize) =
-        *fw.offset(-(3i32) as isize) + (*fl.offset(5) + *fw.offset(5)) * c;
-      *fw.offset(-(2i32) as isize) =
-        *fw.offset(-(2i32) as isize) + (*fl.offset(6) + *fw.offset(6)) * c;
-      *fw.offset(-(1i32) as isize) =
-        *fw.offset(-(1i32) as isize) + (*fl.offset(7) + *fw.offset(7)) * c;
-      fl = fw;
-      fw = fw.offset((2 * NB_ELTS_V8) as isize);
-      i += 1;
-    }
-    if m < end {
-      assert!(m.wrapping_add(1u32) == end);
-      c += c;
-      *fw.offset(-(8i32) as isize) = *fw.offset(-(8i32) as isize) + *fl.offset(0) * c;
-      *fw.offset(-(7i32) as isize) = *fw.offset(-(7i32) as isize) + *fl.offset(1) * c;
-      *fw.offset(-(6i32) as isize) = *fw.offset(-(6i32) as isize) + *fl.offset(2) * c;
-      *fw.offset(-(5i32) as isize) = *fw.offset(-(5i32) as isize) + *fl.offset(3) * c;
-      *fw.offset(-(4i32) as isize) = *fw.offset(-(4i32) as isize) + *fl.offset(4) * c;
-      *fw.offset(-(3i32) as isize) = *fw.offset(-(3i32) as isize) + *fl.offset(5) * c;
-      *fw.offset(-(2i32) as isize) = *fw.offset(-(2i32) as isize) + *fl.offset(6) * c;
-      *fw.offset(-(1i32) as isize) = *fw.offset(-(1i32) as isize) + *fl.offset(7) * c
-    };
+    super::simd::v8dwt_decode_step2(
+      l as *mut OPJ_FLOAT32,
+      w as *mut OPJ_FLOAT32,
+      start,
+      end,
+      m,
+      c,
+    )
   }
 }
 /* <summary>                             */

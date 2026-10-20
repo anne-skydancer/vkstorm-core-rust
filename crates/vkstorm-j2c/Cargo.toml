@@ -11,3 +11,4 @@ vkstorm-openjp2 = { path = "../vkstorm-openjp2", default-features = false, featu
 
 [features]
 guard-alloc = ["vkstorm-openjp2/guard-alloc"]
+stage-timing = ["vkstorm-openjp2/stage-timing"]

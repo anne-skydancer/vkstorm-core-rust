@@ -2001,100 +2001,35 @@ fn opj_t1_clbl_decode_processor(mut user_data: *mut core::ffi::c_void) {
       /* priority */
       assert!(!(*cblk).decoded_data.is_null() || !(*tilec).data.is_null()); /* if (tccp->qmfbid == 0) */
       if !(*cblk).decoded_data.is_null() {
-        let mut cblk_size = cblk_w.wrapping_mul(cblk_h); /* resno */
+        let cblk_size = cblk_w.wrapping_mul(cblk_h) as usize;
         if (*tccp).qmfbid == 1 {
-          i = 0 as OPJ_UINT32;
-          while i < cblk_size {
-            *datap.offset(i as isize) /= 2i32;
-            i += 1
+          super::simd::half_i32(datap, datap, cblk_size);
+        } else {
+          let stepsize = 0.5f32 * (*band).stepsize;
+          super::simd::scale_i32_to_f32(datap, datap as *mut OPJ_FLOAT32, cblk_size, stepsize);
+        }
+      } else {
+        let tiledp: *mut OPJ_INT32 = (*tilec)
+          .data
+          .add((y as usize).wrapping_mul(tile_w as usize).wrapping_add(x as usize));
+        if (*tccp).qmfbid == 1 {
+          for j in 0..cblk_h as usize {
+            super::simd::half_i32(
+              datap.add(j * cblk_w as usize),
+              tiledp.add(j * tile_w as usize),
+              cblk_w as usize,
+            );
           }
         } else {
           let stepsize = 0.5f32 * (*band).stepsize;
-          i = 0 as OPJ_UINT32;
-          while i < cblk_size {
-            let mut tmp = *datap as OPJ_FLOAT32 * stepsize;
-            memcpy(
-              datap as *mut core::ffi::c_void,
-              &mut tmp as *mut OPJ_FLOAT32 as *const core::ffi::c_void,
-              core::mem::size_of::<OPJ_FLOAT32>(),
+          for j in 0..cblk_h as usize {
+            super::simd::scale_i32_to_f32(
+              datap.add(j * cblk_w as usize),
+              tiledp.add(j * tile_w as usize) as *mut OPJ_FLOAT32,
+              cblk_w as usize,
+              stepsize,
             );
-            datap = datap.offset(1);
-            i += 1
           }
-        }
-      } else if (*tccp).qmfbid == 1 {
-        let mut tiledp: *mut OPJ_INT32 = &mut *(*tilec).data.add((y as OPJ_SIZE_T)
-            .wrapping_mul(tile_w as usize)
-            .wrapping_add(x as OPJ_SIZE_T)) as *mut OPJ_INT32;
-        j = 0 as OPJ_UINT32;
-        while j < cblk_h {
-          i = 0 as OPJ_UINT32;
-          while i < cblk_w & !(3u32) {
-            let mut tmp0 = *datap.offset(
-              j.wrapping_mul(cblk_w)
-                .wrapping_add(i)
-                .wrapping_add(0u32) as isize,
-            );
-            let mut tmp1 = *datap.offset(
-              j.wrapping_mul(cblk_w)
-                .wrapping_add(i)
-                .wrapping_add(1u32) as isize,
-            );
-            let mut tmp2 = *datap.offset(
-              j.wrapping_mul(cblk_w)
-                .wrapping_add(i)
-                .wrapping_add(2u32) as isize,
-            );
-            let mut tmp3 = *datap.offset(
-              j.wrapping_mul(cblk_w)
-                .wrapping_add(i)
-                .wrapping_add(3u32) as isize,
-            );
-            *tiledp.add((j as usize)
-                .wrapping_mul(tile_w as OPJ_SIZE_T)
-                .wrapping_add(i as usize)
-                .wrapping_add(0)) = tmp0 / 2i32;
-            *tiledp.add((j as usize)
-                .wrapping_mul(tile_w as OPJ_SIZE_T)
-                .wrapping_add(i as usize)
-                .wrapping_add(1)) = tmp1 / 2i32;
-            *tiledp.add((j as usize)
-                .wrapping_mul(tile_w as OPJ_SIZE_T)
-                .wrapping_add(i as usize)
-                .wrapping_add(2)) = tmp2 / 2i32;
-            *tiledp.add((j as usize)
-                .wrapping_mul(tile_w as OPJ_SIZE_T)
-                .wrapping_add(i as usize)
-                .wrapping_add(3)) = tmp3 / 2i32;
-            i = (i as core::ffi::c_uint).wrapping_add(4u32)
-          }
-          while i < cblk_w {
-            let mut tmp_0 = *datap.offset(j.wrapping_mul(cblk_w).wrapping_add(i) as isize);
-            *tiledp.add((j as usize)
-                .wrapping_mul(tile_w as OPJ_SIZE_T)
-                .wrapping_add(i as usize)) = tmp_0 / 2i32;
-            i += 1
-          }
-          j += 1
-        }
-      } else {
-        let stepsize_0 = 0.5f32 * (*band).stepsize;
-        let mut tiledp_0 = &mut *(*tilec).data.add((y as OPJ_SIZE_T)
-            .wrapping_mul(tile_w as usize)
-            .wrapping_add(x as OPJ_SIZE_T)) as *mut OPJ_INT32 as *mut OPJ_FLOAT32;
-        j = 0 as OPJ_UINT32;
-        while j < cblk_h {
-          let mut tiledp2 = tiledp_0;
-          i = 0 as OPJ_UINT32;
-          while i < cblk_w {
-            let mut tmp_1 = *datap as OPJ_FLOAT32 * stepsize_0;
-            *tiledp2 = tmp_1;
-            datap = datap.offset(1);
-            tiledp2 = tiledp2.offset(1);
-            i += 1
-          }
-          tiledp_0 = tiledp_0.offset(tile_w as isize);
-          j += 1
         }
       }
       opj_free(job as *mut core::ffi::c_void);

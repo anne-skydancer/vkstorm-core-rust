@@ -1811,7 +1811,8 @@ pub(crate) fn opj_tcd_decode_tile(
     }
     /* FIXME */
     /*--------------TIER2------------------*/
-    /* FIXME _ProfStart(PGROUP_T2); */
+    #[cfg(feature = "stage-timing")]
+    let stage_t0 = std::time::Instant::now();
     l_data_read = 0 as OPJ_UINT32;
     if opj_tcd_t2_decode(
       p_tcd,
@@ -1826,10 +1827,13 @@ pub(crate) fn opj_tcd_decode_tile(
     }
     /* FIXME _ProfStop(PGROUP_T2); */
     /*------------------TIER1-----------------*/
-    /* FIXME _ProfStart(PGROUP_T1); */
+    #[cfg(feature = "stage-timing")]
+    let stage_t1 = std::time::Instant::now();
     if opj_tcd_t1_decode(p_tcd, p_manager) == 0 {
       return 0i32;
     }
+    #[cfg(feature = "stage-timing")]
+    let stage_t2 = std::time::Instant::now();
     /* FIXME _ProfStop(PGROUP_T1); */
     /* For subtile decoding, now we know the resno_decoded, we can allocate */
     /* the tile data buffer */
@@ -1885,20 +1889,36 @@ pub(crate) fn opj_tcd_decode_tile(
       }
     }
     /*----------------DWT---------------------*/
-    /* FIXME _ProfStart(PGROUP_DWT); */
+    #[cfg(feature = "stage-timing")]
+    let stage_t3 = std::time::Instant::now();
     if opj_tcd_dwt_decode(p_tcd) == 0 {
       return 0i32;
     }
+    #[cfg(feature = "stage-timing")]
+    let stage_t4 = std::time::Instant::now();
     /* FIXME _ProfStop(PGROUP_DWT); */
     /*----------------MCT-------------------*/
     /* FIXME _ProfStart(PGROUP_MCT); */
     if opj_tcd_mct_decode(p_tcd, p_manager) == 0 {
       return 0i32;
     }
-    /* FIXME _ProfStop(PGROUP_MCT); */
-    /* FIXME _ProfStart(PGROUP_DC_SHIFT); */
+    #[cfg(feature = "stage-timing")]
+    let stage_t5 = std::time::Instant::now();
     if opj_tcd_dc_level_shift_decode(p_tcd) == 0 {
       return 0i32;
+    }
+    #[cfg(feature = "stage-timing")]
+    {
+      let ms = |a: std::time::Instant, b: std::time::Instant| (b - a).as_secs_f64() * 1e3;
+      eprintln!(
+        "stage-timing: t2 {:.2} t1 {:.2} alloc {:.2} dwt {:.2} mct {:.2} dc {:.2} ms",
+        ms(stage_t0, stage_t1),
+        ms(stage_t1, stage_t2),
+        ms(stage_t2, stage_t3),
+        ms(stage_t3, stage_t4),
+        ms(stage_t4, stage_t5),
+        ms(stage_t5, std::time::Instant::now())
+      );
     }
     /* FIXME _ProfStop(PGROUP_DC_SHIFT); */
     /*---------------TILE-------------------*/
