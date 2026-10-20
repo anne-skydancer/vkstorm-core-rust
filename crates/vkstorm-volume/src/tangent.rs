@@ -21,8 +21,31 @@ pub fn calculate_tangent_array(
             && tangent.len() >= vertex_count
     );
 
-    let mut tan1 = vec![V4::ZERO; vertex_count];
-    let mut tan2 = vec![V4::ZERO; vertex_count];
+    // The per-thread accumulators (the C++ allocates tan1 per call; a
+    // reused buffer avoids the allocator in the hot path).
+    SCRATCH.with(|cell| {
+        let mut scratch = cell.borrow_mut();
+        scratch.clear();
+        scratch.resize(vertex_count * 2, V4::ZERO);
+        let (tan1, tan2) = scratch.split_at_mut(vertex_count);
+        accumulate(vertex, normal, texcoord, indices, tangent, tan1, tan2);
+    });
+}
+
+thread_local! {
+    static SCRATCH: std::cell::RefCell<Vec<V4>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+
+fn accumulate(
+    vertex: &[V4],
+    normal: &[V4],
+    texcoord: &[[f32; 2]],
+    indices: &[u16],
+    tangent: &mut [V4],
+    tan1: &mut [V4],
+    tan2: &mut [V4],
+) {
+    let vertex_count = vertex.len();
 
     for tri in indices.as_chunks::<3>().0 {
         let (i1, i2, i3) = (tri[0] as usize, tri[1] as usize, tri[2] as usize);

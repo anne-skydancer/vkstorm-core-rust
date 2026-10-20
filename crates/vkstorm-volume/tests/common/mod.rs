@@ -402,21 +402,29 @@ pub fn build_case(c: &Case, with_tangents: bool) -> Built {
         let (kind, nv, ni) = face_sizes(&fp);
         let nvu = nv.max(0) as usize;
         let niu = ni.max(0) as usize;
-        let mut positions = vec![V4::ZERO; nvu];
-        let mut normals = vec![V4::ZERO; nvu];
-        let mut texcoords = vec![[0.0f32; 2]; nvu + (nvu & 1)];
+        // One block for positions, normals and texture coordinates, as
+        // LLVolumeFace::resizeVertices allocates them.
+        let tc_vectors = nvu.div_ceil(2);
+        let mut block = vec![V4::ZERO; nvu * 2 + tc_vectors];
         let mut indices = vec![0u16; niu];
         let mut result = FaceResult::default();
-        {
+        let (positions, normals, texcoords) = {
+            let (pos, rest) = block.split_at_mut(nvu);
+            let (norm, tc) = rest.split_at_mut(nvu);
+            // SAFETY: a V4 is two [f32; 2] pairs with the same layout.
+            let tc: &mut [[f32; 2]] = unsafe {
+                std::slice::from_raw_parts_mut(tc.as_mut_ptr() as *mut [f32; 2], nvu + (nvu & 1))
+            };
             let mut bufs = FaceBuffers {
-                positions: &mut positions,
-                normals: &mut normals,
-                texcoords: &mut texcoords,
+                positions: pos,
+                normals: norm,
+                texcoords: tc,
                 indices: &mut indices,
                 write_indices: true,
             };
             build_face(&fp, &mut bufs, &mut result);
-        }
+            (pos.to_vec(), norm.to_vec(), tc.to_vec())
+        };
         let mut tangents = Vec::new();
         let mut normals_after = Vec::new();
         if with_tangents {
