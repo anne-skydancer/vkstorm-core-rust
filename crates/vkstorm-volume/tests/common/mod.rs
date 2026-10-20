@@ -8,7 +8,25 @@
 use vkstorm_volume::params::*;
 use vkstorm_volume::*;
 
+/// The corpus recorded from the C++ mesher built by this platform's
+/// toolchain: MSVC/UCRT on Windows, GCC/glibc on Linux. Other platforms get
+/// the Windows corpus and a tolerance for the float arrays.
+#[cfg(target_env = "msvc")]
 pub const CORPUS: &[u8] = include_bytes!("../fixtures/llvolume_corpus.vksv");
+#[cfg(target_env = "msvc")]
+pub const CORPUS_NAME: &str = "llvolume_corpus.vksv (Windows, MSVC)";
+#[cfg(all(not(target_env = "msvc"), target_os = "linux"))]
+pub const CORPUS: &[u8] = include_bytes!("../fixtures/llvolume_corpus.linux.vksv");
+#[cfg(all(not(target_env = "msvc"), target_os = "linux"))]
+pub const CORPUS_NAME: &str = "llvolume_corpus.linux.vksv (Linux, GCC/glibc)";
+#[cfg(not(any(target_env = "msvc", target_os = "linux")))]
+pub const CORPUS: &[u8] = include_bytes!("../fixtures/llvolume_corpus.vksv");
+#[cfg(not(any(target_env = "msvc", target_os = "linux")))]
+pub const CORPUS_NAME: &str = "llvolume_corpus.vksv (Windows, MSVC; no oracle for this platform)";
+
+/// Whether this platform has its own oracle recording, so every block must
+/// match exactly (bar a different CPU's rsqrt table).
+pub const STRICT_PLATFORM: bool = cfg!(any(target_env = "msvc", target_os = "linux"));
 
 pub const FIXTURE_MAGIC: u32 = 0x5653_4B56; // "VKSV"
 pub const FIXTURE_VERSION: u32 = 1;

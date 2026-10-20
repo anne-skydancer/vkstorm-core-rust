@@ -77,17 +77,17 @@ impl Profile {
             scale = TABLE_SCALE[total_sides.max(0) as usize];
         }
 
-        let t_first = (begin * sides as f32).floor() / sides as f32;
+        let t_first = floor_div(begin * sides as f32, sides as f32);
 
         // pt1 is the first point on the fractional face.
         let mut t = t_first;
         let mut ang = 2.0 * F_PI * (t * ang_scale + offset);
-        let mut pt1 = V4::set3(ang.cos() * scale, ang.sin() * scale, t);
+        let mut pt1 = V4::set3(cos_mul(ang, scale), sin_mul(ang, scale), t);
 
         // pt2 is the end point on the fractional face.
         t += t_step;
         ang += ang_step;
-        let mut pt2 = V4::set3(ang.cos() * scale, ang.sin() * scale, t);
+        let mut pt2 = V4::set3(cos_mul(ang, scale), sin_mul(ang, scale), t);
 
         let mut t_fraction = (begin - t_first) * sides as f32;
 
@@ -98,7 +98,7 @@ impl Profile {
 
         while t < end {
             // Iterate through all the integer steps of t.
-            pt1 = V4::set3(ang.cos() * scale, ang.sin() * scale, t);
+            pt1 = V4::set3(cos_mul(ang, scale), sin_mul(ang, scale), t);
 
             if let Some(&p) = self.points.last() {
                 for i in 0..split {
@@ -113,7 +113,7 @@ impl Profile {
         }
 
         // pt1 is the first point on the fractional face, pt2 the end point.
-        pt2 = V4::set3(ang.cos() * scale, ang.sin() * scale, t);
+        pt2 = V4::set3(cos_mul(ang, scale), sin_mul(ang, scale), t);
 
         // Find the fraction that we need to add to the end point.
         t_fraction = (end - (t - t_step)) * sides as f32;
@@ -413,7 +413,7 @@ fn num_ngon_points(params: &ProfileParams, sides: i32, ang_scale: f32) -> i32 {
     let end = params.end;
 
     let t_step = 1.0f32 / sides as f32;
-    let t_first = (begin * sides as f32).floor() / sides as f32;
+    let t_first = floor_div(begin * sides as f32, sides as f32);
 
     let mut t = t_first;
     t += t_step;

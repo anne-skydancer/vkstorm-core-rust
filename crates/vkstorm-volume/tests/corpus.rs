@@ -3,24 +3,22 @@
 //! taper, shear, radius offset, revolutions, skew and LOD the viewer uses,
 //! plus flexible paths and the sculpt stitching branch of the face builder.
 //!
-//! The corpus was recorded on Windows with MSVC (the viewer's Release
-//! toolchain), on an AMD CPU. Two things are inherently platform-dependent
-//! and are handled rather than hidden:
-//! - `_mm_rsqrt_ps` tables differ between CPU vendors; the fixture carries a
-//!   signature of the recording CPU, and when it differs the rsqrt-derived
-//!   arrays (cap normals, tangents, normalised normals) are compared with a
-//!   tolerance.
-//! - `sinf`/`cosf` are the platform's libm, as they are for the C++. Off
-//!   Windows/MSVC the float arrays are compared with a tolerance; the
-//!   integer data (counts, indices, descriptors) stays exact.
+//! There is one corpus per platform toolchain, each recorded from the C++
+//! mesher built by that toolchain on an AMD CPU: Windows/MSVC/UCRT and
+//! Linux/GCC/glibc (`libm` and `std::lerp` differ between them, as they did
+//! for the C++). On those platforms every block must match exactly. One
+//! thing is inherently CPU-dependent and is handled rather than hidden:
+//! `_mm_rsqrt_ps` tables differ between CPU vendors, so the fixture carries
+//! a signature of the recording CPU, and when it differs the rsqrt-derived
+//! arrays (cap normals, tangents, normalised normals) are compared with a
+//! tolerance. A platform without a recording gets the Windows corpus with a
+//! tolerance on the float arrays and exact integer data.
 #![allow(clippy::chunks_exact_to_as_chunks)] // fixed-size record parsing
 
 mod common;
 
 use common::*;
 use vkstorm_volume::params::CAP_MASK;
-
-const STRICT_PLATFORM: bool = cfg!(all(windows, target_env = "msvc"));
 
 struct Check {
     same_rsqrt: bool,

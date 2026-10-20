@@ -120,11 +120,129 @@ impl PathParams {
     }
 }
 
-/// `std::lerp(float, float, float)` as the MSVC STL implements it at run
-/// time (`_Common_lerp` with `_Linear_for_lerp` = `fma(t, b - a, a)`), which
-/// is what `llmath.h`'s `lerp` resolves to in the viewer.
+/// `std::lerp(float, float, float)` as the viewer's C++ standard library
+/// implements it on this platform, which is what `llmath.h`'s `lerp`
+/// resolves to: the MSVC STL at run time (`_Common_lerp` with
+/// `_Linear_for_lerp` = `fma(t, b - a, a)`), libstdc++ elsewhere
+/// (`a + t * (b - a)`, two roundings; the viewer's Linux build is strict
+/// `-std=c++20` without `-march`, so GCC neither contracts it nor has FMA).
 #[inline]
 pub fn lerp(a: f32, b: f32, t: f32) -> f32 {
+    if cfg!(target_env = "msvc") {
+        lerp_msvc(a, b, t)
+    } else {
+        lerp_libstdcxx(a, b, t)
+    }
+}
+
+/// libstdc++'s `std::__lerp` on doubles: what `lerp(0.f, -sin(x) * 0.5f, t)`
+/// in the test path resolves to with GCC, where `sin(float)` is the C double
+/// function and the mixed arguments promote to the double overload.
+#[inline]
+pub fn lerp_libstdcxx_f64(a: f64, b: f64, t: f64) -> f64 {
+    if (a <= 0.0 && b >= 0.0) || (a >= 0.0 && b <= 0.0) {
+        return t * b + (1.0 - t) * a;
+    }
+    if t == 1.0 {
+        return b;
+    }
+    let x = a + t * (b - a);
+    if (t > 1.0) == (b > a) {
+        if b < x { x } else { b }
+    } else if b > x {
+        x
+    } else {
+        b
+    }
+}
+
+/// `llvolume.cpp` calls `sin`, `cos`, `floor` and `fabs` unqualified on
+/// floats. With MSVC the global float overloads of `<math.h>` bind (`sinf`
+/// and friends); with GCC and libstdc++ only `std::` has the float
+/// overloads, so the C double functions bind and the surrounding
+/// expression is evaluated in double before the store to `F32`. These
+/// helpers reproduce each platform's resolution for the expressions used.
+pub const C_MATH_IS_DOUBLE: bool = !cfg!(target_env = "msvc");
+
+/// `sin(ang) * k` stored to an `F32`.
+#[inline]
+pub fn sin_mul(ang: f32, k: f32) -> f32 {
+    if C_MATH_IS_DOUBLE {
+        ((ang as f64).sin() * k as f64) as f32
+    } else {
+        ang.sin() * k
+    }
+}
+
+/// `cos(ang) * k` stored to an `F32`.
+#[inline]
+pub fn cos_mul(ang: f32, k: f32) -> f32 {
+    if C_MATH_IS_DOUBLE {
+        ((ang as f64).cos() * k as f64) as f32
+    } else {
+        ang.cos() * k
+    }
+}
+
+/// `floor(x) / d` stored to an `F32`.
+#[inline]
+pub fn floor_div(x: f32, d: f32) -> f32 {
+    if C_MATH_IS_DOUBLE {
+        ((x as f64).floor() / d as f64) as f32
+    } else {
+        x.floor() / d
+    }
+}
+
+/// `llfloor(fabs(a) * b * c)`.
+#[inline]
+pub fn llfloor_fabs_mul_mul(a: f32, b: f32, c: f32) -> i32 {
+    if C_MATH_IS_DOUBLE {
+        ((a.abs() as f64 * b as f64) * c as f64).floor() as i32
+    } else {
+        llfloor(a.abs() * b * c)
+    }
+}
+
+/// `lerp(0.f, -sin(x) * 0.5f, t)` and `lerp(-0.5f, cos(x) * 0.5f, t)` of
+/// the test path, stored to `F32`.
+#[inline]
+pub fn test_path_yz(x: f32, t: f32) -> (f32, f32) {
+    if C_MATH_IS_DOUBLE {
+        let xd = x as f64;
+        (
+            lerp_libstdcxx_f64(0.0, -xd.sin() * 0.5, t as f64) as f32,
+            lerp_libstdcxx_f64(-0.5, xd.cos() * 0.5, t as f64) as f32,
+        )
+    } else {
+        (lerp(0.0, -x.sin() * 0.5, t), lerp(-0.5, x.cos() * 0.5, t))
+    }
+}
+
+/// libstdc++'s `std::__lerp`.
+#[inline]
+pub fn lerp_libstdcxx(a: f32, b: f32, t: f32) -> f32 {
+    if (a <= 0.0 && b >= 0.0) || (a >= 0.0 && b <= 0.0) {
+        return t * b + (1.0 - t) * a;
+    }
+    if t == 1.0 {
+        return b; // exact
+    }
+    // Exact at t = 0, monotonic except near t = 1, bounded, determinate,
+    // and consistent:
+    let x = a + t * (b - a);
+    if (t > 1.0) == (b > a) {
+        if b < x { x } else { b }
+    } else if b > x {
+        x
+    } else {
+        b
+    } // monotonic near t = 1
+}
+
+/// The MSVC STL's `_Common_lerp`.
+#[inline]
+pub fn lerp_msvc(a: f32, b: f32, t: f32) -> f32 {
     let t_is_finite = t.is_finite();
     if t_is_finite && a.is_finite() && b.is_finite() {
         if (a <= 0.0 && b >= 0.0) || (a >= 0.0 && b <= 0.0) {

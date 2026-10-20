@@ -262,9 +262,19 @@ fn create_uncut_cube_cap(p: &FaceParams, b: &mut FaceBuffers, out: &mut FaceResu
     let mut base_normal = V4::cross3(lhs, rhs).normalize3fast();
 
     if !top {
-        // A real multiply, not a sign flip: they differ for the NaN a
-        // zero-area cap produces, and the C++ multiplies.
-        base_normal = base_normal.mul_s(std::hint::black_box(-1.0));
+        // `normal.mul(-1.0f)`: a multiply and a sign flip differ only for the
+        // NaN a zero-area cap produces. MSVC keeps the multiply; GCC folds
+        // it into a negation. Follow the platform's C++.
+        base_normal = if cfg!(target_env = "msvc") {
+            base_normal.mul_s(std::hint::black_box(-1.0))
+        } else {
+            V4([
+                -base_normal.0[0],
+                -base_normal.0[1],
+                -base_normal.0[2],
+                -base_normal.0[3],
+            ])
+        };
     } else {
         // Swap the UVs on the U(X) axis for the top face.
         let swap = corners[0].tc;

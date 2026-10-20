@@ -160,8 +160,8 @@ fn gen_ngon(out: &mut Path, params: &PathParams, sides: i32, end_scale: f32, twi
 
     let make_point = |t: f32| -> PathPt {
         let ang = 2.0 * F_PI * revolutions * t;
-        let s = ang.sin() * lerp(radius_start, radius_end, t);
-        let c = ang.cos() * lerp(radius_start, radius_end, t);
+        let s = sin_mul(ang, lerp(radius_start, radius_end, t));
+        let c = cos_mul(ang, lerp(radius_start, radius_end, t));
 
         let pos = [
             0.0 + lerp(0.0, shear_x, s) + lerp(-skew, skew, t) * 0.5,
@@ -270,12 +270,8 @@ pub fn generate_path(
             let twist = params.twist_end;
             for i in 0..np {
                 let t = i as f32 * out.step;
-                let pos = [
-                    0.0,
-                    lerp(0.0, -(F_PI * twist * t).sin() * 0.5, t),
-                    lerp(-0.5, (F_PI * twist * t).cos() * 0.5, t),
-                    0.0,
-                ];
+                let (y, z) = test_path_yz(F_PI * twist * t, t);
+                let pos = [0.0, y, z, 0.0];
                 let scale = [
                     lerp(1.0, params.scale_x, t),
                     lerp(1.0, params.scale_y, t),
@@ -296,7 +292,7 @@ pub fn generate_path(
             // LL_PCODE_PATH_LINE and anything unknown.
             // Take the begin/end twist into account for detail.
             let mut np =
-                llfloor((params.twist_begin - params.twist_end).abs() * 3.5 * (detail - 0.5)) + 2;
+                llfloor_fabs_mul_mul(params.twist_begin - params.twist_end, 3.5, detail - 0.5) + 2;
             if np < split + 2 {
                 np = split + 2;
             }
@@ -373,6 +369,6 @@ pub fn path_num_points(params: &PathParams, detail: f32) -> i32 {
         }
         PATH_CIRCLE2 => num_ngon_points(params, llfloor(MIN_DETAIL_FACES as f32 * detail)),
         PATH_TEST => 5,
-        _ => llfloor((params.twist_begin - params.twist_end).abs() * 3.5 * (detail - 0.5)) + 2,
+        _ => llfloor_fabs_mul_mul(params.twist_begin - params.twist_end, 3.5, detail - 0.5) + 2,
     }
 }
