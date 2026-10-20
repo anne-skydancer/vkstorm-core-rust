@@ -188,8 +188,11 @@ pub struct FlatSink {
 impl FlatSink {
     pub fn new() -> Self {
         FlatSink {
-            doc: FlatDoc::default(),
-            open: Vec::new(),
+            doc: FlatDoc {
+                nodes: Vec::with_capacity(64),
+                bytes: Vec::with_capacity(512),
+            },
+            open: Vec::with_capacity(8),
         }
     }
 
