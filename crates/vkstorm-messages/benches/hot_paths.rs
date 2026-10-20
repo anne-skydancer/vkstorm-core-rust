@@ -1,55 +1,30 @@
-//! The two hot paths, timed in the crate alone: unpacking a 1 KB
-//! `ObjectUpdate` (the template's largest high-frequency message, three
-//! object blocks) and packing an `AgentUpdate` (sent every frame), plus the
-//! same reader's getters over every field of the decoded message. The
-//! viewer-side harness (`INTEGRATION_TEST_llmessagetemplate` with
-//! `VKS_MSG_BENCH`) times the same work through the C++ classes and the C
-//! ABI; the difference is the boundary cost.
+//! The hot paths, timed in the crate alone: unpacking an `ObjectUpdate`
+//! (`tests/fixtures/objectupdate.bin`, 1274 bytes: `RegionData` and four
+//! `ObjectData` repeats of a typical prim, one with hover text and name
+//! values, one with two textures), reading it as the viewer's handler does,
+//! expanding its zero-coded form (`objectupdate_coded.bin`, 600 bytes) and
+//! packing an `AgentUpdate` with a moving agent (`agentupdate.bin`, 121
+//! bytes). The packets were constructed by the viewer's own builder
+//! (`INTEGRATION_TEST_llmessagetemplate` with `VKS_MSG_PACKETS_OUT`): no
+//! real session was captured, since nothing reaches UDP without a login.
+//! The viewer-side harness (the same test with `VKS_MSG_BENCH`) times the
+//! same work through the C++ classes and the C ABI; the difference is the
+//! boundary cost.
 //!
-//! Usage: `cargo bench --bench hot_paths [-- iterations]`, with the message
-//! template at `VKS_MESSAGE_TEMPLATE` (default: the viewer's
-//! `scripts/messages/message_template.msg` next to this workspace).
+//! Usage: `cargo bench --bench hot_paths [-- iterations]`.
 
 use std::sync::Arc;
 use std::time::Instant;
 use vkstorm_messages::reader::decode_number;
 use vkstorm_messages::{Builder, Reader, Template, Tokenizer, VarType, parse_template, zerocode};
 
-fn template_file() -> String {
-    let path = std::env::var("VKS_MESSAGE_TEMPLATE").unwrap_or_else(|_| {
-        concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/tests/fixtures/message_template.msg"
-        )
-        .to_owned()
-    });
-    std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{path}: {e}"))
+fn fixture(name: &str) -> Vec<u8> {
+    let path = format!("{}/tests/fixtures/{name}", env!("CARGO_MANIFEST_DIR"));
+    std::fs::read(&path).unwrap_or_else(|e| panic!("{path}: {e}"))
 }
 
-fn fill(builder: &mut Builder, t: &Arc<Template>, repeats: &[(usize, usize)], var_len: usize) {
-    builder.new_message(t.clone());
-    for &(b, n) in repeats {
-        let block = &t.blocks[b];
-        for r in 0..n {
-            builder.next_block(block.key).unwrap();
-            for (v, var) in block.variables.iter().enumerate() {
-                let data: Vec<u8> = if var.ty == VarType::Variable {
-                    (0..var_len).map(|i| (i + v + r) as u8 | 1).collect()
-                } else {
-                    (0..var.size as usize)
-                        .map(|i| {
-                            if (i + v) % 8 < 4 {
-                                0
-                            } else {
-                                (i * 7 + v + 3 * r) as u8
-                            }
-                        })
-                        .collect()
-                };
-                builder.add_data(var.key, &data, var.ty).unwrap();
-            }
-        }
-    }
+fn template_file() -> String {
+    String::from_utf8(fixture("message_template.msg")).unwrap()
 }
 
 fn median(mut v: Vec<f64>) -> f64 {
@@ -77,17 +52,15 @@ fn main() {
     let object_update = find("ObjectUpdate");
     let agent_update = find("AgentUpdate");
 
-    // a ~1 KB ObjectUpdate: RegionData plus five ObjectData repeats with
-    // modest variable fields
-    let mut builder = Builder::new();
-    fill(&mut builder, &object_update, &[(0, 1), (1, 3)], 24);
-    let mut packet = vec![0u8; 8192];
-    let len = builder.build_message(&mut packet, 0).unwrap();
-    let packet = packet[..len].to_vec();
-    let mut coded = vec![0u8; 16384];
-    let coded_len = zerocode::zero_code(&packet, &mut coded).unwrap();
-    let coded = coded[..coded_len].to_vec();
-    println!("ObjectUpdate packet: {len} bytes, zero-coded {coded_len}");
+    let packet = fixture("objectupdate.bin");
+    let coded = fixture("objectupdate_coded.bin");
+    let agent_packet = fixture("agentupdate.bin");
+    let len = packet.len();
+    println!(
+        "ObjectUpdate packet: {len} bytes, zero-coded {}; AgentUpdate {} bytes",
+        coded.len(),
+        agent_packet.len()
+    );
 
     let mut reader = Reader::new();
     let mut rounds = Vec::new();
@@ -107,6 +80,10 @@ fn main() {
         median(rounds)
     );
 
+    // the getters the viewer's handler issues for a full prim update:
+    // every variable of every repeat except Data (empty here), read by key
+    let region = &object_update.blocks[0];
+    let objects = &object_update.blocks[1];
     let mut rounds = Vec::new();
     let mut sink = 0u64;
     for _ in 0..7 {
@@ -114,16 +91,16 @@ fn main() {
         for _ in 0..iterations {
             reader.set_message(object_update.clone(), len as i32);
             reader.decode_data(&packet);
-            for (b, block) in object_update.blocks.iter().enumerate() {
-                let n = reader.number_of_blocks(block.key).unwrap();
-                for r in 0..n {
-                    for var in &block.variables {
-                        let d = reader.get(block.key, r, var.key, 0).unwrap();
-                        sink = sink
-                            .wrapping_add(d.len() as u64 + d.first().copied().unwrap_or(0) as u64);
-                    }
+            let n = reader.number_of_blocks(objects.key).unwrap();
+            for var in &region.variables {
+                sink += reader.get(region.key, 0, var.key, 0).unwrap().len() as u64;
+            }
+            for r in 0..n {
+                for var in &objects.variables {
+                    let d = reader.get(objects.key, r, var.key, 0).unwrap();
+                    sink =
+                        sink.wrapping_add(d.len() as u64 + d.first().copied().unwrap_or(0) as u64);
                 }
-                let _ = b;
             }
         }
         rounds.push(start.elapsed().as_secs_f64() * 1e6 / iterations as f64);
@@ -145,15 +122,36 @@ fn main() {
     }
     println!("zero-code expand ObjectUpdate: {:.3} us", median(rounds));
 
+    // pack the AgentUpdate: the fixture's field values added one by one
+    let mut r2 = Reader::new();
+    r2.set_message(agent_update.clone(), agent_packet.len() as i32);
+    r2.decode_data(&agent_packet);
+    let block = &agent_update.blocks[0];
+    let fields: Vec<(u64, Vec<u8>, VarType)> = block
+        .variables
+        .iter()
+        .map(|v| {
+            (
+                v.key,
+                r2.get(block.key, 0, v.key, 0).unwrap().to_vec(),
+                v.ty,
+            )
+        })
+        .collect();
+    let mut builder = Builder::new();
     let mut rounds = Vec::new();
     let mut out = vec![0u8; 8192];
-    let mut coded = vec![0u8; 16384];
+    let mut coded_out = vec![0u8; 16384];
     for _ in 0..7 {
         let start = Instant::now();
         for _ in 0..iterations {
-            fill(&mut builder, &agent_update, &[(0, 1)], 0);
+            builder.new_message(agent_update.clone());
+            builder.next_block(block.key).unwrap();
+            for (key, data, ty) in &fields {
+                builder.add_data(*key, data, *ty).unwrap();
+            }
             let n = builder.build_message(&mut out, 0).unwrap();
-            let _ = zerocode::zero_code(&out[..n], &mut coded);
+            let _ = zerocode::zero_code(&out[..n], &mut coded_out);
         }
         rounds.push(start.elapsed().as_secs_f64() * 1e6 / iterations as f64);
     }
