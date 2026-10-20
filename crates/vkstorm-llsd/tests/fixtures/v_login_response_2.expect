@@ -1,0 +1,52 @@
+{
+    'agent_id':uc96f9b1e-f589-4100-9774-d98643ce0bed,
+    'circuit_code':i123456,
+    'first_name':'Test',
+    'home':'{\'region_handle\':[r256000,r256000], \'position\':[r128,r128,r20]}',
+    'inventory-skeleton':
+        [
+            {
+                'folder_id':ub1e79a9d-72d3-5c0b-37bc-c0089ffc973f,
+                'name':'Folder 0',
+                'parent_id':u00000000-0000-0000-0000-000000000000,
+                'type_default':i0,
+                'version':i1
+            },
+            {
+                'folder_id':ued33306c-d829-6743-0f5d-2b12f839df21,
+                'name':'Folder 1',
+                'parent_id':u00000000-0000-0000-0000-000000000000,
+                'type_default':i1,
+                'version':i1
+            },
+            {
+                'folder_id':u9fb59d7c-b97d-b811-1784-f0963a548af6,
+                'name':'Folder 2',
+                'parent_id':u00000000-0000-0000-0000-000000000000,
+                'type_default':i2,
+                'version':i1
+            },
+            {
+                'folder_id':uae33f130-768c-5378-f0ff-8c948c547e01,
+                'name':'Folder 3',
+                'parent_id':u00000000-0000-0000-0000-000000000000,
+                'type_default':i3,
+                'version':i1
+            },
+            {
+                'folder_id':u0f251412-9c2f-e0db-f429-61578301febc,
+                'name':'Folder 4',
+                'parent_id':u00000000-0000-0000-0000-000000000000,
+                'type_default':i4,
+                'version':i1
+            }],
+    'last_name':'Resident',
+    'login':'true',
+    'look_at':'[r0.1,r0.2,r0.3]',
+    'seconds_since_epoch':i1198833773,
+    'seed_capability':l"https://sim.example.com/cap/12345",
+    'session_id':u1e6a4e1b-2c3d-4e5f-8a9b-0c1d2e3f4a5b,
+    'sim_ip':'127.0.0.1',
+    'sim_port':i13000,
+    'start_location':'last'
+}

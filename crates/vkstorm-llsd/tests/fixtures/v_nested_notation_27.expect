@@ -1,0 +1,1 @@
+<llsd><map><key>amy</key><integer>23</integer><key>bob</key><map><key>dogs</key><array><map><key>breed</key><string>samoyed</string><key>name</key><string>groove</string></map><map><key>breed</key><string>chow/husky</string><key>name</key><string>greyley</string></map></array></map><key>cam</key><real>1.229999999999999982236432</real></map></llsd>
