@@ -16,7 +16,7 @@
 use std::sync::Arc;
 use std::time::Instant;
 use vkstorm_messages::reader::decode_number;
-use vkstorm_messages::{Builder, Reader, Template, Tokenizer, VarType, parse_template, zerocode};
+use vkstorm_messages::{Builder, Reader, Tokenizer, VarType, parse_template, zerocode};
 
 fn fixture(name: &str) -> Vec<u8> {
     let path = format!("{}/tests/fixtures/{name}", env!("CARGO_MANIFEST_DIR"));
