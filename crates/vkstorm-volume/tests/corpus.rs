@@ -81,13 +81,25 @@ impl Check {
                 Some(d) => {
                     self.tolerance_blocks += 1;
                     let tol = if rsqrt { 1e-3 } else { 1e-4 };
-                    if elem == 2 || !within(&floats(d), &floats(actual), tol) {
+                    let ok = match elem {
+                        2 => false, // index blocks are exact everywhere
+                        16 if !rsqrt && what.ends_with("profile faces") => {
+                            profile_faces_within(d, actual, true)
+                        }
+                        _ => within(&floats(d), &floats(actual), tol),
+                    };
+                    if !ok {
                         self.add(format!(
                             "{what}: outside tolerance{}",
                             first_diff(d, actual, elem)
                         ));
                     }
                 }
+                // The recorder stores the data of every rsqrt-dependent
+                // block; a comparison that needs it and has none fails.
+                None if rsqrt => self.add(format!(
+                    "{what}: no recorded data for the rsqrt tolerance comparison"
+                )),
                 None => self.unverifiable_blocks += 1,
             }
             return;
@@ -105,14 +117,41 @@ fn floats(b: &[u8]) -> Vec<f32> {
         .collect()
 }
 
+/// The tolerance comparison of one value: identical bits or two NaNs are
+/// equal; otherwise any non-finite value is a difference; otherwise the
+/// relative tolerance applies (against `max(1, |expected|)`).
+fn close_enough(e: f32, a: f32, rel: f32) -> bool {
+    if e.to_bits() == a.to_bits() || (e.is_nan() && a.is_nan()) {
+        return true;
+    }
+    if !e.is_finite() || !a.is_finite() {
+        return false;
+    }
+    (e - a).abs() <= rel * e.abs().max(1.0)
+}
+
 fn within(expected: &[f32], actual: &[f32], rel: f32) -> bool {
     expected.len() == actual.len()
-        && expected.iter().zip(actual).all(|(e, a)| {
-            if e.to_bits() == a.to_bits() {
-                return true;
-            }
-            (e - a).abs() <= rel * e.abs().max(1.0)
-        })
+        && expected
+            .iter()
+            .zip(actual)
+            .all(|(e, a)| close_enough(*e, *a, rel))
+}
+
+/// Profile face records (16 bytes: index, count, scale_u, cap, flat, face
+/// id): the integer fields compare exactly everywhere; only `scale_u` takes
+/// the tolerance of a platform without a recording.
+fn profile_faces_within(expected: &[u8], actual: &[u8], loose: bool) -> bool {
+    expected.len() == actual.len()
+        && expected
+            .chunks_exact(16)
+            .zip(actual.chunks_exact(16))
+            .all(|(e, a)| {
+                let ints = e[..8] == a[..8] && e[12..] == a[12..];
+                let es = f32::from_le_bytes(e[8..12].try_into().unwrap());
+                let as_ = f32::from_le_bytes(a[8..12].try_into().unwrap());
+                ints && (es.to_bits() == as_.to_bits() || (loose && close_enough(es, as_, 1e-4)))
+            })
 }
 
 fn first_diff(expected: &[u8], actual: &[u8], elem: usize) -> String {
@@ -367,10 +406,15 @@ fn corpus_parity() {
         ck.mismatch_count, 0,
         "mesher output differs from the recorded C++ corpus"
     );
+    if STRICT_PLATFORM {
+        assert_eq!(
+            ck.unverifiable_blocks, 0,
+            "no unverifiable blocks on a recording platform"
+        );
+    }
     if STRICT_PLATFORM && same_rsqrt {
         assert_eq!(
-            ck.tolerance_blocks + ck.unverifiable_blocks,
-            0,
+            ck.tolerance_blocks, 0,
             "every block must be exact on the recording platform"
         );
     }
@@ -437,4 +481,50 @@ fn corpus_covers_the_parameter_space() {
     ] {
         assert!(n >= 8, "{name}: {n} cases");
     }
+}
+
+#[test]
+fn tolerance_rejects_non_finite_differences() {
+    let nan = f32::NAN;
+    let inf = f32::INFINITY;
+    assert!(close_enough(0.5, 0.5, 1e-4));
+    assert!(close_enough(nan, -nan, 1e-4));
+    assert!(!close_enough(0.5, nan, 1e-4) && !close_enough(nan, 0.5, 1e-4));
+    assert!(!close_enough(inf, 1e30, 1e-4) && !close_enough(1.0, inf, 1e-4));
+    assert!(close_enough(inf, inf, 1e-4) && !close_enough(inf, -inf, 1e-4));
+    assert!(close_enough(2.0, 2.0 + 1e-4, 1e-4) && !close_enough(2.0, 2.0 + 3e-4, 1e-4));
+    assert!(!within(&[1.0, 2.0], &[1.0, nan], 1e-3));
+    assert!(within(&[1.0, 2.0], &[1.0, 2.0 + 1e-4], 1e-3));
+    assert!(!within(&[1.0, 2.0], &[1.0], 1e-3));
+}
+
+#[test]
+fn profile_face_integers_are_exact_in_loose_mode() {
+    fn rec(index: i32, count: i32, scale_u: f32, cap: u8, flat: u8, id: u16) -> Vec<u8> {
+        let mut v = Vec::new();
+        v.extend_from_slice(&index.to_le_bytes());
+        v.extend_from_slice(&count.to_le_bytes());
+        v.extend_from_slice(&scale_u.to_le_bytes());
+        v.push(cap);
+        v.push(flat);
+        v.extend_from_slice(&id.to_le_bytes());
+        v
+    }
+    let a = rec(3, 4, 0.5, 0, 1, 32);
+    assert!(profile_faces_within(&a, &a, true));
+    // an index change is a subnormal difference as a float: still rejected
+    assert!(!profile_faces_within(&a, &rec(4, 4, 0.5, 0, 1, 32), true));
+    assert!(!profile_faces_within(&a, &rec(3, 4, 0.5, 1, 1, 32), true));
+    assert!(!profile_faces_within(&a, &rec(3, 4, 0.5, 0, 1, 64), true));
+    // scale_u takes the tolerance only in loose mode
+    assert!(profile_faces_within(
+        &a,
+        &rec(3, 4, 0.5 + 1e-5, 0, 1, 32),
+        true
+    ));
+    assert!(!profile_faces_within(
+        &a,
+        &rec(3, 4, 0.5 + 1e-5, 0, 1, 32),
+        false
+    ));
 }

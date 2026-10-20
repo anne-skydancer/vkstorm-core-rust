@@ -46,7 +46,7 @@ pub use params::{PathParams, ProfileParams};
 pub use path::{Path, PathPt, generate_path, path_num_points};
 pub use profile::{Profile, ProfileFace, generate_profile, profile_num_points};
 pub use simd::V4;
-pub use sweep::sweep;
+pub use sweep::{sweep, sweep_uninit};
 pub use tangent::calculate_tangents;
 
 /// The edge split the viewer derives from the LOD detail in

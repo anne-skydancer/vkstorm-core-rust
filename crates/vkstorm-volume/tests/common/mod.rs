@@ -29,7 +29,7 @@ pub const CORPUS_NAME: &str = "llvolume_corpus.vksv (Windows, MSVC; no oracle fo
 pub const STRICT_PLATFORM: bool = cfg!(any(target_env = "msvc", target_os = "linux"));
 
 pub const FIXTURE_MAGIC: u32 = 0x5653_4B56; // "VKSV"
-pub const FIXTURE_VERSION: u32 = 1;
+pub const FIXTURE_VERSION: u32 = 2;
 
 pub const FLAG_FULL: u32 = 1;
 pub const FLAG_FLEX: u32 = 2;

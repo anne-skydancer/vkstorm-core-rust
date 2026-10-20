@@ -1,6 +1,8 @@
 //! The mesh sweep of `LLVolume::generate`: every profile point transformed
 //! by every path point's scale and rotation, offset by its position.
 
+use std::mem::MaybeUninit;
+
 use crate::path::PathPt;
 use crate::simd::{V4, rotate};
 
@@ -8,6 +10,19 @@ use crate::simd::{V4, rotate};
 /// `LLVolume::generate` does: `scale * rot` as a 4x4 product, then
 /// `LLMatrix4a::rotate` and the offset, with a non-finite offset cleared.
 pub fn sweep(path: &[PathPt], profile: &[V4], dst: &mut [V4]) {
+    // SAFETY: `MaybeUninit<V4>` has the layout of `V4`, and initialised
+    // memory is valid as possibly-uninitialised memory; `sweep_uninit` only
+    // writes through the slice.
+    let dst = unsafe {
+        std::slice::from_raw_parts_mut(dst.as_mut_ptr() as *mut MaybeUninit<V4>, dst.len())
+    };
+    sweep_uninit(path, profile, dst);
+}
+
+/// [`sweep`] into storage that need not be initialised (the viewer's freshly
+/// resized `mMesh`): every one of the first `path.len() * profile.len()`
+/// elements is written.
+pub fn sweep_uninit(path: &[PathPt], profile: &[V4], dst: &mut [MaybeUninit<V4>]) {
     let size_t = profile.len();
     assert!(dst.len() >= path.len() * size_t, "mesh buffer too small");
 
@@ -39,7 +54,7 @@ pub fn sweep(path: &[PathPt], profile: &[V4], dst: &mut [V4]) {
 
         let row = &mut dst[s * size_t..(s + 1) * size_t];
         for (d, p) in row.iter_mut().zip(profile) {
-            *d = rotate(&rows, *p).add(offset);
+            d.write(rotate(&rows, *p).add(offset));
         }
     }
 }
