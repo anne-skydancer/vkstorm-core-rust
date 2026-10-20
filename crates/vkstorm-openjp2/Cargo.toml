@@ -1,0 +1,28 @@
+[package]
+name = "vkstorm-openjp2"
+description = "Vulkanstorm's JPEG 2000 codec core: a Rust port of OpenJPEG (from the openjp2 crate, c2rust lineage), maintained and optimised here"
+version.workspace = true
+edition = "2021"
+license = "BSD-2-Clause"
+repository.workspace = true
+
+[lib]
+name = "vkstorm_openjp2"
+
+[features]
+default = ["std"]
+std = ["log/std"]
+# Upstream file-stream helpers; the viewer never uses them.
+file-io = ["dep:libc"]
+# Development aid: canary-checked allocations to localise heap corruption.
+guard-alloc = []
+jpspec = []
+jpwl = []
+
+[dependencies]
+bitflags = "1.3.2"
+libc = { version = "0.2", optional = true }
+byteorder = "1.5"
+log = "0.4.17"
+smallvec = "1.13"
+sprintf = "0.1.3"

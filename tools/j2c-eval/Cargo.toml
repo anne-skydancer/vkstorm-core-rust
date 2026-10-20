@@ -6,6 +6,9 @@ license.workspace = true
 publish = false
 
 [dependencies]
+vkstorm-j2c = { path = "../../crates/vkstorm-j2c" }
 hayro-jpeg2000 = { workspace = true }
 image = { version = "0.25", default-features = false, features = ["png"] }
-j2k = "0.12"
+j2k = { workspace = true }
+openjp2 = "0.6"
+jpeg2k = { version = "0.10", default-features = false, features = ["file-io", "openjp2"] }

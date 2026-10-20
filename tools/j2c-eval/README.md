@@ -10,12 +10,18 @@ the vkstorm-aleph study, [docs/upstream-study/07-j2c-decoder-evaluation.md](http
 
 ## Layout
 
-- `src/main.rs`: Rust harness. `hayro`, `j2k` (single-threaded) and `j2k-auto`
-  (crate-chosen parallelism) decode subcommands, plus `compare` for raw output
-  diffs (max abs, mean abs, PSNR).
+- `src/main.rs`: Rust harness. Decode subcommands `vks` (this repository's
+  codec, `vkstorm-j2c` on `vkstorm-openjp2`), `openjp2` (the upstream crate the
+  port started from, via `jpeg2k`), `hayro`, `j2k` (single-threaded) and
+  `j2k-auto` (crate-chosen parallelism), plus `compare` for raw output diffs
+  (max abs, mean abs, PSNR).
 - `c/opj_bench.c`: C harness that mirrors `LLImageJ2COJ::decode` (memory stream
   truncated to `max_bytes`, `opj_decoder_set_strict_mode(false)`,
   `opj_set_decoded_resolution_factor`).
+- `c/opj_enc.c`: C harness that mirrors `LLImageJ2COJ::encodeImpl` (J2K, RLCP,
+  layered rates, resolution rule under 64 px, COM comment); its output is the
+  byte-parity oracle for the Rust encoder (`examples/encode_probe.rs` produces
+  the matching input).
 - `run.sh`: runs every decoder over a corpus directory and all scenarios,
   writes a CSV.
 - `scripts/gen_corpus.py`, `scripts/mosaic.py`: synthetic source images.

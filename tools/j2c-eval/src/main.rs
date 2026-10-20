@@ -64,6 +64,33 @@ fn j2k_decode(data: &[u8], reduce: u32, serial: bool) -> Result<Out, String> {
     }
 }
 
+fn openjp2_decode(data: &[u8], reduce: u32) -> Result<Out, String> {
+    // The openjp2 crate: Rust port of OpenJPEG (c2rust lineage), via the jpeg2k
+    // wrapper; lenient like opj_decoder_set_strict_mode(false), reduce = discard.
+    use jpeg2k::{DecodeParameters, Image, ImagePixelData};
+    let params = DecodeParameters::new().reduce(reduce).strict(false);
+    let img = Image::from_bytes_with(data, params).map_err(|e| format!("{e}"))?;
+    let px = img.get_pixels(None).map_err(|e| format!("{e}"))?;
+    let (data, c) = match px.data {
+        ImagePixelData::L8(v) => (v, 1),
+        ImagePixelData::La8(v) => (v, 2),
+        ImagePixelData::Rgb8(v) => (v, 3),
+        ImagePixelData::Rgba8(v) => (v, 4),
+        _ => return Err("16-bit output".into()),
+    };
+    Ok(Out { w: px.width, h: px.height, c, data })
+}
+
+fn vks_decode(data: &[u8], reduce: u32) -> Result<Out, String> {
+    // Our codec: vkstorm-j2c on the vkstorm-openjp2 port (bottom-up rows, so
+    // flip back to top-down to compare with the other decoders).
+    let d = vkstorm_j2c::decode(data, 0, reduce, 0, 4).map_err(|e| e.to_string())?;
+    let (w, h, c) = (d.width as usize, d.height as usize, d.channels as usize);
+    let mut top = Vec::with_capacity(d.data.len());
+    for y in (0..h).rev() { top.extend_from_slice(&d.data[y * w * c..(y + 1) * w * c]); }
+    Ok(Out { w: d.width, h: d.height, c: d.channels, data: top })
+}
+
 fn run(which: &str, args: &[String]) {
     let path = &args[0]; let reduce: u32 = args[1].parse().unwrap();
     let max_bytes: usize = args[2].parse().unwrap(); let iters: usize = args[3].parse().unwrap();
@@ -71,7 +98,7 @@ fn run(which: &str, args: &[String]) {
     let mut best = f64::MAX; let mut total = 0.0; let mut last: Option<Out> = None;
     for _ in 0..iters {
         let t0 = Instant::now();
-        let r = match which { "hayro" => hayro_decode(&data, reduce), "j2k-auto" => j2k_decode(&data, reduce, false), _ => j2k_decode(&data, reduce, true) };
+        let r = match which { "hayro" => hayro_decode(&data, reduce), "openjp2" => openjp2_decode(&data, reduce), "vks" => vks_decode(&data, reduce), "j2k-auto" => j2k_decode(&data, reduce, false), _ => j2k_decode(&data, reduce, true) };
         let dt = t0.elapsed().as_secs_f64() * 1000.0;
         match r { Ok(o) => { if dt < best { best = dt; } total += dt; last = Some(o); }
                   Err(e) => { println!("FAIL {}", e.replace('\n', " ")); return; } }
@@ -94,7 +121,7 @@ fn compare(a: &str, b: &str) {
 fn main() {
     let a: Vec<String> = std::env::args().collect();
     match a.get(1).map(|s| s.as_str()) {
-        Some("hayro") | Some("j2k") | Some("j2k-auto") => run(&a[1], &a[2..]),
+        Some("hayro") | Some("j2k") | Some("j2k-auto") | Some("openjp2") | Some("vks") => run(&a[1], &a[2..]),
         Some("compare") => compare(&a[2], &a[3]),
         _ => { eprintln!("usage: j2c-eval hayro|j2k file reduce max_bytes iters [out.raw] | compare a b"); std::process::exit(2); }
     }

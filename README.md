@@ -18,7 +18,8 @@ vkstorm-aleph under `docs/upstream-study/`.
 | Crate | Contents |
 |---|---|
 | `vkstorm-core` | LLSD and codecs, UUID, coordinate frames, asset and inventory enums, binary packers. Carries the `opensim` feature. |
-| `vkstorm-j2c` | JPEG 2000 texture decoding on `hayro-jpeg2000`: metadata, discard-level decode, truncated-stream decode. |
+| `vkstorm-openjp2` | The JPEG 2000 codec core: a port of OpenJPEG (from the `openjp2` crate, c2rust lineage) maintained and optimised here. See `docs/j2c-port-plan.md`. |
+| `vkstorm-j2c` | The viewer-facing JPEG 2000 contract on that core: metadata, discard-level and truncated-stream decode, upload encoding with the viewer's rules. |
 
 Planned, in port order: `vkstorm-messages`, `vkstorm-http`, `vkstorm-assets`,
 `vkstorm-audio`, `vkstorm-inventory`, `vkstorm-world`, `vkstorm-avatar`,
