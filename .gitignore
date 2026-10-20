@@ -1,2 +1,4 @@
 target/
 tools/j2c-eval/c/*.exe
+tools/image-eval/c/*.exe
+tools/image-eval/c/*.obj
