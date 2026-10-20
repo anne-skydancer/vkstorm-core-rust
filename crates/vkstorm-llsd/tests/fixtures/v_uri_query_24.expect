@@ -1,0 +1,3 @@
+<llsd>
+    <uri>http://example.com/path?x=1&amp;y=two words#frag</uri>
+</llsd>

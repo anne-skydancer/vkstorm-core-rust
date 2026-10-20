@@ -1,0 +1,10 @@
+<llsd>
+    <array>
+        <array>
+            <boolean>true</boolean>
+        </array>
+        <array>
+            <boolean>false</boolean>
+        </array>
+    </array>
+</llsd>

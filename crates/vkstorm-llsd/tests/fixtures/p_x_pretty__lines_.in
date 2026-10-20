@@ -1,0 +1,11 @@
+<llsd>
+    <map>
+        <key>a</key>
+        <array>
+            <integer>1</integer>
+            <real>2.5</real>
+        </array>
+        <key>b</key>
+        <string>c</string>
+    </map>
+</llsd>

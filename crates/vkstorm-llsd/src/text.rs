@@ -231,6 +231,13 @@ pub fn extract_int(r: &mut Reader<'_>) -> Option<i32> {
 /// digit, an exponent marker without digits, or a value outside the finite
 /// range.
 pub fn extract_real(r: &mut Reader<'_>) -> Option<f64> {
+    let (v, ok) = extract_real_stored(r);
+    if ok { Some(v) } else { None }
+}
+
+/// As [`extract_real`], also returning the value the C++ extraction stores
+/// when it fails: +/-infinity on overflow, otherwise 0.
+pub fn extract_real_stored(r: &mut Reader<'_>) -> (f64, bool) {
     skip_ws(r);
     let mut text: Vec<u8> = Vec::with_capacity(32);
     let mut negative = false;
@@ -250,6 +257,7 @@ pub fn extract_real(r: &mut Reader<'_>) -> Option<f64> {
         text.push(b'0');
         mantissa_digits += 1;
     }
+    let fail = |v: f64| (v, false);
     while let Some(b) = r.peek() {
         if !b.is_ascii_digit() {
             break;
@@ -273,7 +281,7 @@ pub fn extract_real(r: &mut Reader<'_>) -> Option<f64> {
         }
     }
     if mantissa_digits == 0 {
-        return None;
+        return fail(0.0);
     }
     if let Some(b'e' | b'E') = r.peek() {
         text.push(b'e');
@@ -292,25 +300,29 @@ pub fn extract_real(r: &mut Reader<'_>) -> Option<f64> {
             exp_digits += 1;
         }
         if exp_digits == 0 {
-            return None;
+            return fail(0.0);
         }
     }
-    let s = std::str::from_utf8(&text).ok()?;
-    let v: f64 = s.parse().ok()?;
+    let Ok(s) = std::str::from_utf8(&text) else {
+        return fail(0.0);
+    };
+    let Ok(v) = s.parse::<f64>() else {
+        return fail(0.0);
+    };
     if v.is_infinite() {
-        return None;
+        return fail(v);
     }
     if v == 0.0 && mantissa_nonzero {
         // A non-zero mantissa that underflows to zero sets ERANGE (failbit)
         // in the C runtime.
-        return None;
+        return fail(0.0);
     }
-    Some(v)
+    (v, true)
 }
 
 /// The hexadecimal form after `0x`: hex digits with an optional point, then
 /// an optional `p` exponent in decimal.
-fn extract_hex_real(r: &mut Reader<'_>, negative: bool) -> Option<f64> {
+fn extract_hex_real(r: &mut Reader<'_>, negative: bool) -> (f64, bool) {
     let mut mantissa = 0.0f64;
     let mut digits = 0;
     let mut frac_digits = 0i32;
@@ -333,7 +345,7 @@ fn extract_hex_real(r: &mut Reader<'_>, negative: bool) -> Option<f64> {
         }
     }
     if digits == 0 {
-        return None;
+        return (0.0, false);
     }
     let mut exp: i32 = 0;
     if let Some(b'p' | b'P') = r.peek() {
@@ -353,28 +365,29 @@ fn extract_hex_real(r: &mut Reader<'_>, negative: bool) -> Option<f64> {
             exp_digits += 1;
         }
         if exp_digits == 0 {
-            return None;
+            return (0.0, false);
         }
         if exp_negative {
             exp = -exp;
         }
     }
     let v = mantissa * 2f64.powi(exp.saturating_sub(4 * frac_digits));
-    if v.is_infinite() {
-        return None;
-    }
-    Some(if negative { -v } else { v })
+    let v = if negative { -v } else { v };
+    (v, v.is_finite())
 }
 
-/// `LLSD(string).asReal()`: `istringstream >> v` must then be at end of
-/// string, otherwise 0.0.
+/// `LLSD(string).asReal()`: `istringstream >> v`, then `get()` must hit the
+/// end of the string, else 0.0. After a failed extraction `get()` reports
+/// EOF at once, so the value the extraction stored (infinity on overflow) is
+/// what comes back.
 pub fn string_as_real(s: &[u8]) -> f64 {
     let mut src = SliceSource::new(s);
     let mut r = Reader::new(&mut src);
-    match extract_real(&mut r) {
-        Some(v) if r.peek().is_none() => v,
-        _ => 0.0,
+    let (v, ok) = extract_real_stored(&mut r);
+    if !ok {
+        return v;
     }
+    if r.peek().is_none() { v } else { 0.0 }
 }
 
 /// `(int)` of a double as x86 does it: out-of-range and NaN give `i32::MIN`.
@@ -387,8 +400,8 @@ pub fn real_as_integer(v: f64) -> i32 {
 }
 
 /// `sscanf(s, "%d", &i) == 1`: leading whitespace, optional sign, decimal
-/// digits; stops at the first other byte. Out-of-range values wrap as the C
-/// runtime stores them into an `int`.
+/// digits; stops at the first other byte. The UCRT converts through a
+/// saturating 64-bit signed value and stores its low 32 bits.
 pub fn sscanf_int(s: &[u8]) -> Option<i32> {
     let mut i = 0;
     while i < s.len() && is_space(s[i]) {
@@ -400,17 +413,21 @@ pub fn sscanf_int(s: &[u8]) -> Option<i32> {
         i += 1;
     }
     let mut digits = 0;
-    let mut acc: u64 = 0;
+    let mut acc: i64 = 0;
     while i < s.len() && s[i].is_ascii_digit() {
-        acc = acc.wrapping_mul(10).wrapping_add((s[i] - b'0') as u64);
+        let d = (s[i] - b'0') as i64;
+        acc = if negative {
+            acc.saturating_mul(10).saturating_sub(d)
+        } else {
+            acc.saturating_mul(10).saturating_add(d)
+        };
         digits += 1;
         i += 1;
     }
     if digits == 0 {
         return None;
     }
-    let v = if negative { acc.wrapping_neg() } else { acc };
-    Some(v as u32 as i32)
+    Some(acc as i32)
 }
 
 /// `strtol(s, NULL, 0)`: leading whitespace, sign, then `0x` hex, leading-`0`
@@ -883,6 +900,16 @@ mod tests {
         assert_eq!(string_as_real(b"nan"), 0.0);
         assert_eq!(sscanf_int(b" 12abc"), Some(12));
         assert_eq!(sscanf_int(b"abc"), None);
+        assert_eq!(sscanf_int(b"2147483648"), Some(-2147483648));
+        assert_eq!(sscanf_int(b"4294967296"), Some(0));
+        assert_eq!(sscanf_int(b"8589934593"), Some(1));
+        assert_eq!(sscanf_int(b"99999999999999999999"), Some(-1));
+        assert_eq!(sscanf_int(b"-18446744073709551616"), Some(0));
+        assert_eq!(sscanf_int(b"-2147483649"), Some(2147483647));
+        assert_eq!(string_as_real(b"1e999"), f64::INFINITY);
+        assert_eq!(string_as_real(b"-1e999"), f64::NEG_INFINITY);
+        assert_eq!(string_as_real(b"1e-999"), 0.0);
+        assert_eq!(string_as_real(b"2.5e"), 0.0);
         assert_eq!(strtol0(b"0x10"), 16);
         assert_eq!(strtol0(b"010"), 8);
         assert_eq!(strtol0(b"8)"), 8);

@@ -1,0 +1,14 @@
+<llsd>
+    <map>
+    <key>a</key>
+        <map>
+        <key>1</key>
+            <boolean>true</boolean>
+        </map>
+    <key>b</key>
+        <map>
+        <key>0</key>
+            <boolean>false</boolean>
+        </map>
+    </map>
+</llsd>
