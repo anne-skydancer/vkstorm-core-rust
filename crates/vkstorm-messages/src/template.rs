@@ -200,6 +200,62 @@ impl Deprecation {
     }
 }
 
+/// A small open-addressed table from keys to indices, for the builder's and
+/// reader's lookups by the caller's keys (a few to a few dozen per block).
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
+pub struct KeyIndex {
+    keys: Vec<u64>,
+    /// Index + 1 per slot, 0 when empty; a power of two in size.
+    slots: Vec<u16>,
+    shift: u32,
+}
+
+impl KeyIndex {
+    fn build(keys: &[u64]) -> KeyIndex {
+        let size = (keys.len() * 2).max(4).next_power_of_two();
+        let shift = 64 - size.trailing_zeros();
+        let mut slots = vec![0u16; size];
+        for (i, &key) in keys.iter().enumerate() {
+            let mut s = Self::hash(key, shift);
+            while slots[s] != 0 {
+                s = (s + 1) & (size - 1);
+            }
+            slots[s] = (i + 1) as u16;
+        }
+        KeyIndex {
+            keys: keys.to_vec(),
+            slots,
+            shift,
+        }
+    }
+
+    #[inline]
+    fn hash(key: u64, shift: u32) -> usize {
+        ((key >> 3).wrapping_mul(0x9E37_79B9_7F4A_7C15) >> shift) as usize
+    }
+
+    /// The index of `key`, or `None`.
+    #[inline]
+    pub fn find(&self, key: u64) -> Option<usize> {
+        if self.slots.is_empty() {
+            return None;
+        }
+        let mask = self.slots.len() - 1;
+        let mut s = Self::hash(key, self.shift);
+        loop {
+            let e = self.slots[s];
+            if e == 0 {
+                return None;
+            }
+            let i = e as usize - 1;
+            if self.keys[i] == key {
+                return Some(i);
+            }
+            s = (s + 1) & mask;
+        }
+    }
+}
+
 /// `LLMessageVariable`: `size` is the fixed byte size, or for
 /// [`VarType::Variable`] the width of the size field (1, 2 or 4).
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -221,6 +277,7 @@ pub struct Block {
     pub number: i32,
     pub variables: Vec<Variable>,
     pub total_size: i32,
+    index: KeyIndex,
 }
 
 impl Block {
@@ -232,7 +289,13 @@ impl Block {
             number,
             variables: Vec::new(),
             total_size: 0,
+            index: KeyIndex::default(),
         }
+    }
+
+    fn reindex(&mut self) {
+        let keys: Vec<u64> = self.variables.iter().map(|v| v.key).collect();
+        self.index = KeyIndex::build(&keys);
     }
 
     /// `LLMessageBlock::addVariable`. A duplicate name is an error (the C++
@@ -259,11 +322,13 @@ impl Block {
             ty,
             size,
         });
+        self.reindex();
         Ok(self.variables.len() - 1)
     }
 
+    #[inline]
     pub fn variable_index(&self, key: u64) -> Option<usize> {
-        self.variables.iter().position(|v| v.key == key)
+        self.index.find(key)
     }
 
     pub fn variable_by_name(&self, name: &str) -> Option<&Variable> {
@@ -286,6 +351,7 @@ pub struct Template {
     pub deprecation: Deprecation,
     pub blocks: Vec<Block>,
     pub total_size: i32,
+    index: KeyIndex,
 }
 
 impl Template {
@@ -300,7 +366,13 @@ impl Template {
             deprecation: Deprecation::NotDeprecated,
             blocks: Vec::new(),
             total_size: 0,
+            index: KeyIndex::default(),
         }
+    }
+
+    fn reindex(&mut self) {
+        let keys: Vec<u64> = self.blocks.iter().map(|b| b.key).collect();
+        self.index = KeyIndex::build(&keys);
     }
 
     /// `LLMessageTemplate::addBlock`. A duplicate name is an error; returns
@@ -321,11 +393,13 @@ impl Template {
             self.total_size = -1;
         }
         self.blocks.push(block);
+        self.reindex();
         Ok(self.blocks.len() - 1)
     }
 
+    #[inline]
     pub fn block_index(&self, key: u64) -> Option<usize> {
-        self.blocks.iter().position(|b| b.key == key)
+        self.index.find(key)
     }
 
     pub fn block_by_name(&self, name: &str) -> Option<&Block> {
@@ -346,7 +420,9 @@ impl Template {
             for (v, var) in block.variables.iter_mut().enumerate() {
                 var.key = block.key | ((v as u64) + 1);
             }
+            block.reindex();
         }
+        self.reindex();
         self
     }
 }

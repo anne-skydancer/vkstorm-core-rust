@@ -168,10 +168,30 @@ fn expand(packet: &[u8], out: &mut [u8], overruns: &mut u32) -> Result<usize, Ex
     // The C++ `while (count--)` tests the old value and decrements before
     // the body, so count is -1 after the last byte.
     loop {
-        let c = count;
-        count -= 1;
-        if c == 0 {
+        if count <= 0 {
             break;
+        }
+        // a run of literal bytes, copied up to the next zero (the C++ copied
+        // them one by one through the same count); case 1 when it would
+        // pass the end of the buffer
+        let remaining = (count as usize).min(n - i);
+        let room = remaining.min(max - o);
+        let src = &packet[i..i + room];
+        let dst = &mut out[o..o + room];
+        let mut k = 0;
+        while k < room && src[k] != 0 {
+            dst[k] = src[k];
+            k += 1;
+        }
+        o += k;
+        i += k;
+        count -= k as i64;
+        if count <= 0 {
+            break;
+        }
+        if k == room && i < n && packet[i] != 0 {
+            // out of room in the middle of a literal run
+            return Err(ExpandError::PastEnd1);
         }
         if o > max - 1 || i >= n {
             // case 1 (o past the end), or input exhausted on a malformed
@@ -179,11 +199,12 @@ fn expand(packet: &[u8], out: &mut [u8], overruns: &mut u32) -> Result<usize, Ex
             // same overrun
             return Err(ExpandError::PastEnd1);
         }
-        let b = packet[i];
-        out[o] = b;
+        // the zero byte of a run
+        count -= 1;
+        out[o] = 0;
         o += 1;
         i += 1;
-        if b == 0 {
+        {
             // `while ((count--) && (!(*inptr)))`
             loop {
                 let c = count;
