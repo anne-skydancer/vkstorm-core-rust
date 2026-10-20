@@ -480,6 +480,10 @@ name = "vkstorm-llsd"
 version = "0.1.0"
 
 [[package]]
+name = "vkstorm-messages"
+version = "0.1.0"
+
+[[package]]
 name = "vkstorm-openjp2"
 version = "0.1.0"
 dependencies = [
