@@ -6130,11 +6130,13 @@ fn opj_j2k_read_mco(
       return 0i32;
     }
     l_tccp = (*l_tcp).tccps;
-    i = 0 as OPJ_UINT32;
-    while i < (*l_image).numcomps {
-      (*l_tccp).m_dc_level_shift = 0i32;
-      l_tccp = l_tccp.offset(1);
-      i += 1;
+    if l_nb_stages > 0u32 {
+      i = 0 as OPJ_UINT32;
+      while i < (*l_image).numcomps {
+        (*l_tccp).m_dc_level_shift = 0i32;
+        l_tccp = l_tccp.offset(1);
+        i += 1;
+      }
     }
     if !(*l_tcp).m_mct_decoding_matrix.is_null() {
       opj_free((*l_tcp).m_mct_decoding_matrix as *mut core::ffi::c_void);
@@ -6447,7 +6449,13 @@ pub(crate) fn opj_j2k_setup_decoder(mut j2k: &mut opj_j2k, mut parameters: &mut 
 }
 
 pub(crate) fn opj_j2k_decoder_set_strict_mode(mut j2k: &mut opj_j2k, mut strict: OPJ_BOOL) {
-  j2k.m_cp.strict = strict
+  j2k.m_cp.strict = strict;
+  if strict != 0 {
+    j2k
+      .m_specific_param
+      .m_decoder
+      .m_nb_tile_parts_correction_checked = true;
+  }
 }
 
 pub(crate) fn opj_j2k_set_threads(
@@ -7919,7 +7927,15 @@ pub(crate) fn opj_j2k_setup_encoder(
         } else {
           0i32
         } as OPJ_UINT32;
-        (*tccp_1).numgbits = 2 as OPJ_UINT32;
+        if (parameters.rsiz as core::ffi::c_int >= 0x3i32
+          && parameters.rsiz as core::ffi::c_int <= 0x6i32)
+          && parameters.rsiz as core::ffi::c_int == OPJ_PROFILE_CINEMA_2K as core::ffi::c_int
+        {
+          /* From https://github.com/uclouvain/openjpeg/issues/1340 */
+          (*tccp_1).numgbits = 1 as OPJ_UINT32;
+        } else {
+          (*tccp_1).numgbits = 2 as OPJ_UINT32;
+        }
         if i as OPJ_INT32 == parameters.roi_compno {
           (*tccp_1).roishift = parameters.roi_shift
         } else {

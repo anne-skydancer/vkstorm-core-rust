@@ -1329,18 +1329,24 @@ pub(crate) fn opj_jp2_setup_encoder(
   /* Colour Specification box */
   if image.icc_profile_len != 0 {
     jp2.meth = 2 as OPJ_UINT32;
-    jp2.enumcs = 0 as OPJ_UINT32
+    jp2.enumcs = 0 as OPJ_UINT32;
+    if let Some(ICCProfileRef::ICC(data)) = image.icc_profile() {
+      jp2.color.set_icc_profile(data.to_vec());
+    }
   } else {
     jp2.meth = 1 as OPJ_UINT32;
-    if image.color_space as core::ffi::c_int == 1 {
+    if image.color_space == OPJ_CLRSPC_SRGB {
       jp2.enumcs = 16 as OPJ_UINT32
     /* sRGB as defined by IEC 61966-2-1 */
-    } else if image.color_space as core::ffi::c_int == 2 {
+    } else if image.color_space == OPJ_CLRSPC_GRAY {
       jp2.enumcs = 17 as OPJ_UINT32
-    /* greyscale */
-    } else if image.color_space as core::ffi::c_int == 3 {
+    } else if image.color_space == OPJ_CLRSPC_SYCC {
       jp2.enumcs = 18 as OPJ_UINT32
-      /* YUV */
+    /* YUV */
+    } else if image.color_space == OPJ_CLRSPC_EYCC {
+      jp2.enumcs = 24 as OPJ_UINT32
+    } else if image.color_space == OPJ_CLRSPC_CMYK {
+      jp2.enumcs = 12 as OPJ_UINT32
     }
   }
   /* Channel Definition box */
@@ -1960,7 +1966,7 @@ pub(crate) fn opj_jp2_read_header(
       None
     }
   };
-  if let Some(image) = image {
+  if let (true, Some(image)) = (ret != 0, image) {
     /* Set Image Color Space */
     if jp2.enumcs == 16u32 {
       image.color_space = OPJ_CLRSPC_SRGB
