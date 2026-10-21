@@ -341,8 +341,11 @@ mod tests {
     #[test]
     fn naming() {
         let id = crate::uuid_from_string("a1234567-89ab-cdef-1032-547698badcfe").unwrap();
-        let p = metadata_to_filepath("C:\\cache", "\\", &id);
-        assert_eq!(p, "C:\\cache\\a\\sl_cache_a1234567-89ab-cdef-1032-547698badcfe_0.asset");
+        // The platform's delimiter: the name is read back through the
+        // platform's path splitting, as getBaseFileName does.
+        let d = std::path::MAIN_SEPARATOR.to_string();
+        let p = metadata_to_filepath(&format!("{d}cache"), &d, &id);
+        assert_eq!(p, format!("{d}cache{d}a{d}sl_cache_a1234567-89ab-cdef-1032-547698badcfe_0.asset"));
         assert_eq!(uuid_text_of_cache_file(&p), "a1234567-89ab-cdef-1032-547698badcfe");
     }
 
