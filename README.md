@@ -25,7 +25,9 @@ vkstorm-aleph under `docs/upstream-study/`.
 | `vkstorm-volume` | The parametric prim mesher behind `LLVolume`: profile and path generation, the mesh sweep, side and cap faces, tangents; float-identical to the viewer's C++ on the recorded corpus. |
 | `vkstorm-messages` | The UDP message system's data side behind `LLTemplateParser`, `LLTemplateMessageBuilder`, `LLTemplateMessageReader` and `LLDataPacker`: the template language, packing and unpacking of every variable type with the block and size rules, zero-coding both ways, the binary and text data packers; byte-identical to the viewer's C++ on the recorded corpus. Carries the `opensim` feature. |
 
-Planned, in port order: `vkstorm-http`, `vkstorm-assets`,
+| `vkstorm-http` | The viewer's HTTP layer behind `LLCore::HttpRequest`: the service thread with its request and reply queues, policy classes with connection limits and request-rate throttling, the retry queue with its backoff, and the libcurl multi-handle transport (libcurl bound by hand, the viewer's own build with OpenSSL and nghttp2); request-for-request identical to the C++ on the recorded scenarios. |
+
+Planned, in port order: `vkstorm-assets`,
 `vkstorm-audio`, `vkstorm-inventory`, `vkstorm-world`, `vkstorm-avatar`,
 `vkstorm-comms`, `vkstorm-rlv`, `vkstorm-scripting`.
 
