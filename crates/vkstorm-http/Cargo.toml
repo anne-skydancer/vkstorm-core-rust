@@ -1,0 +1,24 @@
+[package]
+name = "vkstorm-http"
+description = "The viewer's HTTP layer for Vulkanstorm: the LLCore::HttpRequest service (request, ready, retry and reply queues, policy classes with concurrency limits and throttling, retry backoff) on a libcurl multi-handle transport, behaviour-identical to the C++ llcorehttp it replaces"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+build = "build.rs"
+
+[features]
+default = []
+# Link libcurl from the build environment (for the crate's own tests and
+# benches). The viewer links its own prebuilt libcurl into the final
+# executable, so the crate must not name the library there; see build.rs.
+link-curl = []
+
+[dependencies]
+
+[dev-dependencies]
+vkstorm-http = { path = ".", features = ["link-curl"] }
+
+[[bench]]
+name = "loopback"
+harness = false

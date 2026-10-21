@@ -459,6 +459,13 @@ name = "vkstorm-core"
 version = "0.1.0"
 
 [[package]]
+name = "vkstorm-http"
+version = "0.1.0"
+dependencies = [
+ "vkstorm-http",
+]
+
+[[package]]
 name = "vkstorm-image"
 version = "0.1.0"
 dependencies = [
