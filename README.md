@@ -26,10 +26,11 @@ vkstorm-aleph under `docs/upstream-study/`.
 | `vkstorm-messages` | The UDP message system's data side behind `LLTemplateParser`, `LLTemplateMessageBuilder`, `LLTemplateMessageReader` and `LLDataPacker`: the template language, packing and unpacking of every variable type with the block and size rules, zero-coding both ways, the binary and text data packers; byte-identical to the viewer's C++ on the recorded corpus. Carries the `opensim` feature. |
 
 | `vkstorm-http` | The viewer's HTTP layer behind `LLCore::HttpRequest`: the service thread with its request and reply queues, policy classes with connection limits and request-rate throttling, the retry queue with its backoff, and the libcurl multi-handle transport (libcurl bound by hand, the viewer's own build with OpenSSL and nghttp2); request-for-request identical to the C++ on the recorded scenarios. |
+| `vkstorm-assets` | The asset pipeline's data side behind `LLTextureCache`, `LLTextureFetch`, `LLDiskCache`/`LLFileSystem`, `LLVolume::unpackVolumeFaces`, `LLMeshSkinInfo`, `LLModel::Decomposition`, `LLMeshHeader` and `LLAssetStorage`: the texture cache files (byte-compatible with the C++ cache), the texture fetch state machine (cache, range, decode and write-back decisions, retries, the HTTP resource semaphore) driven by the host's threads, the JPEG 2000 byte budget per discard level, the asset disk cache's naming and purge, mesh asset unpacking into the viewer's face buffers with the skin and physics blocks, mesh fetch planning, and the asset request bookkeeping. Carries the `opensim` feature (the legacy UDP texture and asset paths). |
 
-Planned, in port order: `vkstorm-assets`,
-`vkstorm-audio`, `vkstorm-inventory`, `vkstorm-world`, `vkstorm-avatar`,
-`vkstorm-comms`, `vkstorm-rlv`, `vkstorm-scripting`.
+Planned, in port order: `vkstorm-audio`, `vkstorm-inventory`,
+`vkstorm-world`, `vkstorm-avatar`, `vkstorm-comms`, `vkstorm-rlv`,
+`vkstorm-scripting`.
 
 ## Grid support
 

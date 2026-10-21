@@ -1,0 +1,26 @@
+[package]
+name = "vkstorm-assets"
+description = "The viewer's asset pipeline data side for Vulkanstorm: the texture fetch state machine, the texture cache (byte-compatible on disk), the asset disk cache, mesh asset unpacking and fetch planning, and the generic asset fetch bookkeeping, behaviour-identical to the C++ it replaces"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[features]
+default = []
+# OpenSim grid support: the legacy UDP texture transfer states of the fetch
+# state machine and the UDP asset transfer fallback. Absent from a Second
+# Life-only build.
+opensim = []
+
+[dependencies]
+vkstorm-llsd = { path = "../vkstorm-llsd" }
+# Mesh asset blocks are zlib-compressed binary LLSD; the viewer inflated them
+# with zlib-ng. zlib-rs is its Rust port (pinned as in vkstorm-image).
+zlib-rs = "=0.6.8"
+
+[dev-dependencies]
+
+[[bench]]
+name = "hot_paths"
+harness = false
