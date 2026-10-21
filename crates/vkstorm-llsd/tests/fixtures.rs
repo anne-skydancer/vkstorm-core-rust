@@ -7,11 +7,33 @@
 //! parsed value in the C++ binary serialization. Each format case gives a
 //! value (binary serialization), the formatter settings and the exact bytes
 //! the C++ formatter wrote.
+//!
+//! The fixtures were recorded on Windows, where the C runtime spells a
+//! negative quiet NaN `-nan(ind)` (and a signalling one `nan(snan)`); the
+//! crate spells NaN as each platform's runtime does, so on other platforms
+//! the expected bytes are read with the glibc spelling (`-nan`, `nan`).
 
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use vkstorm_llsd::{FloatField, Format, Formatter, Limits, Options, Value, XmlMode, format, parse};
+
+/// Expected formatter output as this platform's C runtime would have
+/// written it: the fixtures carry the MSVC NaN spellings; elsewhere the
+/// crate, like glibc's printf, writes `-nan` and `nan` without a payload tag.
+fn platform_nan_spelling(expected: Vec<u8>) -> Vec<u8> {
+    if cfg!(windows) {
+        return expected;
+    }
+    let text = String::from_utf8(expected.clone());
+    match text {
+        Ok(t) if t.contains("nan(") => t
+            .replace("nan(ind)", "nan")
+            .replace("nan(snan)", "nan")
+            .into_bytes(),
+        _ => expected,
+    }
+}
 
 fn fixtures_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -98,7 +120,7 @@ fn run() -> Counts {
                 let boolalpha = f[5] == "1";
                 let real_format = f[6];
                 let expected_count: i32 = f[7].parse().unwrap();
-                let expected = read(&format!("{name}.expect"));
+                let expected = platform_nan_spelling(read(&format!("{name}.expect")));
                 let opts = Options {
                     pretty: options & 1 != 0,
                     pretty_binary: options & 2 != 0,
