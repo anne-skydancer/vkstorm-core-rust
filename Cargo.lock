@@ -163,6 +163,7 @@ dependencies = [
  "jpeg2k",
  "openjp2",
  "vkstorm-j2c",
+ "vkstorm-openjp2",
 ]
 
 [[package]]

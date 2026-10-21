@@ -16,14 +16,19 @@ the vkstorm-aleph study, [docs/upstream-study/07-j2c-decoder-evaluation.md](http
   `c/opj_bench.c` times, so use it for like-for-like ratios), `openjp2` (the
   upstream crate the port started from, via `jpeg2k`), `hayro`, `j2k`
   (single-threaded) and `j2k-auto` (crate-chosen parallelism), plus `compare`
-  for raw output diffs (max abs, mean abs, PSNR).
+  for raw output diffs (max abs, mean abs, PSNR). `vksraw` drives the port
+  through its raw API with `c/opj_bench.c`'s argument layout and modes
+  (`src/vksraw.rs`), for the paths the viewer API never reaches.
 - `examples/encode_bench.rs`: times `vkstorm_j2c::encode` on the synthetic
   pattern shared with `c/opj_enc.c`, which times the same work when
   `OPJ_ENC_ITERS=<n>` is set; both print `<bytes> <best_ms>` and write the
   codestream, so speed and byte parity come from one run per case.
 - `c/opj_bench.c`: C harness that mirrors `LLImageJ2COJ::decode` (memory stream
   truncated to `max_bytes`, `opj_decoder_set_strict_mode(false)`,
-  `opj_set_decoded_resolution_factor`).
+  `opj_set_decoded_resolution_factor`). An optional sixth argument selects
+  `tiles` (every tile in turn through `opj_get_decoded_tile` on one codec,
+  tiles written back to back) or `area=x0,y0,x1,y1` (`opj_set_decode_area`
+  before `opj_decode`); `-` as the output path writes nothing.
 - `c/opj_enc.c`: C harness that mirrors `LLImageJ2COJ::encodeImpl` (J2K, RLCP,
   layered rates, resolution rule under 64 px, COM comment); its output is the
   byte-parity oracle for the Rust encoder (`examples/encode_probe.rs` produces
@@ -31,17 +36,24 @@ the vkstorm-aleph study, [docs/upstream-study/07-j2c-decoder-evaluation.md](http
 - `run.sh`: runs every decoder over a corpus directory and all scenarios,
   writes a CSV.
 - `scripts/gen_corpus.py`, `scripts/mosaic.py`: synthetic source images.
+- `scripts/baseline_fixtures.py`: the codestreams in
+  `crates/vkstorm-openjp2/tests/fixtures` (tiles with TLM, interleaved
+  tile-parts, MCO, SOP/EPH, Cinema 2K and their crafted variants), from the
+  fork's `opj_compress` at the baseline commit.
 - `patches/hayro-jpeg2000-0.4.1-truncated-tilepart.diff`: the change that lets
   hayro decode truncated tile-parts in non-strict mode.
 - `results/`: CSVs from recorded runs, named by date and CPU.
 
 ## Reproduce
 
-1. Build the fork's OpenJPEG twice (clang + ninja), GPU backends off:
+1. Build the fork's OpenJPEG twice (clang + ninja on Windows, gcc on
+   Linux), GPU backends off, at the commit the port corresponds to
+   (`vkstorm_openjp2::UPSTREAM_BASELINE.fork`; the release viewer's
+   3p-openjpeg tag `v2.5.4-cpu-avx2.1` points at it):
 
    ```sh
    git clone --recurse-submodules https://github.com/anne-skydancer/3p-openjpeg.git
-   cd 3p-openjpeg && mkdir build-avx2 && cd build-avx2
+   cd 3p-openjpeg && git -C openjpeg checkout 3b1a6a96 && mkdir build-avx2 && cd build-avx2
    cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang \
      -DBUILD_SHARED_LIBS=OFF -DBUILD_CODEC=ON -DBUILD_TESTING=OFF -DBUILD_THIRDPARTY=ON \
      -DOPJ_ENABLE_CUDA=OFF -DOPJ_ENABLE_OPENCL=OFF -DOPJ_PRECISE_FP=ON \
@@ -88,6 +100,23 @@ the vkstorm-aleph study, [docs/upstream-study/07-j2c-decoder-evaluation.md](http
    redistributed here).
 
 5. Run: `./run.sh <corpus_dir> results/<date>-<cpu>.csv 5`.
+
+## Parity with the fork on the baseline fixtures
+
+For every fixture, every scenario (reduce 0 to 3, truncated input, tile by
+tile, decode areas) must give `max_abs 0` between the two harnesses, or
+fail on both sides:
+
+```sh
+C=c/opj_bench_avx2.exe; R=../../target/release/j2c-eval.exe; f=<fixture>
+$C $f 0 0 1 c.raw tiles; $R vksraw $f 0 0 1 r.raw tiles; $R compare r.raw c.raw
+```
+
+`tools/j2c-eval/results/` keeps the recorded sweeps. To regenerate the
+fixtures after an upstream change, run `scripts/baseline_fixtures.py` with
+the fork's `opj_compress` built at the new commit, then write the
+`.opj.raw` references with `c/opj_bench` (`<name>.r0.opj.raw` is the whole
+decode at reduce 0, `tlm_tiles_256.tiles.opj.raw` the `tiles` mode).
 
 Scenarios in `run.sh`: full decode at reduce 0 to 3, and truncated input at
 25% of bytes for reduce 0, 50% for reduce 1, 25% for reduce 2, 12% for
