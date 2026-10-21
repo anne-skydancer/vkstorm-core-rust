@@ -1,2 +1,6 @@
 # Recorded message corpus (vkstorm-messages)
 *.vksm binary
+# JPEG 2000 fixtures and the C fork's reference outputs (vkstorm-openjp2, vkstorm-j2c)
+*.j2c binary
+*.j2k binary
+*.opj.raw binary

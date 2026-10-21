@@ -35,6 +35,35 @@ pub mod image;
 pub mod openjpeg;
 pub mod stream;
 
+/// The OpenJPEG source this port corresponds to, as a pair of commits:
+/// the Vulkanstorm fork (https://github.com/anne-skydancer/openjpeg) at the
+/// commit the release viewer ships (tag `v2.5.4-cpu-avx2.1` of 3p-openjpeg),
+/// and the upstream commit (https://github.com/uclouvain/openjpeg) that fork
+/// is based on. Every CPU decode and encode change upstream made between
+/// v2.5.2 and that commit is in this crate; the fork's own commits add only
+/// the OpenCL and CUDA backends and the `OPJ_PRECISE_FP` build option. To
+/// follow a newer upstream, diff from `UPSTREAM_BASELINE.upstream`, port the
+/// CPU changes into the mirroring files, extend the fixtures, run
+/// `tools/j2c-eval` against the fork built at the new commit, and update this
+/// constant (procedure in `docs/j2c-port-plan.md`, item 8).
+pub const UPSTREAM_BASELINE: UpstreamBaseline = UpstreamBaseline {
+  fork: "3b1a6a96ddf1c7765253db6089de2d8dd30f761f",
+  upstream: "8314119b067c0fc77834731168daaebd379fdb12",
+  version: "2.5.4",
+};
+
+/// See [`UPSTREAM_BASELINE`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct UpstreamBaseline {
+  /// Commit of the Vulkanstorm fork (its CPU code is this upstream commit).
+  pub fork: &'static str,
+  /// Upstream OpenJPEG commit the port's CPU paths correspond to
+  /// (`v2.5.4-29-g8314119b`, the merge of upstream PR #1666).
+  pub upstream: &'static str,
+  /// OpenJPEG release that commit follows; also `opj_version()`.
+  pub version: &'static str,
+}
+
 // Export safe API
 pub use c_api_types::*;
 pub use codec::Codec;
