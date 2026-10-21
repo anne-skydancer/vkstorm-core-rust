@@ -20,8 +20,11 @@ use std::ffi::{c_void, CString};
 
 use vkstorm_openjp2::openjpeg::*;
 
-/// Codec name and version, for the viewer engine-info display.
-pub const ENGINE_INFO: &str = "vkstorm-openjp2 2.5.2 (Rust)";
+/// Codec name and version, for the viewer engine-info display and the texture
+/// cache header (which purges the cache when it changes). The version is the
+/// OpenJPEG release the port corresponds to; `engine_info_matches_baseline`
+/// keeps it in step with `vkstorm_openjp2::UPSTREAM_BASELINE`.
+pub const ENGINE_INFO: &str = "vkstorm-openjp2 2.5.4 (Rust)";
 
 /// Header-level facts about a codestream.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -490,5 +493,16 @@ pub fn encode(
         drop(hnd);
         let bytes = std::mem::take(&mut sink.0.borrow_mut().0);
         Ok(bytes)
+    }
+}
+
+#[cfg(test)]
+mod engine_info_tests {
+    #[test]
+    fn engine_info_matches_baseline() {
+        let v = vkstorm_openjp2::UPSTREAM_BASELINE.version;
+        assert!(super::ENGINE_INFO.contains(v), "ENGINE_INFO {:?} does not carry the baseline version {v}", super::ENGINE_INFO);
+        // LLTextureCache stores the engine string in a 32-byte header field.
+        assert!(super::ENGINE_INFO.len() < 32);
     }
 }

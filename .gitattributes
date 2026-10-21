@@ -3,3 +3,7 @@
 # Recorded parity corpora (vkstorm-assets): stored as is
 *.vksa binary
 crates/*/tests/fixtures/*.bin binary
+# JPEG 2000 fixtures and the C fork's reference outputs (vkstorm-openjp2, vkstorm-j2c)
+*.j2c binary
+*.j2k binary
+*.opj.raw binary

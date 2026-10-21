@@ -1140,13 +1140,15 @@ fn opj_t2_read_packet_header(
         {
           event_msg!(
             p_manager,
-            EVT_WARNING,
-            "Not enough space for expected EPH marker\n",
+            EVT_ERROR,
+            "Not enough space for required EPH marker\n",
           );
+          return 0i32;
         } else if *l_header_data as core::ffi::c_int != 0xffi32
           || *l_header_data.offset(1) as core::ffi::c_int != 0x92i32
         {
-          event_msg!(p_manager, EVT_WARNING, "Expected EPH marker\n",);
+          event_msg!(p_manager, EVT_ERROR, "Expected EPH marker\n",);
+          return 0i32;
         } else {
           l_header_data = l_header_data.offset(2)
         }
@@ -1378,19 +1380,24 @@ fn opj_t2_read_packet_header(
       {
         event_msg!(
           p_manager,
-          EVT_WARNING,
-          "Not enough space for expected EPH marker\n",
+          EVT_ERROR,
+          "Not enough space for required EPH marker\n",
         );
+        return 0i32;
       } else if *l_header_data as core::ffi::c_int != 0xffi32
         || *l_header_data.offset(1) as core::ffi::c_int != 0x92i32
       {
-        event_msg!(p_manager, EVT_WARNING, "Expected EPH marker\n",);
+        event_msg!(p_manager, EVT_ERROR, "Expected EPH marker\n",);
+        return 0i32;
       } else {
         l_header_data = l_header_data.offset(2)
       }
     }
     l_header_length = l_header_data.offset_from(*l_header_data_start) as OPJ_UINT32;
     log::debug!("hdrlen={}", l_header_length);
+    if l_header_length == 0 {
+      return 0i32;
+    }
     log::debug!("packet body");
     *l_modified_length_ptr =
       (*l_modified_length_ptr as core::ffi::c_uint).wrapping_sub(l_header_length) as OPJ_UINT32;
@@ -1627,6 +1634,7 @@ fn opj_t2_skip_packet_data(
                                                 (*l_seg).newlen, p_max_length,
                                                 cblkno, (*p_pi).precno, bandno,
                                                 (*p_pi).resno, (*p_pi).compno);
+                  *p_data_read = p_max_length;
                   return 1i32;
                 }
               }
