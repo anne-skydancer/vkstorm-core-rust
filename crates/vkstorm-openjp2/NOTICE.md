@@ -9,8 +9,10 @@ It is maintained here as Vulkanstorm's single JPEG 2000 codec (decode and
 encode) and diverges from its origins deliberately:
 
 - the `file-io`/libc dependency is dropped; the viewer only uses memory streams;
-- non-strict (lenient) decoding of truncated codestreams is being brought to
-  OpenJPEG 2.5.4 behaviour, which the viewer's progressive texture fetch needs;
+- the CPU decode and encode behaviour follows the Vulkanstorm fork at the
+  commit named by `UPSTREAM_BASELINE` in `src/lib.rs` (OpenJPEG 2.5.4 plus the
+  upstream fixes after it), including non-strict decoding of truncated
+  codestreams, which the viewer's progressive texture fetch needs;
 - SIMD (AVX2) paths for the wavelet and colour transforms, and a code-block
   thread pool, are being added to reach at least the C fork's performance;
 - the C-shaped internals are made safe incrementally.

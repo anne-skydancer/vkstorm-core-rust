@@ -2299,11 +2299,14 @@ pub(crate) fn opj_pi_initialise_encode(
     (*l_pi).tp_on = (*p_cp).m_specific_param.m_enc.m_tp_on as OPJ_BYTE;
     l_current_pi = l_pi;
     /* memory allocation for include*/
-    (*l_current_pi).include_size = (*l_tcp).numlayers.wrapping_mul(l_step_l);
-    (*l_current_pi).include = opj_calloc(
-      (*l_current_pi).include_size as size_t,
-      core::mem::size_of::<OPJ_INT16>(),
-    ) as *mut OPJ_INT16;
+    (*l_current_pi).include = core::ptr::null_mut::<OPJ_INT16>();
+    if l_step_l <= u32::MAX / (*l_tcp).numlayers {
+      (*l_current_pi).include_size = (*l_tcp).numlayers.wrapping_mul(l_step_l);
+      (*l_current_pi).include = opj_calloc(
+        (*l_current_pi).include_size as size_t,
+        core::mem::size_of::<OPJ_INT16>(),
+      ) as *mut OPJ_INT16;
+    }
     if (*l_current_pi).include.is_null() {
       opj_free(l_tmp_data as *mut core::ffi::c_void);
       opj_free(l_tmp_ptr as *mut core::ffi::c_void);
