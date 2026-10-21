@@ -6,9 +6,13 @@
 //!   j2c-eval hayro <file> <reduce> <max_bytes|0> <iters> [out.raw]
 //!   j2c-eval j2k   <file> <reduce> <max_bytes|0> <iters> [out.raw]   (single-threaded)
 //!   j2c-eval j2k-auto <file> <reduce> <max_bytes|0> <iters> [out.raw] (crate-chosen parallelism)
+//!   j2c-eval vksraw <file> <reduce> <max_bytes|0> <iters> [out.raw|-] [tiles|area=x0,y0,x1,y1]
+//!                  (the port through its raw API, mirroring c/opj_bench.c's modes)
 //!   j2c-eval compare <a.raw> <b.raw>
 //! prints for decoders: w h comps best_ms mean_ms   (or FAIL <reason>)
 use std::time::Instant;
+
+mod vksraw;
 
 fn load(path: &str, max_bytes: usize) -> Vec<u8> {
     let mut d = std::fs::read(path).expect("read");
@@ -114,6 +118,29 @@ fn run(which: &str, args: &[String]) {
     if args.len() >= 5 { std::fs::write(&args[4], &o.data).unwrap(); }
 }
 
+/// The port through its raw API, with the C harness's argument layout.
+fn run_raw(args: &[String]) {
+    let path = &args[0]; let reduce: u32 = args[1].parse().unwrap();
+    let max_bytes: usize = args[2].parse().unwrap(); let iters: usize = args[3].parse().unwrap();
+    let out_path = args.get(4).filter(|s| s.as_str() != "-");
+    let mode = match args.get(5) {
+        None => vksraw::Mode::Whole,
+        Some(m) => vksraw::Mode::parse(m).unwrap_or_else(|| { eprintln!("unknown mode {m}"); std::process::exit(2); }),
+    };
+    let data = load(path, max_bytes);
+    let mut best = f64::MAX; let mut total = 0.0; let mut last = None;
+    for _ in 0..iters {
+        let t0 = Instant::now();
+        let r = vksraw::decode(&data, reduce, &mode);
+        let dt = t0.elapsed().as_secs_f64() * 1000.0;
+        match r { Ok(o) => { if dt < best { best = dt; } total += dt; last = Some(o); }
+                  Err(e) => { println!("FAIL {e}"); std::process::exit(1); } }
+    }
+    let (w, h, c, raw) = last.unwrap();
+    println!("{} {} {} {:.3} {:.3}", w, h, c, best, total / iters as f64);
+    if let Some(p) = out_path { std::fs::write(p, &raw).unwrap(); }
+}
+
 fn compare(a: &str, b: &str) {
     let (x, y) = (std::fs::read(a).unwrap(), std::fs::read(b).unwrap());
     if x.len() != y.len() { println!("LEN_MISMATCH {} {}", x.len(), y.len()); return; }
@@ -128,6 +155,7 @@ fn main() {
     let a: Vec<String> = std::env::args().collect();
     match a.get(1).map(|s| s.as_str()) {
         Some("hayro") | Some("j2k") | Some("j2k-auto") | Some("openjp2") | Some("vks") | Some("vksdec") => run(&a[1], &a[2..]),
+        Some("vksraw") => run_raw(&a[2..]),
         Some("compare") => compare(&a[2], &a[3]),
         _ => { eprintln!("usage: j2c-eval hayro|j2k file reduce max_bytes iters [out.raw] | compare a b"); std::process::exit(2); }
     }
