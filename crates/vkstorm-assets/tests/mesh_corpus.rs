@@ -14,7 +14,7 @@ use vkstorm_assets::mesh::llsd::parse_binary;
 
 const FIXTURE_MAGIC: u32 = 0x4853_4d56;
 const FIXTURE_VERSION: u32 = 2;
-const NUM_PARTS: usize = 5;
+pub const NUM_PARTS: usize = 5;
 const FULL_BUFFER_LIMIT: i32 = 300;
 
 struct Reader<'a> {
@@ -56,26 +56,26 @@ impl<'a> Reader<'a> {
 }
 
 #[derive(Debug, PartialEq)]
-struct FaceRecord {
-    num_vertices: i32,
-    num_indices: i32,
-    has_weights: bool,
-    has_tangents: bool,
-    hash_positions: u64,
-    hash_normals: u64,
-    hash_texcoords: u64,
-    hash_indices: u64,
-    hash_weights: u64,
-    hash_tangents: u64,
-    extents: [f32; 8],
-    tc_extents: [f32; 4],
-    normalized_scale: [f32; 3],
-    positions: Vec<u8>,
-    normals: Vec<u8>,
-    texcoords: Vec<u8>,
-    indices: Vec<u8>,
-    weights: Vec<u8>,
-    tangents: Vec<u8>,
+pub struct FaceRecord {
+    pub num_vertices: i32,
+    pub num_indices: i32,
+    pub has_weights: bool,
+    pub has_tangents: bool,
+    pub hash_positions: u64,
+    pub hash_normals: u64,
+    pub hash_texcoords: u64,
+    pub hash_indices: u64,
+    pub hash_weights: u64,
+    pub hash_tangents: u64,
+    pub extents: [f32; 8],
+    pub tc_extents: [f32; 4],
+    pub normalized_scale: [f32; 3],
+    pub positions: Vec<u8>,
+    pub normals: Vec<u8>,
+    pub texcoords: Vec<u8>,
+    pub indices: Vec<u8>,
+    pub weights: Vec<u8>,
+    pub tangents: Vec<u8>,
 }
 
 fn read_face(r: &mut Reader) -> FaceRecord {
@@ -179,7 +179,7 @@ fn record(face: &Face) -> FaceRecord {
 }
 
 #[derive(Debug, PartialEq)]
-struct SkinRecord {
+pub struct SkinRecord {
     present: bool,
     ok: bool,
     joint_names: Vec<String>,
@@ -229,7 +229,7 @@ fn record_skin(s: &SkinInfo, present: bool, ok: bool) -> SkinRecord {
 }
 
 #[derive(Debug, PartialEq)]
-struct DecompRecord {
+pub struct DecompRecord {
     present: bool,
     ok: bool,
     hulls: Vec<Vec<u8>>,
@@ -261,18 +261,18 @@ fn record_decomp(d: &Decomposition, present: bool, ok: bool) -> DecompRecord {
     }
 }
 
-struct Case {
-    name: String,
-    sculpt_type: u8,
-    asset: Vec<u8>,
-    raw_faces: [Vec<FaceRecord>; NUM_PARTS],
-    present: [bool; NUM_PARTS],
-    ok: [bool; NUM_PARTS],
-    skin: SkinRecord,
-    decomp: DecompRecord,
+pub struct Case {
+    pub name: String,
+    pub sculpt_type: u8,
+    pub asset: Vec<u8>,
+    pub raw_faces: [Vec<FaceRecord>; NUM_PARTS],
+    pub present: [bool; NUM_PARTS],
+    pub ok: [bool; NUM_PARTS],
+    pub skin: SkinRecord,
+    pub decomp: DecompRecord,
 }
 
-fn read_corpus(bytes: &[u8]) -> Vec<Case> {
+pub fn read_corpus(bytes: &[u8]) -> Vec<Case> {
     let mut r = Reader { b: bytes, pos: 0 };
     assert_eq!(r.u32(), FIXTURE_MAGIC, "fixture magic");
     assert_eq!(r.u32(), FIXTURE_VERSION, "fixture version");
@@ -306,7 +306,7 @@ fn read_corpus(bytes: &[u8]) -> Vec<Case> {
 }
 
 /// The header of a packed asset: `(header_size, parts[(offset, size)], skin, convex)`.
-fn parse_asset_header(asset: &[u8]) -> (usize, [Option<(i32, i32)>; NUM_PARTS], Option<(i32, i32)>, Option<(i32, i32)>) {
+pub fn parse_asset_header(asset: &[u8]) -> (usize, [Option<(i32, i32)>; NUM_PARTS], Option<(i32, i32)>, Option<(i32, i32)>) {
     use vkstorm_assets::mesh::llsd::{as_integer, get, has};
     let (value, consumed) = parse_binary(asset, asset.len() as i64, -1).expect("asset header parses");
     const NAMES: [&str; NUM_PARTS] = ["lowest_lod", "low_lod", "medium_lod", "high_lod", "physics_mesh"];
@@ -322,7 +322,7 @@ fn parse_asset_header(asset: &[u8]) -> (usize, [Option<(i32, i32)>; NUM_PARTS], 
     (consumed, parts, skin, convex)
 }
 
-fn fixture_path() -> PathBuf {
+pub fn fixture_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/llmeshunpack_corpus.vksa")
 }
 
