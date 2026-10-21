@@ -25,9 +25,14 @@ pub const LARGE_MESH_FETCH_THRESHOLD: u32 = 1 << 21;
 
 const LOD_NAMES: [&str; NUM_LODS] = ["lowest_lod", "low_lod", "medium_lod", "high_lod"];
 
-const FLAG_SKIN: u32 = 1 << NUM_LODS;
-const FLAG_PHYSCONVEX: u32 = 1 << (NUM_LODS + 1);
-const FLAG_PHYSMESH: u32 = 1 << (NUM_LODS + 2);
+/// The preamble's flag bits as `LLMeshHeader::getFlags` lays them out:
+/// `LLModel::NUM_LODS` is 5 (the physics mesh counts), so the render LODs
+/// take bits 0..3, bit 4 is never set and the skin, convex and physics
+/// mesh flags are bits 5, 6 and 7.
+const CPP_NUM_LODS: u32 = 5;
+const FLAG_SKIN: u32 = 1 << CPP_NUM_LODS;
+const FLAG_PHYSCONVEX: u32 = 1 << (CPP_NUM_LODS + 1);
+const FLAG_PHYSMESH: u32 = 1 << (CPP_NUM_LODS + 2);
 
 /// `LLMeshHeader`.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -343,7 +348,7 @@ mod tests {
         assert!(e.not_found);
         h.lod_in_cache = [true, false, true, false];
         h.skin_in_cache = true;
-        assert_eq!(h.flags(), 0b1_0101);
+        assert_eq!(h.flags(), 0b10_0101);
         let mut g = MeshHeader::default();
         g.set_from_flags(h.flags());
         assert_eq!(g.lod_in_cache, h.lod_in_cache);
