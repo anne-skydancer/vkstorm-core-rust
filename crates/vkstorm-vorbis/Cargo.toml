@@ -1,0 +1,18 @@
+[package]
+name = "vkstorm-vorbis"
+description = "Ogg Vorbis decoding for Vulkanstorm: a port of the libogg 1.3.5 and libvorbis 1.3.7 decoder (framing, codec setup, floors, residues, MDCT, synthesis and vorbisfile's reader), bit-identical to the C library's output"
+version.workspace = true
+edition.workspace = true
+# The decoder is a port of Xiph's BSD-3-Clause libogg/libvorbis (notice in
+# LICENSE-xiph); the crate is part of the LGPL-2.1 Vulkanstorm core.
+license = "BSD-3-Clause AND LGPL-2.1-only"
+repository.workspace = true
+
+# No dependencies: the decoder is plain safe Rust over std (libm through
+# std's f64 functions, which link the platform C runtime as the C library
+# does).
+[dependencies]
+
+[[bench]]
+name = "decode"
+harness = false

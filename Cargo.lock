@@ -464,6 +464,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "vkstorm-audio"
+version = "0.1.0"
+dependencies = [
+ "vkstorm-http",
+ "vkstorm-vorbis",
+]
+
+[[package]]
 name = "vkstorm-core"
 version = "0.1.0"
 
@@ -511,6 +519,17 @@ dependencies = [
 [[package]]
 name = "vkstorm-volume"
 version = "0.1.0"
+
+[[package]]
+name = "vkstorm-vorbis"
+version = "0.1.0"
+
+[[package]]
+name = "vorbis-oracle"
+version = "0.1.0"
+dependencies = [
+ "vkstorm-vorbis",
+]
 
 [[package]]
 name = "zlib-rs"

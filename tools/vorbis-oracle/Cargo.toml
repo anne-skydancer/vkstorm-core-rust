@@ -1,0 +1,10 @@
+[package]
+name = "vorbis-oracle"
+description = "Parity and timing harness for vkstorm-vorbis against the viewer's libogg/libvorbis (see c/vorbis_oracle.c)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+vkstorm-vorbis = { path = "../../crates/vkstorm-vorbis" }
