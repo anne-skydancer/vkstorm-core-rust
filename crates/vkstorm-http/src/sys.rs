@@ -160,6 +160,11 @@ pub type SeekFn = unsafe extern "C" fn(*mut c_void, curl_off_t, c_int) -> c_int;
 pub type SslCtxFn = unsafe extern "C" fn(*mut CURL, *mut c_void, *mut c_void) -> CURLcode;
 pub type DebugFn = unsafe extern "C" fn(*mut CURL, curl_infotype, *mut c_char, usize, *mut c_void) -> c_int;
 
+// The library, and tests built with the `link-curl` feature, bind the real
+// functions. The crate's own plain test build (`cargo test` without the
+// feature) has no libcurl to link: it gets the stubs below, which panic if
+// a test reaches them, so the pure tests run anywhere.
+#[cfg(any(not(test), feature = "link-curl"))]
 unsafe extern "C" {
     pub fn curl_global_init(flags: c_long) -> CURLcode;
     pub fn curl_version() -> *const c_char;
@@ -181,6 +186,104 @@ unsafe extern "C" {
     pub fn curl_slist_append(list: *mut curl_slist, string: *const c_char) -> *mut curl_slist;
     pub fn curl_slist_free_all(list: *mut curl_slist);
 }
+
+/// The variadic calls, typed. Everything outside this module goes through
+/// these, so the plain test build can replace them.
+#[cfg(any(not(test), feature = "link-curl"))]
+mod typed {
+    use super::*;
+
+    /// # Safety
+    /// `h` must be a live easy handle.
+    pub unsafe fn easy_setopt_long(h: *mut CURL, opt: CURLoption, v: c_long) -> CURLcode {
+        unsafe { curl_easy_setopt(h, opt, v) }
+    }
+
+    /// # Safety
+    /// `h` must be a live easy handle; `v` must stay valid as the option requires.
+    pub unsafe fn easy_setopt_ptr(h: *mut CURL, opt: CURLoption, v: *const c_void) -> CURLcode {
+        unsafe { curl_easy_setopt(h, opt, v) }
+    }
+
+    /// # Safety
+    /// `h` must be a live easy handle; `v` NUL-terminated.
+    pub unsafe fn easy_setopt_str(h: *mut CURL, opt: CURLoption, v: *const c_char) -> CURLcode {
+        unsafe { curl_easy_setopt(h, opt, v) }
+    }
+
+    /// # Safety
+    /// `m` must be a live multi handle.
+    pub unsafe fn multi_setopt_long(m: *mut CURLM, opt: CURLMoption, v: c_long) -> CURLMcode {
+        unsafe { curl_multi_setopt(m, opt, v) }
+    }
+
+    /// # Safety
+    /// `h` must be a live easy handle; `out` valid.
+    pub unsafe fn easy_getinfo_long(h: *mut CURL, info: CURLINFO, out: *mut c_long) -> CURLcode {
+        unsafe { curl_easy_getinfo(h, info, out) }
+    }
+
+    /// # Safety
+    /// `h` must be a live easy handle; `out` valid.
+    pub unsafe fn easy_getinfo_ptr(h: *mut CURL, info: CURLINFO, out: *mut *mut c_void) -> CURLcode {
+        unsafe { curl_easy_getinfo(h, info, out) }
+    }
+
+    /// # Safety
+    /// `h` must be a live easy handle; `out` valid.
+    pub unsafe fn easy_getinfo_str(h: *mut CURL, info: CURLINFO, out: *mut *const c_char) -> CURLcode {
+        unsafe { curl_easy_getinfo(h, info, out) }
+    }
+
+    /// # Safety
+    /// `h` must be a live easy handle; `out` valid.
+    pub unsafe fn easy_getinfo_double(h: *mut CURL, info: CURLINFO, out: *mut f64) -> CURLcode {
+        unsafe { curl_easy_getinfo(h, info, out) }
+    }
+}
+
+#[cfg(any(not(test), feature = "link-curl"))]
+pub use typed::*;
+
+/// Stubs for the crate's plain test build (no libcurl linked): every libcurl
+/// entry point panics with the instruction to use the `link-curl` feature.
+#[cfg(all(test, not(feature = "link-curl")))]
+mod stubs {
+    #![allow(clippy::missing_safety_doc, unused_variables)]
+    use super::*;
+
+    fn unlinked() -> ! {
+        panic!("libcurl is not linked into this test build: run `cargo test -p vkstorm-http --features link-curl` with VKS_HTTP_CURL_LIB_DIR set (see the crate README)")
+    }
+
+    pub unsafe fn curl_global_init(flags: c_long) -> CURLcode { unlinked() }
+    pub unsafe fn curl_version() -> *const c_char { unlinked() }
+    pub unsafe fn curl_easy_init() -> *mut CURL { unlinked() }
+    pub unsafe fn curl_easy_duphandle(handle: *mut CURL) -> *mut CURL { unlinked() }
+    pub unsafe fn curl_easy_reset(handle: *mut CURL) { unlinked() }
+    pub unsafe fn curl_easy_cleanup(handle: *mut CURL) { unlinked() }
+    pub unsafe fn curl_easy_strerror(code: CURLcode) -> *const c_char { unlinked() }
+    pub unsafe fn curl_multi_init() -> *mut CURLM { unlinked() }
+    pub unsafe fn curl_multi_cleanup(multi: *mut CURLM) -> CURLMcode { unlinked() }
+    pub unsafe fn curl_multi_add_handle(multi: *mut CURLM, handle: *mut CURL) -> CURLMcode { unlinked() }
+    pub unsafe fn curl_multi_remove_handle(multi: *mut CURLM, handle: *mut CURL) -> CURLMcode { unlinked() }
+    pub unsafe fn curl_multi_perform(multi: *mut CURLM, running: *mut c_int) -> CURLMcode { unlinked() }
+    pub unsafe fn curl_multi_info_read(multi: *mut CURLM, msgs_in_queue: *mut c_int) -> *mut CURLMsg { unlinked() }
+    pub unsafe fn curl_multi_strerror(code: CURLMcode) -> *const c_char { unlinked() }
+    pub unsafe fn curl_slist_append(list: *mut curl_slist, string: *const c_char) -> *mut curl_slist { unlinked() }
+    pub unsafe fn curl_slist_free_all(list: *mut curl_slist) { unlinked() }
+    pub unsafe fn easy_setopt_long(h: *mut CURL, opt: CURLoption, v: c_long) -> CURLcode { unlinked() }
+    pub unsafe fn easy_setopt_ptr(h: *mut CURL, opt: CURLoption, v: *const c_void) -> CURLcode { unlinked() }
+    pub unsafe fn easy_setopt_str(h: *mut CURL, opt: CURLoption, v: *const c_char) -> CURLcode { unlinked() }
+    pub unsafe fn multi_setopt_long(m: *mut CURLM, opt: CURLMoption, v: c_long) -> CURLMcode { unlinked() }
+    pub unsafe fn easy_getinfo_long(h: *mut CURL, info: CURLINFO, out: *mut c_long) -> CURLcode { unlinked() }
+    pub unsafe fn easy_getinfo_ptr(h: *mut CURL, info: CURLINFO, out: *mut *mut c_void) -> CURLcode { unlinked() }
+    pub unsafe fn easy_getinfo_str(h: *mut CURL, info: CURLINFO, out: *mut *const c_char) -> CURLcode { unlinked() }
+    pub unsafe fn easy_getinfo_double(h: *mut CURL, info: CURLINFO, out: *mut f64) -> CURLcode { unlinked() }
+}
+
+#[cfg(all(test, not(feature = "link-curl")))]
+pub use stubs::*;
 
 /// `curl_global_init(CURL_GLOBAL_ALL)`, once per process. The viewer calls
 /// it itself (`LLCore::LLHttp::initialize`); the crate's tests use this.

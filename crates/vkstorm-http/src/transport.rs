@@ -98,19 +98,19 @@ fn check_multi(code: sys::CURLMcode, option: Option<sys::CURLMoption>, hooks: &d
 }
 
 unsafe fn setopt_long(h: *mut CURL, opt: sys::CURLoption, v: c_long, hooks: &dyn Hooks) {
-    check_easy(unsafe { sys::curl_easy_setopt(h, opt, v) }, opt, hooks);
+    check_easy(unsafe { sys::easy_setopt_long(h, opt, v) }, opt, hooks);
 }
 
 unsafe fn setopt_ptr(h: *mut CURL, opt: sys::CURLoption, v: *const c_void, hooks: &dyn Hooks) {
-    check_easy(unsafe { sys::curl_easy_setopt(h, opt, v) }, opt, hooks);
+    check_easy(unsafe { sys::easy_setopt_ptr(h, opt, v) }, opt, hooks);
 }
 
 unsafe fn setopt_str(h: *mut CURL, opt: sys::CURLoption, v: &CStr, hooks: &dyn Hooks) {
-    check_easy(unsafe { sys::curl_easy_setopt(h, opt, v.as_ptr()) }, opt, hooks);
+    check_easy(unsafe { sys::easy_setopt_str(h, opt, v.as_ptr()) }, opt, hooks);
 }
 
 unsafe fn msetopt_long(m: *mut CURLM, opt: sys::CURLMoption, v: c_long, hooks: &dyn Hooks) {
-    check_multi(unsafe { sys::curl_multi_setopt(m, opt, v) }, Some(opt), hooks);
+    check_multi(unsafe { sys::multi_setopt_long(m, opt, v) }, Some(opt), hooks);
 }
 
 fn slist_append(list: *mut sys::curl_slist, line: &str) -> *mut sys::curl_slist {
@@ -444,7 +444,7 @@ impl Transport {
     fn complete_request(&mut self, multi: *mut CURLM, handle: *mut CURL, result: sys::CURLcode, policy: &mut Policy, now: u64) {
         let hooks = self.hooks.clone();
         let mut priv_ptr: *mut c_void = std::ptr::null_mut();
-        let ccode = unsafe { sys::curl_easy_getinfo(handle, sys::CURLINFO_PRIVATE, &mut priv_ptr) };
+        let ccode = unsafe { sys::easy_getinfo_ptr(handle, sys::CURLINFO_PRIVATE, &mut priv_ptr) };
         if ccode != sys::CURLE_OK || priv_ptr.is_null() {
             hooks.log(LogLevel::Warn, &format!("libcurl error: {ccode} Unable to retrieve operation handle from CURL handle"));
             return;
@@ -474,11 +474,11 @@ impl Transport {
         }
         if op.status.is_ok() {
             let mut http_status: c_long = 200;
-            let ccode = unsafe { sys::curl_easy_getinfo(handle, sys::CURLINFO_RESPONSE_CODE, &mut http_status) };
+            let ccode = unsafe { sys::easy_getinfo_long(handle, sys::CURLINFO_RESPONSE_CODE, &mut http_status) };
             if ccode == sys::CURLE_OK {
                 if (100..=999).contains(&http_status) {
                     let mut cont_type: *const c_char = std::ptr::null();
-                    let ccode = unsafe { sys::curl_easy_getinfo(handle, sys::CURLINFO_CONTENT_TYPE, &mut cont_type) };
+                    let ccode = unsafe { sys::easy_getinfo_str(handle, sys::CURLINFO_CONTENT_TYPE, &mut cont_type) };
                     if ccode == sys::CURLE_OK {
                         if !cont_type.is_null() {
                             op.content_type = unsafe { CStr::from_ptr(cont_type) }.to_string_lossy().into_owned();
@@ -497,9 +497,9 @@ impl Transport {
         }
         // The transfer statistics, read while the handle still holds them.
         unsafe {
-            sys::curl_easy_getinfo(handle, sys::CURLINFO_SIZE_DOWNLOAD, &mut op.stats.size_download);
-            sys::curl_easy_getinfo(handle, sys::CURLINFO_TOTAL_TIME, &mut op.stats.total_time);
-            sys::curl_easy_getinfo(handle, sys::CURLINFO_SPEED_DOWNLOAD, &mut op.stats.speed_download);
+            sys::easy_getinfo_double(handle, sys::CURLINFO_SIZE_DOWNLOAD, &mut op.stats.size_download);
+            sys::easy_getinfo_double(handle, sys::CURLINFO_TOTAL_TIME, &mut op.stats.total_time);
+            sys::easy_getinfo_double(handle, sys::CURLINFO_SPEED_DOWNLOAD, &mut op.stats.speed_download);
         }
 
         // Pipelining sanity checks: an X-LL-URL header naming another

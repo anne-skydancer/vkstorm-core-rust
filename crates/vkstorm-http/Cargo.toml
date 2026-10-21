@@ -17,8 +17,12 @@ link-curl = []
 [dependencies]
 
 [dev-dependencies]
-vkstorm-http = { path = ".", features = ["link-curl"] }
+
+[[test]]
+name = "scenarios"
+required-features = ["link-curl"]
 
 [[bench]]
 name = "loopback"
 harness = false
+required-features = ["link-curl"]
