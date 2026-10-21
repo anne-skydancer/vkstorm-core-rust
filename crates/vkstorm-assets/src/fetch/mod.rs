@@ -276,8 +276,9 @@ pub trait Host {
     /// (`WAIT_HTTP_REQ`): creates the image from the URL's extension when
     /// absent (JPEG 2000 by default), copies `cur_size` existing bytes and
     /// `append_size` reply bytes from `src_offset`, sets `total_size`.
-    /// False when the allocation failed.
-    fn assemble_http_reply(&mut self, src_offset: i32, cur_size: i32, append_size: i32, total_size: i32) -> bool;
+    /// False when the allocation failed. `url` is the request URL, whose
+    /// extension picks the codec when no image exists yet.
+    fn assemble_http_reply(&mut self, url: &str, src_offset: i32, cur_size: i32, append_size: i32, total_size: i32) -> bool;
     /// `mFetcher->addToHTTPQueue(mID)`.
     fn add_to_http_queue(&mut self);
     /// `recordTextureStart`/`recordTextureDone` (asset statistics).
@@ -415,6 +416,18 @@ impl Fetcher {
         }
         idx
     }
+}
+
+/// The outcome of `Worker::setup_packet_data` (OpenSim).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SetupPackets {
+    Ok,
+    /// "Bad CACHED TEXTURE size": the host removes the texture from the
+    /// cache and resets the formatted data.
+    BadSize,
+    /// Cached through HTTP: the host resets the formatted data so the
+    /// first packet is fetched again.
+    Refetch,
 }
 
 /// The outcome of `Worker::try_release` (one waiter in `releaseHttpWaiters`).
@@ -1242,7 +1255,7 @@ impl Worker {
             // as not fully loaded (one more than the bytes held).
             self.file_size = if self.have_all_data { total_size } else { total_size + 1 };
 
-            if !host.assemble_http_reply(src_offset, cur_size, append_size, total_size) {
+            if !host.assemble_http_reply(&self.url, src_offset, cur_size, append_size, total_size) {
                 self.set_state(State::Done);
                 host.log(2, false, &format!("{} abort: out of memory", id));
                 self.release_http_semaphore(fetcher);
@@ -1303,7 +1316,6 @@ impl Worker {
             self.decode_timer = Instant::now();
             host.drop_raw_images();
             self.decoded = false;
-            self.set_state(State::DecodeImageUpdate);
             self.set_state(State::DecodeImageUpdate);
             host.log(
                 0,
@@ -1488,25 +1500,45 @@ impl Worker {
         false
     }
 
-    /// OpenSim: `setupPacketData`. Returns false when the cached data had a
-    /// bad size (the host then removes it from the cache and resets the
-    /// formatted data).
+    /// OpenSim: `setupPacketData` over the cached data's size. The host
+    /// then does what the C++ did with its containers: on `BadSize` it
+    /// removes the texture from the cache and resets the formatted data,
+    /// on `Refetch` (cached through HTTP, the first packet is fetched
+    /// again) it resets the formatted data; the packets are cleared here.
     #[cfg(feature = "opensim")]
-    pub fn setup_packet_data(&mut self, data_size: i32) -> bool {
+    pub fn setup_packet_data(&mut self, data_size: i32) -> SetupPackets {
         if data_size > 0 {
             self.first_packet = (data_size - FIRST_PACKET_SIZE) / MAX_IMG_PACKET_SIZE + 1;
             if FIRST_PACKET_SIZE + (self.first_packet - 1) * MAX_IMG_PACKET_SIZE != data_size {
                 self.clear_packets();
-                return false;
+                return SetupPackets::BadSize;
             } else if self.file_size > 0 {
                 self.last_packet = self.first_packet - 1;
                 self.total_packets = ((self.file_size - FIRST_PACKET_SIZE + MAX_IMG_PACKET_SIZE - 1) / MAX_IMG_PACKET_SIZE + 1) as u16;
             } else {
                 self.clear_packets();
-                return false;
+                return SetupPackets::Refetch;
             }
         }
-        true
+        SetupPackets::Ok
+    }
+
+    /// OpenSim: `receiveImageHeader`'s fields and `mSentRequest = SENT_SIM`
+    /// bookkeeping of `sendRequestListToSimulators`.
+    #[cfg(feature = "opensim")]
+    pub fn receive_header(&mut self, codec: i32, total_packets: u16, file_size: i32) {
+        self.image_codec = codec;
+        self.total_packets = total_packets;
+        self.file_size = file_size;
+    }
+
+    /// OpenSim: the request was sent to the simulator.
+    #[cfg(feature = "opensim")]
+    pub fn mark_sent_sim(&mut self) {
+        self.sent_request = RequestState::SentSim;
+        self.sim_requested_discard = self.desired_discard;
+        self.requested_priority = self.image_priority;
+        self.requested_delta = Instant::now();
     }
 
     /// OpenSim: `insertPacket`.

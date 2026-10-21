@@ -298,6 +298,13 @@ impl DiskCache {
         }
     }
 
+    /// Takes over the scan result (`mStoredCacheSize`, `mLastScanTime`) of
+    /// a purge run on a copy of this cache.
+    pub fn absorb_scan(&mut self, from: &DiskCache) {
+        self.stored_cache_size = from.stored_cache_size;
+        self.last_scan = from.last_scan;
+    }
+
     fn update_cache_size(&mut self, newsize: u64) -> u64 {
         self.stored_cache_size = newsize;
         self.last_scan = Some(Instant::now());

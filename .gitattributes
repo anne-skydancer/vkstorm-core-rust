@@ -1,2 +1,5 @@
 # Recorded message corpus (vkstorm-messages)
 *.vksm binary
+# Recorded parity corpora (vkstorm-assets): stored as is
+*.vksa binary
+crates/*/tests/fixtures/*.bin binary

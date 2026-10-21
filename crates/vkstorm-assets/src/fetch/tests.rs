@@ -101,7 +101,7 @@ impl Host for MockHost {
     fn release_http_buffer(&mut self) {
         self.http_body.clear();
     }
-    fn assemble_http_reply(&mut self, src_offset: i32, cur_size: i32, append_size: i32, total_size: i32) -> bool {
+    fn assemble_http_reply(&mut self, _url: &str, src_offset: i32, cur_size: i32, append_size: i32, total_size: i32) -> bool {
         let mut out = Vec::with_capacity(total_size as usize);
         out.extend_from_slice(&self.formatted[..cur_size as usize]);
         out.extend_from_slice(&self.http_body[src_offset as usize..(src_offset + append_size) as usize]);
