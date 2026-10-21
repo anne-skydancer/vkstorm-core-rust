@@ -917,6 +917,30 @@ pub(crate) struct opj_j2k_enc {
 }
 pub(crate) type opj_j2k_enc_t = opj_j2k_enc;
 
+/** Entry of a TLM marker segment */
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub(crate) struct opj_j2k_tlm_tile_part_info {
+  /** Tile index of the tile part. Ttlmi field */
+  pub m_tile_index: OPJ_UINT16,
+  /** Length in bytes, from the beginning of the SOT marker to the end of
+   * the bit stream data for that tile-part. Ptlmi field */
+  pub m_length: OPJ_UINT32,
+}
+pub(crate) type opj_j2k_tlm_tile_part_info_t = opj_j2k_tlm_tile_part_info;
+
+/** Information got from the concatenation of TLM marker segments. */
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub(crate) struct opj_j2k_tlm_info {
+  /** Number of entries in m_tile_part_infos. */
+  pub m_entries_count: OPJ_UINT32,
+  /** Array of m_entries_count values. */
+  pub m_tile_part_infos: *mut opj_j2k_tlm_tile_part_info_t,
+  pub m_is_invalid: OPJ_BOOL,
+}
+pub(crate) type opj_j2k_tlm_info_t = opj_j2k_tlm_info;
+
 #[repr(C)]
 #[derive(Copy, Clone)]
 pub(crate) struct opj_j2k_dec {
@@ -934,6 +958,16 @@ pub(crate) struct opj_j2k_dec {
   pub m_last_tile_part: OPJ_BOOL,
   pub m_numcomps_to_decode: OPJ_UINT32,
   pub m_comps_indices_to_decode: *mut OPJ_UINT32,
+  pub m_tlm: opj_j2k_tlm_info_t,
+  /** Below if used when there's TLM information available and we use
+   * opj_set_decoded_area() to a subset of all tiles.
+   */
+  /* Current index in m_intersecting_tile_parts_offset[] to seek to */
+  pub m_idx_intersecting_tile_parts: OPJ_UINT32,
+  /* Number of elements of m_intersecting_tile_parts_offset[] */
+  pub m_num_intersecting_tile_parts: OPJ_UINT32,
+  /* Start offset of contributing tile parts */
+  pub m_intersecting_tile_parts_offset: *mut OPJ_OFF_T,
   pub m_can_decode: bool,
   pub m_discard_tiles: bool,
   pub m_skip_data: bool,

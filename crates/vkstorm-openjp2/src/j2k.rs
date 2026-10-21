@@ -1658,6 +1658,10 @@ fn opj_j2k_read_siz(
       l_current_tile_param = l_current_tile_param.offset(1);
       i += 1;
     }
+    /*Allocate and initialize some elements of codestrem index*/
+    if opj_j2k_allocate_tile_element_cstr_index(p_j2k) == 0 {
+      return 0i32;
+    }
     p_j2k.m_specific_param.m_decoder.m_state = J2KState::MH;
     opj_image_comp_header_update(l_image, l_cp);
     1i32
@@ -3052,7 +3056,7 @@ fn opj_j2k_read_crg(
  * @param       p_manager               the user event manager.
 */
 fn opj_j2k_read_tlm(
-  mut _p_j2k: &mut opj_j2k,
+  mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
   mut p_header_size: OPJ_UINT32,
   mut p_manager: &mut opj_event_mgr,
@@ -3062,41 +3066,125 @@ fn opj_j2k_read_tlm(
     let mut l_Stlm: OPJ_UINT32 = 0;
     let mut l_ST: OPJ_UINT32 = 0;
     let mut l_SP: OPJ_UINT32 = 0;
-    let mut l_tot_num_tp_remaining: OPJ_UINT32 = 0;
-    let mut l_quotient: OPJ_UINT32 = 0;
     let mut l_Ptlm_size: OPJ_UINT32 = 0;
+    let mut l_entry_size: OPJ_UINT32 = 0;
+    let mut l_num_tileparts: OPJ_UINT32 = 0;
+    let mut i: OPJ_UINT32 = 0;
+    let mut l_tile_part_infos = core::ptr::null_mut::<opj_j2k_tlm_tile_part_info_t>();
+    let l_tlm: *mut opj_j2k_tlm_info_t = &mut p_j2k.m_specific_param.m_decoder.m_tlm;
     /* preconditions */
-    /* Stlm */
 
     assert!(!p_header_data.is_null());
     if p_header_size < 2u32 {
-      event_msg!(p_manager, EVT_ERROR, "Error reading TLM marker\n",);
+      event_msg!(p_manager, EVT_ERROR, "Error reading TLM marker.\n",);
       return 0i32;
     }
     p_header_size = (p_header_size as core::ffi::c_uint).wrapping_sub(2u32) as OPJ_UINT32;
-    opj_read_bytes(p_header_data, &mut l_Ztlm, 1 as OPJ_UINT32);
+
+    if (*l_tlm).m_is_invalid != 0 {
+      return 1i32;
+    }
+
+    opj_read_bytes(p_header_data, &mut l_Ztlm, 1 as OPJ_UINT32); /* Ztlm */
     p_header_data = p_header_data.offset(1);
-    opj_read_bytes(p_header_data, &mut l_Stlm, 1 as OPJ_UINT32);
+    opj_read_bytes(p_header_data, &mut l_Stlm, 1 as OPJ_UINT32); /* Stlm */
     p_header_data = p_header_data.offset(1);
     l_ST = l_Stlm >> 4i32 & 0x3u32;
+    if l_ST == 3u32 {
+      (*l_tlm).m_is_invalid = 1i32;
+      event_msg!(
+        p_manager,
+        EVT_WARNING,
+        "opj_j2k_read_tlm(): ST = 3 is invalid.\n",
+      );
+      return 1i32;
+    }
     l_SP = l_Stlm >> 6i32 & 0x1u32;
     l_Ptlm_size = l_SP.wrapping_add(1u32).wrapping_mul(2u32);
-    l_quotient = l_Ptlm_size.wrapping_add(l_ST);
-    l_tot_num_tp_remaining = p_header_size.wrapping_rem(l_quotient);
-    if l_tot_num_tp_remaining != 0u32 {
-      event_msg!(p_manager, EVT_ERROR, "Error reading TLM marker\n",);
-      return 0i32;
+    l_entry_size = l_Ptlm_size.wrapping_add(l_ST);
+
+    if p_header_size.wrapping_rem(l_entry_size) != 0u32 {
+      (*l_tlm).m_is_invalid = 1i32;
+      event_msg!(
+        p_manager,
+        EVT_WARNING,
+        "opj_j2k_read_tlm(): TLM marker not of expected size.\n",
+      );
+      return 1i32;
     }
-    /* FIXME Do not care of this at the moment since only local variables are set here */
-    /*
-    for
-            (i = 0; i < l_tot_num_tp; ++i)
+
+    l_num_tileparts = p_header_size.wrapping_div(l_entry_size);
+    if l_num_tileparts == 0u32 {
+      /* not totally sure if this is valid... */
+      return 1i32;
+    }
+
+    /* Highly unlikely, unless there are gazillions of TLM markers */
+    if (*l_tlm).m_entries_count > u32::MAX.wrapping_sub(l_num_tileparts)
+      || ((*l_tlm).m_entries_count.wrapping_add(l_num_tileparts) as usize)
+        > (u32::MAX as usize) / core::mem::size_of::<opj_j2k_tlm_tile_part_info_t>()
     {
-            opj_read_bytes(p_header_data,&l_Ttlm_i,l_ST);                           // Ttlm_i
-            p_header_data += l_ST;
-            opj_read_bytes(p_header_data,&l_Ptlm_i,l_Ptlm_size);            // Ptlm_i
-            p_header_data += l_Ptlm_size;
-    }*/
+      (*l_tlm).m_is_invalid = 1i32;
+      event_msg!(
+        p_manager,
+        EVT_WARNING,
+        "opj_j2k_read_tlm(): too many TLM markers.\n",
+      );
+      return 1i32;
+    }
+
+    l_tile_part_infos = opj_realloc(
+      (*l_tlm).m_tile_part_infos as *mut core::ffi::c_void,
+      ((*l_tlm).m_entries_count.wrapping_add(l_num_tileparts) as usize)
+        .wrapping_mul(core::mem::size_of::<opj_j2k_tlm_tile_part_info_t>()),
+    ) as *mut opj_j2k_tlm_tile_part_info_t;
+    if l_tile_part_infos.is_null() {
+      (*l_tlm).m_is_invalid = 1i32;
+      event_msg!(
+        p_manager,
+        EVT_WARNING,
+        "opj_j2k_read_tlm(): cannot allocate m_tile_part_infos.\n",
+      );
+      return 1i32;
+    }
+
+    (*l_tlm).m_tile_part_infos = l_tile_part_infos;
+
+    i = 0 as OPJ_UINT32;
+    while i < l_num_tileparts {
+      let mut l_tile_index: OPJ_UINT32 = 0;
+      let mut l_length: OPJ_UINT32 = 0;
+
+      /* Read Ttlm_i */
+      if l_ST == 0u32 {
+        l_tile_index = (*l_tlm).m_entries_count;
+      } else {
+        opj_read_bytes(p_header_data, &mut l_tile_index, l_ST);
+        p_header_data = p_header_data.offset(l_ST as isize);
+      }
+
+      if l_tile_index >= p_j2k.m_cp.tw.wrapping_mul(p_j2k.m_cp.th) {
+        (*l_tlm).m_is_invalid = 1i32;
+        event_msg!(
+          p_manager,
+          EVT_WARNING,
+          "opj_j2k_read_tlm(): invalid tile number %d\n",
+          l_tile_index,
+        );
+        return 1i32;
+      }
+
+      /* Read Ptlm_i */
+      opj_read_bytes(p_header_data, &mut l_length, l_Ptlm_size);
+      p_header_data = p_header_data.offset(l_Ptlm_size as isize);
+
+      (*l_tile_part_infos.offset((*l_tlm).m_entries_count as isize)).m_tile_index =
+        l_tile_index as OPJ_UINT16;
+      (*l_tile_part_infos.offset((*l_tlm).m_entries_count as isize)).m_length = l_length;
+      (*l_tlm).m_entries_count = (*l_tlm).m_entries_count.wrapping_add(1);
+      i += 1;
+    }
+
     1i32
   }
 }
@@ -4091,7 +4179,7 @@ fn opj_j2k_read_sot(
         != p_j2k.m_specific_param.m_decoder.m_tile_ind_to_dec as OPJ_UINT32;
     }
     /* Index */
-    if !p_j2k.cstr_index.is_null() {
+    {
       assert!(!(*p_j2k.cstr_index).tile_index.is_null());
       (*(*p_j2k.cstr_index)
         .tile_index
@@ -4101,7 +4189,26 @@ fn opj_j2k_read_sot(
         .tile_index
         .offset(p_j2k.m_current_tile_number as isize))
       .current_tpsno = l_current_part;
-      if l_num_parts != 0u32 {
+
+      if p_j2k.m_specific_param.m_decoder.m_tlm.m_is_invalid == 0
+        && l_num_parts
+          > (*(*p_j2k.cstr_index)
+            .tile_index
+            .offset(p_j2k.m_current_tile_number as isize))
+          .nb_tps
+      {
+        event_msg!(
+          p_manager,
+          EVT_WARNING,
+          "SOT marker for tile %u declares more tile-parts than found in TLM marker.",
+          p_j2k.m_current_tile_number,
+        );
+        p_j2k.m_specific_param.m_decoder.m_tlm.m_is_invalid = 1i32;
+      }
+
+      if p_j2k.m_specific_param.m_decoder.m_tlm.m_is_invalid == 0 {
+        /* do nothing */
+      } else if l_num_parts != 0u32 {
         (*(*p_j2k.cstr_index)
           .tile_index
           .offset(p_j2k.m_current_tile_number as isize))
@@ -4648,24 +4755,36 @@ fn opj_j2k_read_sod(
     }
     /* Index */
     l_cstr_index = p_j2k.cstr_index;
-    if !l_cstr_index.is_null() {
+    {
       let mut l_current_pos = opj_stream_tell(p_stream) - 2i64;
       let mut l_current_tile_part = (*(*l_cstr_index)
         .tile_index
         .offset(p_j2k.m_current_tile_number as isize))
       .current_tpsno;
-      (*(*(*l_cstr_index)
+      if !(*(*l_cstr_index)
         .tile_index
         .offset(p_j2k.m_current_tile_number as isize))
       .tp_index
-      .offset(l_current_tile_part as isize))
-      .end_header = l_current_pos;
-      (*(*(*l_cstr_index)
-        .tile_index
-        .offset(p_j2k.m_current_tile_number as isize))
-      .tp_index
-      .offset(l_current_tile_part as isize))
-      .end_pos = l_current_pos + p_j2k.m_specific_param.m_decoder.m_sot_length as i64 + 2i64;
+      .is_null()
+        && l_current_tile_part
+          < (*(*l_cstr_index)
+            .tile_index
+            .offset(p_j2k.m_current_tile_number as isize))
+          .nb_tps
+      {
+        (*(*(*l_cstr_index)
+          .tile_index
+          .offset(p_j2k.m_current_tile_number as isize))
+        .tp_index
+        .offset(l_current_tile_part as isize))
+        .end_header = l_current_pos;
+        (*(*(*l_cstr_index)
+          .tile_index
+          .offset(p_j2k.m_current_tile_number as isize))
+        .tp_index
+        .offset(l_current_tile_part as isize))
+        .end_pos = l_current_pos + p_j2k.m_specific_param.m_decoder.m_sot_length as i64 + 2i64;
+      }
       if 0i32
         == opj_j2k_add_tlmarker(
           p_j2k.m_current_tile_number,
@@ -8117,6 +8236,7 @@ fn opj_j2k_add_tlmarker(
       if !(*(*cstr_index).tile_index.offset(tileno as isize))
         .tp_index
         .is_null()
+        && l_current_tile_part < (*(*cstr_index).tile_index.offset(tileno as isize)).nb_tps
       {
         (*(*(*cstr_index).tile_index.offset(tileno as isize))
           .tp_index
@@ -8187,12 +8307,6 @@ pub(crate) fn opj_j2k_read_header(
     }
     /* Copy codestream image information to the output image */
     opj_copy_image_header(p_j2k.m_private_image, *p_image);
-    /*Allocate and initialize some elements of codestrem index*/
-    if opj_j2k_allocate_tile_element_cstr_index(p_j2k) == 0 {
-      opj_image_destroy(*p_image);
-      *p_image = core::ptr::null_mut::<opj_image_t>();
-      return 0i32;
-    }
     1i32
   }
 }
@@ -8630,6 +8744,116 @@ fn opj_j2k_decoding_validation(
 /* *
  * The read header procedure.
  */
+/** Fill p_j2k->cstr_index->tp_index[].start_pos/end_pos fields from TLM marker segments */
+fn opj_j2k_build_tp_index_from_tlm(mut p_j2k: &mut opj_j2k, mut p_manager: &mut opj_event_mgr) {
+  unsafe {
+    let mut i: OPJ_UINT32 = 0;
+    let mut l_cur_offset: OPJ_OFF_T = 0;
+    let l_tlm: *mut opj_j2k_tlm_info_t = &mut p_j2k.m_specific_param.m_decoder.m_tlm;
+
+    assert!((*p_j2k.cstr_index).main_head_end > 0i64);
+    assert!((*p_j2k.cstr_index).nb_of_tiles > 0u32);
+    assert!(!(*p_j2k.cstr_index).tile_index.is_null());
+
+    if (*l_tlm).m_entries_count == 0u32 {
+      (*l_tlm).m_is_invalid = 1i32;
+      return;
+    }
+
+    if (*l_tlm).m_is_invalid != 0 {
+      return;
+    }
+
+    /* Initial pass to count the number of tile-parts per tile */
+    i = 0 as OPJ_UINT32;
+    while i < (*l_tlm).m_entries_count {
+      let l_tile_index_no =
+        (*(*l_tlm).m_tile_part_infos.offset(i as isize)).m_tile_index as OPJ_UINT32;
+      assert!(l_tile_index_no < (*p_j2k.cstr_index).nb_of_tiles);
+      (*(*p_j2k.cstr_index).tile_index.offset(l_tile_index_no as isize)).tileno = l_tile_index_no;
+      let fresh = &mut (*(*p_j2k.cstr_index).tile_index.offset(l_tile_index_no as isize)).current_nb_tps;
+      *fresh = (*fresh).wrapping_add(1);
+      i += 1;
+    }
+
+    /* Now check that all tiles have at least one tile-part */
+    let mut l_error = false;
+    i = 0 as OPJ_UINT32;
+    while i < (*p_j2k.cstr_index).nb_of_tiles {
+      if (*(*p_j2k.cstr_index).tile_index.offset(i as isize)).current_nb_tps == 0u32 {
+        event_msg!(
+          p_manager,
+          EVT_ERROR,
+          "opj_j2k_build_tp_index_from_tlm(): tile %d has no registered tile-part in TLM marker segments.\n",
+          i,
+        );
+        l_error = true;
+        break;
+      }
+      i += 1;
+    }
+
+    /* Final pass to fill p_j2k->cstr_index */
+    if !l_error {
+      l_cur_offset = (*p_j2k.cstr_index).main_head_end;
+      i = 0 as OPJ_UINT32;
+      while i < (*l_tlm).m_entries_count {
+        let l_tile_index_no =
+          (*(*l_tlm).m_tile_part_infos.offset(i as isize)).m_tile_index as OPJ_UINT32;
+        let l_tile_index: *mut opj_tile_index_t =
+          &mut *(*p_j2k.cstr_index).tile_index.offset(l_tile_index_no as isize);
+        if (*l_tile_index).tp_index.is_null() {
+          (*l_tile_index).tp_index = opj_calloc(
+            (*l_tile_index).current_nb_tps as size_t,
+            core::mem::size_of::<opj_tp_index_t>(),
+          ) as *mut opj_tp_index_t;
+          if (*l_tile_index).tp_index.is_null() {
+            event_msg!(
+              p_manager,
+              EVT_ERROR,
+              "opj_j2k_build_tp_index_from_tlm(): tile index allocation failed\n",
+            );
+            l_error = true;
+            break;
+          }
+        }
+
+        assert!((*l_tile_index).nb_tps < (*l_tile_index).current_nb_tps);
+        (*(*l_tile_index).tp_index.offset((*l_tile_index).nb_tps as isize)).start_pos = l_cur_offset;
+        /* We don't know how to set the tp_index[].end_header field, but this is not really needed */
+        /* If there would be no markers between SOT and SOD, that would be : */
+        /* l_tile_index->tp_index[l_tile_index->nb_tps].end_header = l_cur_offset + 12; */
+        (*(*l_tile_index).tp_index.offset((*l_tile_index).nb_tps as isize)).end_pos =
+          l_cur_offset + (*(*l_tlm).m_tile_part_infos.offset(i as isize)).m_length as OPJ_OFF_T;
+        (*l_tile_index).nb_tps = (*l_tile_index).nb_tps.wrapping_add(1);
+
+        l_cur_offset += (*(*l_tlm).m_tile_part_infos.offset(i as isize)).m_length as OPJ_OFF_T;
+        i += 1;
+      }
+    }
+
+    if !l_error {
+      return;
+    }
+
+    /* error: */
+    (*l_tlm).m_is_invalid = 1i32;
+    i = 0 as OPJ_UINT32;
+    while i < (*l_tlm).m_entries_count {
+      let l_tile_index =
+        (*(*l_tlm).m_tile_part_infos.offset(i as isize)).m_tile_index as OPJ_UINT32;
+      (*(*p_j2k.cstr_index).tile_index.offset(l_tile_index as isize)).current_nb_tps = 0 as OPJ_UINT32;
+      opj_free(
+        (*(*p_j2k.cstr_index).tile_index.offset(l_tile_index as isize)).tp_index
+          as *mut core::ffi::c_void,
+      );
+      (*(*p_j2k.cstr_index).tile_index.offset(l_tile_index as isize)).tp_index =
+        core::ptr::null_mut::<opj_tp_index_t>();
+      i += 1;
+    }
+  }
+}
+
 fn opj_j2k_read_header_procedure(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -8841,6 +9065,10 @@ fn opj_j2k_read_header_procedure(
     /* Position of the last element if the main header */
     (*p_j2k.cstr_index).main_head_end =
       (opj_stream_tell(p_stream) as OPJ_UINT32).wrapping_sub(2u32) as OPJ_OFF_T;
+
+    /* Build tile-part index from TLM information */
+    opj_j2k_build_tp_index_from_tlm(p_j2k, p_manager);
+
     /* Next step: read a tile-part header */
     p_j2k.m_specific_param.m_decoder.m_state = J2KState::TPHSOT;
     1i32
@@ -9054,7 +9282,17 @@ impl Drop for opj_j2k {
         );
         self.m_specific_param.m_decoder.m_comps_indices_to_decode =
           core::ptr::null_mut::<OPJ_UINT32>();
-        self.m_specific_param.m_decoder.m_numcomps_to_decode = 0 as OPJ_UINT32
+        self.m_specific_param.m_decoder.m_numcomps_to_decode = 0 as OPJ_UINT32;
+
+        opj_free(self.m_specific_param.m_decoder.m_tlm.m_tile_part_infos as *mut core::ffi::c_void);
+        self.m_specific_param.m_decoder.m_tlm.m_tile_part_infos =
+          core::ptr::null_mut::<opj_j2k_tlm_tile_part_info_t>();
+
+        opj_free(
+          self.m_specific_param.m_decoder.m_intersecting_tile_parts_offset as *mut core::ffi::c_void,
+        );
+        self.m_specific_param.m_decoder.m_intersecting_tile_parts_offset =
+          core::ptr::null_mut::<OPJ_OFF_T>();
       } else {
         if !self
           .m_specific_param
@@ -9443,6 +9681,46 @@ pub(crate) fn opj_j2k_read_tile_header(
     /* We need to encounter a SOT marker (a new tile-part header) */
     /* Read into the codestream until reach the EOC or ! can_decode ??? FIXME */
     while !p_j2k.m_specific_param.m_decoder.m_can_decode && l_current_marker != J2KMarker::EOC {
+      if p_j2k.m_specific_param.m_decoder.m_num_intersecting_tile_parts > 0u32
+        && p_j2k.m_specific_param.m_decoder.m_idx_intersecting_tile_parts
+          < p_j2k.m_specific_param.m_decoder.m_num_intersecting_tile_parts
+      {
+        let next_tp_sot_pos: OPJ_OFF_T = *p_j2k
+          .m_specific_param
+          .m_decoder
+          .m_intersecting_tile_parts_offset
+          .offset(p_j2k.m_specific_param.m_decoder.m_idx_intersecting_tile_parts as isize);
+        p_j2k.m_specific_param.m_decoder.m_idx_intersecting_tile_parts = p_j2k
+          .m_specific_param
+          .m_decoder
+          .m_idx_intersecting_tile_parts
+          .wrapping_add(1);
+        if opj_stream_seek(p_stream, next_tp_sot_pos, p_manager) == 0 {
+          event_msg!(p_manager, EVT_ERROR, "Problem with seek function\n",);
+          return false;
+        }
+
+        /* Try to read 2 bytes (the marker ID) from stream and copy them into the buffer */
+        if opj_stream_read_data(
+          p_stream,
+          p_j2k.m_specific_param.m_decoder.m_header_data,
+          2 as OPJ_SIZE_T,
+          p_manager,
+        ) != 2
+        {
+          event_msg!(p_manager, EVT_ERROR, "Stream too short\n",);
+          return false;
+        }
+
+        /* Read 2 bytes from the buffer as the marker ID */
+        l_current_marker = J2KMarker::from_buffer(p_j2k.m_specific_param.m_decoder.m_header_data);
+
+        if l_current_marker != J2KMarker::SOT {
+          event_msg!(p_manager, EVT_ERROR, "Did not get expected SOT marker\n",);
+          return false;
+        }
+      }
+
       /* Try to read until the Start Of Data is detected */
       while l_current_marker != J2KMarker::SOD {
         if opj_stream_get_number_byte_left(p_stream) == 0i64 {
@@ -9479,7 +9757,17 @@ pub(crate) fn opj_j2k_read_tile_header(
             break;
           } else {
             /* Why this condition? FIXME */
-            if p_j2k.m_specific_param.m_decoder.m_state & J2KState::TPH != J2KState::NONE {
+            if p_j2k.m_specific_param.m_decoder.m_state & J2KState::TPH != J2KState::NONE
+              && p_j2k.m_specific_param.m_decoder.m_sot_length != 0u32
+            {
+              if p_j2k.m_specific_param.m_decoder.m_sot_length < l_marker_size.wrapping_add(2u32) {
+                event_msg!(
+                  p_manager,
+                  EVT_ERROR,
+                  "Sot length is less than marker size + marker ID\n",
+                );
+                return false;
+              }
               p_j2k.m_specific_param.m_decoder.m_sot_length =
                 (p_j2k.m_specific_param.m_decoder.m_sot_length as core::ffi::c_uint)
                   .wrapping_sub(l_marker_size.wrapping_add(2u32)) as OPJ_UINT32
@@ -9621,6 +9909,63 @@ pub(crate) fn opj_j2k_read_tile_header(
         if opj_j2k_read_sod(p_j2k, p_stream, p_manager) == 0 {
           return false;
         }
+
+        /* Check if we can use the TLM index to access the next tile-part */
+        if !p_j2k.m_specific_param.m_decoder.m_can_decode
+          && p_j2k.m_specific_param.m_decoder.m_tile_ind_to_dec >= 0i32
+          && p_j2k.m_current_tile_number
+            == p_j2k.m_specific_param.m_decoder.m_tile_ind_to_dec as OPJ_UINT32
+          && p_j2k.m_specific_param.m_decoder.m_tlm.m_is_invalid == 0
+          && opj_stream_has_seek(p_stream) != 0
+        {
+          l_tcp = p_j2k.m_cp.tcps.offset(p_j2k.m_current_tile_number as isize);
+          if (*l_tcp).m_nb_tile_parts
+            == (*(*p_j2k.cstr_index)
+              .tile_index
+              .offset(p_j2k.m_current_tile_number as isize))
+            .nb_tps
+            && ((*l_tcp).m_current_tile_part_number as OPJ_UINT32).wrapping_add(1u32)
+              < (*l_tcp).m_nb_tile_parts
+          {
+            let next_tp_sot_pos: OPJ_OFF_T = (*(*(*p_j2k.cstr_index)
+              .tile_index
+              .offset(p_j2k.m_current_tile_number as isize))
+            .tp_index
+            .offset(((*l_tcp).m_current_tile_part_number + 1i32) as isize))
+            .start_pos;
+
+            if next_tp_sot_pos != opj_stream_tell(p_stream) {
+              if opj_stream_seek(p_stream, next_tp_sot_pos, p_manager) == 0 {
+                event_msg!(p_manager, EVT_ERROR, "Problem with seek function\n",);
+                return false;
+              }
+            }
+
+            /* Try to read 2 bytes (the marker ID) from stream and copy them into the buffer */
+            if opj_stream_read_data(
+              p_stream,
+              p_j2k.m_specific_param.m_decoder.m_header_data,
+              2 as OPJ_SIZE_T,
+              p_manager,
+            ) != 2
+            {
+              event_msg!(p_manager, EVT_ERROR, "Stream too short\n",);
+              return false;
+            }
+
+            /* Read 2 bytes from the buffer as the marker ID */
+            l_current_marker =
+              J2KMarker::from_buffer(p_j2k.m_specific_param.m_decoder.m_header_data);
+
+            if l_current_marker != J2KMarker::SOT {
+              event_msg!(p_manager, EVT_ERROR, "Did not get expected SOT marker\n",);
+              return false;
+            }
+
+            continue;
+          }
+        }
+
         if p_j2k.m_specific_param.m_decoder.m_can_decode
           && !p_j2k
             .m_specific_param
@@ -9633,7 +9978,19 @@ pub(crate) fn opj_j2k_read_tile_header(
             .m_specific_param
             .m_decoder
             .m_nb_tile_parts_correction_checked = true;
-          if opj_j2k_need_nb_tile_parts_correction(
+          if (*p_j2k.m_cp.tcps.offset(p_j2k.m_current_tile_number as isize)).m_nb_tile_parts
+            == 1u32
+          {
+            /* Skip opj_j2k_need_nb_tile_parts_correction() if there is
+             * only a single tile part declared. The
+             * opj_j2k_need_nb_tile_parts_correction() hack was needed
+             * for files with 5 declared tileparts (where they were
+             * actually 6).
+             * Doing it systematically hurts performance when reading
+             * Sentinel2 L1C JPEG2000 files as explained in
+             * https://lists.osgeo.org/pipermail/gdal-dev/2024-November/059805.html
+             */
+          } else if opj_j2k_need_nb_tile_parts_correction(
             p_stream,
             p_j2k.m_current_tile_number,
             &mut l_correction_needed,
@@ -11971,6 +12328,7 @@ fn opj_j2k_decode_tiles(
   unsafe {
     let mut tile_info = TileInfo::default();
     let mut nr_tiles = 0 as OPJ_UINT32;
+    let mut end_pos: OPJ_OFF_T = 0;
     /* Particular case for whole single tile decoding */
     /* We can avoid allocating intermediate tile buffers */
     if p_j2k.m_cp.tw == 1u32
@@ -11986,7 +12344,9 @@ fn opj_j2k_decode_tiles(
       if !opj_j2k_read_tile_header(p_j2k, p_stream, &mut tile_info, p_manager) {
         return 0i32;
       }
-      if opj_j2k_decode_tile(p_j2k, tile_info.index, None, p_stream, p_manager) == 0 {
+      if !tile_info.go_on
+        || opj_j2k_decode_tile(p_j2k, tile_info.index, None, p_stream, p_manager) == 0
+      {
         event_msg!(p_manager, EVT_ERROR, "Failed to decode tile 1/1\n",);
         return 0i32;
       }
@@ -12006,6 +12366,98 @@ fn opj_j2k_decode_tiles(
       }
       return 1i32;
     }
+
+    p_j2k.m_specific_param.m_decoder.m_num_intersecting_tile_parts = 0 as OPJ_UINT32;
+    p_j2k.m_specific_param.m_decoder.m_idx_intersecting_tile_parts = 0 as OPJ_UINT32;
+    opj_free(
+      p_j2k.m_specific_param.m_decoder.m_intersecting_tile_parts_offset as *mut core::ffi::c_void,
+    );
+    p_j2k.m_specific_param.m_decoder.m_intersecting_tile_parts_offset =
+      core::ptr::null_mut::<OPJ_OFF_T>();
+
+    /* If the area to decode only intersects a subset of tiles, and we have
+     * valid TLM information, then use it to plan the tilepart offsets to
+     * seek to.
+     */
+    if !(p_j2k.m_specific_param.m_decoder.m_start_tile_x == 0u32
+      && p_j2k.m_specific_param.m_decoder.m_start_tile_y == 0u32
+      && p_j2k.m_specific_param.m_decoder.m_end_tile_x == p_j2k.m_cp.tw
+      && p_j2k.m_specific_param.m_decoder.m_end_tile_y == p_j2k.m_cp.th)
+      && p_j2k.m_specific_param.m_decoder.m_tlm.m_is_invalid == 0
+      && opj_stream_has_seek(p_stream) != 0
+    {
+      let mut m_num_intersecting_tile_parts = 0 as OPJ_UINT32;
+      let mut j: OPJ_UINT32 = 0;
+      let l_tile_index = (*p_j2k.cstr_index).tile_index;
+
+      j = 0 as OPJ_UINT32;
+      while j < p_j2k.m_cp.tw.wrapping_mul(p_j2k.m_cp.th) {
+        if (*l_tile_index.offset(j as isize)).nb_tps > 0u32
+          && (*(*l_tile_index.offset(j as isize))
+            .tp_index
+            .offset((*l_tile_index.offset(j as isize)).nb_tps.wrapping_sub(1u32) as isize))
+          .end_pos
+            > end_pos
+        {
+          end_pos = (*(*l_tile_index.offset(j as isize))
+            .tp_index
+            .offset((*l_tile_index.offset(j as isize)).nb_tps.wrapping_sub(1u32) as isize))
+          .end_pos;
+        }
+        j += 1;
+      }
+
+      j = p_j2k.m_specific_param.m_decoder.m_start_tile_y;
+      while j < p_j2k.m_specific_param.m_decoder.m_end_tile_y {
+        let mut i: OPJ_UINT32 = p_j2k.m_specific_param.m_decoder.m_start_tile_x;
+        while i < p_j2k.m_specific_param.m_decoder.m_end_tile_x {
+          let tile_number = j.wrapping_mul(p_j2k.m_cp.tw).wrapping_add(i);
+          m_num_intersecting_tile_parts = m_num_intersecting_tile_parts
+            .wrapping_add((*l_tile_index.offset(tile_number as isize)).nb_tps);
+          i += 1;
+        }
+        j += 1;
+      }
+
+      p_j2k.m_specific_param.m_decoder.m_intersecting_tile_parts_offset = opj_malloc(
+        (m_num_intersecting_tile_parts as usize).wrapping_mul(core::mem::size_of::<OPJ_OFF_T>()),
+      ) as *mut OPJ_OFF_T;
+      if m_num_intersecting_tile_parts > 0u32
+        && !p_j2k
+          .m_specific_param
+          .m_decoder
+          .m_intersecting_tile_parts_offset
+          .is_null()
+      {
+        let mut idx = 0 as OPJ_UINT32;
+        let l_offsets = p_j2k.m_specific_param.m_decoder.m_intersecting_tile_parts_offset;
+        j = p_j2k.m_specific_param.m_decoder.m_start_tile_y;
+        while j < p_j2k.m_specific_param.m_decoder.m_end_tile_y {
+          let mut i: OPJ_UINT32 = p_j2k.m_specific_param.m_decoder.m_start_tile_x;
+          while i < p_j2k.m_specific_param.m_decoder.m_end_tile_x {
+            let tile_number = j.wrapping_mul(p_j2k.m_cp.tw).wrapping_add(i);
+            let mut k: OPJ_UINT32 = 0;
+            while k < (*l_tile_index.offset(tile_number as isize)).nb_tps {
+              let next_tp_sot_pos: OPJ_OFF_T = (*(*l_tile_index.offset(tile_number as isize))
+                .tp_index
+                .offset(k as isize))
+              .start_pos;
+              *l_offsets.offset(idx as isize) = next_tp_sot_pos;
+              idx = idx.wrapping_add(1);
+              k += 1;
+            }
+            i += 1;
+          }
+          j += 1;
+        }
+
+        p_j2k.m_specific_param.m_decoder.m_num_intersecting_tile_parts = idx;
+
+        /* Sort by increasing offset */
+        core::slice::from_raw_parts_mut(l_offsets, idx as usize).sort_unstable();
+      }
+    }
+
     loop {
       if p_j2k.m_cp.tw == 1u32
         && p_j2k.m_cp.th == 1u32
@@ -12066,6 +12518,13 @@ fn opj_j2k_decode_tiles(
       if nr_tiles == p_j2k.m_cp.th.wrapping_mul(p_j2k.m_cp.tw) {
         break;
       }
+      if p_j2k.m_specific_param.m_decoder.m_num_intersecting_tile_parts > 0u32
+        && p_j2k.m_specific_param.m_decoder.m_idx_intersecting_tile_parts
+          == p_j2k.m_specific_param.m_decoder.m_num_intersecting_tile_parts
+      {
+        opj_stream_seek(p_stream, end_pos + 2i64, p_manager);
+        break;
+      }
     }
     if opj_j2k_are_all_used_components_decoded(p_j2k, p_manager) == 0 {
       return 0i32;
@@ -12099,12 +12558,6 @@ fn opj_j2k_decode_one_tile(
     let mut tile_info = TileInfo::default();
     let mut l_nb_tiles: OPJ_UINT32 = 0;
     let mut i: OPJ_UINT32 = 0;
-    /*Allocate and initialize some elements of codestrem index if not already done*/
-    if (*p_j2k.cstr_index).tile_index.is_null()
-      && opj_j2k_allocate_tile_element_cstr_index(p_j2k) == 0
-    {
-      return 0i32;
-    }
     /* Move into the codestream to the first SOT used to decode the desired tile */
     let l_tile_no_to_dec = p_j2k.m_specific_param.m_decoder.m_tile_ind_to_dec as OPJ_UINT32;
     if !(*p_j2k.cstr_index).tile_index.is_null()
@@ -12116,31 +12569,57 @@ fn opj_j2k_decode_one_tile(
       .nb_tps
         == 0
       {
-        /* the index for this tile has not been built,
-         *  so move to the last SOT read */
+        /* The index for this tile has not been built. This happens */
+        /* when the tile's tile-parts are interleaved with other */
+        /* tiles' tile-parts and the number of tile-parts (TNsot) was */
+        /* only declared in a tile-part not reached while decoding a */
+        /* previous tile. In that case we cannot rely on the recorded */
+        /* SOT positions, nor on m_last_sot_read_pos (which may point */
+        /* past the first tile-part of the requested tile), so seek */
+        /* back to the start of the codestream and read the tile-part */
+        /* headers in order. See issue #1558. */
         if opj_stream_seek(
           p_stream,
-          p_j2k.m_specific_param.m_decoder.m_last_sot_read_pos + 2i64,
+          (*p_j2k.cstr_index).main_head_end + 2i64,
           p_manager,
         ) == 0
         {
           event_msg!(p_manager, EVT_ERROR, "Problem with seek function\n",);
           return 0i32;
         }
-      } else if opj_stream_seek(
-        p_stream,
-        (*(*(*p_j2k.cstr_index)
+      } else {
+        let sot_pos: OPJ_OFF_T = (*(*(*p_j2k.cstr_index)
           .tile_index
           .offset(l_tile_no_to_dec as isize))
         .tp_index
         .offset(0))
-        .start_pos
-          + 2i64,
-        p_manager,
-      ) == 0
-      {
-        event_msg!(p_manager, EVT_ERROR, "Problem with seek function\n",);
-        return 0i32;
+        .start_pos;
+        let mut l_marker = J2KMarker::SOT;
+
+        if opj_stream_seek(p_stream, sot_pos, p_manager) == 0 {
+          event_msg!(p_manager, EVT_ERROR, "Problem with seek function\n",);
+          return 0i32;
+        }
+
+        /* Try to read 2 bytes (the marker ID) from stream and copy them into the buffer */
+        if opj_stream_read_data(
+          p_stream,
+          p_j2k.m_specific_param.m_decoder.m_header_data,
+          2 as OPJ_SIZE_T,
+          p_manager,
+        ) != 2
+        {
+          event_msg!(p_manager, EVT_ERROR, "Stream too short\n",);
+          return 0i32;
+        }
+
+        /* Read 2 bytes from the buffer as the marker ID */
+        l_marker = J2KMarker::from_buffer(p_j2k.m_specific_param.m_decoder.m_header_data);
+
+        if l_marker != J2KMarker::SOT {
+          event_msg!(p_manager, EVT_ERROR, "Did not get expected SOT marker\n",);
+          return 0i32;
+        }
       }
       /* Special case if we have previously read the EOC marker (if the previous tile getted is the last ) */
       if p_j2k.m_specific_param.m_decoder.m_state == J2KState::EOC {
