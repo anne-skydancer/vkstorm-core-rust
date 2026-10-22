@@ -3,7 +3,8 @@ name = "vkstorm-audio"
 description = "The viewer's audio engine for Vulkanstorm: the sound-effect mixer (voices, 3D positioning, attenuation, Doppler, wind), the output device, sound asset decoding and in-process parcel music streaming with fades and speaker fill, replacing SoLoud and the VLC music path"
 version.workspace = true
 edition.workspace = true
-license.workspace = true
+# The mixer is derived from SoLoud (zlib; LICENSE-soloud).
+license = "LGPL-2.1-only AND Zlib"
 repository.workspace = true
 
 [features]

@@ -1,3 +1,6 @@
+//! Derived from SoLoud (Copyright (c) 2013-2020 Jari Komppa), zlib licence;
+//! altered: rewritten in Rust. See LICENSE-soloud in this crate.
+//!
 //! The WAV reader the viewer's sound buffers load with: what SoLoud's
 //! `Wav::load` produces for a RIFF file (dr_wav 0.13.2's
 //! `drwav_init_memory` + `drwav_read_pcm_frames_f32`, then SoLoud's

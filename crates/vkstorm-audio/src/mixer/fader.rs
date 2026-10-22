@@ -1,3 +1,6 @@
+//! Derived from SoLoud (Copyright (c) 2013-2020 Jari Komppa), zlib licence;
+//! altered: rewritten in Rust. See LICENSE-soloud in this crate.
+//!
 //! SoLoud's `Fader` (`soloud_fader.cpp`): a linear ramp in stream time,
 //! used for the per-voice volume fade and the scheduled stop.
 //!

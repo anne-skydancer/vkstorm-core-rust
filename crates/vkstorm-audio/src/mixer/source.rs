@@ -1,3 +1,6 @@
+//! Derived from SoLoud (Copyright (c) 2013-2020 Jari Komppa), zlib licence;
+//! altered: rewritten in Rust. See LICENSE-soloud in this crate.
+//!
 //! Audio sources: SoLoud's `Wav` (planar float sample data with the
 //! `AudioSource` attributes voices inherit) and the voice-side instances
 //! (`WavInstance`, the adapter's wind instance).

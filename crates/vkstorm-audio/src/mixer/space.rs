@@ -1,3 +1,6 @@
+//! Derived from SoLoud (Copyright (c) 2013-2020 Jari Komppa), zlib licence;
+//! altered: rewritten in Rust. See LICENSE-soloud in this crate.
+//!
 //! SoLoud's 3D math (`soloud_core_3d.cpp`): vectors, the listener basis,
 //! distance attenuation, Doppler and the per-speaker panning, with the C's
 //! float operation order (`(x*x + y*y) + z*z`, `sqrt` in double rounded to

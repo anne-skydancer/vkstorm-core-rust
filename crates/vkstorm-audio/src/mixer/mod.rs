@@ -1,3 +1,6 @@
+//! Derived from SoLoud (Copyright (c) 2013-2020 Jari Komppa), zlib licence;
+//! altered: rewritten in Rust. See LICENSE-soloud in this crate.
+//!
 //! The sound-effect mixer: a port of the parts of SoLoud 202002
 //! (`e82fd32c1f`, with the viewer package's patches) that the viewer's
 //! SoLoud adapter exercises, plus the parcel music bus.

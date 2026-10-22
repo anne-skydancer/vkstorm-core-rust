@@ -1,3 +1,6 @@
+//! Derived from SoLoud (Copyright (c) 2013-2020 Jari Komppa), zlib licence;
+//! altered: rewritten in Rust. See LICENSE-soloud in this crate.
+//!
 //! SoLoud's per-voice mixing arithmetic (`soloud.cpp`): the linear
 //! resampler, `panAndExpand` (channel volume ramps and source-to-output
 //! channel maps) and `clip_internal` (global volume ramp, round-off clipper,
