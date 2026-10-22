@@ -621,18 +621,15 @@ impl MusicBus {
         let in_ch = (layout.channels as usize).clamp(1, MAX_CH);
         let stereo = in_ch == 2
             && (layout.mask == 0 || layout.mask == (SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT));
-        let mono = in_ch == 1;
-        if (stereo || mono) && self.fill != 0 {
+        // Only stereo input is filled (VLC's filter bypassed every other
+        // layout, mono included: see the record in speakerfill_record.rs)
+        if stereo && self.fill != 0 {
             // Speaker fill (VLC's Fill(), then the gain of Process()).
             let out_mask = self.output.effective_mask();
             let fill = self.fill;
             for f in 0..frames {
                 let factor = self.frame_factor(first_frame + f as u64);
-                let (l, r) = if mono {
-                    (self.pull[f], self.pull[f])
-                } else {
-                    (self.pull[f * 2], self.pull[f * 2 + 1])
-                };
+                let (l, r) = (self.pull[f * 2], self.pull[f * 2 + 1]);
                 let left = l * HALF_SQRT2;
                 let right = r * HALF_SQRT2;
                 let dst = &mut out[f * channels..(f + 1) * channels];
