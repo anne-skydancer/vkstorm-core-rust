@@ -14,11 +14,17 @@ replaces the generated files in
   <viewer>/indra/newview/tests/fixtures/inventory/{cache,msgs}
   crates/vkstorm-inventory/tests/fixtures/{cache,msgs}
 
-keeping README.md, .gitattributes and the QA-mode validation file of the
-other standard library (c4_validation_qa.msvc.txt is recorded on Windows,
-c4_validation_qa.libstdcxx.txt on Linux: run the script on both to refresh
-both). It finishes by checking that the viewer and crate copies are
-byte-identical.
+keeping README.md, .gitattributes and the other platform's own records
+(c4_validation_qa.msvc.txt is recorded on Windows, c4_validation_qa.libstdcxx.txt
+and c5_write_safety.linux.txt on Linux: run the script on both to refresh
+both).
+
+A record run never passes (the test fails on purpose after writing
+DUMP_COMPLETE), so the exit status is not used: the script records twice
+into fresh directories, requires DUMP_COMPLETE in both and the two trees to
+be identical, and only then replaces the fixture trees. It finishes by
+checking that the viewer and crate copies are byte-identical; replay the
+viewer test afterwards to confirm.
 
 The executable needs the viewer's shared libraries: the script adds the
 executable's directory, its Release subdirectory, <build>/packages/lib/release
@@ -38,19 +44,19 @@ AREAS = ("cache", "msgs")
 KEEP = {"README.md", ".gitattributes"}
 
 
-def qa_file_for_this_platform():
-    return "c4_validation_qa.msvc.txt" if os.name == "nt" else "c4_validation_qa.libstdcxx.txt"
+def other_platform_files():
+    if os.name == "nt":
+        return {"c4_validation_qa.libstdcxx.txt", "c5_write_safety.linux.txt"}
+    return {"c4_validation_qa.msvc.txt"}
 
 
 def replace_generated(dest, generated):
     os.makedirs(dest, exist_ok=True)
-    this_qa = qa_file_for_this_platform()
+    keep = KEEP | other_platform_files()
     for name in os.listdir(dest):
         path = os.path.join(dest, name)
-        if name in KEEP:
+        if name in keep:
             continue
-        if name.startswith("c4_validation_qa.") and name != this_qa:
-            continue  # the other standard library's record
         if os.path.isdir(path):
             shutil.rmtree(path)
         else:
@@ -98,14 +104,23 @@ def main():
         env[var] = os.pathsep.join(libs + ([env[var]] if env.get(var) else []))
 
     with tempfile.TemporaryDirectory() as tmp:
-        env["VKS_INVMODEL_DUMP"] = tmp
-        env["VKS_INVMODEL_COMMIT"] = commit
-        subprocess.run([exe], check=True, env=env)
-        for area in AREAS:
-            generated = os.path.join(tmp, area)
-            if not os.path.isdir(generated):
-                print("the executable wrote no %s/ directory" % area)
+        runs = []
+        for k in (1, 2):
+            out = os.path.join(tmp, "run%d" % k)
+            os.makedirs(out)
+            env["VKS_INVMODEL_DUMP"] = out
+            env["VKS_INVMODEL_COMMIT"] = commit
+            subprocess.run([exe], env=env)  # a record run exits non-zero by design
+            if not os.path.isfile(os.path.join(out, "DUMP_COMPLETE")):
+                print("record run %d did not complete (no DUMP_COMPLETE)" % k)
                 return 1
+            runs.append(out)
+        for area in AREAS:
+            if not same_tree(os.path.join(runs[0], area), os.path.join(runs[1], area)):
+                print("the two record runs differ in %s/: not replacing anything" % area)
+                return 1
+        for area in AREAS:
+            generated = os.path.join(runs[0], area)
             replace_generated(os.path.join(viewer_fixtures, area), generated)
             replace_generated(os.path.join(crate, area), generated)
     for area in AREAS:

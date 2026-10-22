@@ -1,4 +1,4 @@
-note a 3-byte cache file (gzipped)
+note a 3-byte cache file (gzipped): one byte short of the header
 second_instance 0
 production_grid 1
 grid_id util.agni.lindenlab.com

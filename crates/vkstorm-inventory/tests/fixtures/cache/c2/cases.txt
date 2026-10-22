@@ -16,6 +16,8 @@ gz_trailing_garbage
 gz_empty_file
 short_0
 short_3
+short_4_header_only
+short_5
 header_4
 header_6
 llsd_truncated_50
@@ -45,6 +47,8 @@ skeleton_null_parent
 skeleton_mesh_folder
 skeleton_second_root
 skeleton_duplicate_system_folders
+skeleton_no_common_system_folders
+skeleton_three_roots
 skeleton_missing_system_folders
 link_target_later
 link_target_absent
