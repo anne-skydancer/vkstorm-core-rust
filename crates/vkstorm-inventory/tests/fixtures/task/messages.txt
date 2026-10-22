@@ -6,6 +6,8 @@
 #  before <state>; after <state> | <side effects in order (msg.send = LLMessageSystem::sendReliable)>
 #  packets <n>: packet <name> flags=<byte 0> zerocoded wirelen
 #   wire <datagram, packet id (bytes 1-4) zeroed; no acks are appended: nothing is ever received>
+#   (a StartPingCheck marker sent after each action through the same socket delimits the capture;
+#   it is not listed)
 #   body <zero-expanded> and every block/variable as raw bytes (Variable fields also as text)
 #  RequestXfer/AbortXfer ids are random (LLXferManager::getNextID): shown as <xfer id real#k> and zeroed
 #  in body (and in wire when not zero-coded)

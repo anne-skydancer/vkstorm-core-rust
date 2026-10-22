@@ -25,7 +25,18 @@ scrub raw="abc" rawlen=3 received="abc" scrubbed="abc" len=3
 scrub raw="abcd" rawlen=4 received="abcd" scrubbed="abcd" len=4
  outcome returned planted=1 remaining=1 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/abcd remote=abcd path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
-  packets 0
+  packets 1
+  packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
+    wire <zero-coded with the random xfer id: see body>
+    body 400000000000ffff009c000000000000000005616263640004010000000000000000000000000000000000ffff
+    XferID count=1
+      [0] ID = <xfer id real#1>
+      [0] Filename = 6162636400 "abcd\x00"
+      [0] FilePath = 04
+      [0] DeleteOnCompletion = 01
+      [0] UseBigPackets = 00
+      [0] VFileID = 00000000000000000000000000000000
+      [0] VFileType = ffff
 scrub raw=".tmp" rawlen=4 received=".tmp" scrubbed=".tmp" len=4
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/.tmp remote=.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
