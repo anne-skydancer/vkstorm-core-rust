@@ -7,3 +7,15 @@ crates/*/tests/fixtures/*.bin binary
 *.j2c binary
 *.j2k binary
 *.opj.raw binary
+# Audio fixtures (vkstorm-vorbis, vkstorm-audio)
+*.ogg binary
+*.oga binary
+*.ogv binary
+*.opus binary
+*.mp2 binary
+*.mp3 binary
+*.aac binary
+*.flac binary
+*.m4a binary
+*.mp4 binary
+*.wav binary

@@ -1,0 +1,33 @@
+[package]
+name = "vkstorm-audio"
+description = "The viewer's audio engine for Vulkanstorm: the sound-effect mixer (voices, 3D positioning, attenuation, Doppler, wind), the output device, sound asset decoding and in-process parcel music streaming with fades and speaker fill, replacing SoLoud and the VLC music path"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+# Linux output backends (libpulse, libasound) are loaded at run time.
+libloading = "=0.9.0"
+
+# The output device on Windows (src/device/wasapi.rs): COM, MMDevice
+# enumeration and notifications, WASAPI shared-mode rendering. On Linux the
+# device loads libpulse/libasound at run time through libloading above.
+[target.'cfg(windows)'.dependencies]
+windows = { version = "=0.62.2", features = [
+    "Win32_Devices_FunctionDiscovery",
+    "Win32_Foundation",
+    "Win32_Media_Audio",
+    "Win32_Media_KernelStreaming",
+    "Win32_Media_Multimedia",
+    "Win32_Security",
+    "Win32_System_Com",
+    "Win32_System_Com_StructuredStorage",
+    "Win32_System_Threading",
+    "Win32_System_Variant",
+    "Win32_UI_Shell_PropertiesSystem",
+] }
+windows-core = "=0.62.2"
+
+[dev-dependencies]
+
