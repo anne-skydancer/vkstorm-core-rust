@@ -608,6 +608,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "vkstorm-inventory"
+version = "0.1.0"
+dependencies = [
+ "vkstorm-llsd",
+]
+
+[[package]]
 name = "vkstorm-j2c"
 version = "0.1.0"
 dependencies = [

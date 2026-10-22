@@ -1,8 +1,9 @@
 [workspace]
 resolver = "3"
 members = ["crates/*", "tools/*"]
-# Not a Rust package: the fixture generator driver (Python) for vkstorm-llsd.
-exclude = ["tools/llsd-fixtures"]
+# Not Rust packages: the fixture generator drivers for vkstorm-llsd and
+# vkstorm-inventory.
+exclude = ["tools/llsd-fixtures", "tools/inventory-fixtures"]
 
 [workspace.package]
 version = "0.1.0"
