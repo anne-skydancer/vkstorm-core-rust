@@ -1,0 +1,16 @@
+# vkstorm-inventory model fixture: digests of the random streams (SHA-256 of the canonical lines, each ending in \n) and of the exhaustive sweeps (SHA-256 of 20 bytes per case: the five masks as little-endian U32)
+# generator: llinventory_tool dump (indra/llinventory/tests/llinventory_tool.cpp); values from the frozen copies in llinventory_oracle.cpp
+# viewer source: 472ecf270d
+# platform: windows x86_64, MSVC 1944 (194435229), 64-bit time_t
+# seed: per stream, see README.md
+# format: tab-separated "<case>\t<field>\t<value>..." (README.md)
+# columns: <stream>\t<cases>\t<lines (records for the exhaustive sweeps)>\t<sha256>
+c3r	200000	800000	50176f43f23993308c30d1c2890245e0eb90aa0561e8e90b693ad2fb8ac39b6c
+c4r	100000	325013	be758c8a0663686b0859b43cdffc0360b7a82908beaccceea002934db91558be
+c5r	20000	460000	9a2b4b202e016ca13635bbe4871a3fc9f61ff6044b7265034f3bea2fed22adac
+c5mf	972	22356	829a5caf7c543a02af890e6c73d3ca3e6c9de9da974da8c9a610046960c81035
+c3x.fix.alpha5.go0	33554432	33554432	b8ffecabc2c8e50bc94ab8c43807c93c01aa95b24d1ae5f1192f2caa9dcf693a
+c3x.fix.alpha4.go0	1048576	1048576	9e89d69d329487607b9210f6dd1336fe3f330ea5b304c87774a9465d618a3d2e
+c3x.fix.alpha5.go1	33554432	33554432	48c9147e6ec28f86695bcdcc6b2453172b1dd9102c9648a9e57cfd1125d1f4d9
+c3x.fix.alpha4.go1	1048576	1048576	51873e9188e1324d0ed567fe8c85b3f3f24c3cb273dea2e58b6134ec09f5c929
+c3x.initmasks5	2048000	2048000	050155ed7fe55fb93686b7d486ca25bf0c5871c3a198819f18963809de4dc614

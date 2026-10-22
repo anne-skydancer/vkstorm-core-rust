@@ -1,0 +1,2474 @@
+# vkstorm-inventory model fixture: C2 name and description normalisers
+# generator: llinventory_tool dump (indra/llinventory/tests/llinventory_tool.cpp); values from the frozen copies in llinventory_oracle.cpp
+# viewer source: 472ecf270d
+# platform: windows x86_64, MSVC 1944 (194435229), 64-bit time_t
+# seed: none
+# format: tab-separated "<case>\t<field>\t<value>..." (README.md)
+c2.0	in	\x00
+c2.0	out		 	 	 	prev		 	 	
+c2.1	in	\x00abc
+c2.1	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.2	in	abc\x00
+c2.2	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.3	in	ab\x00c
+c2.3	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.4	in	\x01
+c2.4	out		 	 	 	prev		 	 	
+c2.5	in	\x01abc
+c2.5	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.6	in	abc\x01
+c2.6	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.7	in	ab\x01c
+c2.7	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.8	in	\x02
+c2.8	out		 	 	 	prev		 	 	
+c2.9	in	\x02abc
+c2.9	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.10	in	abc\x02
+c2.10	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.11	in	ab\x02c
+c2.11	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.12	in	\x03
+c2.12	out		 	 	 	prev		 	 	
+c2.13	in	\x03abc
+c2.13	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.14	in	abc\x03
+c2.14	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.15	in	ab\x03c
+c2.15	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.16	in	\x04
+c2.16	out		 	 	 	prev		 	 	
+c2.17	in	\x04abc
+c2.17	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.18	in	abc\x04
+c2.18	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.19	in	ab\x04c
+c2.19	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.20	in	\x05
+c2.20	out		 	 	 	prev		 	 	
+c2.21	in	\x05abc
+c2.21	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.22	in	abc\x05
+c2.22	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.23	in	ab\x05c
+c2.23	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.24	in	\x06
+c2.24	out		 	 	 	prev		 	 	
+c2.25	in	\x06abc
+c2.25	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.26	in	abc\x06
+c2.26	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.27	in	ab\x06c
+c2.27	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.28	in	\x07
+c2.28	out		 	 	 	prev		 	 	
+c2.29	in	\x07abc
+c2.29	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.30	in	abc\x07
+c2.30	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.31	in	ab\x07c
+c2.31	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.32	in	\x08
+c2.32	out		 	 	 	prev		 	 	
+c2.33	in	\x08abc
+c2.33	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.34	in	abc\x08
+c2.34	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.35	in	ab\x08c
+c2.35	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.36	in	\x09
+c2.36	out		 	 	 	prev		 	 	
+c2.37	in	\x09abc
+c2.37	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.38	in	abc\x09
+c2.38	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.39	in	ab\x09c
+c2.39	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.40	in	\x0a
+c2.40	out		\x0a	\x0a	\x0a	prev		\x0a	\x0a	
+c2.41	in	\x0aabc
+c2.41	out	abc	\x0aabc	\x0aabc	\x0aabc	abc	abc	\x0aabc	\x0aabc	abc
+c2.42	in	abc\x0a
+c2.42	out	abc	abc\x0a	abc\x0a	abc\x0a	abc	abc	abc\x0a	abc\x0a	abc
+c2.43	in	ab\x0ac
+c2.43	out	ab\x0ac	ab\x0ac	ab\x0ac	ab\x0ac	ab\x0ac	ab\x0ac	ab\x0ac	ab\x0ac	ab\x0ac
+c2.44	in	\x0b
+c2.44	out		 	 	 	prev		 	 	
+c2.45	in	\x0babc
+c2.45	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.46	in	abc\x0b
+c2.46	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.47	in	ab\x0bc
+c2.47	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.48	in	\x0c
+c2.48	out		 	 	 	prev		 	 	
+c2.49	in	\x0cabc
+c2.49	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.50	in	abc\x0c
+c2.50	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.51	in	ab\x0cc
+c2.51	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.52	in	\x0d
+c2.52	out		 	 	 	prev		 	 	
+c2.53	in	\x0dabc
+c2.53	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.54	in	abc\x0d
+c2.54	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.55	in	ab\x0dc
+c2.55	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.56	in	\x0e
+c2.56	out		 	 	 	prev		 	 	
+c2.57	in	\x0eabc
+c2.57	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.58	in	abc\x0e
+c2.58	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.59	in	ab\x0ec
+c2.59	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.60	in	\x0f
+c2.60	out		 	 	 	prev		 	 	
+c2.61	in	\x0fabc
+c2.61	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.62	in	abc\x0f
+c2.62	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.63	in	ab\x0fc
+c2.63	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.64	in	\x10
+c2.64	out		 	 	 	prev		 	 	
+c2.65	in	\x10abc
+c2.65	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.66	in	abc\x10
+c2.66	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.67	in	ab\x10c
+c2.67	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.68	in	\x11
+c2.68	out		 	 	 	prev		 	 	
+c2.69	in	\x11abc
+c2.69	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.70	in	abc\x11
+c2.70	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.71	in	ab\x11c
+c2.71	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.72	in	\x12
+c2.72	out		 	 	 	prev		 	 	
+c2.73	in	\x12abc
+c2.73	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.74	in	abc\x12
+c2.74	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.75	in	ab\x12c
+c2.75	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.76	in	\x13
+c2.76	out		 	 	 	prev		 	 	
+c2.77	in	\x13abc
+c2.77	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.78	in	abc\x13
+c2.78	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.79	in	ab\x13c
+c2.79	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.80	in	\x14
+c2.80	out		 	 	 	prev		 	 	
+c2.81	in	\x14abc
+c2.81	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.82	in	abc\x14
+c2.82	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.83	in	ab\x14c
+c2.83	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.84	in	\x15
+c2.84	out		 	 	 	prev		 	 	
+c2.85	in	\x15abc
+c2.85	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.86	in	abc\x15
+c2.86	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.87	in	ab\x15c
+c2.87	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.88	in	\x16
+c2.88	out		 	 	 	prev		 	 	
+c2.89	in	\x16abc
+c2.89	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.90	in	abc\x16
+c2.90	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.91	in	ab\x16c
+c2.91	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.92	in	\x17
+c2.92	out		 	 	 	prev		 	 	
+c2.93	in	\x17abc
+c2.93	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.94	in	abc\x17
+c2.94	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.95	in	ab\x17c
+c2.95	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.96	in	\x18
+c2.96	out		 	 	 	prev		 	 	
+c2.97	in	\x18abc
+c2.97	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.98	in	abc\x18
+c2.98	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.99	in	ab\x18c
+c2.99	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.100	in	\x19
+c2.100	out		 	 	 	prev		 	 	
+c2.101	in	\x19abc
+c2.101	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.102	in	abc\x19
+c2.102	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.103	in	ab\x19c
+c2.103	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.104	in	\x1a
+c2.104	out		 	 	 	prev		 	 	
+c2.105	in	\x1aabc
+c2.105	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.106	in	abc\x1a
+c2.106	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.107	in	ab\x1ac
+c2.107	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.108	in	\x1b
+c2.108	out		 	 	 	prev		 	 	
+c2.109	in	\x1babc
+c2.109	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.110	in	abc\x1b
+c2.110	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.111	in	ab\x1bc
+c2.111	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.112	in	\x1c
+c2.112	out		 	 	 	prev		 	 	
+c2.113	in	\x1cabc
+c2.113	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.114	in	abc\x1c
+c2.114	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.115	in	ab\x1cc
+c2.115	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.116	in	\x1d
+c2.116	out		 	 	 	prev		 	 	
+c2.117	in	\x1dabc
+c2.117	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.118	in	abc\x1d
+c2.118	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.119	in	ab\x1dc
+c2.119	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.120	in	\x1e
+c2.120	out		 	 	 	prev		 	 	
+c2.121	in	\x1eabc
+c2.121	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.122	in	abc\x1e
+c2.122	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.123	in	ab\x1ec
+c2.123	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.124	in	\x1f
+c2.124	out		 	 	 	prev		 	 	
+c2.125	in	\x1fabc
+c2.125	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.126	in	abc\x1f
+c2.126	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.127	in	ab\x1fc
+c2.127	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.128	in	 
+c2.128	out		 	 	 	prev		 	 	
+c2.129	in	 abc
+c2.129	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.130	in	abc 
+c2.130	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.131	in	ab c
+c2.131	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.132	in	!
+c2.132	out	!	!	!	!	!	!	!	!	!
+c2.133	in	!abc
+c2.133	out	!abc	!abc	!abc	!abc	!abc	!abc	!abc	!abc	!abc
+c2.134	in	abc!
+c2.134	out	abc!	abc!	abc!	abc!	abc!	abc!	abc!	abc!	abc!
+c2.135	in	ab!c
+c2.135	out	ab!c	ab!c	ab!c	ab!c	ab!c	ab!c	ab!c	ab!c	ab!c
+c2.136	in	"
+c2.136	out	"	"	"	"	"	"	"	"	"
+c2.137	in	"abc
+c2.137	out	"abc	"abc	"abc	"abc	"abc	"abc	"abc	"abc	"abc
+c2.138	in	abc"
+c2.138	out	abc"	abc"	abc"	abc"	abc"	abc"	abc"	abc"	abc"
+c2.139	in	ab"c
+c2.139	out	ab"c	ab"c	ab"c	ab"c	ab"c	ab"c	ab"c	ab"c	ab"c
+c2.140	in	#
+c2.140	out	#	#	#	#	#	#	#	#	#
+c2.141	in	#abc
+c2.141	out	#abc	#abc	#abc	#abc	#abc	#abc	#abc	#abc	#abc
+c2.142	in	abc#
+c2.142	out	abc#	abc#	abc#	abc#	abc#	abc#	abc#	abc#	abc#
+c2.143	in	ab#c
+c2.143	out	ab#c	ab#c	ab#c	ab#c	ab#c	ab#c	ab#c	ab#c	ab#c
+c2.144	in	$
+c2.144	out	$	$	$	$	$	$	$	$	$
+c2.145	in	$abc
+c2.145	out	$abc	$abc	$abc	$abc	$abc	$abc	$abc	$abc	$abc
+c2.146	in	abc$
+c2.146	out	abc$	abc$	abc$	abc$	abc$	abc$	abc$	abc$	abc$
+c2.147	in	ab$c
+c2.147	out	ab$c	ab$c	ab$c	ab$c	ab$c	ab$c	ab$c	ab$c	ab$c
+c2.148	in	%
+c2.148	out	%	%	%	%	%	%	%	%	%
+c2.149	in	%abc
+c2.149	out	%abc	%abc	%abc	%abc	%abc	%abc	%abc	%abc	%abc
+c2.150	in	abc%
+c2.150	out	abc%	abc%	abc%	abc%	abc%	abc%	abc%	abc%	abc%
+c2.151	in	ab%c
+c2.151	out	ab%c	ab%c	ab%c	ab%c	ab%c	ab%c	ab%c	ab%c	ab%c
+c2.152	in	&
+c2.152	out	&	&	&	&	&	&	&	&	&
+c2.153	in	&abc
+c2.153	out	&abc	&abc	&abc	&abc	&abc	&abc	&abc	&abc	&abc
+c2.154	in	abc&
+c2.154	out	abc&	abc&	abc&	abc&	abc&	abc&	abc&	abc&	abc&
+c2.155	in	ab&c
+c2.155	out	ab&c	ab&c	ab&c	ab&c	ab&c	ab&c	ab&c	ab&c	ab&c
+c2.156	in	'
+c2.156	out	'	'	'	'	'	'	'	'	'
+c2.157	in	'abc
+c2.157	out	'abc	'abc	'abc	'abc	'abc	'abc	'abc	'abc	'abc
+c2.158	in	abc'
+c2.158	out	abc'	abc'	abc'	abc'	abc'	abc'	abc'	abc'	abc'
+c2.159	in	ab'c
+c2.159	out	ab'c	ab'c	ab'c	ab'c	ab'c	ab'c	ab'c	ab'c	ab'c
+c2.160	in	(
+c2.160	out	(	(	(	(	(	(	(	(	(
+c2.161	in	(abc
+c2.161	out	(abc	(abc	(abc	(abc	(abc	(abc	(abc	(abc	(abc
+c2.162	in	abc(
+c2.162	out	abc(	abc(	abc(	abc(	abc(	abc(	abc(	abc(	abc(
+c2.163	in	ab(c
+c2.163	out	ab(c	ab(c	ab(c	ab(c	ab(c	ab(c	ab(c	ab(c	ab(c
+c2.164	in	)
+c2.164	out	)	)	)	)	)	)	)	)	)
+c2.165	in	)abc
+c2.165	out	)abc	)abc	)abc	)abc	)abc	)abc	)abc	)abc	)abc
+c2.166	in	abc)
+c2.166	out	abc)	abc)	abc)	abc)	abc)	abc)	abc)	abc)	abc)
+c2.167	in	ab)c
+c2.167	out	ab)c	ab)c	ab)c	ab)c	ab)c	ab)c	ab)c	ab)c	ab)c
+c2.168	in	*
+c2.168	out	*	*	*	*	*	*	*	*	*
+c2.169	in	*abc
+c2.169	out	*abc	*abc	*abc	*abc	*abc	*abc	*abc	*abc	*abc
+c2.170	in	abc*
+c2.170	out	abc*	abc*	abc*	abc*	abc*	abc*	abc*	abc*	abc*
+c2.171	in	ab*c
+c2.171	out	ab*c	ab*c	ab*c	ab*c	ab*c	ab*c	ab*c	ab*c	ab*c
+c2.172	in	+
+c2.172	out	+	+	+	+	+	+	+	+	+
+c2.173	in	+abc
+c2.173	out	+abc	+abc	+abc	+abc	+abc	+abc	+abc	+abc	+abc
+c2.174	in	abc+
+c2.174	out	abc+	abc+	abc+	abc+	abc+	abc+	abc+	abc+	abc+
+c2.175	in	ab+c
+c2.175	out	ab+c	ab+c	ab+c	ab+c	ab+c	ab+c	ab+c	ab+c	ab+c
+c2.176	in	,
+c2.176	out	,	,	,	,	,	,	,	,	,
+c2.177	in	,abc
+c2.177	out	,abc	,abc	,abc	,abc	,abc	,abc	,abc	,abc	,abc
+c2.178	in	abc,
+c2.178	out	abc,	abc,	abc,	abc,	abc,	abc,	abc,	abc,	abc,
+c2.179	in	ab,c
+c2.179	out	ab,c	ab,c	ab,c	ab,c	ab,c	ab,c	ab,c	ab,c	ab,c
+c2.180	in	-
+c2.180	out	-	-	-	-	-	-	-	-	-
+c2.181	in	-abc
+c2.181	out	-abc	-abc	-abc	-abc	-abc	-abc	-abc	-abc	-abc
+c2.182	in	abc-
+c2.182	out	abc-	abc-	abc-	abc-	abc-	abc-	abc-	abc-	abc-
+c2.183	in	ab-c
+c2.183	out	ab-c	ab-c	ab-c	ab-c	ab-c	ab-c	ab-c	ab-c	ab-c
+c2.184	in	.
+c2.184	out	.	.	.	.	.	.	.	.	.
+c2.185	in	.abc
+c2.185	out	.abc	.abc	.abc	.abc	.abc	.abc	.abc	.abc	.abc
+c2.186	in	abc.
+c2.186	out	abc.	abc.	abc.	abc.	abc.	abc.	abc.	abc.	abc.
+c2.187	in	ab.c
+c2.187	out	ab.c	ab.c	ab.c	ab.c	ab.c	ab.c	ab.c	ab.c	ab.c
+c2.188	in	/
+c2.188	out	/	/	/	/	/	/	/	/	/
+c2.189	in	/abc
+c2.189	out	/abc	/abc	/abc	/abc	/abc	/abc	/abc	/abc	/abc
+c2.190	in	abc/
+c2.190	out	abc/	abc/	abc/	abc/	abc/	abc/	abc/	abc/	abc/
+c2.191	in	ab/c
+c2.191	out	ab/c	ab/c	ab/c	ab/c	ab/c	ab/c	ab/c	ab/c	ab/c
+c2.192	in	0
+c2.192	out	0	0	0	0	0	0	0	0	0
+c2.193	in	0abc
+c2.193	out	0abc	0abc	0abc	0abc	0abc	0abc	0abc	0abc	0abc
+c2.194	in	abc0
+c2.194	out	abc0	abc0	abc0	abc0	abc0	abc0	abc0	abc0	abc0
+c2.195	in	ab0c
+c2.195	out	ab0c	ab0c	ab0c	ab0c	ab0c	ab0c	ab0c	ab0c	ab0c
+c2.196	in	1
+c2.196	out	1	1	1	1	1	1	1	1	1
+c2.197	in	1abc
+c2.197	out	1abc	1abc	1abc	1abc	1abc	1abc	1abc	1abc	1abc
+c2.198	in	abc1
+c2.198	out	abc1	abc1	abc1	abc1	abc1	abc1	abc1	abc1	abc1
+c2.199	in	ab1c
+c2.199	out	ab1c	ab1c	ab1c	ab1c	ab1c	ab1c	ab1c	ab1c	ab1c
+c2.200	in	2
+c2.200	out	2	2	2	2	2	2	2	2	2
+c2.201	in	2abc
+c2.201	out	2abc	2abc	2abc	2abc	2abc	2abc	2abc	2abc	2abc
+c2.202	in	abc2
+c2.202	out	abc2	abc2	abc2	abc2	abc2	abc2	abc2	abc2	abc2
+c2.203	in	ab2c
+c2.203	out	ab2c	ab2c	ab2c	ab2c	ab2c	ab2c	ab2c	ab2c	ab2c
+c2.204	in	3
+c2.204	out	3	3	3	3	3	3	3	3	3
+c2.205	in	3abc
+c2.205	out	3abc	3abc	3abc	3abc	3abc	3abc	3abc	3abc	3abc
+c2.206	in	abc3
+c2.206	out	abc3	abc3	abc3	abc3	abc3	abc3	abc3	abc3	abc3
+c2.207	in	ab3c
+c2.207	out	ab3c	ab3c	ab3c	ab3c	ab3c	ab3c	ab3c	ab3c	ab3c
+c2.208	in	4
+c2.208	out	4	4	4	4	4	4	4	4	4
+c2.209	in	4abc
+c2.209	out	4abc	4abc	4abc	4abc	4abc	4abc	4abc	4abc	4abc
+c2.210	in	abc4
+c2.210	out	abc4	abc4	abc4	abc4	abc4	abc4	abc4	abc4	abc4
+c2.211	in	ab4c
+c2.211	out	ab4c	ab4c	ab4c	ab4c	ab4c	ab4c	ab4c	ab4c	ab4c
+c2.212	in	5
+c2.212	out	5	5	5	5	5	5	5	5	5
+c2.213	in	5abc
+c2.213	out	5abc	5abc	5abc	5abc	5abc	5abc	5abc	5abc	5abc
+c2.214	in	abc5
+c2.214	out	abc5	abc5	abc5	abc5	abc5	abc5	abc5	abc5	abc5
+c2.215	in	ab5c
+c2.215	out	ab5c	ab5c	ab5c	ab5c	ab5c	ab5c	ab5c	ab5c	ab5c
+c2.216	in	6
+c2.216	out	6	6	6	6	6	6	6	6	6
+c2.217	in	6abc
+c2.217	out	6abc	6abc	6abc	6abc	6abc	6abc	6abc	6abc	6abc
+c2.218	in	abc6
+c2.218	out	abc6	abc6	abc6	abc6	abc6	abc6	abc6	abc6	abc6
+c2.219	in	ab6c
+c2.219	out	ab6c	ab6c	ab6c	ab6c	ab6c	ab6c	ab6c	ab6c	ab6c
+c2.220	in	7
+c2.220	out	7	7	7	7	7	7	7	7	7
+c2.221	in	7abc
+c2.221	out	7abc	7abc	7abc	7abc	7abc	7abc	7abc	7abc	7abc
+c2.222	in	abc7
+c2.222	out	abc7	abc7	abc7	abc7	abc7	abc7	abc7	abc7	abc7
+c2.223	in	ab7c
+c2.223	out	ab7c	ab7c	ab7c	ab7c	ab7c	ab7c	ab7c	ab7c	ab7c
+c2.224	in	8
+c2.224	out	8	8	8	8	8	8	8	8	8
+c2.225	in	8abc
+c2.225	out	8abc	8abc	8abc	8abc	8abc	8abc	8abc	8abc	8abc
+c2.226	in	abc8
+c2.226	out	abc8	abc8	abc8	abc8	abc8	abc8	abc8	abc8	abc8
+c2.227	in	ab8c
+c2.227	out	ab8c	ab8c	ab8c	ab8c	ab8c	ab8c	ab8c	ab8c	ab8c
+c2.228	in	9
+c2.228	out	9	9	9	9	9	9	9	9	9
+c2.229	in	9abc
+c2.229	out	9abc	9abc	9abc	9abc	9abc	9abc	9abc	9abc	9abc
+c2.230	in	abc9
+c2.230	out	abc9	abc9	abc9	abc9	abc9	abc9	abc9	abc9	abc9
+c2.231	in	ab9c
+c2.231	out	ab9c	ab9c	ab9c	ab9c	ab9c	ab9c	ab9c	ab9c	ab9c
+c2.232	in	:
+c2.232	out	:	:	:	:	:	:	:	:	:
+c2.233	in	:abc
+c2.233	out	:abc	:abc	:abc	:abc	:abc	:abc	:abc	:abc	:abc
+c2.234	in	abc:
+c2.234	out	abc:	abc:	abc:	abc:	abc:	abc:	abc:	abc:	abc:
+c2.235	in	ab:c
+c2.235	out	ab:c	ab:c	ab:c	ab:c	ab:c	ab:c	ab:c	ab:c	ab:c
+c2.236	in	;
+c2.236	out	;	;	;	;	;	;	;	;	;
+c2.237	in	;abc
+c2.237	out	;abc	;abc	;abc	;abc	;abc	;abc	;abc	;abc	;abc
+c2.238	in	abc;
+c2.238	out	abc;	abc;	abc;	abc;	abc;	abc;	abc;	abc;	abc;
+c2.239	in	ab;c
+c2.239	out	ab;c	ab;c	ab;c	ab;c	ab;c	ab;c	ab;c	ab;c	ab;c
+c2.240	in	<
+c2.240	out	<	<	<	<	<	<	<	<	<
+c2.241	in	<abc
+c2.241	out	<abc	<abc	<abc	<abc	<abc	<abc	<abc	<abc	<abc
+c2.242	in	abc<
+c2.242	out	abc<	abc<	abc<	abc<	abc<	abc<	abc<	abc<	abc<
+c2.243	in	ab<c
+c2.243	out	ab<c	ab<c	ab<c	ab<c	ab<c	ab<c	ab<c	ab<c	ab<c
+c2.244	in	=
+c2.244	out	=	=	=	=	=	=	=	=	=
+c2.245	in	=abc
+c2.245	out	=abc	=abc	=abc	=abc	=abc	=abc	=abc	=abc	=abc
+c2.246	in	abc=
+c2.246	out	abc=	abc=	abc=	abc=	abc=	abc=	abc=	abc=	abc=
+c2.247	in	ab=c
+c2.247	out	ab=c	ab=c	ab=c	ab=c	ab=c	ab=c	ab=c	ab=c	ab=c
+c2.248	in	>
+c2.248	out	>	>	>	>	>	>	>	>	>
+c2.249	in	>abc
+c2.249	out	>abc	>abc	>abc	>abc	>abc	>abc	>abc	>abc	>abc
+c2.250	in	abc>
+c2.250	out	abc>	abc>	abc>	abc>	abc>	abc>	abc>	abc>	abc>
+c2.251	in	ab>c
+c2.251	out	ab>c	ab>c	ab>c	ab>c	ab>c	ab>c	ab>c	ab>c	ab>c
+c2.252	in	?
+c2.252	out	?	?	?	?	?	?	?	?	?
+c2.253	in	?abc
+c2.253	out	?abc	?abc	?abc	?abc	?abc	?abc	?abc	?abc	?abc
+c2.254	in	abc?
+c2.254	out	abc?	abc?	abc?	abc?	abc?	abc?	abc?	abc?	abc?
+c2.255	in	ab?c
+c2.255	out	ab?c	ab?c	ab?c	ab?c	ab?c	ab?c	ab?c	ab?c	ab?c
+c2.256	in	@
+c2.256	out	@	@	@	@	@	@	@	@	@
+c2.257	in	@abc
+c2.257	out	@abc	@abc	@abc	@abc	@abc	@abc	@abc	@abc	@abc
+c2.258	in	abc@
+c2.258	out	abc@	abc@	abc@	abc@	abc@	abc@	abc@	abc@	abc@
+c2.259	in	ab@c
+c2.259	out	ab@c	ab@c	ab@c	ab@c	ab@c	ab@c	ab@c	ab@c	ab@c
+c2.260	in	A
+c2.260	out	A	A	A	A	A	A	A	A	A
+c2.261	in	Aabc
+c2.261	out	Aabc	Aabc	Aabc	Aabc	Aabc	Aabc	Aabc	Aabc	Aabc
+c2.262	in	abcA
+c2.262	out	abcA	abcA	abcA	abcA	abcA	abcA	abcA	abcA	abcA
+c2.263	in	abAc
+c2.263	out	abAc	abAc	abAc	abAc	abAc	abAc	abAc	abAc	abAc
+c2.264	in	B
+c2.264	out	B	B	B	B	B	B	B	B	B
+c2.265	in	Babc
+c2.265	out	Babc	Babc	Babc	Babc	Babc	Babc	Babc	Babc	Babc
+c2.266	in	abcB
+c2.266	out	abcB	abcB	abcB	abcB	abcB	abcB	abcB	abcB	abcB
+c2.267	in	abBc
+c2.267	out	abBc	abBc	abBc	abBc	abBc	abBc	abBc	abBc	abBc
+c2.268	in	C
+c2.268	out	C	C	C	C	C	C	C	C	C
+c2.269	in	Cabc
+c2.269	out	Cabc	Cabc	Cabc	Cabc	Cabc	Cabc	Cabc	Cabc	Cabc
+c2.270	in	abcC
+c2.270	out	abcC	abcC	abcC	abcC	abcC	abcC	abcC	abcC	abcC
+c2.271	in	abCc
+c2.271	out	abCc	abCc	abCc	abCc	abCc	abCc	abCc	abCc	abCc
+c2.272	in	D
+c2.272	out	D	D	D	D	D	D	D	D	D
+c2.273	in	Dabc
+c2.273	out	Dabc	Dabc	Dabc	Dabc	Dabc	Dabc	Dabc	Dabc	Dabc
+c2.274	in	abcD
+c2.274	out	abcD	abcD	abcD	abcD	abcD	abcD	abcD	abcD	abcD
+c2.275	in	abDc
+c2.275	out	abDc	abDc	abDc	abDc	abDc	abDc	abDc	abDc	abDc
+c2.276	in	E
+c2.276	out	E	E	E	E	E	E	E	E	E
+c2.277	in	Eabc
+c2.277	out	Eabc	Eabc	Eabc	Eabc	Eabc	Eabc	Eabc	Eabc	Eabc
+c2.278	in	abcE
+c2.278	out	abcE	abcE	abcE	abcE	abcE	abcE	abcE	abcE	abcE
+c2.279	in	abEc
+c2.279	out	abEc	abEc	abEc	abEc	abEc	abEc	abEc	abEc	abEc
+c2.280	in	F
+c2.280	out	F	F	F	F	F	F	F	F	F
+c2.281	in	Fabc
+c2.281	out	Fabc	Fabc	Fabc	Fabc	Fabc	Fabc	Fabc	Fabc	Fabc
+c2.282	in	abcF
+c2.282	out	abcF	abcF	abcF	abcF	abcF	abcF	abcF	abcF	abcF
+c2.283	in	abFc
+c2.283	out	abFc	abFc	abFc	abFc	abFc	abFc	abFc	abFc	abFc
+c2.284	in	G
+c2.284	out	G	G	G	G	G	G	G	G	G
+c2.285	in	Gabc
+c2.285	out	Gabc	Gabc	Gabc	Gabc	Gabc	Gabc	Gabc	Gabc	Gabc
+c2.286	in	abcG
+c2.286	out	abcG	abcG	abcG	abcG	abcG	abcG	abcG	abcG	abcG
+c2.287	in	abGc
+c2.287	out	abGc	abGc	abGc	abGc	abGc	abGc	abGc	abGc	abGc
+c2.288	in	H
+c2.288	out	H	H	H	H	H	H	H	H	H
+c2.289	in	Habc
+c2.289	out	Habc	Habc	Habc	Habc	Habc	Habc	Habc	Habc	Habc
+c2.290	in	abcH
+c2.290	out	abcH	abcH	abcH	abcH	abcH	abcH	abcH	abcH	abcH
+c2.291	in	abHc
+c2.291	out	abHc	abHc	abHc	abHc	abHc	abHc	abHc	abHc	abHc
+c2.292	in	I
+c2.292	out	I	I	I	I	I	I	I	I	I
+c2.293	in	Iabc
+c2.293	out	Iabc	Iabc	Iabc	Iabc	Iabc	Iabc	Iabc	Iabc	Iabc
+c2.294	in	abcI
+c2.294	out	abcI	abcI	abcI	abcI	abcI	abcI	abcI	abcI	abcI
+c2.295	in	abIc
+c2.295	out	abIc	abIc	abIc	abIc	abIc	abIc	abIc	abIc	abIc
+c2.296	in	J
+c2.296	out	J	J	J	J	J	J	J	J	J
+c2.297	in	Jabc
+c2.297	out	Jabc	Jabc	Jabc	Jabc	Jabc	Jabc	Jabc	Jabc	Jabc
+c2.298	in	abcJ
+c2.298	out	abcJ	abcJ	abcJ	abcJ	abcJ	abcJ	abcJ	abcJ	abcJ
+c2.299	in	abJc
+c2.299	out	abJc	abJc	abJc	abJc	abJc	abJc	abJc	abJc	abJc
+c2.300	in	K
+c2.300	out	K	K	K	K	K	K	K	K	K
+c2.301	in	Kabc
+c2.301	out	Kabc	Kabc	Kabc	Kabc	Kabc	Kabc	Kabc	Kabc	Kabc
+c2.302	in	abcK
+c2.302	out	abcK	abcK	abcK	abcK	abcK	abcK	abcK	abcK	abcK
+c2.303	in	abKc
+c2.303	out	abKc	abKc	abKc	abKc	abKc	abKc	abKc	abKc	abKc
+c2.304	in	L
+c2.304	out	L	L	L	L	L	L	L	L	L
+c2.305	in	Labc
+c2.305	out	Labc	Labc	Labc	Labc	Labc	Labc	Labc	Labc	Labc
+c2.306	in	abcL
+c2.306	out	abcL	abcL	abcL	abcL	abcL	abcL	abcL	abcL	abcL
+c2.307	in	abLc
+c2.307	out	abLc	abLc	abLc	abLc	abLc	abLc	abLc	abLc	abLc
+c2.308	in	M
+c2.308	out	M	M	M	M	M	M	M	M	M
+c2.309	in	Mabc
+c2.309	out	Mabc	Mabc	Mabc	Mabc	Mabc	Mabc	Mabc	Mabc	Mabc
+c2.310	in	abcM
+c2.310	out	abcM	abcM	abcM	abcM	abcM	abcM	abcM	abcM	abcM
+c2.311	in	abMc
+c2.311	out	abMc	abMc	abMc	abMc	abMc	abMc	abMc	abMc	abMc
+c2.312	in	N
+c2.312	out	N	N	N	N	N	N	N	N	N
+c2.313	in	Nabc
+c2.313	out	Nabc	Nabc	Nabc	Nabc	Nabc	Nabc	Nabc	Nabc	Nabc
+c2.314	in	abcN
+c2.314	out	abcN	abcN	abcN	abcN	abcN	abcN	abcN	abcN	abcN
+c2.315	in	abNc
+c2.315	out	abNc	abNc	abNc	abNc	abNc	abNc	abNc	abNc	abNc
+c2.316	in	O
+c2.316	out	O	O	O	O	O	O	O	O	O
+c2.317	in	Oabc
+c2.317	out	Oabc	Oabc	Oabc	Oabc	Oabc	Oabc	Oabc	Oabc	Oabc
+c2.318	in	abcO
+c2.318	out	abcO	abcO	abcO	abcO	abcO	abcO	abcO	abcO	abcO
+c2.319	in	abOc
+c2.319	out	abOc	abOc	abOc	abOc	abOc	abOc	abOc	abOc	abOc
+c2.320	in	P
+c2.320	out	P	P	P	P	P	P	P	P	P
+c2.321	in	Pabc
+c2.321	out	Pabc	Pabc	Pabc	Pabc	Pabc	Pabc	Pabc	Pabc	Pabc
+c2.322	in	abcP
+c2.322	out	abcP	abcP	abcP	abcP	abcP	abcP	abcP	abcP	abcP
+c2.323	in	abPc
+c2.323	out	abPc	abPc	abPc	abPc	abPc	abPc	abPc	abPc	abPc
+c2.324	in	Q
+c2.324	out	Q	Q	Q	Q	Q	Q	Q	Q	Q
+c2.325	in	Qabc
+c2.325	out	Qabc	Qabc	Qabc	Qabc	Qabc	Qabc	Qabc	Qabc	Qabc
+c2.326	in	abcQ
+c2.326	out	abcQ	abcQ	abcQ	abcQ	abcQ	abcQ	abcQ	abcQ	abcQ
+c2.327	in	abQc
+c2.327	out	abQc	abQc	abQc	abQc	abQc	abQc	abQc	abQc	abQc
+c2.328	in	R
+c2.328	out	R	R	R	R	R	R	R	R	R
+c2.329	in	Rabc
+c2.329	out	Rabc	Rabc	Rabc	Rabc	Rabc	Rabc	Rabc	Rabc	Rabc
+c2.330	in	abcR
+c2.330	out	abcR	abcR	abcR	abcR	abcR	abcR	abcR	abcR	abcR
+c2.331	in	abRc
+c2.331	out	abRc	abRc	abRc	abRc	abRc	abRc	abRc	abRc	abRc
+c2.332	in	S
+c2.332	out	S	S	S	S	S	S	S	S	S
+c2.333	in	Sabc
+c2.333	out	Sabc	Sabc	Sabc	Sabc	Sabc	Sabc	Sabc	Sabc	Sabc
+c2.334	in	abcS
+c2.334	out	abcS	abcS	abcS	abcS	abcS	abcS	abcS	abcS	abcS
+c2.335	in	abSc
+c2.335	out	abSc	abSc	abSc	abSc	abSc	abSc	abSc	abSc	abSc
+c2.336	in	T
+c2.336	out	T	T	T	T	T	T	T	T	T
+c2.337	in	Tabc
+c2.337	out	Tabc	Tabc	Tabc	Tabc	Tabc	Tabc	Tabc	Tabc	Tabc
+c2.338	in	abcT
+c2.338	out	abcT	abcT	abcT	abcT	abcT	abcT	abcT	abcT	abcT
+c2.339	in	abTc
+c2.339	out	abTc	abTc	abTc	abTc	abTc	abTc	abTc	abTc	abTc
+c2.340	in	U
+c2.340	out	U	U	U	U	U	U	U	U	U
+c2.341	in	Uabc
+c2.341	out	Uabc	Uabc	Uabc	Uabc	Uabc	Uabc	Uabc	Uabc	Uabc
+c2.342	in	abcU
+c2.342	out	abcU	abcU	abcU	abcU	abcU	abcU	abcU	abcU	abcU
+c2.343	in	abUc
+c2.343	out	abUc	abUc	abUc	abUc	abUc	abUc	abUc	abUc	abUc
+c2.344	in	V
+c2.344	out	V	V	V	V	V	V	V	V	V
+c2.345	in	Vabc
+c2.345	out	Vabc	Vabc	Vabc	Vabc	Vabc	Vabc	Vabc	Vabc	Vabc
+c2.346	in	abcV
+c2.346	out	abcV	abcV	abcV	abcV	abcV	abcV	abcV	abcV	abcV
+c2.347	in	abVc
+c2.347	out	abVc	abVc	abVc	abVc	abVc	abVc	abVc	abVc	abVc
+c2.348	in	W
+c2.348	out	W	W	W	W	W	W	W	W	W
+c2.349	in	Wabc
+c2.349	out	Wabc	Wabc	Wabc	Wabc	Wabc	Wabc	Wabc	Wabc	Wabc
+c2.350	in	abcW
+c2.350	out	abcW	abcW	abcW	abcW	abcW	abcW	abcW	abcW	abcW
+c2.351	in	abWc
+c2.351	out	abWc	abWc	abWc	abWc	abWc	abWc	abWc	abWc	abWc
+c2.352	in	X
+c2.352	out	X	X	X	X	X	X	X	X	X
+c2.353	in	Xabc
+c2.353	out	Xabc	Xabc	Xabc	Xabc	Xabc	Xabc	Xabc	Xabc	Xabc
+c2.354	in	abcX
+c2.354	out	abcX	abcX	abcX	abcX	abcX	abcX	abcX	abcX	abcX
+c2.355	in	abXc
+c2.355	out	abXc	abXc	abXc	abXc	abXc	abXc	abXc	abXc	abXc
+c2.356	in	Y
+c2.356	out	Y	Y	Y	Y	Y	Y	Y	Y	Y
+c2.357	in	Yabc
+c2.357	out	Yabc	Yabc	Yabc	Yabc	Yabc	Yabc	Yabc	Yabc	Yabc
+c2.358	in	abcY
+c2.358	out	abcY	abcY	abcY	abcY	abcY	abcY	abcY	abcY	abcY
+c2.359	in	abYc
+c2.359	out	abYc	abYc	abYc	abYc	abYc	abYc	abYc	abYc	abYc
+c2.360	in	Z
+c2.360	out	Z	Z	Z	Z	Z	Z	Z	Z	Z
+c2.361	in	Zabc
+c2.361	out	Zabc	Zabc	Zabc	Zabc	Zabc	Zabc	Zabc	Zabc	Zabc
+c2.362	in	abcZ
+c2.362	out	abcZ	abcZ	abcZ	abcZ	abcZ	abcZ	abcZ	abcZ	abcZ
+c2.363	in	abZc
+c2.363	out	abZc	abZc	abZc	abZc	abZc	abZc	abZc	abZc	abZc
+c2.364	in	[
+c2.364	out	[	[	[	[	[	[	[	[	[
+c2.365	in	[abc
+c2.365	out	[abc	[abc	[abc	[abc	[abc	[abc	[abc	[abc	[abc
+c2.366	in	abc[
+c2.366	out	abc[	abc[	abc[	abc[	abc[	abc[	abc[	abc[	abc[
+c2.367	in	ab[c
+c2.367	out	ab[c	ab[c	ab[c	ab[c	ab[c	ab[c	ab[c	ab[c	ab[c
+c2.368	in	\\
+c2.368	out	\\	\\	\\	\\	\\	\\	\\	\\	\\
+c2.369	in	\\abc
+c2.369	out	\\abc	\\abc	\\abc	\\abc	\\abc	\\abc	\\abc	\\abc	\\abc
+c2.370	in	abc\\
+c2.370	out	abc\\	abc\\	abc\\	abc\\	abc\\	abc\\	abc\\	abc\\	abc\\
+c2.371	in	ab\\c
+c2.371	out	ab\\c	ab\\c	ab\\c	ab\\c	ab\\c	ab\\c	ab\\c	ab\\c	ab\\c
+c2.372	in	]
+c2.372	out	]	]	]	]	]	]	]	]	]
+c2.373	in	]abc
+c2.373	out	]abc	]abc	]abc	]abc	]abc	]abc	]abc	]abc	]abc
+c2.374	in	abc]
+c2.374	out	abc]	abc]	abc]	abc]	abc]	abc]	abc]	abc]	abc]
+c2.375	in	ab]c
+c2.375	out	ab]c	ab]c	ab]c	ab]c	ab]c	ab]c	ab]c	ab]c	ab]c
+c2.376	in	^
+c2.376	out	^	^	^	^	^	^	^	^	^
+c2.377	in	^abc
+c2.377	out	^abc	^abc	^abc	^abc	^abc	^abc	^abc	^abc	^abc
+c2.378	in	abc^
+c2.378	out	abc^	abc^	abc^	abc^	abc^	abc^	abc^	abc^	abc^
+c2.379	in	ab^c
+c2.379	out	ab^c	ab^c	ab^c	ab^c	ab^c	ab^c	ab^c	ab^c	ab^c
+c2.380	in	_
+c2.380	out	_	_	_	_	_	_	_	_	_
+c2.381	in	_abc
+c2.381	out	_abc	_abc	_abc	_abc	_abc	_abc	_abc	_abc	_abc
+c2.382	in	abc_
+c2.382	out	abc_	abc_	abc_	abc_	abc_	abc_	abc_	abc_	abc_
+c2.383	in	ab_c
+c2.383	out	ab_c	ab_c	ab_c	ab_c	ab_c	ab_c	ab_c	ab_c	ab_c
+c2.384	in	`
+c2.384	out	`	`	`	`	`	`	`	`	`
+c2.385	in	`abc
+c2.385	out	`abc	`abc	`abc	`abc	`abc	`abc	`abc	`abc	`abc
+c2.386	in	abc`
+c2.386	out	abc`	abc`	abc`	abc`	abc`	abc`	abc`	abc`	abc`
+c2.387	in	ab`c
+c2.387	out	ab`c	ab`c	ab`c	ab`c	ab`c	ab`c	ab`c	ab`c	ab`c
+c2.388	in	a
+c2.388	out	a	a	a	a	a	a	a	a	a
+c2.389	in	aabc
+c2.389	out	aabc	aabc	aabc	aabc	aabc	aabc	aabc	aabc	aabc
+c2.390	in	abca
+c2.390	out	abca	abca	abca	abca	abca	abca	abca	abca	abca
+c2.391	in	abac
+c2.391	out	abac	abac	abac	abac	abac	abac	abac	abac	abac
+c2.392	in	b
+c2.392	out	b	b	b	b	b	b	b	b	b
+c2.393	in	babc
+c2.393	out	babc	babc	babc	babc	babc	babc	babc	babc	babc
+c2.394	in	abcb
+c2.394	out	abcb	abcb	abcb	abcb	abcb	abcb	abcb	abcb	abcb
+c2.395	in	abbc
+c2.395	out	abbc	abbc	abbc	abbc	abbc	abbc	abbc	abbc	abbc
+c2.396	in	c
+c2.396	out	c	c	c	c	c	c	c	c	c
+c2.397	in	cabc
+c2.397	out	cabc	cabc	cabc	cabc	cabc	cabc	cabc	cabc	cabc
+c2.398	in	abcc
+c2.398	out	abcc	abcc	abcc	abcc	abcc	abcc	abcc	abcc	abcc
+c2.399	in	abcc
+c2.399	out	abcc	abcc	abcc	abcc	abcc	abcc	abcc	abcc	abcc
+c2.400	in	d
+c2.400	out	d	d	d	d	d	d	d	d	d
+c2.401	in	dabc
+c2.401	out	dabc	dabc	dabc	dabc	dabc	dabc	dabc	dabc	dabc
+c2.402	in	abcd
+c2.402	out	abcd	abcd	abcd	abcd	abcd	abcd	abcd	abcd	abcd
+c2.403	in	abdc
+c2.403	out	abdc	abdc	abdc	abdc	abdc	abdc	abdc	abdc	abdc
+c2.404	in	e
+c2.404	out	e	e	e	e	e	e	e	e	e
+c2.405	in	eabc
+c2.405	out	eabc	eabc	eabc	eabc	eabc	eabc	eabc	eabc	eabc
+c2.406	in	abce
+c2.406	out	abce	abce	abce	abce	abce	abce	abce	abce	abce
+c2.407	in	abec
+c2.407	out	abec	abec	abec	abec	abec	abec	abec	abec	abec
+c2.408	in	f
+c2.408	out	f	f	f	f	f	f	f	f	f
+c2.409	in	fabc
+c2.409	out	fabc	fabc	fabc	fabc	fabc	fabc	fabc	fabc	fabc
+c2.410	in	abcf
+c2.410	out	abcf	abcf	abcf	abcf	abcf	abcf	abcf	abcf	abcf
+c2.411	in	abfc
+c2.411	out	abfc	abfc	abfc	abfc	abfc	abfc	abfc	abfc	abfc
+c2.412	in	g
+c2.412	out	g	g	g	g	g	g	g	g	g
+c2.413	in	gabc
+c2.413	out	gabc	gabc	gabc	gabc	gabc	gabc	gabc	gabc	gabc
+c2.414	in	abcg
+c2.414	out	abcg	abcg	abcg	abcg	abcg	abcg	abcg	abcg	abcg
+c2.415	in	abgc
+c2.415	out	abgc	abgc	abgc	abgc	abgc	abgc	abgc	abgc	abgc
+c2.416	in	h
+c2.416	out	h	h	h	h	h	h	h	h	h
+c2.417	in	habc
+c2.417	out	habc	habc	habc	habc	habc	habc	habc	habc	habc
+c2.418	in	abch
+c2.418	out	abch	abch	abch	abch	abch	abch	abch	abch	abch
+c2.419	in	abhc
+c2.419	out	abhc	abhc	abhc	abhc	abhc	abhc	abhc	abhc	abhc
+c2.420	in	i
+c2.420	out	i	i	i	i	i	i	i	i	i
+c2.421	in	iabc
+c2.421	out	iabc	iabc	iabc	iabc	iabc	iabc	iabc	iabc	iabc
+c2.422	in	abci
+c2.422	out	abci	abci	abci	abci	abci	abci	abci	abci	abci
+c2.423	in	abic
+c2.423	out	abic	abic	abic	abic	abic	abic	abic	abic	abic
+c2.424	in	j
+c2.424	out	j	j	j	j	j	j	j	j	j
+c2.425	in	jabc
+c2.425	out	jabc	jabc	jabc	jabc	jabc	jabc	jabc	jabc	jabc
+c2.426	in	abcj
+c2.426	out	abcj	abcj	abcj	abcj	abcj	abcj	abcj	abcj	abcj
+c2.427	in	abjc
+c2.427	out	abjc	abjc	abjc	abjc	abjc	abjc	abjc	abjc	abjc
+c2.428	in	k
+c2.428	out	k	k	k	k	k	k	k	k	k
+c2.429	in	kabc
+c2.429	out	kabc	kabc	kabc	kabc	kabc	kabc	kabc	kabc	kabc
+c2.430	in	abck
+c2.430	out	abck	abck	abck	abck	abck	abck	abck	abck	abck
+c2.431	in	abkc
+c2.431	out	abkc	abkc	abkc	abkc	abkc	abkc	abkc	abkc	abkc
+c2.432	in	l
+c2.432	out	l	l	l	l	l	l	l	l	l
+c2.433	in	labc
+c2.433	out	labc	labc	labc	labc	labc	labc	labc	labc	labc
+c2.434	in	abcl
+c2.434	out	abcl	abcl	abcl	abcl	abcl	abcl	abcl	abcl	abcl
+c2.435	in	ablc
+c2.435	out	ablc	ablc	ablc	ablc	ablc	ablc	ablc	ablc	ablc
+c2.436	in	m
+c2.436	out	m	m	m	m	m	m	m	m	m
+c2.437	in	mabc
+c2.437	out	mabc	mabc	mabc	mabc	mabc	mabc	mabc	mabc	mabc
+c2.438	in	abcm
+c2.438	out	abcm	abcm	abcm	abcm	abcm	abcm	abcm	abcm	abcm
+c2.439	in	abmc
+c2.439	out	abmc	abmc	abmc	abmc	abmc	abmc	abmc	abmc	abmc
+c2.440	in	n
+c2.440	out	n	n	n	n	n	n	n	n	n
+c2.441	in	nabc
+c2.441	out	nabc	nabc	nabc	nabc	nabc	nabc	nabc	nabc	nabc
+c2.442	in	abcn
+c2.442	out	abcn	abcn	abcn	abcn	abcn	abcn	abcn	abcn	abcn
+c2.443	in	abnc
+c2.443	out	abnc	abnc	abnc	abnc	abnc	abnc	abnc	abnc	abnc
+c2.444	in	o
+c2.444	out	o	o	o	o	o	o	o	o	o
+c2.445	in	oabc
+c2.445	out	oabc	oabc	oabc	oabc	oabc	oabc	oabc	oabc	oabc
+c2.446	in	abco
+c2.446	out	abco	abco	abco	abco	abco	abco	abco	abco	abco
+c2.447	in	aboc
+c2.447	out	aboc	aboc	aboc	aboc	aboc	aboc	aboc	aboc	aboc
+c2.448	in	p
+c2.448	out	p	p	p	p	p	p	p	p	p
+c2.449	in	pabc
+c2.449	out	pabc	pabc	pabc	pabc	pabc	pabc	pabc	pabc	pabc
+c2.450	in	abcp
+c2.450	out	abcp	abcp	abcp	abcp	abcp	abcp	abcp	abcp	abcp
+c2.451	in	abpc
+c2.451	out	abpc	abpc	abpc	abpc	abpc	abpc	abpc	abpc	abpc
+c2.452	in	q
+c2.452	out	q	q	q	q	q	q	q	q	q
+c2.453	in	qabc
+c2.453	out	qabc	qabc	qabc	qabc	qabc	qabc	qabc	qabc	qabc
+c2.454	in	abcq
+c2.454	out	abcq	abcq	abcq	abcq	abcq	abcq	abcq	abcq	abcq
+c2.455	in	abqc
+c2.455	out	abqc	abqc	abqc	abqc	abqc	abqc	abqc	abqc	abqc
+c2.456	in	r
+c2.456	out	r	r	r	r	r	r	r	r	r
+c2.457	in	rabc
+c2.457	out	rabc	rabc	rabc	rabc	rabc	rabc	rabc	rabc	rabc
+c2.458	in	abcr
+c2.458	out	abcr	abcr	abcr	abcr	abcr	abcr	abcr	abcr	abcr
+c2.459	in	abrc
+c2.459	out	abrc	abrc	abrc	abrc	abrc	abrc	abrc	abrc	abrc
+c2.460	in	s
+c2.460	out	s	s	s	s	s	s	s	s	s
+c2.461	in	sabc
+c2.461	out	sabc	sabc	sabc	sabc	sabc	sabc	sabc	sabc	sabc
+c2.462	in	abcs
+c2.462	out	abcs	abcs	abcs	abcs	abcs	abcs	abcs	abcs	abcs
+c2.463	in	absc
+c2.463	out	absc	absc	absc	absc	absc	absc	absc	absc	absc
+c2.464	in	t
+c2.464	out	t	t	t	t	t	t	t	t	t
+c2.465	in	tabc
+c2.465	out	tabc	tabc	tabc	tabc	tabc	tabc	tabc	tabc	tabc
+c2.466	in	abct
+c2.466	out	abct	abct	abct	abct	abct	abct	abct	abct	abct
+c2.467	in	abtc
+c2.467	out	abtc	abtc	abtc	abtc	abtc	abtc	abtc	abtc	abtc
+c2.468	in	u
+c2.468	out	u	u	u	u	u	u	u	u	u
+c2.469	in	uabc
+c2.469	out	uabc	uabc	uabc	uabc	uabc	uabc	uabc	uabc	uabc
+c2.470	in	abcu
+c2.470	out	abcu	abcu	abcu	abcu	abcu	abcu	abcu	abcu	abcu
+c2.471	in	abuc
+c2.471	out	abuc	abuc	abuc	abuc	abuc	abuc	abuc	abuc	abuc
+c2.472	in	v
+c2.472	out	v	v	v	v	v	v	v	v	v
+c2.473	in	vabc
+c2.473	out	vabc	vabc	vabc	vabc	vabc	vabc	vabc	vabc	vabc
+c2.474	in	abcv
+c2.474	out	abcv	abcv	abcv	abcv	abcv	abcv	abcv	abcv	abcv
+c2.475	in	abvc
+c2.475	out	abvc	abvc	abvc	abvc	abvc	abvc	abvc	abvc	abvc
+c2.476	in	w
+c2.476	out	w	w	w	w	w	w	w	w	w
+c2.477	in	wabc
+c2.477	out	wabc	wabc	wabc	wabc	wabc	wabc	wabc	wabc	wabc
+c2.478	in	abcw
+c2.478	out	abcw	abcw	abcw	abcw	abcw	abcw	abcw	abcw	abcw
+c2.479	in	abwc
+c2.479	out	abwc	abwc	abwc	abwc	abwc	abwc	abwc	abwc	abwc
+c2.480	in	x
+c2.480	out	x	x	x	x	x	x	x	x	x
+c2.481	in	xabc
+c2.481	out	xabc	xabc	xabc	xabc	xabc	xabc	xabc	xabc	xabc
+c2.482	in	abcx
+c2.482	out	abcx	abcx	abcx	abcx	abcx	abcx	abcx	abcx	abcx
+c2.483	in	abxc
+c2.483	out	abxc	abxc	abxc	abxc	abxc	abxc	abxc	abxc	abxc
+c2.484	in	y
+c2.484	out	y	y	y	y	y	y	y	y	y
+c2.485	in	yabc
+c2.485	out	yabc	yabc	yabc	yabc	yabc	yabc	yabc	yabc	yabc
+c2.486	in	abcy
+c2.486	out	abcy	abcy	abcy	abcy	abcy	abcy	abcy	abcy	abcy
+c2.487	in	abyc
+c2.487	out	abyc	abyc	abyc	abyc	abyc	abyc	abyc	abyc	abyc
+c2.488	in	z
+c2.488	out	z	z	z	z	z	z	z	z	z
+c2.489	in	zabc
+c2.489	out	zabc	zabc	zabc	zabc	zabc	zabc	zabc	zabc	zabc
+c2.490	in	abcz
+c2.490	out	abcz	abcz	abcz	abcz	abcz	abcz	abcz	abcz	abcz
+c2.491	in	abzc
+c2.491	out	abzc	abzc	abzc	abzc	abzc	abzc	abzc	abzc	abzc
+c2.492	in	{
+c2.492	out	{	{	{	{	{	{	{	{	{
+c2.493	in	{abc
+c2.493	out	{abc	{abc	{abc	{abc	{abc	{abc	{abc	{abc	{abc
+c2.494	in	abc{
+c2.494	out	abc{	abc{	abc{	abc{	abc{	abc{	abc{	abc{	abc{
+c2.495	in	ab{c
+c2.495	out	ab{c	ab{c	ab{c	ab{c	ab{c	ab{c	ab{c	ab{c	ab{c
+c2.496	in	|
+c2.496	out		 	 	|	prev		 	 	
+c2.497	in	|abc
+c2.497	out	abc	 abc	 abc	|abc	abc	abc	 abc	 abc	abc
+c2.498	in	abc|
+c2.498	out	abc	abc 	abc 	abc|	abc	abc	abc 	abc 	abc
+c2.499	in	ab|c
+c2.499	out	ab c	ab c	ab c	ab|c	ab c	ab c	ab c	ab c	ab c
+c2.500	in	}
+c2.500	out	}	}	}	}	}	}	}	}	}
+c2.501	in	}abc
+c2.501	out	}abc	}abc	}abc	}abc	}abc	}abc	}abc	}abc	}abc
+c2.502	in	abc}
+c2.502	out	abc}	abc}	abc}	abc}	abc}	abc}	abc}	abc}	abc}
+c2.503	in	ab}c
+c2.503	out	ab}c	ab}c	ab}c	ab}c	ab}c	ab}c	ab}c	ab}c	ab}c
+c2.504	in	~
+c2.504	out	~	~	~	~	~	~	~	~	~
+c2.505	in	~abc
+c2.505	out	~abc	~abc	~abc	~abc	~abc	~abc	~abc	~abc	~abc
+c2.506	in	abc~
+c2.506	out	abc~	abc~	abc~	abc~	abc~	abc~	abc~	abc~	abc~
+c2.507	in	ab~c
+c2.507	out	ab~c	ab~c	ab~c	ab~c	ab~c	ab~c	ab~c	ab~c	ab~c
+c2.508	in	\x7f
+c2.508	out	\x7f	\x7f	\x7f	\x7f	\x7f	\x7f	\x7f	\x7f	\x7f
+c2.509	in	\x7fabc
+c2.509	out	\x7fabc	\x7fabc	\x7fabc	\x7fabc	\x7fabc	\x7fabc	\x7fabc	\x7fabc	\x7fabc
+c2.510	in	abc\x7f
+c2.510	out	abc\x7f	abc\x7f	abc\x7f	abc\x7f	abc\x7f	abc\x7f	abc\x7f	abc\x7f	abc\x7f
+c2.511	in	ab\x7fc
+c2.511	out	ab\x7fc	ab\x7fc	ab\x7fc	ab\x7fc	ab\x7fc	ab\x7fc	ab\x7fc	ab\x7fc	ab\x7fc
+c2.512	in	\x80
+c2.512	out		 	 	 	prev		 	 	
+c2.513	in	\x80abc
+c2.513	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.514	in	abc\x80
+c2.514	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.515	in	ab\x80c
+c2.515	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.516	in	\x81
+c2.516	out		 	 	 	prev		 	 	
+c2.517	in	\x81abc
+c2.517	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.518	in	abc\x81
+c2.518	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.519	in	ab\x81c
+c2.519	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.520	in	\x82
+c2.520	out		 	 	 	prev		 	 	
+c2.521	in	\x82abc
+c2.521	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.522	in	abc\x82
+c2.522	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.523	in	ab\x82c
+c2.523	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.524	in	\x83
+c2.524	out		 	 	 	prev		 	 	
+c2.525	in	\x83abc
+c2.525	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.526	in	abc\x83
+c2.526	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.527	in	ab\x83c
+c2.527	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.528	in	\x84
+c2.528	out		 	 	 	prev		 	 	
+c2.529	in	\x84abc
+c2.529	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.530	in	abc\x84
+c2.530	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.531	in	ab\x84c
+c2.531	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.532	in	\x85
+c2.532	out		 	 	 	prev		 	 	
+c2.533	in	\x85abc
+c2.533	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.534	in	abc\x85
+c2.534	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.535	in	ab\x85c
+c2.535	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.536	in	\x86
+c2.536	out		 	 	 	prev		 	 	
+c2.537	in	\x86abc
+c2.537	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.538	in	abc\x86
+c2.538	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.539	in	ab\x86c
+c2.539	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.540	in	\x87
+c2.540	out		 	 	 	prev		 	 	
+c2.541	in	\x87abc
+c2.541	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.542	in	abc\x87
+c2.542	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.543	in	ab\x87c
+c2.543	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.544	in	\x88
+c2.544	out		 	 	 	prev		 	 	
+c2.545	in	\x88abc
+c2.545	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.546	in	abc\x88
+c2.546	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.547	in	ab\x88c
+c2.547	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.548	in	\x89
+c2.548	out		 	 	 	prev		 	 	
+c2.549	in	\x89abc
+c2.549	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.550	in	abc\x89
+c2.550	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.551	in	ab\x89c
+c2.551	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.552	in	\x8a
+c2.552	out		 	 	 	prev		 	 	
+c2.553	in	\x8aabc
+c2.553	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.554	in	abc\x8a
+c2.554	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.555	in	ab\x8ac
+c2.555	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.556	in	\x8b
+c2.556	out		 	 	 	prev		 	 	
+c2.557	in	\x8babc
+c2.557	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.558	in	abc\x8b
+c2.558	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.559	in	ab\x8bc
+c2.559	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.560	in	\x8c
+c2.560	out		 	 	 	prev		 	 	
+c2.561	in	\x8cabc
+c2.561	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.562	in	abc\x8c
+c2.562	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.563	in	ab\x8cc
+c2.563	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.564	in	\x8d
+c2.564	out		 	 	 	prev		 	 	
+c2.565	in	\x8dabc
+c2.565	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.566	in	abc\x8d
+c2.566	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.567	in	ab\x8dc
+c2.567	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.568	in	\x8e
+c2.568	out		 	 	 	prev		 	 	
+c2.569	in	\x8eabc
+c2.569	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.570	in	abc\x8e
+c2.570	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.571	in	ab\x8ec
+c2.571	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.572	in	\x8f
+c2.572	out		 	 	 	prev		 	 	
+c2.573	in	\x8fabc
+c2.573	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.574	in	abc\x8f
+c2.574	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.575	in	ab\x8fc
+c2.575	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.576	in	\x90
+c2.576	out		 	 	 	prev		 	 	
+c2.577	in	\x90abc
+c2.577	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.578	in	abc\x90
+c2.578	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.579	in	ab\x90c
+c2.579	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.580	in	\x91
+c2.580	out		 	 	 	prev		 	 	
+c2.581	in	\x91abc
+c2.581	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.582	in	abc\x91
+c2.582	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.583	in	ab\x91c
+c2.583	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.584	in	\x92
+c2.584	out		 	 	 	prev		 	 	
+c2.585	in	\x92abc
+c2.585	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.586	in	abc\x92
+c2.586	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.587	in	ab\x92c
+c2.587	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.588	in	\x93
+c2.588	out		 	 	 	prev		 	 	
+c2.589	in	\x93abc
+c2.589	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.590	in	abc\x93
+c2.590	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.591	in	ab\x93c
+c2.591	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.592	in	\x94
+c2.592	out		 	 	 	prev		 	 	
+c2.593	in	\x94abc
+c2.593	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.594	in	abc\x94
+c2.594	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.595	in	ab\x94c
+c2.595	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.596	in	\x95
+c2.596	out		 	 	 	prev		 	 	
+c2.597	in	\x95abc
+c2.597	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.598	in	abc\x95
+c2.598	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.599	in	ab\x95c
+c2.599	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.600	in	\x96
+c2.600	out		 	 	 	prev		 	 	
+c2.601	in	\x96abc
+c2.601	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.602	in	abc\x96
+c2.602	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.603	in	ab\x96c
+c2.603	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.604	in	\x97
+c2.604	out		 	 	 	prev		 	 	
+c2.605	in	\x97abc
+c2.605	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.606	in	abc\x97
+c2.606	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.607	in	ab\x97c
+c2.607	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.608	in	\x98
+c2.608	out		 	 	 	prev		 	 	
+c2.609	in	\x98abc
+c2.609	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.610	in	abc\x98
+c2.610	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.611	in	ab\x98c
+c2.611	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.612	in	\x99
+c2.612	out		 	 	 	prev		 	 	
+c2.613	in	\x99abc
+c2.613	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.614	in	abc\x99
+c2.614	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.615	in	ab\x99c
+c2.615	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.616	in	\x9a
+c2.616	out		 	 	 	prev		 	 	
+c2.617	in	\x9aabc
+c2.617	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.618	in	abc\x9a
+c2.618	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.619	in	ab\x9ac
+c2.619	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.620	in	\x9b
+c2.620	out		 	 	 	prev		 	 	
+c2.621	in	\x9babc
+c2.621	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.622	in	abc\x9b
+c2.622	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.623	in	ab\x9bc
+c2.623	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.624	in	\x9c
+c2.624	out		 	 	 	prev		 	 	
+c2.625	in	\x9cabc
+c2.625	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.626	in	abc\x9c
+c2.626	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.627	in	ab\x9cc
+c2.627	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.628	in	\x9d
+c2.628	out		 	 	 	prev		 	 	
+c2.629	in	\x9dabc
+c2.629	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.630	in	abc\x9d
+c2.630	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.631	in	ab\x9dc
+c2.631	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.632	in	\x9e
+c2.632	out		 	 	 	prev		 	 	
+c2.633	in	\x9eabc
+c2.633	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.634	in	abc\x9e
+c2.634	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.635	in	ab\x9ec
+c2.635	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.636	in	\x9f
+c2.636	out		 	 	 	prev		 	 	
+c2.637	in	\x9fabc
+c2.637	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.638	in	abc\x9f
+c2.638	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.639	in	ab\x9fc
+c2.639	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.640	in	\xa0
+c2.640	out		 	 	 	prev		 	 	
+c2.641	in	\xa0abc
+c2.641	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.642	in	abc\xa0
+c2.642	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.643	in	ab\xa0c
+c2.643	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.644	in	\xa1
+c2.644	out		 	 	 	prev		 	 	
+c2.645	in	\xa1abc
+c2.645	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.646	in	abc\xa1
+c2.646	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.647	in	ab\xa1c
+c2.647	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.648	in	\xa2
+c2.648	out		 	 	 	prev		 	 	
+c2.649	in	\xa2abc
+c2.649	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.650	in	abc\xa2
+c2.650	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.651	in	ab\xa2c
+c2.651	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.652	in	\xa3
+c2.652	out		 	 	 	prev		 	 	
+c2.653	in	\xa3abc
+c2.653	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.654	in	abc\xa3
+c2.654	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.655	in	ab\xa3c
+c2.655	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.656	in	\xa4
+c2.656	out		 	 	 	prev		 	 	
+c2.657	in	\xa4abc
+c2.657	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.658	in	abc\xa4
+c2.658	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.659	in	ab\xa4c
+c2.659	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.660	in	\xa5
+c2.660	out		 	 	 	prev		 	 	
+c2.661	in	\xa5abc
+c2.661	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.662	in	abc\xa5
+c2.662	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.663	in	ab\xa5c
+c2.663	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.664	in	\xa6
+c2.664	out		 	 	 	prev		 	 	
+c2.665	in	\xa6abc
+c2.665	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.666	in	abc\xa6
+c2.666	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.667	in	ab\xa6c
+c2.667	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.668	in	\xa7
+c2.668	out		 	 	 	prev		 	 	
+c2.669	in	\xa7abc
+c2.669	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.670	in	abc\xa7
+c2.670	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.671	in	ab\xa7c
+c2.671	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.672	in	\xa8
+c2.672	out		 	 	 	prev		 	 	
+c2.673	in	\xa8abc
+c2.673	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.674	in	abc\xa8
+c2.674	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.675	in	ab\xa8c
+c2.675	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.676	in	\xa9
+c2.676	out		 	 	 	prev		 	 	
+c2.677	in	\xa9abc
+c2.677	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.678	in	abc\xa9
+c2.678	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.679	in	ab\xa9c
+c2.679	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.680	in	\xaa
+c2.680	out		 	 	 	prev		 	 	
+c2.681	in	\xaaabc
+c2.681	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.682	in	abc\xaa
+c2.682	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.683	in	ab\xaac
+c2.683	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.684	in	\xab
+c2.684	out		 	 	 	prev		 	 	
+c2.685	in	\xababc
+c2.685	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.686	in	abc\xab
+c2.686	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.687	in	ab\xabc
+c2.687	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.688	in	\xac
+c2.688	out		 	 	 	prev		 	 	
+c2.689	in	\xacabc
+c2.689	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.690	in	abc\xac
+c2.690	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.691	in	ab\xacc
+c2.691	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.692	in	\xad
+c2.692	out		 	 	 	prev		 	 	
+c2.693	in	\xadabc
+c2.693	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.694	in	abc\xad
+c2.694	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.695	in	ab\xadc
+c2.695	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.696	in	\xae
+c2.696	out		 	 	 	prev		 	 	
+c2.697	in	\xaeabc
+c2.697	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.698	in	abc\xae
+c2.698	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.699	in	ab\xaec
+c2.699	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.700	in	\xaf
+c2.700	out		 	 	 	prev		 	 	
+c2.701	in	\xafabc
+c2.701	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.702	in	abc\xaf
+c2.702	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.703	in	ab\xafc
+c2.703	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.704	in	\xb0
+c2.704	out		 	 	 	prev		 	 	
+c2.705	in	\xb0abc
+c2.705	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.706	in	abc\xb0
+c2.706	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.707	in	ab\xb0c
+c2.707	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.708	in	\xb1
+c2.708	out		 	 	 	prev		 	 	
+c2.709	in	\xb1abc
+c2.709	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.710	in	abc\xb1
+c2.710	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.711	in	ab\xb1c
+c2.711	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.712	in	\xb2
+c2.712	out		 	 	 	prev		 	 	
+c2.713	in	\xb2abc
+c2.713	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.714	in	abc\xb2
+c2.714	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.715	in	ab\xb2c
+c2.715	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.716	in	\xb3
+c2.716	out		 	 	 	prev		 	 	
+c2.717	in	\xb3abc
+c2.717	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.718	in	abc\xb3
+c2.718	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.719	in	ab\xb3c
+c2.719	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.720	in	\xb4
+c2.720	out		 	 	 	prev		 	 	
+c2.721	in	\xb4abc
+c2.721	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.722	in	abc\xb4
+c2.722	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.723	in	ab\xb4c
+c2.723	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.724	in	\xb5
+c2.724	out		 	 	 	prev		 	 	
+c2.725	in	\xb5abc
+c2.725	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.726	in	abc\xb5
+c2.726	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.727	in	ab\xb5c
+c2.727	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.728	in	\xb6
+c2.728	out		 	 	 	prev		 	 	
+c2.729	in	\xb6abc
+c2.729	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.730	in	abc\xb6
+c2.730	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.731	in	ab\xb6c
+c2.731	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.732	in	\xb7
+c2.732	out		 	 	 	prev		 	 	
+c2.733	in	\xb7abc
+c2.733	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.734	in	abc\xb7
+c2.734	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.735	in	ab\xb7c
+c2.735	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.736	in	\xb8
+c2.736	out		 	 	 	prev		 	 	
+c2.737	in	\xb8abc
+c2.737	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.738	in	abc\xb8
+c2.738	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.739	in	ab\xb8c
+c2.739	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.740	in	\xb9
+c2.740	out		 	 	 	prev		 	 	
+c2.741	in	\xb9abc
+c2.741	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.742	in	abc\xb9
+c2.742	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.743	in	ab\xb9c
+c2.743	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.744	in	\xba
+c2.744	out		 	 	 	prev		 	 	
+c2.745	in	\xbaabc
+c2.745	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.746	in	abc\xba
+c2.746	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.747	in	ab\xbac
+c2.747	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.748	in	\xbb
+c2.748	out		 	 	 	prev		 	 	
+c2.749	in	\xbbabc
+c2.749	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.750	in	abc\xbb
+c2.750	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.751	in	ab\xbbc
+c2.751	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.752	in	\xbc
+c2.752	out		 	 	 	prev		 	 	
+c2.753	in	\xbcabc
+c2.753	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.754	in	abc\xbc
+c2.754	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.755	in	ab\xbcc
+c2.755	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.756	in	\xbd
+c2.756	out		 	 	 	prev		 	 	
+c2.757	in	\xbdabc
+c2.757	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.758	in	abc\xbd
+c2.758	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.759	in	ab\xbdc
+c2.759	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.760	in	\xbe
+c2.760	out		 	 	 	prev		 	 	
+c2.761	in	\xbeabc
+c2.761	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.762	in	abc\xbe
+c2.762	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.763	in	ab\xbec
+c2.763	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.764	in	\xbf
+c2.764	out		 	 	 	prev		 	 	
+c2.765	in	\xbfabc
+c2.765	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.766	in	abc\xbf
+c2.766	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.767	in	ab\xbfc
+c2.767	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.768	in	\xc0
+c2.768	out		 	 	 	prev		 	 	
+c2.769	in	\xc0abc
+c2.769	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.770	in	abc\xc0
+c2.770	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.771	in	ab\xc0c
+c2.771	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.772	in	\xc1
+c2.772	out		 	 	 	prev		 	 	
+c2.773	in	\xc1abc
+c2.773	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.774	in	abc\xc1
+c2.774	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.775	in	ab\xc1c
+c2.775	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.776	in	\xc2
+c2.776	out		 	 	 	prev		 	 	
+c2.777	in	\xc2abc
+c2.777	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.778	in	abc\xc2
+c2.778	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.779	in	ab\xc2c
+c2.779	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.780	in	\xc3
+c2.780	out		 	 	 	prev		 	 	
+c2.781	in	\xc3abc
+c2.781	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.782	in	abc\xc3
+c2.782	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.783	in	ab\xc3c
+c2.783	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.784	in	\xc4
+c2.784	out		 	 	 	prev		 	 	
+c2.785	in	\xc4abc
+c2.785	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.786	in	abc\xc4
+c2.786	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.787	in	ab\xc4c
+c2.787	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.788	in	\xc5
+c2.788	out		 	 	 	prev		 	 	
+c2.789	in	\xc5abc
+c2.789	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.790	in	abc\xc5
+c2.790	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.791	in	ab\xc5c
+c2.791	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.792	in	\xc6
+c2.792	out		 	 	 	prev		 	 	
+c2.793	in	\xc6abc
+c2.793	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.794	in	abc\xc6
+c2.794	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.795	in	ab\xc6c
+c2.795	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.796	in	\xc7
+c2.796	out		 	 	 	prev		 	 	
+c2.797	in	\xc7abc
+c2.797	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.798	in	abc\xc7
+c2.798	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.799	in	ab\xc7c
+c2.799	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.800	in	\xc8
+c2.800	out		 	 	 	prev		 	 	
+c2.801	in	\xc8abc
+c2.801	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.802	in	abc\xc8
+c2.802	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.803	in	ab\xc8c
+c2.803	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.804	in	\xc9
+c2.804	out		 	 	 	prev		 	 	
+c2.805	in	\xc9abc
+c2.805	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.806	in	abc\xc9
+c2.806	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.807	in	ab\xc9c
+c2.807	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.808	in	\xca
+c2.808	out		 	 	 	prev		 	 	
+c2.809	in	\xcaabc
+c2.809	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.810	in	abc\xca
+c2.810	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.811	in	ab\xcac
+c2.811	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.812	in	\xcb
+c2.812	out		 	 	 	prev		 	 	
+c2.813	in	\xcbabc
+c2.813	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.814	in	abc\xcb
+c2.814	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.815	in	ab\xcbc
+c2.815	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.816	in	\xcc
+c2.816	out		 	 	 	prev		 	 	
+c2.817	in	\xccabc
+c2.817	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.818	in	abc\xcc
+c2.818	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.819	in	ab\xccc
+c2.819	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.820	in	\xcd
+c2.820	out		 	 	 	prev		 	 	
+c2.821	in	\xcdabc
+c2.821	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.822	in	abc\xcd
+c2.822	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.823	in	ab\xcdc
+c2.823	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.824	in	\xce
+c2.824	out		 	 	 	prev		 	 	
+c2.825	in	\xceabc
+c2.825	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.826	in	abc\xce
+c2.826	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.827	in	ab\xcec
+c2.827	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.828	in	\xcf
+c2.828	out		 	 	 	prev		 	 	
+c2.829	in	\xcfabc
+c2.829	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.830	in	abc\xcf
+c2.830	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.831	in	ab\xcfc
+c2.831	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.832	in	\xd0
+c2.832	out		 	 	 	prev		 	 	
+c2.833	in	\xd0abc
+c2.833	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.834	in	abc\xd0
+c2.834	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.835	in	ab\xd0c
+c2.835	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.836	in	\xd1
+c2.836	out		 	 	 	prev		 	 	
+c2.837	in	\xd1abc
+c2.837	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.838	in	abc\xd1
+c2.838	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.839	in	ab\xd1c
+c2.839	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.840	in	\xd2
+c2.840	out		 	 	 	prev		 	 	
+c2.841	in	\xd2abc
+c2.841	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.842	in	abc\xd2
+c2.842	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.843	in	ab\xd2c
+c2.843	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.844	in	\xd3
+c2.844	out		 	 	 	prev		 	 	
+c2.845	in	\xd3abc
+c2.845	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.846	in	abc\xd3
+c2.846	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.847	in	ab\xd3c
+c2.847	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.848	in	\xd4
+c2.848	out		 	 	 	prev		 	 	
+c2.849	in	\xd4abc
+c2.849	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.850	in	abc\xd4
+c2.850	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.851	in	ab\xd4c
+c2.851	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.852	in	\xd5
+c2.852	out		 	 	 	prev		 	 	
+c2.853	in	\xd5abc
+c2.853	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.854	in	abc\xd5
+c2.854	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.855	in	ab\xd5c
+c2.855	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.856	in	\xd6
+c2.856	out		 	 	 	prev		 	 	
+c2.857	in	\xd6abc
+c2.857	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.858	in	abc\xd6
+c2.858	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.859	in	ab\xd6c
+c2.859	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.860	in	\xd7
+c2.860	out		 	 	 	prev		 	 	
+c2.861	in	\xd7abc
+c2.861	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.862	in	abc\xd7
+c2.862	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.863	in	ab\xd7c
+c2.863	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.864	in	\xd8
+c2.864	out		 	 	 	prev		 	 	
+c2.865	in	\xd8abc
+c2.865	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.866	in	abc\xd8
+c2.866	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.867	in	ab\xd8c
+c2.867	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.868	in	\xd9
+c2.868	out		 	 	 	prev		 	 	
+c2.869	in	\xd9abc
+c2.869	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.870	in	abc\xd9
+c2.870	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.871	in	ab\xd9c
+c2.871	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.872	in	\xda
+c2.872	out		 	 	 	prev		 	 	
+c2.873	in	\xdaabc
+c2.873	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.874	in	abc\xda
+c2.874	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.875	in	ab\xdac
+c2.875	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.876	in	\xdb
+c2.876	out		 	 	 	prev		 	 	
+c2.877	in	\xdbabc
+c2.877	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.878	in	abc\xdb
+c2.878	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.879	in	ab\xdbc
+c2.879	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.880	in	\xdc
+c2.880	out		 	 	 	prev		 	 	
+c2.881	in	\xdcabc
+c2.881	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.882	in	abc\xdc
+c2.882	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.883	in	ab\xdcc
+c2.883	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.884	in	\xdd
+c2.884	out		 	 	 	prev		 	 	
+c2.885	in	\xddabc
+c2.885	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.886	in	abc\xdd
+c2.886	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.887	in	ab\xddc
+c2.887	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.888	in	\xde
+c2.888	out		 	 	 	prev		 	 	
+c2.889	in	\xdeabc
+c2.889	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.890	in	abc\xde
+c2.890	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.891	in	ab\xdec
+c2.891	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.892	in	\xdf
+c2.892	out		 	 	 	prev		 	 	
+c2.893	in	\xdfabc
+c2.893	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.894	in	abc\xdf
+c2.894	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.895	in	ab\xdfc
+c2.895	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.896	in	\xe0
+c2.896	out		 	 	 	prev		 	 	
+c2.897	in	\xe0abc
+c2.897	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.898	in	abc\xe0
+c2.898	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.899	in	ab\xe0c
+c2.899	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.900	in	\xe1
+c2.900	out		 	 	 	prev		 	 	
+c2.901	in	\xe1abc
+c2.901	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.902	in	abc\xe1
+c2.902	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.903	in	ab\xe1c
+c2.903	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.904	in	\xe2
+c2.904	out		 	 	 	prev		 	 	
+c2.905	in	\xe2abc
+c2.905	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.906	in	abc\xe2
+c2.906	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.907	in	ab\xe2c
+c2.907	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.908	in	\xe3
+c2.908	out		 	 	 	prev		 	 	
+c2.909	in	\xe3abc
+c2.909	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.910	in	abc\xe3
+c2.910	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.911	in	ab\xe3c
+c2.911	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.912	in	\xe4
+c2.912	out		 	 	 	prev		 	 	
+c2.913	in	\xe4abc
+c2.913	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.914	in	abc\xe4
+c2.914	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.915	in	ab\xe4c
+c2.915	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.916	in	\xe5
+c2.916	out		 	 	 	prev		 	 	
+c2.917	in	\xe5abc
+c2.917	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.918	in	abc\xe5
+c2.918	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.919	in	ab\xe5c
+c2.919	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.920	in	\xe6
+c2.920	out		 	 	 	prev		 	 	
+c2.921	in	\xe6abc
+c2.921	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.922	in	abc\xe6
+c2.922	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.923	in	ab\xe6c
+c2.923	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.924	in	\xe7
+c2.924	out		 	 	 	prev		 	 	
+c2.925	in	\xe7abc
+c2.925	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.926	in	abc\xe7
+c2.926	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.927	in	ab\xe7c
+c2.927	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.928	in	\xe8
+c2.928	out		 	 	 	prev		 	 	
+c2.929	in	\xe8abc
+c2.929	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.930	in	abc\xe8
+c2.930	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.931	in	ab\xe8c
+c2.931	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.932	in	\xe9
+c2.932	out		 	 	 	prev		 	 	
+c2.933	in	\xe9abc
+c2.933	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.934	in	abc\xe9
+c2.934	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.935	in	ab\xe9c
+c2.935	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.936	in	\xea
+c2.936	out		 	 	 	prev		 	 	
+c2.937	in	\xeaabc
+c2.937	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.938	in	abc\xea
+c2.938	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.939	in	ab\xeac
+c2.939	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.940	in	\xeb
+c2.940	out		 	 	 	prev		 	 	
+c2.941	in	\xebabc
+c2.941	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.942	in	abc\xeb
+c2.942	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.943	in	ab\xebc
+c2.943	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.944	in	\xec
+c2.944	out		 	 	 	prev		 	 	
+c2.945	in	\xecabc
+c2.945	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.946	in	abc\xec
+c2.946	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.947	in	ab\xecc
+c2.947	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.948	in	\xed
+c2.948	out		 	 	 	prev		 	 	
+c2.949	in	\xedabc
+c2.949	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.950	in	abc\xed
+c2.950	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.951	in	ab\xedc
+c2.951	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.952	in	\xee
+c2.952	out		 	 	 	prev		 	 	
+c2.953	in	\xeeabc
+c2.953	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.954	in	abc\xee
+c2.954	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.955	in	ab\xeec
+c2.955	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.956	in	\xef
+c2.956	out		 	 	 	prev		 	 	
+c2.957	in	\xefabc
+c2.957	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.958	in	abc\xef
+c2.958	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.959	in	ab\xefc
+c2.959	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.960	in	\xf0
+c2.960	out		 	 	 	prev		 	 	
+c2.961	in	\xf0abc
+c2.961	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.962	in	abc\xf0
+c2.962	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.963	in	ab\xf0c
+c2.963	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.964	in	\xf1
+c2.964	out		 	 	 	prev		 	 	
+c2.965	in	\xf1abc
+c2.965	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.966	in	abc\xf1
+c2.966	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.967	in	ab\xf1c
+c2.967	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.968	in	\xf2
+c2.968	out		 	 	 	prev		 	 	
+c2.969	in	\xf2abc
+c2.969	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.970	in	abc\xf2
+c2.970	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.971	in	ab\xf2c
+c2.971	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.972	in	\xf3
+c2.972	out		 	 	 	prev		 	 	
+c2.973	in	\xf3abc
+c2.973	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.974	in	abc\xf3
+c2.974	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.975	in	ab\xf3c
+c2.975	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.976	in	\xf4
+c2.976	out		 	 	 	prev		 	 	
+c2.977	in	\xf4abc
+c2.977	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.978	in	abc\xf4
+c2.978	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.979	in	ab\xf4c
+c2.979	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.980	in	\xf5
+c2.980	out		 	 	 	prev		 	 	
+c2.981	in	\xf5abc
+c2.981	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.982	in	abc\xf5
+c2.982	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.983	in	ab\xf5c
+c2.983	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.984	in	\xf6
+c2.984	out		 	 	 	prev		 	 	
+c2.985	in	\xf6abc
+c2.985	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.986	in	abc\xf6
+c2.986	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.987	in	ab\xf6c
+c2.987	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.988	in	\xf7
+c2.988	out		 	 	 	prev		 	 	
+c2.989	in	\xf7abc
+c2.989	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.990	in	abc\xf7
+c2.990	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.991	in	ab\xf7c
+c2.991	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.992	in	\xf8
+c2.992	out		 	 	 	prev		 	 	
+c2.993	in	\xf8abc
+c2.993	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.994	in	abc\xf8
+c2.994	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.995	in	ab\xf8c
+c2.995	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.996	in	\xf9
+c2.996	out		 	 	 	prev		 	 	
+c2.997	in	\xf9abc
+c2.997	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.998	in	abc\xf9
+c2.998	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.999	in	ab\xf9c
+c2.999	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.1000	in	\xfa
+c2.1000	out		 	 	 	prev		 	 	
+c2.1001	in	\xfaabc
+c2.1001	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.1002	in	abc\xfa
+c2.1002	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.1003	in	ab\xfac
+c2.1003	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.1004	in	\xfb
+c2.1004	out		 	 	 	prev		 	 	
+c2.1005	in	\xfbabc
+c2.1005	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.1006	in	abc\xfb
+c2.1006	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.1007	in	ab\xfbc
+c2.1007	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.1008	in	\xfc
+c2.1008	out		 	 	 	prev		 	 	
+c2.1009	in	\xfcabc
+c2.1009	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.1010	in	abc\xfc
+c2.1010	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.1011	in	ab\xfcc
+c2.1011	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.1012	in	\xfd
+c2.1012	out		 	 	 	prev		 	 	
+c2.1013	in	\xfdabc
+c2.1013	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.1014	in	abc\xfd
+c2.1014	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.1015	in	ab\xfdc
+c2.1015	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.1016	in	\xfe
+c2.1016	out		 	 	 	prev		 	 	
+c2.1017	in	\xfeabc
+c2.1017	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.1018	in	abc\xfe
+c2.1018	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.1019	in	ab\xfec
+c2.1019	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.1020	in	\xff
+c2.1020	out		 	 	 	prev		 	 	
+c2.1021	in	\xffabc
+c2.1021	out	abc	 abc	 abc	 abc	abc	abc	 abc	 abc	abc
+c2.1022	in	abc\xff
+c2.1022	out	abc	abc 	abc 	abc 	abc	abc	abc 	abc 	abc
+c2.1023	in	ab\xffc
+c2.1023	out	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c	ab c
+c2.1024	in	
+c2.1024	out					prev				
+c2.1025	in	A
+c2.1025	out	A	A	A	A	A	A	A	A	A
+c2.1026	in	Ab
+c2.1026	out	Ab	Ab	Ab	Ab	Ab	Ab	Ab	Ab	Ab
+c2.1027	in	Abc
+c2.1027	out	Abc	Abc	Abc	Abc	Abc	Abc	Abc	Abc	Abc
+c2.1028	in	Abcd
+c2.1028	out	Abcd	Abcd	Abcd	Abcd	Abcd	Abcd	Abcd	Abcd	Abcd
+c2.1029	in	Abcde
+c2.1029	out	Abcde	Abcde	Abcde	Abcde	Abcde	Abcde	Abcde	Abcde	Abcde
+c2.1030	in	Abcdef
+c2.1030	out	Abcdef	Abcdef	Abcdef	Abcdef	Abcdef	Abcdef	Abcdef	Abcdef	Abcdef
+c2.1031	in	Abcdefg
+c2.1031	out	Abcdefg	Abcdefg	Abcdefg	Abcdefg	Abcdefg	Abcdefg	Abcdefg	Abcdefg	Abcdefg
+c2.1032	in	Abcdefgh
+c2.1032	out	Abcdefgh	Abcdefgh	Abcdefgh	Abcdefgh	Abcdefgh	Abcdefgh	Abcdefgh	Abcdefgh	Abcdefgh
+c2.1033	in	Abcdefghi
+c2.1033	out	Abcdefghi	Abcdefghi	Abcdefghi	Abcdefghi	Abcdefghi	Abcdefghi	Abcdefghi	Abcdefghi	Abcdefghi
+c2.1034	in	Abcdefghij
+c2.1034	out	Abcdefghij	Abcdefghij	Abcdefghij	Abcdefghij	Abcdefghij	Abcdefghij	Abcdefghij	Abcdefghij	Abcdefghij
+c2.1035	in	Abcdefghij 
+c2.1035	out	Abcdefghij	Abcdefghij 	Abcdefghij 	Abcdefghij 	Abcdefghij	Abcdefghij	Abcdefghij 	Abcdefghij 	Abcdefghij
+c2.1036	in	Abcdefghij k
+c2.1036	out	Abcdefghij k	Abcdefghij k	Abcdefghij k	Abcdefghij k	Abcdefghij k	Abcdefghij k	Abcdefghij k	Abcdefghij k	Abcdefghij k
+c2.1037	in	Abcdefghij kl
+c2.1037	out	Abcdefghij kl	Abcdefghij kl	Abcdefghij kl	Abcdefghij kl	Abcdefghij kl	Abcdefghij kl	Abcdefghij kl	Abcdefghij kl	Abcdefghij kl
+c2.1038	in	Abcdefghij klm
+c2.1038	out	Abcdefghij klm	Abcdefghij klm	Abcdefghij klm	Abcdefghij klm	Abcdefghij klm	Abcdefghij klm	Abcdefghij klm	Abcdefghij klm	Abcdefghij klm
+c2.1039	in	Abcdefghij klmn
+c2.1039	out	Abcdefghij klmn	Abcdefghij klmn	Abcdefghij klmn	Abcdefghij klmn	Abcdefghij klmn	Abcdefghij klmn	Abcdefghij klmn	Abcdefghij klmn	Abcdefghij klmn
+c2.1040	in	Abcdefghij klmno
+c2.1040	out	Abcdefghij klmno	Abcdefghij klmno	Abcdefghij klmno	Abcdefghij klmno	Abcdefghij klmno	Abcdefghij klmno	Abcdefghij klmno	Abcdefghij klmno	Abcdefghij klmno
+c2.1041	in	Abcdefghij klmnop
+c2.1041	out	Abcdefghij klmnop	Abcdefghij klmnop	Abcdefghij klmnop	Abcdefghij klmnop	Abcdefghij klmnop	Abcdefghij klmnop	Abcdefghij klmnop	Abcdefghij klmnop	Abcdefghij klmnop
+c2.1042	in	Abcdefghij klmnopq
+c2.1042	out	Abcdefghij klmnopq	Abcdefghij klmnopq	Abcdefghij klmnopq	Abcdefghij klmnopq	Abcdefghij klmnopq	Abcdefghij klmnopq	Abcdefghij klmnopq	Abcdefghij klmnopq	Abcdefghij klmnopq
+c2.1043	in	Abcdefghij klmnopqr
+c2.1043	out	Abcdefghij klmnopqr	Abcdefghij klmnopqr	Abcdefghij klmnopqr	Abcdefghij klmnopqr	Abcdefghij klmnopqr	Abcdefghij klmnopqr	Abcdefghij klmnopqr	Abcdefghij klmnopqr	Abcdefghij klmnopqr
+c2.1044	in	Abcdefghij klmnopqrs
+c2.1044	out	Abcdefghij klmnopqrs	Abcdefghij klmnopqrs	Abcdefghij klmnopqrs	Abcdefghij klmnopqrs	Abcdefghij klmnopqrs	Abcdefghij klmnopqrs	Abcdefghij klmnopqrs	Abcdefghij klmnopqrs	Abcdefghij klmnopqrs
+c2.1045	in	Abcdefghij klmnopqrst
+c2.1045	out	Abcdefghij klmnopqrst	Abcdefghij klmnopqrst	Abcdefghij klmnopqrst	Abcdefghij klmnopqrst	Abcdefghij klmnopqrst	Abcdefghij klmnopqrst	Abcdefghij klmnopqrst	Abcdefghij klmnopqrst	Abcdefghij klmnopqrst
+c2.1046	in	Abcdefghij klmnopqrst 
+c2.1046	out	Abcdefghij klmnopqrst	Abcdefghij klmnopqrst 	Abcdefghij klmnopqrst 	Abcdefghij klmnopqrst 	Abcdefghij klmnopqrst	Abcdefghij klmnopqrst	Abcdefghij klmnopqrst 	Abcdefghij klmnopqrst 	Abcdefghij klmnopqrst
+c2.1047	in	Abcdefghij klmnopqrst U
+c2.1047	out	Abcdefghij klmnopqrst U	Abcdefghij klmnopqrst U	Abcdefghij klmnopqrst U	Abcdefghij klmnopqrst U	Abcdefghij klmnopqrst U	Abcdefghij klmnopqrst U	Abcdefghij klmnopqrst U	Abcdefghij klmnopqrst U	Abcdefghij klmnopqrst U
+c2.1048	in	Abcdefghij klmnopqrst UV
+c2.1048	out	Abcdefghij klmnopqrst UV	Abcdefghij klmnopqrst UV	Abcdefghij klmnopqrst UV	Abcdefghij klmnopqrst UV	Abcdefghij klmnopqrst UV	Abcdefghij klmnopqrst UV	Abcdefghij klmnopqrst UV	Abcdefghij klmnopqrst UV	Abcdefghij klmnopqrst UV
+c2.1049	in	Abcdefghij klmnopqrst UVW
+c2.1049	out	Abcdefghij klmnopqrst UVW	Abcdefghij klmnopqrst UVW	Abcdefghij klmnopqrst UVW	Abcdefghij klmnopqrst UVW	Abcdefghij klmnopqrst UVW	Abcdefghij klmnopqrst UVW	Abcdefghij klmnopqrst UVW	Abcdefghij klmnopqrst UVW	Abcdefghij klmnopqrst UVW
+c2.1050	in	Abcdefghij klmnopqrst UVWX
+c2.1050	out	Abcdefghij klmnopqrst UVWX	Abcdefghij klmnopqrst UVWX	Abcdefghij klmnopqrst UVWX	Abcdefghij klmnopqrst UVWX	Abcdefghij klmnopqrst UVWX	Abcdefghij klmnopqrst UVWX	Abcdefghij klmnopqrst UVWX	Abcdefghij klmnopqrst UVWX	Abcdefghij klmnopqrst UVWX
+c2.1051	in	Abcdefghij klmnopqrst UVWXY
+c2.1051	out	Abcdefghij klmnopqrst UVWXY	Abcdefghij klmnopqrst UVWXY	Abcdefghij klmnopqrst UVWXY	Abcdefghij klmnopqrst UVWXY	Abcdefghij klmnopqrst UVWXY	Abcdefghij klmnopqrst UVWXY	Abcdefghij klmnopqrst UVWXY	Abcdefghij klmnopqrst UVWXY	Abcdefghij klmnopqrst UVWXY
+c2.1052	in	Abcdefghij klmnopqrst UVWXYZ
+c2.1052	out	Abcdefghij klmnopqrst UVWXYZ	Abcdefghij klmnopqrst UVWXYZ	Abcdefghij klmnopqrst UVWXYZ	Abcdefghij klmnopqrst UVWXYZ	Abcdefghij klmnopqrst UVWXYZ	Abcdefghij klmnopqrst UVWXYZ	Abcdefghij klmnopqrst UVWXYZ	Abcdefghij klmnopqrst UVWXYZ	Abcdefghij klmnopqrst UVWXYZ
+c2.1053	in	Abcdefghij klmnopqrst UVWXYZ0
+c2.1053	out	Abcdefghij klmnopqrst UVWXYZ0	Abcdefghij klmnopqrst UVWXYZ0	Abcdefghij klmnopqrst UVWXYZ0	Abcdefghij klmnopqrst UVWXYZ0	Abcdefghij klmnopqrst UVWXYZ0	Abcdefghij klmnopqrst UVWXYZ0	Abcdefghij klmnopqrst UVWXYZ0	Abcdefghij klmnopqrst UVWXYZ0	Abcdefghij klmnopqrst UVWXYZ0
+c2.1054	in	Abcdefghij klmnopqrst UVWXYZ01
+c2.1054	out	Abcdefghij klmnopqrst UVWXYZ01	Abcdefghij klmnopqrst UVWXYZ01	Abcdefghij klmnopqrst UVWXYZ01	Abcdefghij klmnopqrst UVWXYZ01	Abcdefghij klmnopqrst UVWXYZ01	Abcdefghij klmnopqrst UVWXYZ01	Abcdefghij klmnopqrst UVWXYZ01	Abcdefghij klmnopqrst UVWXYZ01	Abcdefghij klmnopqrst UVWXYZ01
+c2.1055	in	Abcdefghij klmnopqrst UVWXYZ012
+c2.1055	out	Abcdefghij klmnopqrst UVWXYZ012	Abcdefghij klmnopqrst UVWXYZ012	Abcdefghij klmnopqrst UVWXYZ012	Abcdefghij klmnopqrst UVWXYZ012	Abcdefghij klmnopqrst UVWXYZ012	Abcdefghij klmnopqrst UVWXYZ012	Abcdefghij klmnopqrst UVWXYZ012	Abcdefghij klmnopqrst UVWXYZ012	Abcdefghij klmnopqrst UVWXYZ012
+c2.1056	in	Abcdefghij klmnopqrst UVWXYZ0123
+c2.1056	out	Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123
+c2.1057	in	Abcdefghij klmnopqrst UVWXYZ0123 
+c2.1057	out	Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123 	Abcdefghij klmnopqrst UVWXYZ0123 	Abcdefghij klmnopqrst UVWXYZ0123 	Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123 	Abcdefghij klmnopqrst UVWXYZ0123 	Abcdefghij klmnopqrst UVWXYZ0123
+c2.1058	in	Abcdefghij klmnopqrst UVWXYZ0123 4
+c2.1058	out	Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 4
+c2.1059	in	Abcdefghij klmnopqrst UVWXYZ0123 45
+c2.1059	out	Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 45
+c2.1060	in	Abcdefghij klmnopqrst UVWXYZ0123 456
+c2.1060	out	Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456
+c2.1061	in	Abcdefghij klmnopqrst UVWXYZ0123 4567
+c2.1061	out	Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 4567
+c2.1062	in	Abcdefghij klmnopqrst UVWXYZ0123 45678
+c2.1062	out	Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 45678
+c2.1063	in	Abcdefghij klmnopqrst UVWXYZ0123 456789
+c2.1063	out	Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789
+c2.1064	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-
+c2.1064	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-
+c2.1065	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_
+c2.1065	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_	Abcdefghij klmnopqrst UVWXYZ0123 456789-_	Abcdefghij klmnopqrst UVWXYZ0123 456789-_	Abcdefghij klmnopqrst UVWXYZ0123 456789-_	Abcdefghij klmnopqrst UVWXYZ0123 456789-_	Abcdefghij klmnopqrst UVWXYZ0123 456789-_	Abcdefghij klmnopqrst UVWXYZ0123 456789-_	Abcdefghij klmnopqrst UVWXYZ0123 456789-_	Abcdefghij klmnopqrst UVWXYZ0123 456789-_
+c2.1066	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+
+c2.1066	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+
+c2.1067	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+=
+c2.1067	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+=	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+=	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+=	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+=	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+=	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+=	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+=	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+=	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+=
+c2.1068	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= 
+c2.1068	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+=	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+=	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+=	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+=
+c2.1069	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= A
+c2.1069	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= A	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= A	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= A	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= A	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= A	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= A	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= A	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= A	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= A
+c2.1070	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Ab
+c2.1070	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Ab	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Ab	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Ab	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Ab	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Ab	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Ab	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Ab	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Ab	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Ab
+c2.1071	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abc
+c2.1071	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abc	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abc	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abc	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abc	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abc	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abc	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abc	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abc	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abc
+c2.1072	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcd
+c2.1072	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcd	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcd	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcd	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcd	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcd	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcd	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcd	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcd	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcd
+c2.1073	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcde
+c2.1073	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcde	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcde	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcde	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcde	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcde	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcde	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcde	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcde	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcde
+c2.1074	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdef
+c2.1074	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdef	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdef	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdef	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdef	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdef	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdef	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdef	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdef	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdef
+c2.1075	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefg
+c2.1075	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefg	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefg	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefg	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefg	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefg	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefg	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefg	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefg	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefg
+c2.1076	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefgh
+c2.1076	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefgh	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefgh	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefgh	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefgh	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefgh	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefgh	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefgh	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefgh	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefgh
+c2.1077	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghi
+c2.1077	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghi	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghi	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghi	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghi	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghi	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghi	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghi	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghi	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghi
+c2.1078	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij
+c2.1078	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij
+c2.1079	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij 
+c2.1079	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij
+c2.1080	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij k
+c2.1080	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij k	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij k	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij k	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij k	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij k	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij k	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij k	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij k	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij k
+c2.1081	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij kl
+c2.1081	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij kl	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij kl	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij kl	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij kl	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij kl	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij kl	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij kl	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij kl	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij kl
+c2.1082	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klm
+c2.1082	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klm	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klm	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klm	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klm	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klm	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klm	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klm	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klm	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klm
+c2.1083	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmn
+c2.1083	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmn	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmn	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmn	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmn	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmn	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmn	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmn	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmn	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmn
+c2.1084	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmno
+c2.1084	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmno	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmno	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmno	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmno	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmno	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmno	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmno	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmno	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmno
+c2.1085	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnop
+c2.1085	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnop	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnop	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnop	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnop	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnop	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnop	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnop	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnop	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnop
+c2.1086	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopq
+c2.1086	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopq	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopq	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopq	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopq	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopq	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopq	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopq	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopq	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopq
+c2.1087	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1087	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1088	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrs
+c2.1088	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrs	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrs	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrs	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrs	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrs	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1089	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst
+c2.1089	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1090	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst 
+c2.1090	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1091	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst U
+c2.1091	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst U	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst U	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst U	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst U	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst U	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1092	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UV
+c2.1092	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UV	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UV	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UV	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UV	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UV	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1093	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVW
+c2.1093	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVW	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVW	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVW	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVW	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVW	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1094	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWX
+c2.1094	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWX	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWX	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWX	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWX	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWX	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1095	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123
+c2.1095	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1096	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 
+c2.1096	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1097	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4
+c2.1097	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1098	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45
+c2.1098	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1099	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456
+c2.1099	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1100	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4567
+c2.1100	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1101	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45678
+c2.1101	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1102	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789
+c2.1102	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1103	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-
+c2.1103	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1104	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_
+c2.1104	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1105	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+
+c2.1105	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1106	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ01
+c2.1106	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ01	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ01	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ01	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ01	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ01	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1107	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ012
+c2.1107	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ012	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ012	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ012	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ012	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ012	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1108	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123
+c2.1108	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1109	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 
+c2.1109	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1110	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4
+c2.1110	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1111	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45
+c2.1111	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1112	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456
+c2.1112	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1113	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4567
+c2.1113	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 4567	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1114	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45678
+c2.1114	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 45678	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1115	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789
+c2.1115	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1116	in	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-
+c2.1116	out	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqrst UVWXYZ0123 456789-	Abcdefghij klmnopqrst UVWXYZ0123 456789-_+= Abcdefghij klmnopqr
+c2.1117	in	 x y 
+c2.1117	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1118	in	  x  
+c2.1118	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1119	in	 x y\x09
+c2.1119	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1120	in	 \x09x\x09 
+c2.1120	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1121	in	 x y\x0a
+c2.1121	out	x y	 x y\x0a	 x y\x0a	 x y\x0a	x y	x y	 x y\x0a	 x y\x0a	x y
+c2.1122	in	 \x0ax\x0a 
+c2.1122	out	x	 \x0ax\x0a 	 \x0ax\x0a 	 \x0ax\x0a 	x	x	 \x0ax\x0a 	 \x0ax\x0a 	x
+c2.1123	in	 x y\x0b
+c2.1123	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1124	in	 \x0bx\x0b 
+c2.1124	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1125	in	 x y\x0c
+c2.1125	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1126	in	 \x0cx\x0c 
+c2.1126	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1127	in	 x y\x0d
+c2.1127	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1128	in	 \x0dx\x0d 
+c2.1128	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1129	in	\x09x y 
+c2.1129	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1130	in	\x09 x \x09
+c2.1130	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1131	in	\x09x y\x09
+c2.1131	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1132	in	\x09\x09x\x09\x09
+c2.1132	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1133	in	\x09x y\x0a
+c2.1133	out	x y	 x y\x0a	 x y\x0a	 x y\x0a	x y	x y	 x y\x0a	 x y\x0a	x y
+c2.1134	in	\x09\x0ax\x0a\x09
+c2.1134	out	x	 \x0ax\x0a 	 \x0ax\x0a 	 \x0ax\x0a 	x	x	 \x0ax\x0a 	 \x0ax\x0a 	x
+c2.1135	in	\x09x y\x0b
+c2.1135	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1136	in	\x09\x0bx\x0b\x09
+c2.1136	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1137	in	\x09x y\x0c
+c2.1137	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1138	in	\x09\x0cx\x0c\x09
+c2.1138	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1139	in	\x09x y\x0d
+c2.1139	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1140	in	\x09\x0dx\x0d\x09
+c2.1140	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1141	in	\x0ax y 
+c2.1141	out	x y	\x0ax y 	\x0ax y 	\x0ax y 	x y	x y	\x0ax y 	\x0ax y 	x y
+c2.1142	in	\x0a x \x0a
+c2.1142	out	x	\x0a x \x0a	\x0a x \x0a	\x0a x \x0a	x	x	\x0a x \x0a	\x0a x \x0a	x
+c2.1143	in	\x0ax y\x09
+c2.1143	out	x y	\x0ax y 	\x0ax y 	\x0ax y 	x y	x y	\x0ax y 	\x0ax y 	x y
+c2.1144	in	\x0a\x09x\x09\x0a
+c2.1144	out	x	\x0a x \x0a	\x0a x \x0a	\x0a x \x0a	x	x	\x0a x \x0a	\x0a x \x0a	x
+c2.1145	in	\x0ax y\x0a
+c2.1145	out	x y	\x0ax y\x0a	\x0ax y\x0a	\x0ax y\x0a	x y	x y	\x0ax y\x0a	\x0ax y\x0a	x y
+c2.1146	in	\x0a\x0ax\x0a\x0a
+c2.1146	out	x	\x0a\x0ax\x0a\x0a	\x0a\x0ax\x0a\x0a	\x0a\x0ax\x0a\x0a	x	x	\x0a\x0ax\x0a\x0a	\x0a\x0ax\x0a\x0a	x
+c2.1147	in	\x0ax y\x0b
+c2.1147	out	x y	\x0ax y 	\x0ax y 	\x0ax y 	x y	x y	\x0ax y 	\x0ax y 	x y
+c2.1148	in	\x0a\x0bx\x0b\x0a
+c2.1148	out	x	\x0a x \x0a	\x0a x \x0a	\x0a x \x0a	x	x	\x0a x \x0a	\x0a x \x0a	x
+c2.1149	in	\x0ax y\x0c
+c2.1149	out	x y	\x0ax y 	\x0ax y 	\x0ax y 	x y	x y	\x0ax y 	\x0ax y 	x y
+c2.1150	in	\x0a\x0cx\x0c\x0a
+c2.1150	out	x	\x0a x \x0a	\x0a x \x0a	\x0a x \x0a	x	x	\x0a x \x0a	\x0a x \x0a	x
+c2.1151	in	\x0ax y\x0d
+c2.1151	out	x y	\x0ax y 	\x0ax y 	\x0ax y 	x y	x y	\x0ax y 	\x0ax y 	x y
+c2.1152	in	\x0a\x0dx\x0d\x0a
+c2.1152	out	x	\x0a x \x0a	\x0a x \x0a	\x0a x \x0a	x	x	\x0a x \x0a	\x0a x \x0a	x
+c2.1153	in	\x0bx y 
+c2.1153	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1154	in	\x0b x \x0b
+c2.1154	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1155	in	\x0bx y\x09
+c2.1155	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1156	in	\x0b\x09x\x09\x0b
+c2.1156	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1157	in	\x0bx y\x0a
+c2.1157	out	x y	 x y\x0a	 x y\x0a	 x y\x0a	x y	x y	 x y\x0a	 x y\x0a	x y
+c2.1158	in	\x0b\x0ax\x0a\x0b
+c2.1158	out	x	 \x0ax\x0a 	 \x0ax\x0a 	 \x0ax\x0a 	x	x	 \x0ax\x0a 	 \x0ax\x0a 	x
+c2.1159	in	\x0bx y\x0b
+c2.1159	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1160	in	\x0b\x0bx\x0b\x0b
+c2.1160	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1161	in	\x0bx y\x0c
+c2.1161	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1162	in	\x0b\x0cx\x0c\x0b
+c2.1162	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1163	in	\x0bx y\x0d
+c2.1163	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1164	in	\x0b\x0dx\x0d\x0b
+c2.1164	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1165	in	\x0cx y 
+c2.1165	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1166	in	\x0c x \x0c
+c2.1166	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1167	in	\x0cx y\x09
+c2.1167	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1168	in	\x0c\x09x\x09\x0c
+c2.1168	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1169	in	\x0cx y\x0a
+c2.1169	out	x y	 x y\x0a	 x y\x0a	 x y\x0a	x y	x y	 x y\x0a	 x y\x0a	x y
+c2.1170	in	\x0c\x0ax\x0a\x0c
+c2.1170	out	x	 \x0ax\x0a 	 \x0ax\x0a 	 \x0ax\x0a 	x	x	 \x0ax\x0a 	 \x0ax\x0a 	x
+c2.1171	in	\x0cx y\x0b
+c2.1171	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1172	in	\x0c\x0bx\x0b\x0c
+c2.1172	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1173	in	\x0cx y\x0c
+c2.1173	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1174	in	\x0c\x0cx\x0c\x0c
+c2.1174	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1175	in	\x0cx y\x0d
+c2.1175	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1176	in	\x0c\x0dx\x0d\x0c
+c2.1176	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1177	in	\x0dx y 
+c2.1177	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1178	in	\x0d x \x0d
+c2.1178	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1179	in	\x0dx y\x09
+c2.1179	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1180	in	\x0d\x09x\x09\x0d
+c2.1180	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1181	in	\x0dx y\x0a
+c2.1181	out	x y	 x y\x0a	 x y\x0a	 x y\x0a	x y	x y	 x y\x0a	 x y\x0a	x y
+c2.1182	in	\x0d\x0ax\x0a\x0d
+c2.1182	out	x	 \x0ax\x0a 	 \x0ax\x0a 	 \x0ax\x0a 	x	x	 \x0ax\x0a 	 \x0ax\x0a 	x
+c2.1183	in	\x0dx y\x0b
+c2.1183	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1184	in	\x0d\x0bx\x0b\x0d
+c2.1184	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1185	in	\x0dx y\x0c
+c2.1185	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1186	in	\x0d\x0cx\x0c\x0d
+c2.1186	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1187	in	\x0dx y\x0d
+c2.1187	out	x y	 x y 	 x y 	 x y 	x y	x y	 x y 	 x y 	x y
+c2.1188	in	\x0d\x0dx\x0d\x0d
+c2.1188	out	x	  x  	  x  	  x  	x	x	  x  	  x  	x
+c2.1189	in	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b
+c2.1189	out	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa b	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 
+c2.1190	in	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 
+c2.1190	out	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa 	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+c2.1191	in	 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+c2.1191	out	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+c2.1192	in	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa   bbbb
+c2.1192	out	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa   	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa   bbbb	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa   bbbb	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa   bbbb	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa   	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa   	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa   bbbb	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa   bbbb	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa   
+c2.1193	in	                                                                
+c2.1193	out		                                                                	                                                                	                                                                	prev		                                                                	                                                                	
+c2.1194	in	||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+c2.1194	out		                                                                      	                                                                      	||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||	prev		                                                                      	                                                                      	
+c2.1195	in	caf\xc3\xa9
+c2.1195	out	caf	caf  	caf  	caf  	caf	caf	caf  	caf  	caf
+c2.1196	in	\xc3\xa9t\xc3\xa9
+c2.1196	out	t	  t  	  t  	  t  	t	t	  t  	  t  	t
+c2.1197	in	\xe2\x82\xac5
+c2.1197	out	5	   5	   5	   5	5	5	   5	   5	5
+c2.1198	in	\xe6\x97\xa5\xe6\x9c\xac
+c2.1198	out		      	      	      	prev		      	      	
+c2.1199	in	\xf0\x9f\x98\x80 smile
+c2.1199	out	smile	     smile	     smile	     smile	smile	smile	     smile	     smile	smile
+c2.1200	in	a\xf0\x9f\x8f\xb3\xef\xb8\x8f\xe2\x80\x8d\xf0\x9f\x8c\x88z
+c2.1200	out	a              z	a              z	a              z	a              z	a              z	a              z	a              z	a              z	a              z
+c2.1201	in	\xc3
+c2.1201	out		 	 	 	prev		 	 	
+c2.1202	in	\xe2\x82
+c2.1202	out		  	  	  	prev		  	  	
+c2.1203	in	\xff\xfe
+c2.1203	out		  	  	  	prev		  	  	
+c2.1204	in	\xed\xa0\x80
+c2.1204	out		   	   	   	prev		   	   	
+c2.1205	in	\xc0\xaf
+c2.1205	out		  	  	  	prev		  	  	
+c2.1206	in	\x80
+c2.1206	out		 	 	 	prev		 	 	
+c2.1207	in	\xbf\xbf
+c2.1207	out		  	  	  	prev		  	  	
+c2.1208	in	\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3
+c2.1208	out		                              	                              	                              	prev		                              	                              	
+c2.1209	in	a\x00b
+c2.1209	out	a b	a b	a b	a b	a b	a b	a b	a b	a b
+c2.1210	in	\x00
+c2.1210	out		 	 	 	prev		 	 	
+c2.1211	in	name\x00
+c2.1211	out	name	name 	name 	name 	name	name	name 	name 	name
+c2.1212	in	|0123456789
+c2.1212	out	0123456789	 0123456789	 0123456789	|0123456789	0123456789	0123456789	 0123456789	 0123456789	0123456789
+c2.1213	in	0|123456789
+c2.1213	out	0 123456789	0 123456789	0 123456789	0|123456789	0 123456789	0 123456789	0 123456789	0 123456789	0 123456789
+c2.1214	in	01|23456789
+c2.1214	out	01 23456789	01 23456789	01 23456789	01|23456789	01 23456789	01 23456789	01 23456789	01 23456789	01 23456789
+c2.1215	in	012|3456789
+c2.1215	out	012 3456789	012 3456789	012 3456789	012|3456789	012 3456789	012 3456789	012 3456789	012 3456789	012 3456789
+c2.1216	in	0123|456789
+c2.1216	out	0123 456789	0123 456789	0123 456789	0123|456789	0123 456789	0123 456789	0123 456789	0123 456789	0123 456789
+c2.1217	in	01234|56789
+c2.1217	out	01234 56789	01234 56789	01234 56789	01234|56789	01234 56789	01234 56789	01234 56789	01234 56789	01234 56789
+c2.1218	in	012345|6789
+c2.1218	out	012345 6789	012345 6789	012345 6789	012345|6789	012345 6789	012345 6789	012345 6789	012345 6789	012345 6789
+c2.1219	in	0123456|789
+c2.1219	out	0123456 789	0123456 789	0123456 789	0123456|789	0123456 789	0123456 789	0123456 789	0123456 789	0123456 789
+c2.1220	in	01234567|89
+c2.1220	out	01234567 89	01234567 89	01234567 89	01234567|89	01234567 89	01234567 89	01234567 89	01234567 89	01234567 89
+c2.1221	in	012345678|9
+c2.1221	out	012345678 9	012345678 9	012345678 9	012345678|9	012345678 9	012345678 9	012345678 9	012345678 9	012345678 9
+c2.1222	in	0123456789|
+c2.1222	out	0123456789	0123456789 	0123456789 	0123456789|	0123456789	0123456789	0123456789 	0123456789 	0123456789
+c2.1223	in	|
+c2.1223	out		 	 	|	prev		 	 	
+c2.1224	in	||
+c2.1224	out		  	  	||	prev		  	  	
+c2.1225	in	 | 
+c2.1225	out		   	   	 | 	prev		   	   	
+c2.1226	in	line1\x0d\x0aline2
+c2.1226	out	line1 \x0aline2	line1 \x0aline2	line1 \x0aline2	line1 \x0aline2	line1 \x0aline2	line1 \x0aline2	line1 \x0aline2	line1 \x0aline2	line1 \x0aline2
+c2.1227	in	line1\x0aline2\x0a
+c2.1227	out	line1\x0aline2	line1\x0aline2\x0a	line1\x0aline2\x0a	line1\x0aline2\x0a	line1\x0aline2	line1\x0aline2	line1\x0aline2\x0a	line1\x0aline2\x0a	line1\x0aline2
+c2.1228	in	\x0d\x0a
+c2.1228	out		 \x0a	 \x0a	 \x0a	prev		 \x0a	 \x0a	
+c2.1229	in	del\x7f
+c2.1229	out	del\x7f	del\x7f	del\x7f	del\x7f	del\x7f	del\x7f	del\x7f	del\x7f	del\x7f
+c2.1230	in	\x7f
+c2.1230	out	\x7f	\x7f	\x7f	\x7f	\x7f	\x7f	\x7f	\x7f	\x7f
+c2.1231	in	tab\x09inside
+c2.1231	out	tab inside	tab inside	tab inside	tab inside	tab inside	tab inside	tab inside	tab inside	tab inside
+c2.1232	in	\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3\xc3x
+c2.1232	out	x	                                                               x	                                                               x	                                                               x	x	x	                                                               x	                                                               x	x
+c2.1233	in	\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80\x80
+c2.1233	out		                                                                      	                                                                      	                                                                      	prev		                                                                      	                                                                      	
