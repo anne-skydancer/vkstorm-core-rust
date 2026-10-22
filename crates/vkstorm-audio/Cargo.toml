@@ -6,9 +6,28 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 
+[features]
+default = []
+# The stream module calls libcurl through its exported symbols. The
+# viewer's FFI crate enables this (the viewer links its prebuilt libcurl).
+# Without it nothing in the crate references libcurl, so test binaries
+# link without one (stream::set_curl_api can supply the entry points).
+curl-symbols = []
+# Link libcurl from the build environment (the crate's own tests and
+# benches). The viewer links its prebuilt libcurl into the executable.
+link-curl = ["curl-symbols", "dep:vkstorm-http", "vkstorm-http/link-curl"]
+
 [dependencies]
 vkstorm-vorbis = { path = "../vkstorm-vorbis" }
-# Linux output backends (libpulse, libasound) are loaded at run time.
+# Only for link-curl: its build script names libcurl for the linker.
+vkstorm-http = { path = "../vkstorm-http", optional = true }
+# Parcel music decoders (src/stream): MPEG audio layers 1-3, AAC-LC, FLAC.
+# Pure Rust, MPL-2.0. Vorbis is vkstorm-vorbis; HE-AAC and Opus go through
+# FFmpeg, loaded at run time with libloading.
+symphonia-core = "=0.6.1"
+symphonia-bundle-mp3 = "=0.6.1"
+symphonia-codec-aac = "=0.6.1"
+symphonia-bundle-flac = "=0.6.1"
 libloading = "=0.9.0"
 
 # The output device on Windows (src/device/wasapi.rs): COM, MMDevice

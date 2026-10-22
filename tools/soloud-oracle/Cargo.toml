@@ -9,3 +9,7 @@ publish = false
 [dependencies]
 vkstorm-audio = { path = "../../crates/vkstorm-audio" }
 
+[features]
+# vkstorm-audio's stream module needs libcurl at link time (see
+# crates/vkstorm-http/README.md for VKS_HTTP_CURL_LIB_DIR/_LIBS).
+link-curl = ["vkstorm-audio/link-curl"]

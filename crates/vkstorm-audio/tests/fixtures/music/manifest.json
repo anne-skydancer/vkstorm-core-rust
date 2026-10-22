@@ -1,0 +1,217 @@
+{
+ "chain.ogg": {
+  "bytes": 32740,
+  "channels": 2,
+  "freqs": [
+   440,
+   660
+  ],
+  "kind": "vorbis",
+  "links": [
+   {
+    "artist": "First Artist",
+    "channels": 2,
+    "rate": 44100,
+    "seconds": 2.0,
+    "title": "First Title"
+   },
+   {
+    "artist": "Second Artist",
+    "channels": 2,
+    "rate": 48000,
+    "seconds": 3.0,
+    "title": "Second Title"
+   },
+   {
+    "artist": "Third Artist",
+    "channels": 1,
+    "rate": 32000,
+    "seconds": 2.0,
+    "title": "Third Title"
+   }
+  ],
+  "rate": 44100,
+  "seconds": 7.0,
+  "sha256": "f156d68bd2091ab6c2890f205e444b8479f695a914b14b7c5753e4551684aec4"
+ },
+ "page.html": {
+  "bytes": 131,
+  "kind": "html",
+  "seconds": 1.0,
+  "sha256": "5e821eb16c7bcfc82d99b81ea0be1765907aa6a3e47b625f7325f44b653cfe56"
+ },
+ "tone.flac": {
+  "artist": "Flac Artist",
+  "bytes": 60667,
+  "channels": 2,
+  "freqs": [
+   440,
+   660
+  ],
+  "kind": "flac",
+  "rate": 44100,
+  "seconds": 2.0,
+  "sha256": "6315f794ebfa37f35b840864bf96ffad566c9bdeccaa92ecdae209b5c8dd6042",
+  "title": "Flac Title"
+ },
+ "tone.m4a": {
+  "bytes": 9090,
+  "kind": "mp4-audio",
+  "seconds": 1.0,
+  "sha256": "642bb2d1cfd9fb0ada93e1049c3d75aaef3d353c8faeb25bbe91ba5f3d286530"
+ },
+ "tone.mp2": {
+  "bytes": 96192,
+  "channels": 2,
+  "freqs": [
+   440,
+   660
+  ],
+  "kind": "mp2",
+  "rate": 48000,
+  "seconds": 4.0,
+  "sha256": "d607ab3ca44aa00c670acef0832326ebab09a0ffb0e7953a73a47133d38c1597"
+ },
+ "tone.mp3": {
+  "bytes": 64783,
+  "channels": 2,
+  "freqs": [
+   440,
+   660
+  ],
+  "kind": "mp3",
+  "rate": 44100,
+  "seconds": 4.0,
+  "sha256": "f53e82d886ed638ba52d7caddb64108fa3c0c8520fb2db124dcd5e08a87d8d10"
+ },
+ "tone.ogg": {
+  "artist": "Plain Artist",
+  "bytes": 17244,
+  "channels": 2,
+  "freqs": [
+   440,
+   660
+  ],
+  "kind": "vorbis",
+  "rate": 44100,
+  "seconds": 4.0,
+  "sha256": "2d5aea5163fcf041b2d7e0b5b2a463d3b811a4e3fa9dd1c4d76cbb24bf11859c",
+  "title": "Plain Title"
+ },
+ "tone.opus": {
+  "artist": "Opus Artist",
+  "bytes": 68018,
+  "channels": 2,
+  "freqs": [
+   440,
+   660
+  ],
+  "kind": "opus",
+  "rate": 48000,
+  "seconds": 4.0,
+  "sha256": "e609d575aabd77dc18793804572913aa8c337af89aeeea2e0b2ce4dd5e3f3cf9",
+  "title": "Opus Title"
+ },
+ "tone51.ogg": {
+  "bytes": 18838,
+  "channels": 6,
+  "freqs": [
+   300,
+   400,
+   500,
+   50,
+   700,
+   800
+  ],
+  "kind": "vorbis",
+  "rate": 48000,
+  "seconds": 1.0,
+  "sha256": "3edea1feb1f25c453dd4184e1d103a6255988888ca43957ab3ea8581133837c5"
+ },
+ "tone_flac.oga": {
+  "bytes": 34937,
+  "channels": 2,
+  "freqs": [
+   440,
+   660
+  ],
+  "kind": "ogg-flac",
+  "rate": 44100,
+  "seconds": 1.0,
+  "sha256": "ed2bb165c3a29506c2e03deb77a0141f6403ebd476a0761675ab0351a7479732",
+  "title": "OggFlac Title"
+ },
+ "tone_he1.aac": {
+  "bytes": 33110,
+  "channels": 2,
+  "freqs": [
+   440,
+   9000
+  ],
+  "kind": "he-aac",
+  "rate": 48000,
+  "seconds": 4.0,
+  "sha256": "97c2c4e37d8fac0a389063d336c1e46619d1ac4847a442dbaff1811a9a803e7d"
+ },
+ "tone_he2.aac": {
+  "bytes": 16753,
+  "channels": 2,
+  "freqs": [
+   440,
+   9000
+  ],
+  "kind": "he-aac-v2",
+  "rate": 44100,
+  "seconds": 4.0,
+  "sha256": "8cc4771ee2d9334816b6851294449b32eef8a8e520bd962c332f3e5148664836"
+ },
+ "tone_id3.mp3": {
+  "artist": "Tag Artist",
+  "bytes": 32754,
+  "channels": 2,
+  "freqs": [
+   440,
+   660
+  ],
+  "kind": "mp3",
+  "rate": 44100,
+  "seconds": 2.0,
+  "sha256": "0bfc3f09658e4b1e88a0d86d09c1d5711da350702de8ab10052ecb18c3a72daf",
+  "title": "Tag Title"
+ },
+ "tone_lc.aac": {
+  "bytes": 65036,
+  "channels": 2,
+  "freqs": [
+   440,
+   660
+  ],
+  "kind": "aac-lc",
+  "rate": 44100,
+  "seconds": 4.0,
+  "sha256": "05350d287cab6f4baefe2527ad890d8ea43c8b33f20c6077cfac0db9e168e341"
+ },
+ "tone_mono22.mp3": {
+  "bytes": 16509,
+  "channels": 1,
+  "freqs": [
+   440
+  ],
+  "kind": "mp3",
+  "rate": 22050,
+  "seconds": 2.0,
+  "sha256": "68eca15b67d348d3f52c3a174d50e35aa2201eb2449d51c84d058ada599e19b8"
+ },
+ "video.mp4": {
+  "bytes": 11670,
+  "kind": "video",
+  "seconds": 1.0,
+  "sha256": "b5384ce2a79c9c774a30b29a19d2917d8d146f19b366060a28a7088521ee92d1"
+ },
+ "video.ogv": {
+  "bytes": 13701,
+  "kind": "video",
+  "seconds": 1.0,
+  "sha256": "881cfb3335dc7de55c6f079c670577a273b4c0f1425661b075a0621aacd9be37"
+ }
+}

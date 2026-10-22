@@ -18,4 +18,5 @@ pub mod device;
 pub mod engine;
 pub mod mixer;
 pub mod music;
+pub mod stream;
 pub mod wav;
