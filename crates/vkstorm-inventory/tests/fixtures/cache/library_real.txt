@@ -1,0 +1,23 @@
+# vkstorm inventory model oracle (recorder R2): the public Linden Library cache (indra/llinventory/tests/fixtures/library)
+# generator: INTEGRATION_TEST_llinventorymodel_parity with VKS_INVMODEL_DUMP (indra/newview/tests/llinventorymodel_parity_test.cpp)
+# viewer commit: a6d6a04641
+# platform: windows-msvc
+# seed: none
+# format: tests/fixtures/inventory/cache/README.md; lines starting with '#' are not compared
+== library
+source ba2a564a-f0f1-4b82-9c61-b7520bfcd09f.inv.llsd.gz plain_size=3416877 plain_sha256=e13eec9f17cd2d9982aa7662035d61233059d1858be9765aa97afd30377c5b5b
+decode rv=1 obsolete=0 cats=490 items=5585 cats_to_update=[] records_sha256=d431fe1ea0c2713a659f1fad1bf44293be66ba9020727ea0c68b8ef6b6678cde
+item_types 0:353 1:72 3:38 5:1098 6:2602 7:57 10:7 13:804 20:24 21:97 56:415 57:18
+reencode identical=1 size=3416877
+library_root 1c7a7fd0-104e-a8b1-51c6-32ea9b08e38b
+loaded cats=517 cats_known_version=490 items=5585 links=0
+login_lines sha256=379dcfb1bbc8e8b2aa4a8c64c6c0a1dd58a24ee262cde3e4c3e8e217a7836c0a count=513
+model sha256=cbe32d0ee0ec491bf354e1dc8b25ac38bd4bcaffd2cf625a4988a7a182973440 lines=6601
+files after_library [ba2a564a-f0f1-4b82-9c61-b7520bfcd09f.inv.llsd.gz gz]
+files after_agent [ba2a564a-f0f1-4b82-9c61-b7520bfcd09f.inv.llsd.gz gz]
+files temp []
+validation llsd=7b0000000a6b0000001e6475706c69636174655f73797374656d5f666f6c646572735f636f756e7469000000006b00000011666174616c5f6572726f725f636f756e7469000000006b0000001c666174616c5f6e6f5f6c6962726172795f726f6f745f666f6c646572306b00000014666174616c5f6e6f5f726f6f745f666f6c646572306b00000013666174616c5f71615f64656275675f6d6f6465306b0000000b696e697469616c697a6564316b0000000a6c6f6f705f636f756e7469000000006b0000001c6d697373696e675f73797374656d5f666f6c646572735f636f756e7469000000006b0000000e6f727068616e65645f636f756e7469000000006b0000000d7761726e696e675f636f756e7469000000007d
+validation notation={'duplicate_system_folders_count':i0,'fatal_error_count':i0,'fatal_no_library_root_folder':0,'fatal_no_root_folder':0,'fatal_qa_debug_mode':0,'initialized':1,'loop_count':i0,'missing_system_folders_count':i0,'orphaned_count':i0,'warning_count':i0}
+validation fatal=0 warnings=0 loops=0 orphans=0 fatal_system_duplicate=0 no_root=0 no_library_root=0 qa=0 initialized=1
+validation log=""
+usable=1 root=f0000000-0000-4000-8000-000000000001 first_time_in_viewer2=0

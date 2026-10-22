@@ -1,0 +1,8 @@
+note no library in the login response (no library root, owner or skeleton)
+second_instance 0
+production_grid 1
+grid_id util.agni.lindenlab.com
+logout 0
+agent_root f0000000-0000-4000-8000-000000000001
+lib_root 00000000-0000-0000-0000-000000000000
+lib_owner 00000000-0000-0000-0000-000000000000

@@ -1,0 +1,29 @@
+# vkstorm inventory model oracle (recorder R2): C1 realistic synthetic set (100k items, 8k folders)
+# generator: INTEGRATION_TEST_llinventorymodel_parity with VKS_INVMODEL_DUMP (indra/newview/tests/llinventorymodel_parity_test.cpp)
+# viewer commit: a6d6a04641
+# platform: windows-msvc
+# seed: 0x5eed100000 (xorshift64*, realistic_world(seed, 8000, 100000, 20000, 10000))
+# format: tests/fixtures/inventory/cache/README.md; lines starting with '#' are not compared
+== realistic_100k
+world folders=8027 items=100000
+populated cats=8031 cats_known_version=8031 items=100000 links=2040
+file size=57773808 sha256=c27870698845b7c108e8bdb6a022bd819951fecf35f386046f93f0f2e15b0213
+decode rv=1 cats=8027 items=100000 cats_to_update=[] records_sha256=f32c0db99b18806e62b6e41c14814d1ce9985f325c5fd4601b8dabaf0e86b176
+reencode identical=1
+validation llsd=7b0000000a6b0000001e6475706c69636174655f73797374656d5f666f6c646572735f636f756e7469000000006b00000011666174616c5f6572726f725f636f756e7469000000006b0000001c666174616c5f6e6f5f6c6962726172795f726f6f745f666f6c646572306b00000014666174616c5f6e6f5f726f6f745f666f6c646572306b00000013666174616c5f71615f64656275675f6d6f6465306b0000000b696e697469616c697a6564306b0000000a6c6f6f705f636f756e7469000000006b0000001c6d697373696e675f73797374656d5f666f6c646572735f636f756e7469000000006b0000000e6f727068616e65645f636f756e7469000000006b0000000d7761726e696e675f636f756e7469000000007d
+validation notation={'duplicate_system_folders_count':i0,'fatal_error_count':i0,'fatal_no_library_root_folder':0,'fatal_no_root_folder':0,'fatal_qa_debug_mode':0,'initialized':0,'loop_count':i0,'missing_system_folders_count':i0,'orphaned_count':i0,'warning_count':i0}
+validation fatal=0 warnings=0 loops=0 orphans=0 fatal_system_duplicate=0 no_root=0 no_library_root=0 qa=0 initialized=0
+validation log=""
+reload cats=8031 cats_known_version=8027 items=100000 links=2040
+reload_login_lines sha256=5fedb9e63f4c56537ebde62799024b3ec1c804a655b7736b557f990482e2b514 count=10070
+reload_model sha256=612be861f5eebfe181d4082b82631e1690c5fb2d52a4feb0b594d0d7ed8464e0 lines=118087
+step load_library rv=1
+step load_agent rv=1
+step build_parent_child_map
+validation llsd=7b0000000a6b0000001e6475706c69636174655f73797374656d5f666f6c646572735f636f756e7469000000006b00000011666174616c5f6572726f725f636f756e7469000000006b0000001c666174616c5f6e6f5f6c6962726172795f726f6f745f666f6c646572306b00000014666174616c5f6e6f5f726f6f745f666f6c646572306b00000013666174616c5f71615f64656275675f6d6f6465306b0000000b696e697469616c697a6564316b0000000a6c6f6f705f636f756e7469000000006b0000001c6d697373696e675f73797374656d5f666f6c646572735f636f756e7469000000006b0000000e6f727068616e65645f636f756e7469000000006b0000000d7761726e696e675f636f756e7469000000007d
+validation notation={'duplicate_system_folders_count':i0,'fatal_error_count':i0,'fatal_no_library_root_folder':0,'fatal_no_root_folder':0,'fatal_qa_debug_mode':0,'initialized':1,'loop_count':i0,'missing_system_folders_count':i0,'orphaned_count':i0,'warning_count':i0}
+validation fatal=0 warnings=0 loops=0 orphans=0 fatal_system_duplicate=0 no_root=0 no_library_root=0 qa=0 initialized=1
+validation log=""
+usable=1 root=f0000000-0000-4000-8000-000000000001 first_time_in_viewer2=0
+step create_common_system_categories pending=0
+step startup_notify
