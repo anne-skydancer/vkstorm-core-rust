@@ -1,0 +1,65 @@
+	inv_object	0
+	{
+		obj_id	0b000000-0000-4000-8000-0000000000aa
+		parent_id	00000000-0000-0000-0000-000000000000
+		type	category
+		name	Contents|
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000000a
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000000a
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000000b
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fff7fff
+		owner_mask	7fff7fff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00080000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		shadow_id	99115e51-04f4-123c-1fa6-98aff103473b
+		type	object
+		inv_type	object
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Object B|
+		desc	no copy|
+		creation_date	1700000000
+	}

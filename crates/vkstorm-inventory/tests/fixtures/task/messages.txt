@@ -1,0 +1,1046 @@
+# vkstorm-inventory task fixtures: set 4, task-inventory messages sent by the viewer (UDP datagrams captured on loopback)
+# generator: INTEGRATION_TEST_llinventory_task_oracle (indra/newview/tests/llinventory_task_oracle_test.cpp), VKS_TASK_DUMP
+# viewer: 472ecf270d (codex/rust-inventory); frozen copies of llviewerobject.cpp blob c9ac3bdc20301e3e43da73183f18595712912e79 and llviewerinventory.cpp blob a13210dce6ed2561e2b18768645bcfa37068612c
+# platform: windows-msvc
+# case <label> <udp|cap>
+#  before <state>; after <state> | <side effects in order (msg.send = LLMessageSystem::sendReliable)>
+#  packets <n>: packet <name> flags=<byte 0> zerocoded wirelen
+#   wire <datagram, packet id (bytes 1-4) zeroed; no acks are appended: nothing is ever received>
+#   (a StartPingCheck marker sent after each action through the same socket delimits the capture;
+#   it is not listed)
+#   body <zero-expanded> and every block/variable as raw bytes (Variable fields also as text)
+#  RequestXfer/AbortXfer ids are random (LLXferManager::getNextID): shown as <xfer id real#k> and zeroed
+#  in body (and in wire when not zero-coded)
+#  inventory after the action (as task_files.txt)
+case update_key0_new udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,A,obj] | msg.send UpdateTaskInventory
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=123
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060d0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f000920080012070700050a0003064e65772044000109636f707961626c650002f15365a0f59331
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000d0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f0000000000000000002008000000000000000000000000000000000000070700000000000a000000064e657720440009636f707961626c650000f15365a0f59331
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000d
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00200800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 07
+      [0] InvType = 07
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e6577204400 "New D\x00"
+      [0] Description = 636f707961626c6500 "copyable\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = a0f59331
+  inventory 3 entries root obj
+   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A}
+case update_key0_selected udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[A,B,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=126
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060a0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f000920080012070700050a00030b4e6f74656361726420410001076564697465640002f15365a0f5932b
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000a0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f0000000000000000002008000000000000000000000000000000000000070700000000000a0000000b4e6f746563617264204100076564697465640000f15365a0f5932b
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000a
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00200800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 07
+      [0] InvType = 07
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e6f746563617264204100 "Notecard A\x00"
+      [0] Description = 65646974656400 "edited\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = a0f5932b
+  inventory 3 entries root obj
+   [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="edited" invtype=7 flags=00000000 sale=0/10 base=00082000 owner=00082000 group=00000000 every=00000000 next=00082000 creator=creator ownerid=other lastowner=agent groupid=othergroup groupowned=0 complete=1 txn=null running=0 faulted=0 crc=352437e2
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B}
+case update_key0_group_owned udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[A,B,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[A,B,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=126
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060a0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f000920080012070700050a00030b4e6f74656361726420410001076564697465640002f15365a0f5932b
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000a0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f0000000000000000002008000000000000000000000000000000000000070700000000000a0000000b4e6f746563617264204100076564697465640000f15365a0f5932b
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000a
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00200800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 07
+      [0] InvType = 07
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e6f746563617264204100 "Notecard A\x00"
+      [0] Description = 65646974656400 "edited\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = a0f5932b
+  inventory 3 entries root obj
+   [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="edited" invtype=7 flags=00000000 sale=0/10 base=00082000 owner=00082000 group=00000000 every=00000000 next=00082000 creator=creator ownerid=null lastowner=agent groupid=othergroup groupowned=1 complete=1 txn=null running=0 faulted=0 crc=30e436c2
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B}
+case update_key0_owner_known udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[A,B,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=126
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060a0b0005400001800006aaa0000540000180000606a00005400001800006040010ffffff7fffffff7f000920080012070700050a00030b4e6f74656361726420410001076564697465640002f15365a0f5932e
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000a0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000400000000000000000000000000000000ffffff7fffffff7f0000000000000000002008000000000000000000000000000000000000070700000000000a0000000b4e6f746563617264204100076564697465640000f15365a0f5932e
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000a
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000004
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00200800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 07
+      [0] InvType = 07
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e6f746563617264204100 "Notecard A\x00"
+      [0] Description = 65646974656400 "edited\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = a0f5932e
+  inventory 3 entries root obj
+   [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="edited" invtype=7 flags=00000000 sale=0/10 base=00082000 owner=00082000 group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=other groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2fe436c2
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B}
+case update_key0_guess_owner udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[C,B,A,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=136
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060c0b0005400001800006aaa0000540000180000606a0000540000180000601a0000540000180000605ffffff7fffffff7f000920080012070700050a00030b4e6f7465636172642041000109636f707961626c650002f15365c0f6d334
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000c0b0000000000400080000000000000aaa0000000000040008000000000000006a0000000000040008000000000000001a0000000000040008000000000000005ffffff7fffffff7f0000000000000000002008000000000000000000000000000000000000070700000000000a0000000b4e6f74656361726420410009636f707961626c650000f15365c0f6d334
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000c
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = a0000000000040008000000000000005
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00200800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 07
+      [0] InvType = 07
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e6f746563617264204100 "Notecard A\x00"
+      [0] Description = 636f707961626c6500 "copyable\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = c0f6d334
+  inventory 4 entries root obj
+   [0] item uuid=C parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetC desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=agent groupid=othergroup groupowned=0 complete=1 txn=null running=0 faulted=0 crc=3613f7e0
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[C,B,A] count{7:2,6:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/7:C,assetB/6:B,assetA/7:A}
+case update_key0_guess_not_owner udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[C,B,A,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=128
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060c0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f000920080012070700050a00030b4e6f7465636172642041000109636f707961626c650002f15365a0f5932f
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000c0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f0000000000000000002008000000000000000000000000000000000000070700000000000a0000000b4e6f74656361726420410009636f707961626c650000f15365a0f5932f
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000c
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00200800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 07
+      [0] InvType = 07
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e6f746563617264204100 "Notecard A\x00"
+      [0] Description = 636f707961626c6500 "copyable\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = a0f5932f
+  inventory 4 entries root obj
+   [0] item uuid=C parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetC desc="copyable" invtype=7 flags=00000000 sale=0/10 base=00082000 owner=00082000 group=00000000 every=00000000 next=00082000 creator=creator ownerid=null lastowner=agent groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2fa435a2
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[C,B,A] count{7:2,6:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/7:C,assetB/6:B,assetA/7:A}
+case update_key0_object_type_not_atomic udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[C,B,A,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=124
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060c0b0005400001800006aaa0000540000180000606a00005400001800006010010ff7fff7fff7fff7f000a080012060600050a0003094f626a65637420420001086e6f20636f70790002f153659ef5922e
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000c0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ff7fff7fff7fff7f0000000000000000000008000000000000000000000000000000000000060600000000000a000000094f626a656374204200086e6f20636f70790000f153659ef5922e
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000c
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ff7fff7f
+      [0] OwnerMask = ff7fff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00000800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 06
+      [0] InvType = 06
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4f626a656374204200 "Object B\x00"
+      [0] Description = 6e6f20636f707900 "no copy\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = 9ef5922e
+  inventory 4 entries root obj
+   [0] item uuid=C parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=agent groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2fd2f6be
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[C,B,A] count{6:2,7:1,8:1} byasset{assetB:C,assetA:A} bytype{assetB/6:C,assetA/7:A}
+case update_key1_by_asset_known udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[E,B,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[E,B,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=129
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e1100002011a00054000018000060e0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f000920080012070700050a00030b4e6f746563617264204100010962792061737365740002f15365a0f5932f
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000011a00000000004000800000000000000e0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f0000000000000000002008000000000000000000000000000000000000070700000000000a0000000b4e6f7465636172642041000962792061737365740000f15365a0f5932f
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 01
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000e
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00200800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 07
+      [0] InvType = 07
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e6f746563617264204100 "Notecard A\x00"
+      [0] Description = 627920617373657400 "by asset\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = a0f5932f
+  inventory 3 entries root obj
+   [0] item uuid=E parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="by asset" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=agent groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=30d3f6c0
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[E,B] count{7:1,6:1,8:1} byasset{assetA:E,assetB:B} bytype{assetA/7:E,assetB/6:B}
+case update_key1_by_asset_guess udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=[E,B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[E,B,A,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=129
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e1100002011a00054000018000060e0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f000920080012070700050a00030b4e6f7465636172642041000109636f707961626c650002f15365a0f59333
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000011a00000000004000800000000000000e0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f0000000000000000002008000000000000000000000000000000000000070700000000000a0000000b4e6f74656361726420410009636f707961626c650000f15365a0f59333
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 01
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000e
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00200800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 07
+      [0] InvType = 07
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e6f746563617264204100 "Notecard A\x00"
+      [0] Description = 636f707961626c6500 "copyable\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = a0f59333
+  inventory 4 entries root obj
+   [0] item uuid=E parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetE desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=agent groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=34d3f6c0
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[E,B,A] count{7:2,6:1,8:1} byasset{assetE:E,assetB:B,assetA:A} bytype{assetE/7:E,assetB/6:B,assetA/7:A}
+case update_no_inventory udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=128
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060a0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f000920080012070700050a00030b4e6f7465636172642041000109636f707961626c650002f15365a0f5932b
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000a0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f0000000000000000002008000000000000000000000000000000000000070700000000000a0000000b4e6f74656361726420410009636f707961626c650000f15365a0f5932b
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000a
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00200800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 07
+      [0] InvType = 07
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e6f746563617264204100 "Notecard A\x00"
+      [0] Description = 636f707961626c6500 "copyable\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = a0f5932b
+  inventory null
+  helpers root=none contents=[] count{} byasset{} bytype{}
+case update_rich_item udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[A,B,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=222
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060a0b0005400001800006aaa0000540000180000606a0000540000180000601a0000540000180000605ffffff7fffbfff7f0001800004080001ffdfff7f00017a0005400001800006010707ffffffff01d20400024052696368206974656d20776974682061206e616d65206c6f6e676572207468616e2073697874792d746872656520636861726163746572732c2063757420620001144465736320202020776974682020207069706500025ed0b21dd95f85
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000a0b0000000000400080000000000000aaa0000000000040008000000000000006a0000000000040008000000000000001a0000000000040008000000000000005ffffff7fffbfff7f0080000000000800ffdfff7f007a0000000000400080000000000000010707ffffffff01d20400004052696368206974656d20776974682061206e616d65206c6f6e676572207468616e2073697874792d746872656520636861726163746572732c20637574206200144465736320202020776974682020207069706500005ed0b21dd95f85
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000a
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = a0000000000040008000000000000005
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffbfff7f
+      [0] GroupMask = 00800000
+      [0] EveryoneMask = 00000800
+      [0] NextOwnerMask = ffdfff7f
+      [0] GroupOwned = 00
+      [0] TransactionID = 7a000000000040008000000000000001
+      [0] Type = 07
+      [0] InvType = 07
+      [0] Flags = ffffffff
+      [0] SaleType = 01
+      [0] SalePrice = d2040000
+      [0] Name = 52696368206974656d20776974682061206e616d65206c6f6e676572207468616e2073697874792d746872656520636861726163746572732c20637574206200 "Rich item with a name longer than sixty-three characters, cut b\x00"
+      [0] Description = 4465736320202020776974682020207069706500 "Desc    with   pipe\x00"
+      [0] CreationDate = 005ed0b2
+      [0] CRC = 1dd95f85
+  inventory 3 entries root obj
+   [0] item uuid=A parent=obj type=7 name="Rich item with a name longer than sixty-three characters, cut b" thumb=null fav=0 runtime="" created=-1294967296 asset=assetA desc="Desc    with   pipe" invtype=7 flags=ffffffff sale=1/1234 base=7fffffff owner=7fffbfff group=00008000 every=00080000 next=7fffdfff creator=creator ownerid=agent lastowner=agent groupid=null groupowned=0 complete=1 txn=txn running=0 faulted=0 crc=815fd91d
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B}
+case update_material_new udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,A,obj] | msg.send UpdateTaskInventory
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=124
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060d0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f0009200800190a00030b4e6f7465636172642041000109636f707961626c650002f1536592f59331
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000d0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f0000000000000000002008000000000000000000000000000000000000000000000000000a0000000b4e6f74656361726420410009636f707961626c650000f1536592f59331
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000d
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00200800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 00
+      [0] InvType = 00
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e6f746563617264204100 "Notecard A\x00"
+      [0] Description = 636f707961626c6500 "copyable\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = 92f59331
+  inventory 3 entries root obj
+   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A}
+case update_selected_notecard_next_move udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[A,B,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=125
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060a0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f000a080012070700050a00030b4e6f746563617264204100010761746f6d69630002f15365a0f5932b
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000a0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f0000000000000000000008000000000000000000000000000000000000070700000000000a0000000b4e6f7465636172642041000761746f6d69630000f15365a0f5932b
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000a
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00000800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 07
+      [0] InvType = 07
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e6f746563617264204100 "Notecard A\x00"
+      [0] Description = 61746f6d696300 "atomic\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = a0f5932b
+  inventory 3 entries root obj
+   [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="atomic" invtype=7 flags=00000000 sale=0/10 base=00082000 owner=00082000 group=00000000 every=00000000 next=00080000 creator=creator ownerid=other lastowner=agent groupid=othergroup groupowned=0 complete=1 txn=null running=0 faulted=0 crc=352437e2
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B}
+case update_selected_object_next_move udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=127
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060b0b0005400001800006aaa0000540000180000606a00005400001800006010010ff7fff7fff7fff7f000a080012060600050a0003094f626a656374204200010b6e6f742061746f6d69630002f153659ef5922d
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000b0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ff7fff7fff7fff7f0000000000000000000008000000000000000000000000000000000000060600000000000a000000094f626a6563742042000b6e6f742061746f6d69630000f153659ef5922d
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000b
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ff7fff7f
+      [0] OwnerMask = ff7fff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00000800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 06
+      [0] InvType = 06
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4f626a656374204200 "Object B\x00"
+      [0] Description = 6e6f742061746f6d696300 "not atomic\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = 9ef5922d
+  inventory 3 entries root obj
+   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="not atomic" invtype=6 flags=00000000 sale=0/10 base=00080000 owner=00080000 group=00000000 every=00000000 next=00080000 creator=creator ownerid=other lastowner=agent groupid=othergroup groupowned=0 complete=1 txn=null running=0 faulted=0 crc=3723f7e0
+   [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A}
+case update_notowner_notecard_next_move udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[C,B,A,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=127
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060c0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f000a080012070700050a00030b4e6f7465636172642041000109636f707961626c650002f15365a0f5932f
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000c0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f0000000000000000000008000000000000000000000000000000000000070700000000000a0000000b4e6f74656361726420410009636f707961626c650000f15365a0f5932f
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000c
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00000800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 07
+      [0] InvType = 07
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e6f746563617264204100 "Notecard A\x00"
+      [0] Description = 636f707961626c6500 "copyable\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = a0f5932f
+  inventory 4 entries root obj
+   [0] item uuid=C parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetC desc="copyable" invtype=7 flags=00000000 sale=0/10 base=00082000 owner=00082000 group=00000000 every=00000000 next=00080000 creator=creator ownerid=null lastowner=agent groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2fa435a2
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[C,B,A] count{7:2,6:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/7:C,assetB/6:B,assetA/7:A}
+case update_notowner_object_next_move udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[C,B,A,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=124
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060c0b0005400001800006aaa0000540000180000606a00005400001800006010010ff7fff7fff7fff7f000a080012060600050a0003094f626a65637420420001086e6f20636f70790002f153659ef5922f
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000c0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ff7fff7fff7fff7f0000000000000000000008000000000000000000000000000000000000060600000000000a000000094f626a656374204200086e6f20636f70790000f153659ef5922f
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000c
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ff7fff7f
+      [0] OwnerMask = ff7fff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00000800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 06
+      [0] InvType = 06
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4f626a656374204200 "Object B\x00"
+      [0] Description = 6e6f20636f707900 "no copy\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = 9ef5922f
+  inventory 4 entries root obj
+   [0] item uuid=C parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetC desc="no copy" invtype=6 flags=00000000 sale=0/10 base=00080000 owner=00080000 group=00000000 every=00000000 next=00080000 creator=creator ownerid=null lastowner=agent groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2fa3f5a0
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[C,B,A] count{6:2,7:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/6:C,assetB/6:B,assetA/7:A}
+case remove_duplicate_id udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,A,obj] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+  packets 1
+  packet RemoveTaskInventory flags=c0 zerocoded=1 wirelen=44
+    wire c00000000000ffff011fa0000540000180000601a0000540000180000602e11000021a00054000018000060a
+    body 400000000000ffff011fa0000000000040008000000000000001a0000000000040008000000000000002e11000001a00000000004000800000000000000a
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    InventoryData count=1
+      [0] LocalID = e1100000
+      [0] ItemID = 1a00000000004000800000000000000a
+  inventory 3 entries root obj
+   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A}
+case update_local_known udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | callback L1 ser=0 inv=[A,B,obj]
+  packets 0
+  inventory 3 entries root obj
+   [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="local" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=agent groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2cd3f6c0
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B}
+case update_viewer_asset udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | callback L1 ser=0 inv=[A,B,obj]
+  packets 0
+  inventory 3 entries root obj
+   [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetE desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=agent groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=30d3f6c0
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetE:A,assetB:B} bytype{assetE/7:A,assetB/6:B}
+case remove_present udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,obj] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+  packets 1
+  packet RemoveTaskInventory flags=c0 zerocoded=1 wirelen=44
+    wire c00000000000ffff011fa0000540000180000601a0000540000180000602e11000021a00054000018000060a
+    body 400000000000ffff011fa0000000000040008000000000000001a0000000000040008000000000000002e11000001a00000000004000800000000000000a
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    InventoryData count=1
+      [0] LocalID = e1100000
+      [0] ItemID = 1a00000000004000800000000000000a
+  inventory 2 entries root obj
+   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [1] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[B] count{6:1,8:1} byasset{assetB:B} bytype{assetB/6:B}
+case remove_absent udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,A,obj] | floater.hide item_properties {id=E,object=obj}; floater.hide properties E; msg.send RemoveTaskInventory; callback L1 ser=0 inv=[B,A,obj]
+  packets 1
+  packet RemoveTaskInventory flags=c0 zerocoded=1 wirelen=44
+    wire c00000000000ffff011fa0000540000180000601a0000540000180000602e11000021a00054000018000060e
+    body 400000000000ffff011fa0000000000040008000000000000001a0000000000040008000000000000002e11000001a00000000004000800000000000000e
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    InventoryData count=1
+      [0] LocalID = e1100000
+      [0] ItemID = 1a00000000004000800000000000000e
+  inventory 3 entries root obj
+   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A}
+case move_null_folder_copyable udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | msg.send MoveTaskInventory
+  packets 1
+  packet MoveTaskInventory flags=40 zerocoded=0 wirelen=78
+    wire 400000000000ffff0120a0000000000040008000000000000001a000000000004000800000000000000200000000000000000000000000000000e11000001a00000000004000800000000000000a
+    body 400000000000ffff0120a0000000000040008000000000000001a000000000004000800000000000000200000000000000000000000000000000e11000001a00000000004000800000000000000a
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+      [0] FolderID = 00000000000000000000000000000000
+    InventoryData count=1
+      [0] LocalID = e1100000
+      [0] ItemID = 1a00000000004000800000000000000a
+  inventory 3 entries root obj
+   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A}
+case move_explicit_folder_nocopy udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,obj] | msg.send MoveTaskInventory
+  packets 1
+  packet MoveTaskInventory flags=40 zerocoded=0 wirelen=78
+    wire 400000000000ffff0120a0000000000040008000000000000001a0000000000040008000000000000002f0000000000040008000000000000001e11000001a00000000004000800000000000000b
+    body 400000000000ffff0120a0000000000040008000000000000001a0000000000040008000000000000002f0000000000040008000000000000001e11000001a00000000004000800000000000000b
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+      [0] FolderID = f0000000000040008000000000000001
+    InventoryData count=1
+      [0] LocalID = e1100000
+      [0] ItemID = 1a00000000004000800000000000000b
+  inventory 2 entries root obj
+   [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [1] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[A] count{7:1,8:1} byasset{assetA:A} bytype{assetA/7:A}
+case move_absent udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | msg.send MoveTaskInventory
+  packets 1
+  packet MoveTaskInventory flags=40 zerocoded=0 wirelen=78
+    wire 400000000000ffff0120a0000000000040008000000000000001a0000000000040008000000000000002f0000000000040008000000000000001e11000001a00000000004000800000000000000e
+    body 400000000000ffff0120a0000000000040008000000000000001a0000000000040008000000000000002f0000000000040008000000000000001e11000001a00000000004000800000000000000e
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+      [0] FolderID = f0000000000040008000000000000001
+    InventoryData count=1
+      [0] LocalID = e1100000
+      [0] ItemID = 1a00000000004000800000000000000e
+  inventory 3 entries root obj
+   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A}
+case request_udp udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
+  after st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory
+  packets 1
+  packet RequestTaskInventory flags=40 zerocoded=0 wirelen=46
+    wire 400000000000ffff0121a0000000000040008000000000000001a0000000000040008000000000000002e1100000
+    body 400000000000ffff0121a0000000000040008000000000000001a0000000000040008000000000000002e1100000
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    InventoryData count=1
+      [0] LocalID = e1100000
+  inventory null
+  helpers root=none contents=[] count{} byasset{} bytype{}
+case request_udp_pending_dropped udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
+  after st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory
+  packets 1
+  packet RequestTaskInventory flags=40 zerocoded=0 wirelen=46
+    wire 400000000000ffff0121a0000000000040008000000000000001a0000000000040008000000000000002e1100000
+    body 400000000000ffff0121a0000000000040008000000000000001a0000000000040008000000000000002e1100000
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    InventoryData count=1
+      [0] LocalID = e1100000
+  inventory null
+  helpers root=none contents=[] count{} byasset{} bytype{}
+case rezscript_new_template udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send RezScript
+  packets 1
+  packet RezScript flags=c0 zerocoded=1 wirelen=160
+    wire c00000000000ffff0130a0000540000180000601a0000540000180000602a0000540000180000603e1100002011a00054000018000060c0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f0009200800027a0005400001800006010a0a00050a00030b4e657720536372697074000109636f707961626c650002f1536581f45323017e000540000180000601
+    body 400000000000ffff0130a0000000000040008000000000000001a0000000000040008000000000000002a0000000000040008000000000000003e1100000011a00000000004000800000000000000c0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f000000000000000000200800007a0000000000400080000000000000010a0a00000000000a0000000b4e6577205363726970740009636f707961626c650000f1536581f45323017e000000000040008000000000000001
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+      [0] GroupID = a0000000000040008000000000000003
+    UpdateBlock count=1
+      [0] ObjectLocalID = e1100000
+      [0] Enabled = 01
+    InventoryBlock count=1
+      [0] ItemID = 1a00000000004000800000000000000c
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00200800
+      [0] GroupOwned = 00
+      [0] TransactionID = 7a000000000040008000000000000001
+      [0] Type = 0a
+      [0] InvType = 0a
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e65772053637269707400 "New Script\x00"
+      [0] Description = 636f707961626c6500 "copyable\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = 81f45323
+    NewScriptInfo count=1
+      [0] TemplateID = 7e000000000040008000000000000001
+  inventory null
+  helpers root=none contents=[] count{} byasset{} bytype{}
+case rezscript_asset_with_template udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | msg.send RezScript; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[C,B,A,obj]
+  packets 1
+  packet RezScript flags=c0 zerocoded=1 wirelen=136
+    wire c00000000000ffff0130a0000540000180000601a0000540000180000602a0000540000180000603e11000031a00054000018000060c0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f0009200800120a0a00050a000307536372697074000109636f707961626c650002f15365a6f5932f0001
+    body 400000000000ffff0130a0000000000040008000000000000001a0000000000040008000000000000002a0000000000040008000000000000003e1100000001a00000000004000800000000000000c0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f00000000000000000020080000000000000000000000000000000000000a0a00000000000a000000075363726970740009636f707961626c650000f15365a6f5932f00
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+      [0] GroupID = a0000000000040008000000000000003
+    UpdateBlock count=1
+      [0] ObjectLocalID = e1100000
+      [0] Enabled = 00
+    InventoryBlock count=1
+      [0] ItemID = 1a00000000004000800000000000000c
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00200800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 0a
+      [0] InvType = 0a
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 53637269707400 "Script\x00"
+      [0] Description = 636f707961626c6500 "copyable\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = a6f5932f
+    NewScriptInfo count=0
+  inventory 4 entries root obj
+   [0] item uuid=C parent=obj type=10 name="Script" thumb=null fav=0 runtime="" created=1700000000 asset=assetC desc="copyable" invtype=10 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=agent groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=30d3f6c6
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[C,B,A] count{10:1,6:1,7:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/10:C,assetB/6:B,assetA/7:A}
+case rezscript_new_no_template udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send RezScript
+  packets 1
+  packet RezScript flags=c0 zerocoded=1 wirelen=141
+    wire c00000000000ffff0130a0000540000180000601a0000540000180000602a0000540000180000603e1100002011a00054000018000060c0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f0009200800120a0a00050a00030b4e657720536372697074000109636f707961626c650002f1536581f453230001
+    body 400000000000ffff0130a0000000000040008000000000000001a0000000000040008000000000000002a0000000000040008000000000000003e1100000011a00000000004000800000000000000c0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f00000000000000000020080000000000000000000000000000000000000a0a00000000000a0000000b4e6577205363726970740009636f707961626c650000f1536581f4532300
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+      [0] GroupID = a0000000000040008000000000000003
+    UpdateBlock count=1
+      [0] ObjectLocalID = e1100000
+      [0] Enabled = 01
+    InventoryBlock count=1
+      [0] ItemID = 1a00000000004000800000000000000c
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00200800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 0a
+      [0] InvType = 0a
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e65772053637269707400 "New Script\x00"
+      [0] Description = 636f707961626c6500 "copyable\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = 81f45323
+    NewScriptInfo count=0
+  inventory null
+  helpers root=none contents=[] count{} byasset{} bytype{}
+case xfer_request udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
+  after st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | msg.send RequestTaskInventory; xfer.request local=<cache>/inventory_obj.tmp remote=inventory_obj.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
+  packets 2
+  packet RequestTaskInventory flags=40 zerocoded=0 wirelen=46
+    wire 400000000000ffff0121a0000000000040008000000000000001a0000000000040008000000000000002e1100000
+    body 400000000000ffff0121a0000000000040008000000000000001a0000000000040008000000000000002e1100000
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    InventoryData count=1
+      [0] LocalID = e1100000
+  packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
+    wire <zero-coded with the random xfer id: see body>
+    body 400000000000ffff009c000000000000000012696e76656e746f72795f6f626a2e746d700004010000000000000000000000000000000000ffff
+    XferID count=1
+      [0] ID = <xfer id real#1>
+      [0] Filename = 696e76656e746f72795f6f626a2e746d7000 "inventory_obj.tmp\x00"
+      [0] FilePath = 04
+      [0] DeleteOnCompletion = 01
+      [0] UseBigPackets = 00
+      [0] VFileID = 00000000000000000000000000000000
+      [0] VFileType = ffff
+  inventory null
+  helpers root=none contents=[] count{} byasset{} bytype{}
+case xfer_replaced_by_newer_reply udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
+  after st=X ser=1 exp=1 xid=real#2 dirty=0 inv=- | msg.send RequestTaskInventory; xfer.request local=<cache>/inventory_first.tmp remote=inventory_first.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1; xfer.request local=<cache>/inventory_second.tmp remote=inventory_second.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#2; xfer.abort id=real#1 code=-1
+  packets 4
+  packet RequestTaskInventory flags=40 zerocoded=0 wirelen=46
+    wire 400000000000ffff0121a0000000000040008000000000000001a0000000000040008000000000000002e1100000
+    body 400000000000ffff0121a0000000000040008000000000000001a0000000000040008000000000000002e1100000
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    InventoryData count=1
+      [0] LocalID = e1100000
+  packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
+    wire <zero-coded with the random xfer id: see body>
+    body 400000000000ffff009c000000000000000014696e76656e746f72795f66697273742e746d700004010000000000000000000000000000000000ffff
+    XferID count=1
+      [0] ID = <xfer id real#1>
+      [0] Filename = 696e76656e746f72795f66697273742e746d7000 "inventory_first.tmp\x00"
+      [0] FilePath = 04
+      [0] DeleteOnCompletion = 01
+      [0] UseBigPackets = 00
+      [0] VFileID = 00000000000000000000000000000000
+      [0] VFileType = ffff
+  packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
+    wire <zero-coded with the random xfer id: see body>
+    body 400000000000ffff009c000000000000000015696e76656e746f72795f7365636f6e642e746d700004010000000000000000000000000000000000ffff
+    XferID count=1
+      [0] ID = <xfer id real#2>
+      [0] Filename = 696e76656e746f72795f7365636f6e642e746d7000 "inventory_second.tmp\x00"
+      [0] FilePath = 04
+      [0] DeleteOnCompletion = 01
+      [0] UseBigPackets = 00
+      [0] VFileID = 00000000000000000000000000000000
+      [0] VFileType = ffff
+  packet AbortXfer flags=00 zerocoded=0 wirelen=22
+    wire 000000000000ffff009d0000000000000000ffffffff
+    body 000000000000ffff009d0000000000000000ffffffff
+    XferID count=1
+      [0] ID = <xfer id real#1>
+      [0] Result = ffffffff
+  inventory null
+  helpers root=none contents=[] count{} byasset{} bytype{}
+case xfer_aborted_by_delayed_fetch udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
+  after st=W ser=1 exp=3 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory; xfer.request local=<cache>/inventory_first.tmp remote=inventory_first.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1; xfer.abort id=real#1 code=-1; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+  packets 3
+  packet RequestTaskInventory flags=40 zerocoded=0 wirelen=46
+    wire 400000000000ffff0121a0000000000040008000000000000001a0000000000040008000000000000002e1100000
+    body 400000000000ffff0121a0000000000040008000000000000001a0000000000040008000000000000002e1100000
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    InventoryData count=1
+      [0] LocalID = e1100000
+  packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
+    wire <zero-coded with the random xfer id: see body>
+    body 400000000000ffff009c000000000000000014696e76656e746f72795f66697273742e746d700004010000000000000000000000000000000000ffff
+    XferID count=1
+      [0] ID = <xfer id real#1>
+      [0] Filename = 696e76656e746f72795f66697273742e746d7000 "inventory_first.tmp\x00"
+      [0] FilePath = 04
+      [0] DeleteOnCompletion = 01
+      [0] UseBigPackets = 00
+      [0] VFileID = 00000000000000000000000000000000
+      [0] VFileType = ffff
+  packet AbortXfer flags=00 zerocoded=0 wirelen=22
+    wire 000000000000ffff009d0000000000000000ffffffff
+    body 000000000000ffff009d0000000000000000ffffffff
+    XferID count=1
+      [0] ID = <xfer id real#1>
+      [0] Result = ffffffff
+  inventory null
+  helpers root=none contents=[] count{} byasset{} bytype{}
+case cap_request_url cap
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
+  after st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+  pending GET https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+  packets 0
+  inventory null
+  helpers root=none contents=[] count{} byasset{} bytype{}
+case cap_request_url_after_load cap
+  before st=S ser=9 exp=9 xid=0 dirty=0 inv=[B,A,obj]
+  after st=X ser=9 exp=9 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+  pending GET https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+  packets 0
+  inventory null
+  helpers root=none contents=[] count{} byasset{} bytype{}
