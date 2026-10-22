@@ -18,10 +18,17 @@ cmake --build build-vc170-64 --config RelWithDebInfo --target llinventory_tool -
 python tools/inventory-fixtures/model/regenerate.py <viewer>/build-vc170-64/sharedlibs/RelWithDebInfo/llinventory_tool.exe <viewer>
 ```
 
-The script keeps the hand-written README and the Library cache
-(`library/ba2a564a-f0f1-4b82-9c61-b7520bfcd09f.inv.llsd.gz`, committed
-unchanged) and replaces everything else, then checks that the two copies have
-the same bytes.
+The script keeps the hand-written README, the `.gitattributes` and the
+Library cache (`library/ba2a564a-f0f1-4b82-9c61-b7520bfcd09f.inv.llsd.gz`,
+committed unchanged). It replaces everything else only after verifying the
+new recording:
+- it dumps twice, each run into its own new directory;
+- each run must exit 3, the status of a recording (a dump never exits 0, so
+  it cannot pass for a test);
+- the two trees must be byte-identical and hold exactly the expected files.
+
+After the replacement it checks that the viewer and crate copies have the
+same bytes.
 
 The same executable times the C++ baseline that the port must match or beat:
 `llinventory_tool bench 3 --library <cache.gz> [--cache <private cache.gz>]`.
