@@ -235,7 +235,14 @@ by alphabet index) and the trace text exactly as in the sample files.
 
 ## Platform differences
 
-See the end of this file (filled in after the Linux recording).
+Recorded on Windows (MSVC 17, RelWithDebInfo) and on WSL Ubuntu 26.04
+(g++ 15.2 and g++ 14.3, glibc 2.43); the committed files are the Windows
+recording. Apart from the `# platform:` header line the outputs are
+identical on all three, including the digests of the sweeps and
+`date_over_int_max` (both C runtimes give -294967296). The cache directory
+delimiter differs (`\` on Windows) and is shown as `/`
+(`<cache>/<name>`); file names never contain either (they are scrubbed).
+CI's toolchain (Ubuntu 24.04, g++ 14, glibc 2.39) was not run locally.
 
 ## Not covered
 
