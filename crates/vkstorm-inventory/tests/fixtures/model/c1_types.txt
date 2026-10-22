@@ -1,0 +1,2854 @@
+# vkstorm-inventory model fixture: C1 type tables
+# generator: llinventory_tool dump (indra/llinventory/tests/llinventory_tool.cpp); values from the frozen copies in llinventory_oracle.cpp
+# viewer source: 472ecf270d
+# platform: windows x86_64, MSVC 1944 (194435229), 64-bit time_t
+# seed: none
+# format: tab-separated "<case>\t<field>\t<value>..." (README.md)
+c1.v.-129	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-129	it			255	0	1
+c1.v.-129	ft	llfoldertype_bad_lookup	1	1	1	0	-129	-129
+c1.v.-129	sale	NULL
+c1.v.-129	settings	35	New Settings
+c1.v.-128	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-128	it			255	0	1
+c1.v.-128	ft	llfoldertype_bad_lookup	1	1	1	0	-128	-128
+c1.v.-128	sale	NULL
+c1.v.-128	settings	35	New Settings
+c1.v.-127	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-127	it			255	0	1
+c1.v.-127	ft	llfoldertype_bad_lookup	1	1	1	0	-127	-127
+c1.v.-127	sale	NULL
+c1.v.-127	settings	35	New Settings
+c1.v.-126	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-126	it			255	0	1
+c1.v.-126	ft	llfoldertype_bad_lookup	1	1	1	0	-126	-126
+c1.v.-126	sale	NULL
+c1.v.-126	settings	35	New Settings
+c1.v.-125	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-125	it			255	0	1
+c1.v.-125	ft	llfoldertype_bad_lookup	1	1	1	0	-125	-125
+c1.v.-125	sale	NULL
+c1.v.-125	settings	35	New Settings
+c1.v.-124	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-124	it			255	0	1
+c1.v.-124	ft	llfoldertype_bad_lookup	1	1	1	0	-124	-124
+c1.v.-124	sale	NULL
+c1.v.-124	settings	35	New Settings
+c1.v.-123	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-123	it			255	0	1
+c1.v.-123	ft	llfoldertype_bad_lookup	1	1	1	0	-123	-123
+c1.v.-123	sale	NULL
+c1.v.-123	settings	35	New Settings
+c1.v.-122	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-122	it			255	0	1
+c1.v.-122	ft	llfoldertype_bad_lookup	1	1	1	0	-122	-122
+c1.v.-122	sale	NULL
+c1.v.-122	settings	35	New Settings
+c1.v.-121	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-121	it			255	0	1
+c1.v.-121	ft	llfoldertype_bad_lookup	1	1	1	0	-121	-121
+c1.v.-121	sale	NULL
+c1.v.-121	settings	35	New Settings
+c1.v.-120	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-120	it			255	0	1
+c1.v.-120	ft	llfoldertype_bad_lookup	1	1	1	0	-120	-120
+c1.v.-120	sale	NULL
+c1.v.-120	settings	35	New Settings
+c1.v.-119	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-119	it			255	0	1
+c1.v.-119	ft	llfoldertype_bad_lookup	1	1	1	0	-119	-119
+c1.v.-119	sale	NULL
+c1.v.-119	settings	35	New Settings
+c1.v.-118	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-118	it			255	0	1
+c1.v.-118	ft	llfoldertype_bad_lookup	1	1	1	0	-118	-118
+c1.v.-118	sale	NULL
+c1.v.-118	settings	35	New Settings
+c1.v.-117	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-117	it			255	0	1
+c1.v.-117	ft	llfoldertype_bad_lookup	1	1	1	0	-117	-117
+c1.v.-117	sale	NULL
+c1.v.-117	settings	35	New Settings
+c1.v.-116	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-116	it			255	0	1
+c1.v.-116	ft	llfoldertype_bad_lookup	1	1	1	0	-116	-116
+c1.v.-116	sale	NULL
+c1.v.-116	settings	35	New Settings
+c1.v.-115	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-115	it			255	0	1
+c1.v.-115	ft	llfoldertype_bad_lookup	1	1	1	0	-115	-115
+c1.v.-115	sale	NULL
+c1.v.-115	settings	35	New Settings
+c1.v.-114	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-114	it			255	0	1
+c1.v.-114	ft	llfoldertype_bad_lookup	1	1	1	0	-114	-114
+c1.v.-114	sale	NULL
+c1.v.-114	settings	35	New Settings
+c1.v.-113	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-113	it			255	0	1
+c1.v.-113	ft	llfoldertype_bad_lookup	1	1	1	0	-113	-113
+c1.v.-113	sale	NULL
+c1.v.-113	settings	35	New Settings
+c1.v.-112	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-112	it			255	0	1
+c1.v.-112	ft	llfoldertype_bad_lookup	1	1	1	0	-112	-112
+c1.v.-112	sale	NULL
+c1.v.-112	settings	35	New Settings
+c1.v.-111	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-111	it			255	0	1
+c1.v.-111	ft	llfoldertype_bad_lookup	1	1	1	0	-111	-111
+c1.v.-111	sale	NULL
+c1.v.-111	settings	35	New Settings
+c1.v.-110	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-110	it			255	0	1
+c1.v.-110	ft	llfoldertype_bad_lookup	1	1	1	0	-110	-110
+c1.v.-110	sale	NULL
+c1.v.-110	settings	35	New Settings
+c1.v.-109	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-109	it			255	0	1
+c1.v.-109	ft	llfoldertype_bad_lookup	1	1	1	0	-109	-109
+c1.v.-109	sale	NULL
+c1.v.-109	settings	35	New Settings
+c1.v.-108	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-108	it			255	0	1
+c1.v.-108	ft	llfoldertype_bad_lookup	1	1	1	0	-108	-108
+c1.v.-108	sale	NULL
+c1.v.-108	settings	35	New Settings
+c1.v.-107	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-107	it			255	0	1
+c1.v.-107	ft	llfoldertype_bad_lookup	1	1	1	0	-107	-107
+c1.v.-107	sale	NULL
+c1.v.-107	settings	35	New Settings
+c1.v.-106	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-106	it			255	0	1
+c1.v.-106	ft	llfoldertype_bad_lookup	1	1	1	0	-106	-106
+c1.v.-106	sale	NULL
+c1.v.-106	settings	35	New Settings
+c1.v.-105	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-105	it			255	0	1
+c1.v.-105	ft	llfoldertype_bad_lookup	1	1	1	0	-105	-105
+c1.v.-105	sale	NULL
+c1.v.-105	settings	35	New Settings
+c1.v.-104	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-104	it			255	0	1
+c1.v.-104	ft	llfoldertype_bad_lookup	1	1	1	0	-104	-104
+c1.v.-104	sale	NULL
+c1.v.-104	settings	35	New Settings
+c1.v.-103	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-103	it			255	0	1
+c1.v.-103	ft	llfoldertype_bad_lookup	1	1	1	0	-103	-103
+c1.v.-103	sale	NULL
+c1.v.-103	settings	35	New Settings
+c1.v.-102	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-102	it			255	0	1
+c1.v.-102	ft	llfoldertype_bad_lookup	1	1	1	0	-102	-102
+c1.v.-102	sale	NULL
+c1.v.-102	settings	35	New Settings
+c1.v.-101	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-101	it			255	0	1
+c1.v.-101	ft	llfoldertype_bad_lookup	1	1	1	0	-101	-101
+c1.v.-101	sale	NULL
+c1.v.-101	settings	35	New Settings
+c1.v.-100	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-100	it			255	0	1
+c1.v.-100	ft	llfoldertype_bad_lookup	1	1	1	0	-100	-100
+c1.v.-100	sale	NULL
+c1.v.-100	settings	35	New Settings
+c1.v.-99	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-99	it			255	0	1
+c1.v.-99	ft	llfoldertype_bad_lookup	1	1	1	0	-99	-99
+c1.v.-99	sale	NULL
+c1.v.-99	settings	35	New Settings
+c1.v.-98	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-98	it			255	0	1
+c1.v.-98	ft	llfoldertype_bad_lookup	1	1	1	0	-98	-98
+c1.v.-98	sale	NULL
+c1.v.-98	settings	35	New Settings
+c1.v.-97	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-97	it			255	0	1
+c1.v.-97	ft	llfoldertype_bad_lookup	1	1	1	0	-97	-97
+c1.v.-97	sale	NULL
+c1.v.-97	settings	35	New Settings
+c1.v.-96	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-96	it			255	0	1
+c1.v.-96	ft	llfoldertype_bad_lookup	1	1	1	0	-96	-96
+c1.v.-96	sale	NULL
+c1.v.-96	settings	35	New Settings
+c1.v.-95	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-95	it			255	0	1
+c1.v.-95	ft	llfoldertype_bad_lookup	1	1	1	0	-95	-95
+c1.v.-95	sale	NULL
+c1.v.-95	settings	35	New Settings
+c1.v.-94	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-94	it			255	0	1
+c1.v.-94	ft	llfoldertype_bad_lookup	1	1	1	0	-94	-94
+c1.v.-94	sale	NULL
+c1.v.-94	settings	35	New Settings
+c1.v.-93	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-93	it			255	0	1
+c1.v.-93	ft	llfoldertype_bad_lookup	1	1	1	0	-93	-93
+c1.v.-93	sale	NULL
+c1.v.-93	settings	35	New Settings
+c1.v.-92	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-92	it			255	0	1
+c1.v.-92	ft	llfoldertype_bad_lookup	1	1	1	0	-92	-92
+c1.v.-92	sale	NULL
+c1.v.-92	settings	35	New Settings
+c1.v.-91	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-91	it			255	0	1
+c1.v.-91	ft	llfoldertype_bad_lookup	1	1	1	0	-91	-91
+c1.v.-91	sale	NULL
+c1.v.-91	settings	35	New Settings
+c1.v.-90	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-90	it			255	0	1
+c1.v.-90	ft	llfoldertype_bad_lookup	1	1	1	0	-90	-90
+c1.v.-90	sale	NULL
+c1.v.-90	settings	35	New Settings
+c1.v.-89	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-89	it			255	0	1
+c1.v.-89	ft	llfoldertype_bad_lookup	1	1	1	0	-89	-89
+c1.v.-89	sale	NULL
+c1.v.-89	settings	35	New Settings
+c1.v.-88	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-88	it			255	0	1
+c1.v.-88	ft	llfoldertype_bad_lookup	1	1	1	0	-88	-88
+c1.v.-88	sale	NULL
+c1.v.-88	settings	35	New Settings
+c1.v.-87	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-87	it			255	0	1
+c1.v.-87	ft	llfoldertype_bad_lookup	1	1	1	0	-87	-87
+c1.v.-87	sale	NULL
+c1.v.-87	settings	35	New Settings
+c1.v.-86	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-86	it			255	0	1
+c1.v.-86	ft	llfoldertype_bad_lookup	1	1	1	0	-86	-86
+c1.v.-86	sale	NULL
+c1.v.-86	settings	35	New Settings
+c1.v.-85	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-85	it			255	0	1
+c1.v.-85	ft	llfoldertype_bad_lookup	1	1	1	0	-85	-85
+c1.v.-85	sale	NULL
+c1.v.-85	settings	35	New Settings
+c1.v.-84	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-84	it			255	0	1
+c1.v.-84	ft	llfoldertype_bad_lookup	1	1	1	0	-84	-84
+c1.v.-84	sale	NULL
+c1.v.-84	settings	35	New Settings
+c1.v.-83	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-83	it			255	0	1
+c1.v.-83	ft	llfoldertype_bad_lookup	1	1	1	0	-83	-83
+c1.v.-83	sale	NULL
+c1.v.-83	settings	35	New Settings
+c1.v.-82	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-82	it			255	0	1
+c1.v.-82	ft	llfoldertype_bad_lookup	1	1	1	0	-82	-82
+c1.v.-82	sale	NULL
+c1.v.-82	settings	35	New Settings
+c1.v.-81	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-81	it			255	0	1
+c1.v.-81	ft	llfoldertype_bad_lookup	1	1	1	0	-81	-81
+c1.v.-81	sale	NULL
+c1.v.-81	settings	35	New Settings
+c1.v.-80	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-80	it			255	0	1
+c1.v.-80	ft	llfoldertype_bad_lookup	1	1	1	0	-80	-80
+c1.v.-80	sale	NULL
+c1.v.-80	settings	35	New Settings
+c1.v.-79	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-79	it			255	0	1
+c1.v.-79	ft	llfoldertype_bad_lookup	1	1	1	0	-79	-79
+c1.v.-79	sale	NULL
+c1.v.-79	settings	35	New Settings
+c1.v.-78	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-78	it			255	0	1
+c1.v.-78	ft	llfoldertype_bad_lookup	1	1	1	0	-78	-78
+c1.v.-78	sale	NULL
+c1.v.-78	settings	35	New Settings
+c1.v.-77	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-77	it			255	0	1
+c1.v.-77	ft	llfoldertype_bad_lookup	1	1	1	0	-77	-77
+c1.v.-77	sale	NULL
+c1.v.-77	settings	35	New Settings
+c1.v.-76	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-76	it			255	0	1
+c1.v.-76	ft	llfoldertype_bad_lookup	1	1	1	0	-76	-76
+c1.v.-76	sale	NULL
+c1.v.-76	settings	35	New Settings
+c1.v.-75	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-75	it			255	0	1
+c1.v.-75	ft	llfoldertype_bad_lookup	1	1	1	0	-75	-75
+c1.v.-75	sale	NULL
+c1.v.-75	settings	35	New Settings
+c1.v.-74	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-74	it			255	0	1
+c1.v.-74	ft	llfoldertype_bad_lookup	1	1	1	0	-74	-74
+c1.v.-74	sale	NULL
+c1.v.-74	settings	35	New Settings
+c1.v.-73	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-73	it			255	0	1
+c1.v.-73	ft	llfoldertype_bad_lookup	1	1	1	0	-73	-73
+c1.v.-73	sale	NULL
+c1.v.-73	settings	35	New Settings
+c1.v.-72	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-72	it			255	0	1
+c1.v.-72	ft	llfoldertype_bad_lookup	1	1	1	0	-72	-72
+c1.v.-72	sale	NULL
+c1.v.-72	settings	35	New Settings
+c1.v.-71	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-71	it			255	0	1
+c1.v.-71	ft	llfoldertype_bad_lookup	1	1	1	0	-71	-71
+c1.v.-71	sale	NULL
+c1.v.-71	settings	35	New Settings
+c1.v.-70	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-70	it			255	0	1
+c1.v.-70	ft	llfoldertype_bad_lookup	1	1	1	0	-70	-70
+c1.v.-70	sale	NULL
+c1.v.-70	settings	35	New Settings
+c1.v.-69	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-69	it			255	0	1
+c1.v.-69	ft	llfoldertype_bad_lookup	1	1	1	0	-69	-69
+c1.v.-69	sale	NULL
+c1.v.-69	settings	35	New Settings
+c1.v.-68	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-68	it			255	0	1
+c1.v.-68	ft	llfoldertype_bad_lookup	1	1	1	0	-68	-68
+c1.v.-68	sale	NULL
+c1.v.-68	settings	35	New Settings
+c1.v.-67	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-67	it			255	0	1
+c1.v.-67	ft	llfoldertype_bad_lookup	1	1	1	0	-67	-67
+c1.v.-67	sale	NULL
+c1.v.-67	settings	35	New Settings
+c1.v.-66	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-66	it			255	0	1
+c1.v.-66	ft	llfoldertype_bad_lookup	1	1	1	0	-66	-66
+c1.v.-66	sale	NULL
+c1.v.-66	settings	35	New Settings
+c1.v.-65	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-65	it			255	0	1
+c1.v.-65	ft	llfoldertype_bad_lookup	1	1	1	0	-65	-65
+c1.v.-65	sale	NULL
+c1.v.-65	settings	35	New Settings
+c1.v.-64	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-64	it			255	0	1
+c1.v.-64	ft	llfoldertype_bad_lookup	1	1	1	0	-64	-64
+c1.v.-64	sale	NULL
+c1.v.-64	settings	35	New Settings
+c1.v.-63	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-63	it			255	0	1
+c1.v.-63	ft	llfoldertype_bad_lookup	1	1	1	0	-63	-63
+c1.v.-63	sale	NULL
+c1.v.-63	settings	35	New Settings
+c1.v.-62	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-62	it			255	0	1
+c1.v.-62	ft	llfoldertype_bad_lookup	1	1	1	0	-62	-62
+c1.v.-62	sale	NULL
+c1.v.-62	settings	35	New Settings
+c1.v.-61	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-61	it			255	0	1
+c1.v.-61	ft	llfoldertype_bad_lookup	1	1	1	0	-61	-61
+c1.v.-61	sale	NULL
+c1.v.-61	settings	35	New Settings
+c1.v.-60	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-60	it			255	0	1
+c1.v.-60	ft	llfoldertype_bad_lookup	1	1	1	0	-60	-60
+c1.v.-60	sale	NULL
+c1.v.-60	settings	35	New Settings
+c1.v.-59	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-59	it			255	0	1
+c1.v.-59	ft	llfoldertype_bad_lookup	1	1	1	0	-59	-59
+c1.v.-59	sale	NULL
+c1.v.-59	settings	35	New Settings
+c1.v.-58	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-58	it			255	0	1
+c1.v.-58	ft	llfoldertype_bad_lookup	1	1	1	0	-58	-58
+c1.v.-58	sale	NULL
+c1.v.-58	settings	35	New Settings
+c1.v.-57	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-57	it			255	0	1
+c1.v.-57	ft	llfoldertype_bad_lookup	1	1	1	0	-57	-57
+c1.v.-57	sale	NULL
+c1.v.-57	settings	35	New Settings
+c1.v.-56	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-56	it			255	0	1
+c1.v.-56	ft	llfoldertype_bad_lookup	1	1	1	0	-56	-56
+c1.v.-56	sale	NULL
+c1.v.-56	settings	35	New Settings
+c1.v.-55	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-55	it			255	0	1
+c1.v.-55	ft	llfoldertype_bad_lookup	1	1	1	0	-55	-55
+c1.v.-55	sale	NULL
+c1.v.-55	settings	35	New Settings
+c1.v.-54	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-54	it			255	0	1
+c1.v.-54	ft	llfoldertype_bad_lookup	1	1	1	0	-54	-54
+c1.v.-54	sale	NULL
+c1.v.-54	settings	35	New Settings
+c1.v.-53	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-53	it			255	0	1
+c1.v.-53	ft	llfoldertype_bad_lookup	1	1	1	0	-53	-53
+c1.v.-53	sale	NULL
+c1.v.-53	settings	35	New Settings
+c1.v.-52	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-52	it			255	0	1
+c1.v.-52	ft	llfoldertype_bad_lookup	1	1	1	0	-52	-52
+c1.v.-52	sale	NULL
+c1.v.-52	settings	35	New Settings
+c1.v.-51	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-51	it			255	0	1
+c1.v.-51	ft	llfoldertype_bad_lookup	1	1	1	0	-51	-51
+c1.v.-51	sale	NULL
+c1.v.-51	settings	35	New Settings
+c1.v.-50	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-50	it			255	0	1
+c1.v.-50	ft	llfoldertype_bad_lookup	1	1	1	0	-50	-50
+c1.v.-50	sale	NULL
+c1.v.-50	settings	35	New Settings
+c1.v.-49	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-49	it			255	0	1
+c1.v.-49	ft	llfoldertype_bad_lookup	1	1	1	0	-49	-49
+c1.v.-49	sale	NULL
+c1.v.-49	settings	35	New Settings
+c1.v.-48	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-48	it			255	0	1
+c1.v.-48	ft	llfoldertype_bad_lookup	1	1	1	0	-48	-48
+c1.v.-48	sale	NULL
+c1.v.-48	settings	35	New Settings
+c1.v.-47	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-47	it			255	0	1
+c1.v.-47	ft	llfoldertype_bad_lookup	1	1	1	0	-47	-47
+c1.v.-47	sale	NULL
+c1.v.-47	settings	35	New Settings
+c1.v.-46	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-46	it			255	0	1
+c1.v.-46	ft	llfoldertype_bad_lookup	1	1	1	0	-46	-46
+c1.v.-46	sale	NULL
+c1.v.-46	settings	35	New Settings
+c1.v.-45	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-45	it			255	0	1
+c1.v.-45	ft	llfoldertype_bad_lookup	1	1	1	0	-45	-45
+c1.v.-45	sale	NULL
+c1.v.-45	settings	35	New Settings
+c1.v.-44	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-44	it			255	0	1
+c1.v.-44	ft	llfoldertype_bad_lookup	1	1	1	0	-44	-44
+c1.v.-44	sale	NULL
+c1.v.-44	settings	35	New Settings
+c1.v.-43	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-43	it			255	0	1
+c1.v.-43	ft	llfoldertype_bad_lookup	1	1	1	0	-43	-43
+c1.v.-43	sale	NULL
+c1.v.-43	settings	35	New Settings
+c1.v.-42	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-42	it			255	0	1
+c1.v.-42	ft	llfoldertype_bad_lookup	1	1	1	0	-42	-42
+c1.v.-42	sale	NULL
+c1.v.-42	settings	35	New Settings
+c1.v.-41	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-41	it			255	0	1
+c1.v.-41	ft	llfoldertype_bad_lookup	1	1	1	0	-41	-41
+c1.v.-41	sale	NULL
+c1.v.-41	settings	35	New Settings
+c1.v.-40	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-40	it			255	0	1
+c1.v.-40	ft	llfoldertype_bad_lookup	1	1	1	0	-40	-40
+c1.v.-40	sale	NULL
+c1.v.-40	settings	35	New Settings
+c1.v.-39	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-39	it			255	0	1
+c1.v.-39	ft	llfoldertype_bad_lookup	1	1	1	0	-39	-39
+c1.v.-39	sale	NULL
+c1.v.-39	settings	35	New Settings
+c1.v.-38	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-38	it			255	0	1
+c1.v.-38	ft	llfoldertype_bad_lookup	1	1	1	0	-38	-38
+c1.v.-38	sale	NULL
+c1.v.-38	settings	35	New Settings
+c1.v.-37	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-37	it			255	0	1
+c1.v.-37	ft	llfoldertype_bad_lookup	1	1	1	0	-37	-37
+c1.v.-37	sale	NULL
+c1.v.-37	settings	35	New Settings
+c1.v.-36	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-36	it			255	0	1
+c1.v.-36	ft	llfoldertype_bad_lookup	1	1	1	0	-36	-36
+c1.v.-36	sale	NULL
+c1.v.-36	settings	35	New Settings
+c1.v.-35	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-35	it			255	0	1
+c1.v.-35	ft	llfoldertype_bad_lookup	1	1	1	0	-35	-35
+c1.v.-35	sale	NULL
+c1.v.-35	settings	35	New Settings
+c1.v.-34	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-34	it			255	0	1
+c1.v.-34	ft	llfoldertype_bad_lookup	1	1	1	0	-34	-34
+c1.v.-34	sale	NULL
+c1.v.-34	settings	35	New Settings
+c1.v.-33	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-33	it			255	0	1
+c1.v.-33	ft	llfoldertype_bad_lookup	1	1	1	0	-33	-33
+c1.v.-33	sale	NULL
+c1.v.-33	settings	35	New Settings
+c1.v.-32	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-32	it			255	0	1
+c1.v.-32	ft	llfoldertype_bad_lookup	1	1	1	0	-32	-32
+c1.v.-32	sale	NULL
+c1.v.-32	settings	35	New Settings
+c1.v.-31	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-31	it			255	0	1
+c1.v.-31	ft	llfoldertype_bad_lookup	1	1	1	0	-31	-31
+c1.v.-31	sale	NULL
+c1.v.-31	settings	35	New Settings
+c1.v.-30	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-30	it			255	0	1
+c1.v.-30	ft	llfoldertype_bad_lookup	1	1	1	0	-30	-30
+c1.v.-30	sale	NULL
+c1.v.-30	settings	35	New Settings
+c1.v.-29	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-29	it			255	0	1
+c1.v.-29	ft	llfoldertype_bad_lookup	1	1	1	0	-29	-29
+c1.v.-29	sale	NULL
+c1.v.-29	settings	35	New Settings
+c1.v.-28	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-28	it			255	0	1
+c1.v.-28	ft	llfoldertype_bad_lookup	1	1	1	0	-28	-28
+c1.v.-28	sale	NULL
+c1.v.-28	settings	35	New Settings
+c1.v.-27	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-27	it			255	0	1
+c1.v.-27	ft	llfoldertype_bad_lookup	1	1	1	0	-27	-27
+c1.v.-27	sale	NULL
+c1.v.-27	settings	35	New Settings
+c1.v.-26	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-26	it			255	0	1
+c1.v.-26	ft	llfoldertype_bad_lookup	1	1	1	0	-26	-26
+c1.v.-26	sale	NULL
+c1.v.-26	settings	35	New Settings
+c1.v.-25	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-25	it			255	0	1
+c1.v.-25	ft	llfoldertype_bad_lookup	1	1	1	0	-25	-25
+c1.v.-25	sale	NULL
+c1.v.-25	settings	35	New Settings
+c1.v.-24	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-24	it			255	0	1
+c1.v.-24	ft	llfoldertype_bad_lookup	1	1	1	0	-24	-24
+c1.v.-24	sale	NULL
+c1.v.-24	settings	35	New Settings
+c1.v.-23	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-23	it			255	0	1
+c1.v.-23	ft	llfoldertype_bad_lookup	1	1	1	0	-23	-23
+c1.v.-23	sale	NULL
+c1.v.-23	settings	35	New Settings
+c1.v.-22	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-22	it			255	0	1
+c1.v.-22	ft	llfoldertype_bad_lookup	1	1	1	0	-22	-22
+c1.v.-22	sale	NULL
+c1.v.-22	settings	35	New Settings
+c1.v.-21	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-21	it			255	0	1
+c1.v.-21	ft	llfoldertype_bad_lookup	1	1	1	0	-21	-21
+c1.v.-21	sale	NULL
+c1.v.-21	settings	35	New Settings
+c1.v.-20	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-20	it			255	0	1
+c1.v.-20	ft	llfoldertype_bad_lookup	1	1	1	0	-20	-20
+c1.v.-20	sale	NULL
+c1.v.-20	settings	35	New Settings
+c1.v.-19	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-19	it			255	0	1
+c1.v.-19	ft	llfoldertype_bad_lookup	1	1	1	0	-19	-19
+c1.v.-19	sale	NULL
+c1.v.-19	settings	35	New Settings
+c1.v.-18	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-18	it			255	0	1
+c1.v.-18	ft	llfoldertype_bad_lookup	1	1	1	0	-18	-18
+c1.v.-18	sale	NULL
+c1.v.-18	settings	35	New Settings
+c1.v.-17	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-17	it			255	0	1
+c1.v.-17	ft	llfoldertype_bad_lookup	1	1	1	0	-17	-17
+c1.v.-17	sale	NULL
+c1.v.-17	settings	35	New Settings
+c1.v.-16	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-16	it			255	0	1
+c1.v.-16	ft	llfoldertype_bad_lookup	1	1	1	0	-16	-16
+c1.v.-16	sale	NULL
+c1.v.-16	settings	35	New Settings
+c1.v.-15	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-15	it			255	0	1
+c1.v.-15	ft	llfoldertype_bad_lookup	1	1	1	0	-15	-15
+c1.v.-15	sale	NULL
+c1.v.-15	settings	35	New Settings
+c1.v.-14	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-14	it			255	0	1
+c1.v.-14	ft	llfoldertype_bad_lookup	1	1	1	0	-14	-14
+c1.v.-14	sale	NULL
+c1.v.-14	settings	35	New Settings
+c1.v.-13	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-13	it			255	0	1
+c1.v.-13	ft	llfoldertype_bad_lookup	1	1	1	0	-13	-13
+c1.v.-13	sale	NULL
+c1.v.-13	settings	35	New Settings
+c1.v.-12	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-12	it			255	0	1
+c1.v.-12	ft	llfoldertype_bad_lookup	1	1	1	0	-12	-12
+c1.v.-12	sale	NULL
+c1.v.-12	settings	35	New Settings
+c1.v.-11	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-11	it			255	0	1
+c1.v.-11	ft	llfoldertype_bad_lookup	1	1	1	0	-11	-11
+c1.v.-11	sale	NULL
+c1.v.-11	settings	35	New Settings
+c1.v.-10	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-10	it			255	0	1
+c1.v.-10	ft	llfoldertype_bad_lookup	1	1	1	0	-10	-10
+c1.v.-10	sale	NULL
+c1.v.-10	settings	35	New Settings
+c1.v.-9	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-9	it			255	0	1
+c1.v.-9	ft	llfoldertype_bad_lookup	1	1	1	0	-9	-9
+c1.v.-9	sale	NULL
+c1.v.-9	settings	35	New Settings
+c1.v.-8	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-8	it			255	0	1
+c1.v.-8	ft	llfoldertype_bad_lookup	1	1	1	0	-8	-8
+c1.v.-8	sale	NULL
+c1.v.-8	settings	35	New Settings
+c1.v.-7	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-7	it			255	0	1
+c1.v.-7	ft	llfoldertype_bad_lookup	1	1	1	0	-7	-7
+c1.v.-7	sale	NULL
+c1.v.-7	settings	35	New Settings
+c1.v.-6	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-6	it			255	0	1
+c1.v.-6	ft	llfoldertype_bad_lookup	1	1	1	0	-6	-6
+c1.v.-6	sale	NULL
+c1.v.-6	settings	35	New Settings
+c1.v.-5	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-5	it			255	0	1
+c1.v.-5	ft	llfoldertype_bad_lookup	1	1	1	0	-5	-5
+c1.v.-5	sale	NULL
+c1.v.-5	settings	35	New Settings
+c1.v.-4	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-4	it			255	0	1
+c1.v.-4	ft	llfoldertype_bad_lookup	1	1	1	0	-4	-4
+c1.v.-4	sale	NULL
+c1.v.-4	settings	35	New Settings
+c1.v.-3	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-3	it			255	0	1
+c1.v.-3	ft	llfoldertype_bad_lookup	1	1	1	0	-3	-3
+c1.v.-3	sale	NULL
+c1.v.-3	settings	35	New Settings
+c1.v.-2	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-2	it			255	0	1
+c1.v.-2	ft	llfoldertype_bad_lookup	1	1	1	0	-2	-2
+c1.v.-2	sale	NULL
+c1.v.-2	settings	35	New Settings
+c1.v.-1	at	-1	NULL	NONE	0	0	0	0
+c1.v.-1	it			255	0	1
+c1.v.-1	ft	-1	0	0	0	0	-1	-1
+c1.v.-1	sale	NULL
+c1.v.-1	settings	35	New Settings
+c1.v.0	at	texture	texture	TEXTURE	1	0	1	0
+c1.v.0	it	texture	texture	0	0	1
+c1.v.0	ft	texture	1	1	1	0	0	0
+c1.v.0	sale	not
+c1.v.0	settings	36	New Sky
+c1.v.1	at	sound	sound	SOUND	1	1	1	0
+c1.v.1	it	sound	sound	1	0	1
+c1.v.1	ft	sound	1	1	1	0	1	1
+c1.v.1	sale	orig
+c1.v.1	settings	37	New Water
+c1.v.2	at	callcard	calling card	CALLINGCARD	1	0	0	0
+c1.v.2	it	callcard	calling card	2	1	1
+c1.v.2	ft	callcard	1	1	0	0	2	2
+c1.v.2	sale	copy
+c1.v.2	settings	38	New Day
+c1.v.3	at	landmark	landmark	LANDMARK	1	1	1	0
+c1.v.3	it	landmark	landmark	3	1	1
+c1.v.3	ft	landmark	1	0	0	0	3	3
+c1.v.3	sale	cntn
+c1.v.3	settings	35	New Settings
+c1.v.4	at	script	legacy script	SCRIPT	1	0	0	0
+c1.v.4	it			10	0	1
+c1.v.4	ft	llfoldertype_bad_lookup	1	1	1	0	4	4
+c1.v.4	sale	NULL
+c1.v.4	settings	35	New Settings
+c1.v.5	at	clothing	clothing	CLOTHING	1	1	1	0
+c1.v.5	it			18	0	1
+c1.v.5	ft	clothing	1	1	1	0	5	5
+c1.v.5	sale	NULL
+c1.v.5	settings	35	New Settings
+c1.v.6	at	object	object	OBJECT	1	0	0	0
+c1.v.6	it	object	object	6	0	1
+c1.v.6	ft	object	1	1	1	0	6	6
+c1.v.6	sale	NULL
+c1.v.6	settings	35	New Settings
+c1.v.7	at	notecard	note card	NOTECARD	1	0	1	0
+c1.v.7	it	notecard	note card	7	0	1
+c1.v.7	ft	notecard	1	1	1	0	7	7
+c1.v.7	sale	NULL
+c1.v.7	settings	35	New Settings
+c1.v.8	at	category	folder	CATEGORY	1	0	0	0
+c1.v.8	it	category	folder	8	0	1
+c1.v.8	ft	root_inv	1	1	1	0	8	8
+c1.v.8	sale	NULL
+c1.v.8	settings	35	New Settings
+c1.v.9	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.9	it	root	root	-1	0	1
+c1.v.9	ft	llfoldertype_bad_lookup	1	1	1	0	9	9
+c1.v.9	sale	NULL
+c1.v.9	settings	35	New Settings
+c1.v.10	at	lsltext	lsl2 script	LSL_TEXT	1	0	0	0
+c1.v.10	it	script	script	10	0	1
+c1.v.10	ft	lsltext	1	1	1	0	10	10
+c1.v.10	sale	NULL
+c1.v.10	settings	35	New Settings
+c1.v.11	at	lslbyte	lsl bytecode	LSL_BYTECODE	1	0	0	0
+c1.v.11	it			10	0	1
+c1.v.11	ft	llfoldertype_bad_lookup	1	1	1	0	11	11
+c1.v.11	sale	NULL
+c1.v.11	settings	35	New Settings
+c1.v.12	at	txtr_tga	tga texture	TEXTURE_TGA	1	0	0	0
+c1.v.12	it			0	0	1
+c1.v.12	ft	llfoldertype_bad_lookup	1	1	1	0	12	12
+c1.v.12	sale	NULL
+c1.v.12	settings	35	New Settings
+c1.v.13	at	bodypart	body part	BODYPART	1	1	1	0
+c1.v.13	it			18	0	1
+c1.v.13	ft	bodypart	1	1	1	0	13	13
+c1.v.13	sale	NULL
+c1.v.13	settings	35	New Settings
+c1.v.14	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.14	it			8	0	1
+c1.v.14	ft	trash	1	0	1	0	14	14
+c1.v.14	sale	NULL
+c1.v.14	settings	35	New Settings
+c1.v.15	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.15	it	snapshot	snapshot	8	0	1
+c1.v.15	ft	snapshot	1	1	1	0	15	15
+c1.v.15	sale	NULL
+c1.v.15	settings	35	New Settings
+c1.v.16	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.16	it			8	0	1
+c1.v.16	ft	lstndfnd	1	1	1	0	16	16
+c1.v.16	sale	NULL
+c1.v.16	settings	35	New Settings
+c1.v.17	at	snd_wav	sound	SOUND_WAV	1	0	0	0
+c1.v.17	it	attach	attachment	1	0	1
+c1.v.17	ft	llfoldertype_bad_lookup	1	1	1	0	17	17
+c1.v.17	sale	NULL
+c1.v.17	settings	35	New Settings
+c1.v.18	at	img_tga	targa image	IMAGE_TGA	1	0	0	0
+c1.v.18	it	wearable	wearable	-1	0	1
+c1.v.18	ft	llfoldertype_bad_lookup	1	1	1	0	18	18
+c1.v.18	sale	NULL
+c1.v.18	settings	35	New Settings
+c1.v.19	at	jpeg	jpeg image	IMAGE_JPEG	1	0	0	0
+c1.v.19	it	animation	animation	-1	0	1
+c1.v.19	ft	llfoldertype_bad_lookup	1	1	1	0	19	19
+c1.v.19	sale	NULL
+c1.v.19	settings	35	New Settings
+c1.v.20	at	animatn	animation	ANIMATION	1	1	1	0
+c1.v.20	it	gesture	gesture	19	0	1
+c1.v.20	ft	animatn	1	1	1	0	20	20
+c1.v.20	sale	NULL
+c1.v.20	settings	35	New Settings
+c1.v.21	at	gesture	gesture	GESTURE	1	1	1	0
+c1.v.21	it			20	0	1
+c1.v.21	ft	gesture	1	1	1	0	21	21
+c1.v.21	sale	NULL
+c1.v.21	settings	35	New Settings
+c1.v.22	at	simstate	simstate	SIMSTATE	0	0	0	0
+c1.v.22	it	mesh	mesh	-1	0	1
+c1.v.22	ft	llfoldertype_bad_lookup	1	1	1	0	22	22
+c1.v.22	sale	NULL
+c1.v.22	settings	35	New Settings
+c1.v.23	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.23	it	widget	widget	-1	0	1
+c1.v.23	ft	favorite	1	0	1	0	23	23
+c1.v.23	sale	NULL
+c1.v.23	settings	35	New Settings
+c1.v.24	at	link	sym link	LINK	0	0	1	1
+c1.v.24	it	person	person	-1	0	1
+c1.v.24	ft	llfoldertype_bad_lookup	1	1	1	0	24	24
+c1.v.24	sale	NULL
+c1.v.24	settings	35	New Settings
+c1.v.25	at	link_f	sym folder link	FOLDER_LINK	0	0	1	1
+c1.v.25	it	settings	settings	-1	0	0
+c1.v.25	ft	llfoldertype_bad_lookup	1	1	1	0	25	25
+c1.v.25	sale	NULL
+c1.v.25	settings	35	New Settings
+c1.v.26	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.26	it	material	render material	-1	0	1
+c1.v.26	ft	ensemble	0	0	0	1	26	26
+c1.v.26	sale	NULL
+c1.v.26	settings	35	New Settings
+c1.v.27	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.27	it	gltf	gltf	-1	0	1
+c1.v.27	ft	ensemble	0	0	0	1	27	27
+c1.v.27	sale	NULL
+c1.v.27	settings	35	New Settings
+c1.v.28	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.28	it	glbin	glbin	-1	0	1
+c1.v.28	ft	ensemble	0	0	0	1	28	28
+c1.v.28	sale	NULL
+c1.v.28	settings	35	New Settings
+c1.v.29	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.29	it			-1	0	1
+c1.v.29	ft	ensemble	0	0	0	1	29	29
+c1.v.29	sale	NULL
+c1.v.29	settings	35	New Settings
+c1.v.30	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.30	it			-1	0	1
+c1.v.30	ft	ensemble	0	0	0	1	30	30
+c1.v.30	sale	NULL
+c1.v.30	settings	35	New Settings
+c1.v.31	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.31	it			-1	0	1
+c1.v.31	ft	ensemble	0	0	0	1	31	31
+c1.v.31	sale	NULL
+c1.v.31	settings	35	New Settings
+c1.v.32	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.32	it			-1	0	1
+c1.v.32	ft	ensemble	0	0	0	1	32	32
+c1.v.32	sale	NULL
+c1.v.32	settings	35	New Settings
+c1.v.33	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.33	it			-1	0	1
+c1.v.33	ft	ensemble	0	0	0	1	33	33
+c1.v.33	sale	NULL
+c1.v.33	settings	35	New Settings
+c1.v.34	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.34	it			-1	0	1
+c1.v.34	ft	ensemble	0	0	0	1	34	34
+c1.v.34	sale	NULL
+c1.v.34	settings	35	New Settings
+c1.v.35	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.35	it			-1	0	1
+c1.v.35	ft	ensemble	0	0	0	1	35	35
+c1.v.35	sale	NULL
+c1.v.35	settings	35	New Settings
+c1.v.36	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.36	it			-1	0	1
+c1.v.36	ft	ensemble	0	0	0	1	36	36
+c1.v.36	sale	NULL
+c1.v.36	settings	35	New Settings
+c1.v.37	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.37	it			-1	0	1
+c1.v.37	ft	ensemble	0	0	0	1	37	37
+c1.v.37	sale	NULL
+c1.v.37	settings	35	New Settings
+c1.v.38	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.38	it			-1	0	1
+c1.v.38	ft	ensemble	0	0	0	1	38	38
+c1.v.38	sale	NULL
+c1.v.38	settings	35	New Settings
+c1.v.39	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.39	it			-1	0	1
+c1.v.39	ft	ensemble	0	0	0	1	39	39
+c1.v.39	sale	NULL
+c1.v.39	settings	35	New Settings
+c1.v.40	at	widget	widget	WIDGET	0	0	0	0
+c1.v.40	it			23	0	1
+c1.v.40	ft	ensemble	0	0	0	1	40	40
+c1.v.40	sale	NULL
+c1.v.40	settings	35	New Settings
+c1.v.41	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.41	it			-1	0	1
+c1.v.41	ft	ensemble	0	0	0	1	41	41
+c1.v.41	sale	NULL
+c1.v.41	settings	35	New Settings
+c1.v.42	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.42	it			-1	0	1
+c1.v.42	ft	ensemble	0	0	0	1	42	42
+c1.v.42	sale	NULL
+c1.v.42	settings	35	New Settings
+c1.v.43	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.43	it			-1	0	1
+c1.v.43	ft	ensemble	0	0	0	1	43	43
+c1.v.43	sale	NULL
+c1.v.43	settings	35	New Settings
+c1.v.44	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.44	it			-1	0	1
+c1.v.44	ft	ensemble	0	0	0	1	44	44
+c1.v.44	sale	NULL
+c1.v.44	settings	35	New Settings
+c1.v.45	at	person	person	PERSON	0	0	0	0
+c1.v.45	it			24	0	1
+c1.v.45	ft	ensemble	0	0	0	1	45	45
+c1.v.45	sale	NULL
+c1.v.45	settings	35	New Settings
+c1.v.46	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.46	it			-1	0	1
+c1.v.46	ft	current	1	0	1	0	46	46
+c1.v.46	sale	NULL
+c1.v.46	settings	35	New Settings
+c1.v.47	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.47	it			-1	0	1
+c1.v.47	ft	outfit	0	0	0	0	47	47
+c1.v.47	sale	NULL
+c1.v.47	settings	35	New Settings
+c1.v.48	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.48	it			-1	0	1
+c1.v.48	ft	my_otfts	1	0	1	0	48	48
+c1.v.48	sale	NULL
+c1.v.48	settings	35	New Settings
+c1.v.49	at	mesh	mesh	MESH	0	0	0	0
+c1.v.49	it			22	0	1
+c1.v.49	ft	mesh	1	0	0	0	49	49
+c1.v.49	sale	NULL
+c1.v.49	settings	35	New Settings
+c1.v.50	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.50	it			-1	0	1
+c1.v.50	ft	inbox	1	0	1	0	50	50
+c1.v.50	sale	NULL
+c1.v.50	settings	35	New Settings
+c1.v.51	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.51	it			-1	0	1
+c1.v.51	ft	outbox	0	0	0	0	51	51
+c1.v.51	sale	NULL
+c1.v.51	settings	35	New Settings
+c1.v.52	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.52	it			-1	0	1
+c1.v.52	ft	basic_rt	1	0	0	0	52	52
+c1.v.52	sale	NULL
+c1.v.52	settings	35	New Settings
+c1.v.53	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.53	it			-1	0	1
+c1.v.53	ft	merchant	0	0	0	0	53	53
+c1.v.53	sale	NULL
+c1.v.53	settings	35	New Settings
+c1.v.54	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.54	it			-1	0	1
+c1.v.54	ft	stock	0	0	0	0	54	54
+c1.v.54	sale	NULL
+c1.v.54	settings	35	New Settings
+c1.v.55	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.55	it			-1	0	1
+c1.v.55	ft	version	0	0	0	0	55	55
+c1.v.55	sale	NULL
+c1.v.55	settings	35	New Settings
+c1.v.56	at	settings	settings blob	SETTINGS	1	1	1	0
+c1.v.56	it			25	0	1
+c1.v.56	ft	settings	1	0	1	0	56	56
+c1.v.56	sale	NULL
+c1.v.56	settings	35	New Settings
+c1.v.57	at	material	render material	MATERIAL	1	1	1	0
+c1.v.57	it			26	0	1
+c1.v.57	ft	material	1	0	1	0	57	57
+c1.v.57	sale	NULL
+c1.v.57	settings	35	New Settings
+c1.v.58	at	gltf	GLTF	GLTF	1	1	1	0
+c1.v.58	it			27	0	1
+c1.v.58	ft	llfoldertype_bad_lookup	1	1	1	0	58	58
+c1.v.58	sale	NULL
+c1.v.58	settings	35	New Settings
+c1.v.59	at	glbin	GLTF binary	GLTF_BIN	1	1	1	0
+c1.v.59	it			28	0	1
+c1.v.59	ft	llfoldertype_bad_lookup	1	1	1	0	59	59
+c1.v.59	sale	NULL
+c1.v.59	settings	35	New Settings
+c1.v.60	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.60	it			255	0	1
+c1.v.60	ft	llfoldertype_bad_lookup	1	1	1	0	60	60
+c1.v.60	sale	NULL
+c1.v.60	settings	35	New Settings
+c1.v.61	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.61	it			255	0	1
+c1.v.61	ft	llfoldertype_bad_lookup	1	1	1	0	61	61
+c1.v.61	sale	NULL
+c1.v.61	settings	35	New Settings
+c1.v.62	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.62	it			255	0	1
+c1.v.62	ft	llfoldertype_bad_lookup	1	1	1	0	62	62
+c1.v.62	sale	NULL
+c1.v.62	settings	35	New Settings
+c1.v.63	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.63	it			255	0	1
+c1.v.63	ft	llfoldertype_bad_lookup	1	1	1	0	63	63
+c1.v.63	sale	NULL
+c1.v.63	settings	35	New Settings
+c1.v.64	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.64	it			255	0	1
+c1.v.64	ft	llfoldertype_bad_lookup	1	1	1	0	64	64
+c1.v.64	sale	NULL
+c1.v.64	settings	35	New Settings
+c1.v.65	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.65	it			255	0	1
+c1.v.65	ft	llfoldertype_bad_lookup	1	1	1	0	65	65
+c1.v.65	sale	NULL
+c1.v.65	settings	35	New Settings
+c1.v.66	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.66	it			255	0	1
+c1.v.66	ft	llfoldertype_bad_lookup	1	1	1	0	66	66
+c1.v.66	sale	NULL
+c1.v.66	settings	35	New Settings
+c1.v.67	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.67	it			255	0	1
+c1.v.67	ft	llfoldertype_bad_lookup	1	1	1	0	67	67
+c1.v.67	sale	NULL
+c1.v.67	settings	35	New Settings
+c1.v.68	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.68	it			255	0	1
+c1.v.68	ft	llfoldertype_bad_lookup	1	1	1	0	68	68
+c1.v.68	sale	NULL
+c1.v.68	settings	35	New Settings
+c1.v.69	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.69	it			255	0	1
+c1.v.69	ft	llfoldertype_bad_lookup	1	1	1	0	69	69
+c1.v.69	sale	NULL
+c1.v.69	settings	35	New Settings
+c1.v.70	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.70	it			255	0	1
+c1.v.70	ft	llfoldertype_bad_lookup	1	1	1	0	70	70
+c1.v.70	sale	NULL
+c1.v.70	settings	35	New Settings
+c1.v.71	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.71	it			255	0	1
+c1.v.71	ft	llfoldertype_bad_lookup	1	1	1	0	71	71
+c1.v.71	sale	NULL
+c1.v.71	settings	35	New Settings
+c1.v.72	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.72	it			255	0	1
+c1.v.72	ft	llfoldertype_bad_lookup	1	1	1	0	72	72
+c1.v.72	sale	NULL
+c1.v.72	settings	35	New Settings
+c1.v.73	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.73	it			255	0	1
+c1.v.73	ft	llfoldertype_bad_lookup	1	1	1	0	73	73
+c1.v.73	sale	NULL
+c1.v.73	settings	35	New Settings
+c1.v.74	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.74	it			255	0	1
+c1.v.74	ft	llfoldertype_bad_lookup	1	1	1	0	74	74
+c1.v.74	sale	NULL
+c1.v.74	settings	35	New Settings
+c1.v.75	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.75	it			255	0	1
+c1.v.75	ft	llfoldertype_bad_lookup	1	1	1	0	75	75
+c1.v.75	sale	NULL
+c1.v.75	settings	35	New Settings
+c1.v.76	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.76	it			255	0	1
+c1.v.76	ft	llfoldertype_bad_lookup	1	1	1	0	76	76
+c1.v.76	sale	NULL
+c1.v.76	settings	35	New Settings
+c1.v.77	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.77	it			255	0	1
+c1.v.77	ft	llfoldertype_bad_lookup	1	1	1	0	77	77
+c1.v.77	sale	NULL
+c1.v.77	settings	35	New Settings
+c1.v.78	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.78	it			255	0	1
+c1.v.78	ft	llfoldertype_bad_lookup	1	1	1	0	78	78
+c1.v.78	sale	NULL
+c1.v.78	settings	35	New Settings
+c1.v.79	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.79	it			255	0	1
+c1.v.79	ft	llfoldertype_bad_lookup	1	1	1	0	79	79
+c1.v.79	sale	NULL
+c1.v.79	settings	35	New Settings
+c1.v.80	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.80	it			255	0	1
+c1.v.80	ft	llfoldertype_bad_lookup	1	1	1	0	80	80
+c1.v.80	sale	NULL
+c1.v.80	settings	35	New Settings
+c1.v.81	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.81	it			255	0	1
+c1.v.81	ft	llfoldertype_bad_lookup	1	1	1	0	81	81
+c1.v.81	sale	NULL
+c1.v.81	settings	35	New Settings
+c1.v.82	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.82	it			255	0	1
+c1.v.82	ft	llfoldertype_bad_lookup	1	1	1	0	82	82
+c1.v.82	sale	NULL
+c1.v.82	settings	35	New Settings
+c1.v.83	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.83	it			255	0	1
+c1.v.83	ft	llfoldertype_bad_lookup	1	1	1	0	83	83
+c1.v.83	sale	NULL
+c1.v.83	settings	35	New Settings
+c1.v.84	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.84	it			255	0	1
+c1.v.84	ft	llfoldertype_bad_lookup	1	1	1	0	84	84
+c1.v.84	sale	NULL
+c1.v.84	settings	35	New Settings
+c1.v.85	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.85	it			255	0	1
+c1.v.85	ft	llfoldertype_bad_lookup	1	1	1	0	85	85
+c1.v.85	sale	NULL
+c1.v.85	settings	35	New Settings
+c1.v.86	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.86	it			255	0	1
+c1.v.86	ft	llfoldertype_bad_lookup	1	1	1	0	86	86
+c1.v.86	sale	NULL
+c1.v.86	settings	35	New Settings
+c1.v.87	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.87	it			255	0	1
+c1.v.87	ft	llfoldertype_bad_lookup	1	1	1	0	87	87
+c1.v.87	sale	NULL
+c1.v.87	settings	35	New Settings
+c1.v.88	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.88	it			255	0	1
+c1.v.88	ft	llfoldertype_bad_lookup	1	1	1	0	88	88
+c1.v.88	sale	NULL
+c1.v.88	settings	35	New Settings
+c1.v.89	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.89	it			255	0	1
+c1.v.89	ft	llfoldertype_bad_lookup	1	1	1	0	89	89
+c1.v.89	sale	NULL
+c1.v.89	settings	35	New Settings
+c1.v.90	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.90	it			255	0	1
+c1.v.90	ft	llfoldertype_bad_lookup	1	1	1	0	90	90
+c1.v.90	sale	NULL
+c1.v.90	settings	35	New Settings
+c1.v.91	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.91	it			255	0	1
+c1.v.91	ft	llfoldertype_bad_lookup	1	1	1	0	91	91
+c1.v.91	sale	NULL
+c1.v.91	settings	35	New Settings
+c1.v.92	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.92	it			255	0	1
+c1.v.92	ft	llfoldertype_bad_lookup	1	1	1	0	92	92
+c1.v.92	sale	NULL
+c1.v.92	settings	35	New Settings
+c1.v.93	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.93	it			255	0	1
+c1.v.93	ft	llfoldertype_bad_lookup	1	1	1	0	93	93
+c1.v.93	sale	NULL
+c1.v.93	settings	35	New Settings
+c1.v.94	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.94	it			255	0	1
+c1.v.94	ft	llfoldertype_bad_lookup	1	1	1	0	94	94
+c1.v.94	sale	NULL
+c1.v.94	settings	35	New Settings
+c1.v.95	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.95	it			255	0	1
+c1.v.95	ft	llfoldertype_bad_lookup	1	1	1	0	95	95
+c1.v.95	sale	NULL
+c1.v.95	settings	35	New Settings
+c1.v.96	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.96	it			255	0	1
+c1.v.96	ft	llfoldertype_bad_lookup	1	1	1	0	96	96
+c1.v.96	sale	NULL
+c1.v.96	settings	35	New Settings
+c1.v.97	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.97	it			255	0	1
+c1.v.97	ft	llfoldertype_bad_lookup	1	1	1	0	97	97
+c1.v.97	sale	NULL
+c1.v.97	settings	35	New Settings
+c1.v.98	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.98	it			255	0	1
+c1.v.98	ft	llfoldertype_bad_lookup	1	1	1	0	98	98
+c1.v.98	sale	NULL
+c1.v.98	settings	35	New Settings
+c1.v.99	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.99	it			255	0	1
+c1.v.99	ft	llfoldertype_bad_lookup	1	1	1	0	99	99
+c1.v.99	sale	NULL
+c1.v.99	settings	35	New Settings
+c1.v.100	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.100	it			255	0	1
+c1.v.100	ft	suitcase	1	0	1	0	100	100
+c1.v.100	sale	NULL
+c1.v.100	settings	35	New Settings
+c1.v.101	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.101	it			255	0	1
+c1.v.101	ft	llfoldertype_bad_lookup	1	1	1	0	101	101
+c1.v.101	sale	NULL
+c1.v.101	settings	35	New Settings
+c1.v.102	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.102	it			255	0	1
+c1.v.102	ft	llfoldertype_bad_lookup	1	1	1	0	102	102
+c1.v.102	sale	NULL
+c1.v.102	settings	35	New Settings
+c1.v.103	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.103	it			255	0	1
+c1.v.103	ft	llfoldertype_bad_lookup	1	1	1	0	103	103
+c1.v.103	sale	NULL
+c1.v.103	settings	35	New Settings
+c1.v.104	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.104	it			255	0	1
+c1.v.104	ft	llfoldertype_bad_lookup	1	1	1	0	104	104
+c1.v.104	sale	NULL
+c1.v.104	settings	35	New Settings
+c1.v.105	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.105	it			255	0	1
+c1.v.105	ft	llfoldertype_bad_lookup	1	1	1	0	105	105
+c1.v.105	sale	NULL
+c1.v.105	settings	35	New Settings
+c1.v.106	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.106	it			255	0	1
+c1.v.106	ft	llfoldertype_bad_lookup	1	1	1	0	106	106
+c1.v.106	sale	NULL
+c1.v.106	settings	35	New Settings
+c1.v.107	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.107	it			255	0	1
+c1.v.107	ft	llfoldertype_bad_lookup	1	1	1	0	107	107
+c1.v.107	sale	NULL
+c1.v.107	settings	35	New Settings
+c1.v.108	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.108	it			255	0	1
+c1.v.108	ft	llfoldertype_bad_lookup	1	1	1	0	108	108
+c1.v.108	sale	NULL
+c1.v.108	settings	35	New Settings
+c1.v.109	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.109	it			255	0	1
+c1.v.109	ft	llfoldertype_bad_lookup	1	1	1	0	109	109
+c1.v.109	sale	NULL
+c1.v.109	settings	35	New Settings
+c1.v.110	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.110	it			255	0	1
+c1.v.110	ft	llfoldertype_bad_lookup	1	1	1	0	110	110
+c1.v.110	sale	NULL
+c1.v.110	settings	35	New Settings
+c1.v.111	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.111	it			255	0	1
+c1.v.111	ft	llfoldertype_bad_lookup	1	1	1	0	111	111
+c1.v.111	sale	NULL
+c1.v.111	settings	35	New Settings
+c1.v.112	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.112	it			255	0	1
+c1.v.112	ft	llfoldertype_bad_lookup	1	1	1	0	112	112
+c1.v.112	sale	NULL
+c1.v.112	settings	35	New Settings
+c1.v.113	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.113	it			255	0	1
+c1.v.113	ft	llfoldertype_bad_lookup	1	1	1	0	113	113
+c1.v.113	sale	NULL
+c1.v.113	settings	35	New Settings
+c1.v.114	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.114	it			255	0	1
+c1.v.114	ft	llfoldertype_bad_lookup	1	1	1	0	114	114
+c1.v.114	sale	NULL
+c1.v.114	settings	35	New Settings
+c1.v.115	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.115	it			255	0	1
+c1.v.115	ft	llfoldertype_bad_lookup	1	1	1	0	115	115
+c1.v.115	sale	NULL
+c1.v.115	settings	35	New Settings
+c1.v.116	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.116	it			255	0	1
+c1.v.116	ft	llfoldertype_bad_lookup	1	1	1	0	116	116
+c1.v.116	sale	NULL
+c1.v.116	settings	35	New Settings
+c1.v.117	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.117	it			255	0	1
+c1.v.117	ft	llfoldertype_bad_lookup	1	1	1	0	117	117
+c1.v.117	sale	NULL
+c1.v.117	settings	35	New Settings
+c1.v.118	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.118	it			255	0	1
+c1.v.118	ft	llfoldertype_bad_lookup	1	1	1	0	118	118
+c1.v.118	sale	NULL
+c1.v.118	settings	35	New Settings
+c1.v.119	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.119	it			255	0	1
+c1.v.119	ft	llfoldertype_bad_lookup	1	1	1	0	119	119
+c1.v.119	sale	NULL
+c1.v.119	settings	35	New Settings
+c1.v.120	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.120	it			255	0	1
+c1.v.120	ft	llfoldertype_bad_lookup	1	1	1	0	120	120
+c1.v.120	sale	NULL
+c1.v.120	settings	35	New Settings
+c1.v.121	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.121	it			255	0	1
+c1.v.121	ft	llfoldertype_bad_lookup	1	1	1	0	121	121
+c1.v.121	sale	NULL
+c1.v.121	settings	35	New Settings
+c1.v.122	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.122	it			255	0	1
+c1.v.122	ft	llfoldertype_bad_lookup	1	1	1	0	122	122
+c1.v.122	sale	NULL
+c1.v.122	settings	35	New Settings
+c1.v.123	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.123	it			255	0	1
+c1.v.123	ft	llfoldertype_bad_lookup	1	1	1	0	123	123
+c1.v.123	sale	NULL
+c1.v.123	settings	35	New Settings
+c1.v.124	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.124	it			255	0	1
+c1.v.124	ft	llfoldertype_bad_lookup	1	1	1	0	124	124
+c1.v.124	sale	NULL
+c1.v.124	settings	35	New Settings
+c1.v.125	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.125	it			255	0	1
+c1.v.125	ft	llfoldertype_bad_lookup	1	1	1	0	125	125
+c1.v.125	sale	NULL
+c1.v.125	settings	35	New Settings
+c1.v.126	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.126	it			255	0	1
+c1.v.126	ft	llfoldertype_bad_lookup	1	1	1	0	126	126
+c1.v.126	sale	NULL
+c1.v.126	settings	35	New Settings
+c1.v.127	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.127	it			255	0	1
+c1.v.127	ft	llfoldertype_bad_lookup	1	1	1	0	127	127
+c1.v.127	sale	NULL
+c1.v.127	settings	35	New Settings
+c1.v.128	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.128	it			255	0	1
+c1.v.128	ft	llfoldertype_bad_lookup	1	1	1	0	128	128
+c1.v.128	sale	NULL
+c1.v.128	settings	35	New Settings
+c1.v.129	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.129	it			255	0	1
+c1.v.129	ft	llfoldertype_bad_lookup	1	1	1	0	129	129
+c1.v.129	sale	NULL
+c1.v.129	settings	35	New Settings
+c1.v.130	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.130	it			255	0	1
+c1.v.130	ft	llfoldertype_bad_lookup	1	1	1	0	130	130
+c1.v.130	sale	NULL
+c1.v.130	settings	35	New Settings
+c1.v.131	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.131	it			255	0	1
+c1.v.131	ft	llfoldertype_bad_lookup	1	1	1	0	131	131
+c1.v.131	sale	NULL
+c1.v.131	settings	35	New Settings
+c1.v.132	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.132	it			255	0	1
+c1.v.132	ft	llfoldertype_bad_lookup	1	1	1	0	132	132
+c1.v.132	sale	NULL
+c1.v.132	settings	35	New Settings
+c1.v.133	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.133	it			255	0	1
+c1.v.133	ft	llfoldertype_bad_lookup	1	1	1	0	133	133
+c1.v.133	sale	NULL
+c1.v.133	settings	35	New Settings
+c1.v.134	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.134	it			255	0	1
+c1.v.134	ft	llfoldertype_bad_lookup	1	1	1	0	134	134
+c1.v.134	sale	NULL
+c1.v.134	settings	35	New Settings
+c1.v.135	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.135	it			255	0	1
+c1.v.135	ft	llfoldertype_bad_lookup	1	1	1	0	135	135
+c1.v.135	sale	NULL
+c1.v.135	settings	35	New Settings
+c1.v.136	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.136	it			255	0	1
+c1.v.136	ft	llfoldertype_bad_lookup	1	1	1	0	136	136
+c1.v.136	sale	NULL
+c1.v.136	settings	35	New Settings
+c1.v.137	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.137	it			255	0	1
+c1.v.137	ft	llfoldertype_bad_lookup	1	1	1	0	137	137
+c1.v.137	sale	NULL
+c1.v.137	settings	35	New Settings
+c1.v.138	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.138	it			255	0	1
+c1.v.138	ft	llfoldertype_bad_lookup	1	1	1	0	138	138
+c1.v.138	sale	NULL
+c1.v.138	settings	35	New Settings
+c1.v.139	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.139	it			255	0	1
+c1.v.139	ft	llfoldertype_bad_lookup	1	1	1	0	139	139
+c1.v.139	sale	NULL
+c1.v.139	settings	35	New Settings
+c1.v.140	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.140	it			255	0	1
+c1.v.140	ft	llfoldertype_bad_lookup	1	1	1	0	140	140
+c1.v.140	sale	NULL
+c1.v.140	settings	35	New Settings
+c1.v.141	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.141	it			255	0	1
+c1.v.141	ft	llfoldertype_bad_lookup	1	1	1	0	141	141
+c1.v.141	sale	NULL
+c1.v.141	settings	35	New Settings
+c1.v.142	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.142	it			255	0	1
+c1.v.142	ft	llfoldertype_bad_lookup	1	1	1	0	142	142
+c1.v.142	sale	NULL
+c1.v.142	settings	35	New Settings
+c1.v.143	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.143	it			255	0	1
+c1.v.143	ft	llfoldertype_bad_lookup	1	1	1	0	143	143
+c1.v.143	sale	NULL
+c1.v.143	settings	35	New Settings
+c1.v.144	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.144	it			255	0	1
+c1.v.144	ft	llfoldertype_bad_lookup	1	1	1	0	144	144
+c1.v.144	sale	NULL
+c1.v.144	settings	35	New Settings
+c1.v.145	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.145	it			255	0	1
+c1.v.145	ft	llfoldertype_bad_lookup	1	1	1	0	145	145
+c1.v.145	sale	NULL
+c1.v.145	settings	35	New Settings
+c1.v.146	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.146	it			255	0	1
+c1.v.146	ft	llfoldertype_bad_lookup	1	1	1	0	146	146
+c1.v.146	sale	NULL
+c1.v.146	settings	35	New Settings
+c1.v.147	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.147	it			255	0	1
+c1.v.147	ft	llfoldertype_bad_lookup	1	1	1	0	147	147
+c1.v.147	sale	NULL
+c1.v.147	settings	35	New Settings
+c1.v.148	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.148	it			255	0	1
+c1.v.148	ft	llfoldertype_bad_lookup	1	1	1	0	148	148
+c1.v.148	sale	NULL
+c1.v.148	settings	35	New Settings
+c1.v.149	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.149	it			255	0	1
+c1.v.149	ft	llfoldertype_bad_lookup	1	1	1	0	149	149
+c1.v.149	sale	NULL
+c1.v.149	settings	35	New Settings
+c1.v.150	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.150	it			255	0	1
+c1.v.150	ft	llfoldertype_bad_lookup	1	1	1	0	150	150
+c1.v.150	sale	NULL
+c1.v.150	settings	35	New Settings
+c1.v.151	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.151	it			255	0	1
+c1.v.151	ft	llfoldertype_bad_lookup	1	1	1	0	151	151
+c1.v.151	sale	NULL
+c1.v.151	settings	35	New Settings
+c1.v.152	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.152	it			255	0	1
+c1.v.152	ft	llfoldertype_bad_lookup	1	1	1	0	152	152
+c1.v.152	sale	NULL
+c1.v.152	settings	35	New Settings
+c1.v.153	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.153	it			255	0	1
+c1.v.153	ft	llfoldertype_bad_lookup	1	1	1	0	153	153
+c1.v.153	sale	NULL
+c1.v.153	settings	35	New Settings
+c1.v.154	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.154	it			255	0	1
+c1.v.154	ft	llfoldertype_bad_lookup	1	1	1	0	154	154
+c1.v.154	sale	NULL
+c1.v.154	settings	35	New Settings
+c1.v.155	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.155	it			255	0	1
+c1.v.155	ft	llfoldertype_bad_lookup	1	1	1	0	155	155
+c1.v.155	sale	NULL
+c1.v.155	settings	35	New Settings
+c1.v.156	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.156	it			255	0	1
+c1.v.156	ft	llfoldertype_bad_lookup	1	1	1	0	156	156
+c1.v.156	sale	NULL
+c1.v.156	settings	35	New Settings
+c1.v.157	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.157	it			255	0	1
+c1.v.157	ft	llfoldertype_bad_lookup	1	1	1	0	157	157
+c1.v.157	sale	NULL
+c1.v.157	settings	35	New Settings
+c1.v.158	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.158	it			255	0	1
+c1.v.158	ft	llfoldertype_bad_lookup	1	1	1	0	158	158
+c1.v.158	sale	NULL
+c1.v.158	settings	35	New Settings
+c1.v.159	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.159	it			255	0	1
+c1.v.159	ft	llfoldertype_bad_lookup	1	1	1	0	159	159
+c1.v.159	sale	NULL
+c1.v.159	settings	35	New Settings
+c1.v.160	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.160	it			255	0	1
+c1.v.160	ft	llfoldertype_bad_lookup	1	1	1	0	160	160
+c1.v.160	sale	NULL
+c1.v.160	settings	35	New Settings
+c1.v.161	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.161	it			255	0	1
+c1.v.161	ft	llfoldertype_bad_lookup	1	1	1	0	161	161
+c1.v.161	sale	NULL
+c1.v.161	settings	35	New Settings
+c1.v.162	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.162	it			255	0	1
+c1.v.162	ft	llfoldertype_bad_lookup	1	1	1	0	162	162
+c1.v.162	sale	NULL
+c1.v.162	settings	35	New Settings
+c1.v.163	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.163	it			255	0	1
+c1.v.163	ft	llfoldertype_bad_lookup	1	1	1	0	163	163
+c1.v.163	sale	NULL
+c1.v.163	settings	35	New Settings
+c1.v.164	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.164	it			255	0	1
+c1.v.164	ft	llfoldertype_bad_lookup	1	1	1	0	164	164
+c1.v.164	sale	NULL
+c1.v.164	settings	35	New Settings
+c1.v.165	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.165	it			255	0	1
+c1.v.165	ft	llfoldertype_bad_lookup	1	1	1	0	165	165
+c1.v.165	sale	NULL
+c1.v.165	settings	35	New Settings
+c1.v.166	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.166	it			255	0	1
+c1.v.166	ft	llfoldertype_bad_lookup	1	1	1	0	166	166
+c1.v.166	sale	NULL
+c1.v.166	settings	35	New Settings
+c1.v.167	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.167	it			255	0	1
+c1.v.167	ft	llfoldertype_bad_lookup	1	1	1	0	167	167
+c1.v.167	sale	NULL
+c1.v.167	settings	35	New Settings
+c1.v.168	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.168	it			255	0	1
+c1.v.168	ft	llfoldertype_bad_lookup	1	1	1	0	168	168
+c1.v.168	sale	NULL
+c1.v.168	settings	35	New Settings
+c1.v.169	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.169	it			255	0	1
+c1.v.169	ft	llfoldertype_bad_lookup	1	1	1	0	169	169
+c1.v.169	sale	NULL
+c1.v.169	settings	35	New Settings
+c1.v.170	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.170	it			255	0	1
+c1.v.170	ft	llfoldertype_bad_lookup	1	1	1	0	170	170
+c1.v.170	sale	NULL
+c1.v.170	settings	35	New Settings
+c1.v.171	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.171	it			255	0	1
+c1.v.171	ft	llfoldertype_bad_lookup	1	1	1	0	171	171
+c1.v.171	sale	NULL
+c1.v.171	settings	35	New Settings
+c1.v.172	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.172	it			255	0	1
+c1.v.172	ft	llfoldertype_bad_lookup	1	1	1	0	172	172
+c1.v.172	sale	NULL
+c1.v.172	settings	35	New Settings
+c1.v.173	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.173	it			255	0	1
+c1.v.173	ft	llfoldertype_bad_lookup	1	1	1	0	173	173
+c1.v.173	sale	NULL
+c1.v.173	settings	35	New Settings
+c1.v.174	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.174	it			255	0	1
+c1.v.174	ft	llfoldertype_bad_lookup	1	1	1	0	174	174
+c1.v.174	sale	NULL
+c1.v.174	settings	35	New Settings
+c1.v.175	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.175	it			255	0	1
+c1.v.175	ft	llfoldertype_bad_lookup	1	1	1	0	175	175
+c1.v.175	sale	NULL
+c1.v.175	settings	35	New Settings
+c1.v.176	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.176	it			255	0	1
+c1.v.176	ft	llfoldertype_bad_lookup	1	1	1	0	176	176
+c1.v.176	sale	NULL
+c1.v.176	settings	35	New Settings
+c1.v.177	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.177	it			255	0	1
+c1.v.177	ft	llfoldertype_bad_lookup	1	1	1	0	177	177
+c1.v.177	sale	NULL
+c1.v.177	settings	35	New Settings
+c1.v.178	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.178	it			255	0	1
+c1.v.178	ft	llfoldertype_bad_lookup	1	1	1	0	178	178
+c1.v.178	sale	NULL
+c1.v.178	settings	35	New Settings
+c1.v.179	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.179	it			255	0	1
+c1.v.179	ft	llfoldertype_bad_lookup	1	1	1	0	179	179
+c1.v.179	sale	NULL
+c1.v.179	settings	35	New Settings
+c1.v.180	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.180	it			255	0	1
+c1.v.180	ft	llfoldertype_bad_lookup	1	1	1	0	180	180
+c1.v.180	sale	NULL
+c1.v.180	settings	35	New Settings
+c1.v.181	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.181	it			255	0	1
+c1.v.181	ft	llfoldertype_bad_lookup	1	1	1	0	181	181
+c1.v.181	sale	NULL
+c1.v.181	settings	35	New Settings
+c1.v.182	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.182	it			255	0	1
+c1.v.182	ft	llfoldertype_bad_lookup	1	1	1	0	182	182
+c1.v.182	sale	NULL
+c1.v.182	settings	35	New Settings
+c1.v.183	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.183	it			255	0	1
+c1.v.183	ft	llfoldertype_bad_lookup	1	1	1	0	183	183
+c1.v.183	sale	NULL
+c1.v.183	settings	35	New Settings
+c1.v.184	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.184	it			255	0	1
+c1.v.184	ft	llfoldertype_bad_lookup	1	1	1	0	184	184
+c1.v.184	sale	NULL
+c1.v.184	settings	35	New Settings
+c1.v.185	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.185	it			255	0	1
+c1.v.185	ft	llfoldertype_bad_lookup	1	1	1	0	185	185
+c1.v.185	sale	NULL
+c1.v.185	settings	35	New Settings
+c1.v.186	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.186	it			255	0	1
+c1.v.186	ft	llfoldertype_bad_lookup	1	1	1	0	186	186
+c1.v.186	sale	NULL
+c1.v.186	settings	35	New Settings
+c1.v.187	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.187	it			255	0	1
+c1.v.187	ft	llfoldertype_bad_lookup	1	1	1	0	187	187
+c1.v.187	sale	NULL
+c1.v.187	settings	35	New Settings
+c1.v.188	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.188	it			255	0	1
+c1.v.188	ft	llfoldertype_bad_lookup	1	1	1	0	188	188
+c1.v.188	sale	NULL
+c1.v.188	settings	35	New Settings
+c1.v.189	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.189	it			255	0	1
+c1.v.189	ft	llfoldertype_bad_lookup	1	1	1	0	189	189
+c1.v.189	sale	NULL
+c1.v.189	settings	35	New Settings
+c1.v.190	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.190	it			255	0	1
+c1.v.190	ft	llfoldertype_bad_lookup	1	1	1	0	190	190
+c1.v.190	sale	NULL
+c1.v.190	settings	35	New Settings
+c1.v.191	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.191	it			255	0	1
+c1.v.191	ft	llfoldertype_bad_lookup	1	1	1	0	191	191
+c1.v.191	sale	NULL
+c1.v.191	settings	35	New Settings
+c1.v.192	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.192	it			255	0	1
+c1.v.192	ft	llfoldertype_bad_lookup	1	1	1	0	192	192
+c1.v.192	sale	NULL
+c1.v.192	settings	35	New Settings
+c1.v.193	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.193	it			255	0	1
+c1.v.193	ft	llfoldertype_bad_lookup	1	1	1	0	193	193
+c1.v.193	sale	NULL
+c1.v.193	settings	35	New Settings
+c1.v.194	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.194	it			255	0	1
+c1.v.194	ft	llfoldertype_bad_lookup	1	1	1	0	194	194
+c1.v.194	sale	NULL
+c1.v.194	settings	35	New Settings
+c1.v.195	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.195	it			255	0	1
+c1.v.195	ft	llfoldertype_bad_lookup	1	1	1	0	195	195
+c1.v.195	sale	NULL
+c1.v.195	settings	35	New Settings
+c1.v.196	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.196	it			255	0	1
+c1.v.196	ft	llfoldertype_bad_lookup	1	1	1	0	196	196
+c1.v.196	sale	NULL
+c1.v.196	settings	35	New Settings
+c1.v.197	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.197	it			255	0	1
+c1.v.197	ft	llfoldertype_bad_lookup	1	1	1	0	197	197
+c1.v.197	sale	NULL
+c1.v.197	settings	35	New Settings
+c1.v.198	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.198	it			255	0	1
+c1.v.198	ft	llfoldertype_bad_lookup	1	1	1	0	198	198
+c1.v.198	sale	NULL
+c1.v.198	settings	35	New Settings
+c1.v.199	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.199	it			255	0	1
+c1.v.199	ft	llfoldertype_bad_lookup	1	1	1	0	199	199
+c1.v.199	sale	NULL
+c1.v.199	settings	35	New Settings
+c1.v.200	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.200	it			255	0	1
+c1.v.200	ft	llfoldertype_bad_lookup	1	1	1	0	200	200
+c1.v.200	sale	NULL
+c1.v.200	settings	35	New Settings
+c1.v.201	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.201	it			255	0	1
+c1.v.201	ft	llfoldertype_bad_lookup	1	1	1	0	201	201
+c1.v.201	sale	NULL
+c1.v.201	settings	35	New Settings
+c1.v.202	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.202	it			255	0	1
+c1.v.202	ft	llfoldertype_bad_lookup	1	1	1	0	202	202
+c1.v.202	sale	NULL
+c1.v.202	settings	35	New Settings
+c1.v.203	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.203	it			255	0	1
+c1.v.203	ft	llfoldertype_bad_lookup	1	1	1	0	203	203
+c1.v.203	sale	NULL
+c1.v.203	settings	35	New Settings
+c1.v.204	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.204	it			255	0	1
+c1.v.204	ft	llfoldertype_bad_lookup	1	1	1	0	204	204
+c1.v.204	sale	NULL
+c1.v.204	settings	35	New Settings
+c1.v.205	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.205	it			255	0	1
+c1.v.205	ft	llfoldertype_bad_lookup	1	1	1	0	205	205
+c1.v.205	sale	NULL
+c1.v.205	settings	35	New Settings
+c1.v.206	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.206	it			255	0	1
+c1.v.206	ft	llfoldertype_bad_lookup	1	1	1	0	206	206
+c1.v.206	sale	NULL
+c1.v.206	settings	35	New Settings
+c1.v.207	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.207	it			255	0	1
+c1.v.207	ft	llfoldertype_bad_lookup	1	1	1	0	207	207
+c1.v.207	sale	NULL
+c1.v.207	settings	35	New Settings
+c1.v.208	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.208	it			255	0	1
+c1.v.208	ft	llfoldertype_bad_lookup	1	1	1	0	208	208
+c1.v.208	sale	NULL
+c1.v.208	settings	35	New Settings
+c1.v.209	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.209	it			255	0	1
+c1.v.209	ft	llfoldertype_bad_lookup	1	1	1	0	209	209
+c1.v.209	sale	NULL
+c1.v.209	settings	35	New Settings
+c1.v.210	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.210	it			255	0	1
+c1.v.210	ft	llfoldertype_bad_lookup	1	1	1	0	210	210
+c1.v.210	sale	NULL
+c1.v.210	settings	35	New Settings
+c1.v.211	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.211	it			255	0	1
+c1.v.211	ft	llfoldertype_bad_lookup	1	1	1	0	211	211
+c1.v.211	sale	NULL
+c1.v.211	settings	35	New Settings
+c1.v.212	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.212	it			255	0	1
+c1.v.212	ft	llfoldertype_bad_lookup	1	1	1	0	212	212
+c1.v.212	sale	NULL
+c1.v.212	settings	35	New Settings
+c1.v.213	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.213	it			255	0	1
+c1.v.213	ft	llfoldertype_bad_lookup	1	1	1	0	213	213
+c1.v.213	sale	NULL
+c1.v.213	settings	35	New Settings
+c1.v.214	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.214	it			255	0	1
+c1.v.214	ft	llfoldertype_bad_lookup	1	1	1	0	214	214
+c1.v.214	sale	NULL
+c1.v.214	settings	35	New Settings
+c1.v.215	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.215	it			255	0	1
+c1.v.215	ft	llfoldertype_bad_lookup	1	1	1	0	215	215
+c1.v.215	sale	NULL
+c1.v.215	settings	35	New Settings
+c1.v.216	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.216	it			255	0	1
+c1.v.216	ft	llfoldertype_bad_lookup	1	1	1	0	216	216
+c1.v.216	sale	NULL
+c1.v.216	settings	35	New Settings
+c1.v.217	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.217	it			255	0	1
+c1.v.217	ft	llfoldertype_bad_lookup	1	1	1	0	217	217
+c1.v.217	sale	NULL
+c1.v.217	settings	35	New Settings
+c1.v.218	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.218	it			255	0	1
+c1.v.218	ft	llfoldertype_bad_lookup	1	1	1	0	218	218
+c1.v.218	sale	NULL
+c1.v.218	settings	35	New Settings
+c1.v.219	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.219	it			255	0	1
+c1.v.219	ft	llfoldertype_bad_lookup	1	1	1	0	219	219
+c1.v.219	sale	NULL
+c1.v.219	settings	35	New Settings
+c1.v.220	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.220	it			255	0	1
+c1.v.220	ft	llfoldertype_bad_lookup	1	1	1	0	220	220
+c1.v.220	sale	NULL
+c1.v.220	settings	35	New Settings
+c1.v.221	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.221	it			255	0	1
+c1.v.221	ft	llfoldertype_bad_lookup	1	1	1	0	221	221
+c1.v.221	sale	NULL
+c1.v.221	settings	35	New Settings
+c1.v.222	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.222	it			255	0	1
+c1.v.222	ft	llfoldertype_bad_lookup	1	1	1	0	222	222
+c1.v.222	sale	NULL
+c1.v.222	settings	35	New Settings
+c1.v.223	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.223	it			255	0	1
+c1.v.223	ft	llfoldertype_bad_lookup	1	1	1	0	223	223
+c1.v.223	sale	NULL
+c1.v.223	settings	35	New Settings
+c1.v.224	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.224	it			255	0	1
+c1.v.224	ft	llfoldertype_bad_lookup	1	1	1	0	224	224
+c1.v.224	sale	NULL
+c1.v.224	settings	35	New Settings
+c1.v.225	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.225	it			255	0	1
+c1.v.225	ft	llfoldertype_bad_lookup	1	1	1	0	225	225
+c1.v.225	sale	NULL
+c1.v.225	settings	35	New Settings
+c1.v.226	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.226	it			255	0	1
+c1.v.226	ft	llfoldertype_bad_lookup	1	1	1	0	226	226
+c1.v.226	sale	NULL
+c1.v.226	settings	35	New Settings
+c1.v.227	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.227	it			255	0	1
+c1.v.227	ft	llfoldertype_bad_lookup	1	1	1	0	227	227
+c1.v.227	sale	NULL
+c1.v.227	settings	35	New Settings
+c1.v.228	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.228	it			255	0	1
+c1.v.228	ft	llfoldertype_bad_lookup	1	1	1	0	228	228
+c1.v.228	sale	NULL
+c1.v.228	settings	35	New Settings
+c1.v.229	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.229	it			255	0	1
+c1.v.229	ft	llfoldertype_bad_lookup	1	1	1	0	229	229
+c1.v.229	sale	NULL
+c1.v.229	settings	35	New Settings
+c1.v.230	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.230	it			255	0	1
+c1.v.230	ft	llfoldertype_bad_lookup	1	1	1	0	230	230
+c1.v.230	sale	NULL
+c1.v.230	settings	35	New Settings
+c1.v.231	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.231	it			255	0	1
+c1.v.231	ft	llfoldertype_bad_lookup	1	1	1	0	231	231
+c1.v.231	sale	NULL
+c1.v.231	settings	35	New Settings
+c1.v.232	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.232	it			255	0	1
+c1.v.232	ft	llfoldertype_bad_lookup	1	1	1	0	232	232
+c1.v.232	sale	NULL
+c1.v.232	settings	35	New Settings
+c1.v.233	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.233	it			255	0	1
+c1.v.233	ft	llfoldertype_bad_lookup	1	1	1	0	233	233
+c1.v.233	sale	NULL
+c1.v.233	settings	35	New Settings
+c1.v.234	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.234	it			255	0	1
+c1.v.234	ft	llfoldertype_bad_lookup	1	1	1	0	234	234
+c1.v.234	sale	NULL
+c1.v.234	settings	35	New Settings
+c1.v.235	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.235	it			255	0	1
+c1.v.235	ft	llfoldertype_bad_lookup	1	1	1	0	235	235
+c1.v.235	sale	NULL
+c1.v.235	settings	35	New Settings
+c1.v.236	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.236	it			255	0	1
+c1.v.236	ft	llfoldertype_bad_lookup	1	1	1	0	236	236
+c1.v.236	sale	NULL
+c1.v.236	settings	35	New Settings
+c1.v.237	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.237	it			255	0	1
+c1.v.237	ft	llfoldertype_bad_lookup	1	1	1	0	237	237
+c1.v.237	sale	NULL
+c1.v.237	settings	35	New Settings
+c1.v.238	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.238	it			255	0	1
+c1.v.238	ft	llfoldertype_bad_lookup	1	1	1	0	238	238
+c1.v.238	sale	NULL
+c1.v.238	settings	35	New Settings
+c1.v.239	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.239	it			255	0	1
+c1.v.239	ft	llfoldertype_bad_lookup	1	1	1	0	239	239
+c1.v.239	sale	NULL
+c1.v.239	settings	35	New Settings
+c1.v.240	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.240	it			255	0	1
+c1.v.240	ft	llfoldertype_bad_lookup	1	1	1	0	240	240
+c1.v.240	sale	NULL
+c1.v.240	settings	35	New Settings
+c1.v.241	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.241	it			255	0	1
+c1.v.241	ft	llfoldertype_bad_lookup	1	1	1	0	241	241
+c1.v.241	sale	NULL
+c1.v.241	settings	35	New Settings
+c1.v.242	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.242	it			255	0	1
+c1.v.242	ft	llfoldertype_bad_lookup	1	1	1	0	242	242
+c1.v.242	sale	NULL
+c1.v.242	settings	35	New Settings
+c1.v.243	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.243	it			255	0	1
+c1.v.243	ft	llfoldertype_bad_lookup	1	1	1	0	243	243
+c1.v.243	sale	NULL
+c1.v.243	settings	35	New Settings
+c1.v.244	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.244	it			255	0	1
+c1.v.244	ft	llfoldertype_bad_lookup	1	1	1	0	244	244
+c1.v.244	sale	NULL
+c1.v.244	settings	35	New Settings
+c1.v.245	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.245	it			255	0	1
+c1.v.245	ft	llfoldertype_bad_lookup	1	1	1	0	245	245
+c1.v.245	sale	NULL
+c1.v.245	settings	35	New Settings
+c1.v.246	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.246	it			255	0	1
+c1.v.246	ft	llfoldertype_bad_lookup	1	1	1	0	246	246
+c1.v.246	sale	NULL
+c1.v.246	settings	35	New Settings
+c1.v.247	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.247	it			255	0	1
+c1.v.247	ft	llfoldertype_bad_lookup	1	1	1	0	247	247
+c1.v.247	sale	NULL
+c1.v.247	settings	35	New Settings
+c1.v.248	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.248	it			255	0	1
+c1.v.248	ft	llfoldertype_bad_lookup	1	1	1	0	248	248
+c1.v.248	sale	NULL
+c1.v.248	settings	35	New Settings
+c1.v.249	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.249	it			255	0	1
+c1.v.249	ft	llfoldertype_bad_lookup	1	1	1	0	249	249
+c1.v.249	sale	NULL
+c1.v.249	settings	35	New Settings
+c1.v.250	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.250	it			255	0	1
+c1.v.250	ft	llfoldertype_bad_lookup	1	1	1	0	250	250
+c1.v.250	sale	NULL
+c1.v.250	settings	35	New Settings
+c1.v.251	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.251	it			255	0	1
+c1.v.251	ft	llfoldertype_bad_lookup	1	1	1	0	251	251
+c1.v.251	sale	NULL
+c1.v.251	settings	35	New Settings
+c1.v.252	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.252	it			255	0	1
+c1.v.252	ft	llfoldertype_bad_lookup	1	1	1	0	252	252
+c1.v.252	sale	NULL
+c1.v.252	settings	35	New Settings
+c1.v.253	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.253	it			255	0	1
+c1.v.253	ft	llfoldertype_bad_lookup	1	1	1	0	253	253
+c1.v.253	sale	NULL
+c1.v.253	settings	35	New Settings
+c1.v.254	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.254	it			255	0	1
+c1.v.254	ft	llfoldertype_bad_lookup	1	1	1	0	254	254
+c1.v.254	sale	NULL
+c1.v.254	settings	35	New Settings
+c1.v.255	at	invalid	NULL	UNKNOWN	0	0	0	0
+c1.v.255	it			255	0	1
+c1.v.255	ft	llfoldertype_bad_lookup	1	1	1	0	255	255
+c1.v.255	sale	NULL
+c1.v.255	settings	35	New Settings
+c1.v.256	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.256	it			255	0	1
+c1.v.256	ft	llfoldertype_bad_lookup	1	1	1	0	256	256
+c1.v.256	sale	NULL
+c1.v.256	settings	35	New Settings
+c1.v.-2147483648	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.-2147483648	it			255	0	1
+c1.v.-2147483648	ft	llfoldertype_bad_lookup	1	1	1	0	-2147483648	-2147483648
+c1.v.-2147483648	sale	NULL
+c1.v.-2147483648	settings	35	New Settings
+c1.v.2147483647	at	llassettype_bad_lookup	llassettype_bad_lookup	llassettype_bad_lookup	0	0	0	0
+c1.v.2147483647	it			255	0	1
+c1.v.2147483647	ft	llfoldertype_bad_lookup	1	1	1	0	2147483647	2147483647
+c1.v.2147483647	sale	NULL
+c1.v.2147483647	settings	35	New Settings
+c1.match.-1	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.0	at-1..255	01000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.1	at-1..255	00100000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.2	at-1..255	00010000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.3	at-1..255	00001000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.4	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.5	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.6	at-1..255	00000001000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.7	at-1..255	00000000100000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.8	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.9	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.10	at-1..255	00000000000110000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.11	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.12	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.13	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.14	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.15	at-1..255	01000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.16	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.17	at-1..255	00000001000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.18	at-1..255	00000010000000100000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.19	at-1..255	00000000000000000000010001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.20	at-1..255	00000000000000000000001001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.21	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.22	at-1..255	00000000000000000000000001100000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.23	at-1..255	00000000000000000000000001100000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.24	at-1..255	00000000000000000000000001100000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.25	at-1..255	00000000000000000000000001100000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.26	at-1..255	00000000000000000000000001100000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.27	at-1..255	00000000000000000000000001100000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.28	at-1..255	00000000000000000000000001100000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.29	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.30	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.31	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.32	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.33	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.34	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.35	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.36	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.37	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.38	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.39	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.40	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.41	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.42	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.43	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.44	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.45	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.46	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.47	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.48	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.49	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.50	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.51	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.52	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.53	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.54	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.55	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.56	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.57	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.58	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.59	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.60	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.61	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.62	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.63	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.64	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.65	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.66	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.67	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.68	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.69	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.70	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.71	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.72	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.73	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.74	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.75	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.76	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.77	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.78	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.79	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.80	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.81	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.82	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.83	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.84	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.85	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.86	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.87	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.88	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.89	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.90	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.91	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.92	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.93	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.94	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.95	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.96	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.97	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.98	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.99	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.100	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.101	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.102	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.103	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.104	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.105	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.106	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.107	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.108	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.109	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.110	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.111	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.112	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.113	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.114	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.115	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.116	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.117	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.118	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.119	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.120	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.121	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.122	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.123	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.124	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.125	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.126	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.127	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.128	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.129	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.130	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.131	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.132	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.133	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.134	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.135	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.136	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.137	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.138	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.139	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.140	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.141	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.142	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.143	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.144	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.145	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.146	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.147	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.148	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.149	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.150	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.151	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.152	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.153	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.154	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.155	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.156	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.157	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.158	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.159	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.160	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.161	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.162	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.163	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.164	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.165	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.166	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.167	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.168	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.169	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.170	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.171	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.172	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.173	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.174	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.175	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.176	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.177	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.178	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.179	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.180	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.181	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.182	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.183	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.184	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.185	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.186	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.187	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.188	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.189	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.190	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.191	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.192	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.193	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.194	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.195	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.196	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.197	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.198	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.199	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.200	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.201	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.202	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.203	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.204	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.205	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.206	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.207	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.208	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.209	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.210	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.211	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.212	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.213	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.214	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.215	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.216	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.217	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.218	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.219	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.220	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.221	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.222	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.223	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.224	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.225	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.226	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.227	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.228	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.229	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.230	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.231	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.232	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.233	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.234	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.235	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.236	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.237	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.238	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.239	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.240	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.241	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.242	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.243	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.244	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.245	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.246	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.247	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.248	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.249	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.250	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.251	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.252	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.253	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.254	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.match.255	at-1..255	00000000000000000000000001100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+c1.name.0	lookup		255	255	-1	-1	-1	-1	-1	0
+c1.name.1	lookup	-1	-1	-1	-1	-1	-1	-1	-1	0
+c1.name.2	lookup	invalid	255	255	-1	-1	-1	-1	-1	0
+c1.name.3	lookup	ensemble	255	255	-1	-1	-1	-1	26	0
+c1.name.4	lookup	llassettype_bad_lookup	255	255	-1	-1	-1	-1	-1	0
+c1.name.5	lookup	llfoldertype_bad_lookup	255	255	-1	-1	-1	-1	-1	0
+c1.name.6	lookup	texture	0	0	0	0	0	0	0	0
+c1.name.7	lookup	sound	1	1	1	1	1	1	1	0
+c1.name.8	lookup	callcard	2	2	-1	-1	-1	2	2	0
+c1.name.9	lookup	landmark	3	3	3	3	3	3	3	0
+c1.name.10	lookup	script	4	4	-1	-1	4	10	-1	0
+c1.name.11	lookup	clothing	5	5	5	5	5	-1	5	0
+c1.name.12	lookup	object	6	6	6	6	6	6	6	0
+c1.name.13	lookup	notecard	7	7	-1	-1	7	7	7	0
+c1.name.14	lookup	category	8	8	-1	-1	8	8	-1	0
+c1.name.15	lookup	lsltext	10	10	-1	-1	-1	-1	10	0
+c1.name.16	lookup	lslbyte	11	11	-1	-1	-1	-1	-1	0
+c1.name.17	lookup	txtr_tga	12	12	-1	-1	-1	-1	-1	0
+c1.name.18	lookup	bodypart	13	13	-1	-1	13	-1	13	0
+c1.name.19	lookup	snd_wav	17	17	-1	-1	-1	-1	-1	0
+c1.name.20	lookup	img_tga	18	18	-1	-1	-1	-1	-1	0
+c1.name.21	lookup	jpeg	19	19	-1	-1	-1	-1	-1	0
+c1.name.22	lookup	animatn	20	20	-1	-1	-1	-1	20	0
+c1.name.23	lookup	gesture	21	21	21	21	21	20	21	0
+c1.name.24	lookup	simstate	22	22	22	22	22	-1	-1	0
+c1.name.25	lookup	link	24	24	-1	-1	24	-1	-1	0
+c1.name.26	lookup	link_f	25	25	-1	-1	-1	-1	-1	0
+c1.name.27	lookup	widget	40	40	40	40	40	23	-1	0
+c1.name.28	lookup	person	45	45	45	45	45	24	-1	0
+c1.name.29	lookup	mesh	49	49	49	49	49	22	49	0
+c1.name.30	lookup	settings	56	56	-1	-1	56	25	56	0
+c1.name.31	lookup	material	57	57	-1	-1	57	26	57	0
+c1.name.32	lookup	gltf	58	58	-1	-1	58	27	-1	0
+c1.name.33	lookup	glbin	59	59	-1	-1	-1	28	-1	0
+c1.name.34	lookup	root	255	255	-1	-1	-1	9	-1	0
+c1.name.35	lookup	snapshot	255	255	-1	-1	-1	15	15	0
+c1.name.36	lookup	attach	255	255	-1	-1	-1	17	-1	0
+c1.name.37	lookup	wearable	255	255	-1	-1	-1	18	-1	0
+c1.name.38	lookup	animation	255	255	20	20	20	19	-1	0
+c1.name.39	lookup	root_inv	255	255	-1	-1	-1	-1	8	0
+c1.name.40	lookup	trash	255	255	-1	-1	-1	-1	14	0
+c1.name.41	lookup	lstndfnd	255	255	-1	-1	-1	-1	16	0
+c1.name.42	lookup	favorite	255	255	-1	-1	-1	-1	23	0
+c1.name.43	lookup	current	255	255	-1	-1	-1	-1	46	0
+c1.name.44	lookup	outfit	255	255	-1	-1	-1	-1	47	0
+c1.name.45	lookup	my_otfts	255	255	-1	-1	-1	-1	48	0
+c1.name.46	lookup	inbox	255	255	-1	-1	-1	-1	50	0
+c1.name.47	lookup	outbox	255	255	-1	-1	-1	-1	51	0
+c1.name.48	lookup	basic_rt	255	255	-1	-1	-1	-1	52	0
+c1.name.49	lookup	merchant	255	255	-1	-1	-1	-1	53	0
+c1.name.50	lookup	stock	255	255	-1	-1	-1	-1	54	0
+c1.name.51	lookup	version	255	255	-1	-1	-1	-1	55	0
+c1.name.52	lookup	suitcase	255	255	-1	-1	-1	-1	100	0
+c1.name.53	lookup	not	255	255	-1	-1	-1	-1	-1	0
+c1.name.54	lookup	orig	255	255	-1	-1	-1	-1	-1	1
+c1.name.55	lookup	copy	255	255	-1	-1	-1	-1	-1	2
+c1.name.56	lookup	cntn	255	255	-1	-1	-1	-1	-1	3
+c1.name.57	lookup	calling card	255	255	2	2	-1	-1	-1	0
+c1.name.58	lookup	legacy script	255	255	4	4	-1	-1	-1	0
+c1.name.59	lookup	note card	255	255	7	7	-1	-1	-1	0
+c1.name.60	lookup	folder	255	255	8	8	-1	-1	-1	0
+c1.name.61	lookup	lsl2 script	255	255	10	10	-1	-1	-1	0
+c1.name.62	lookup	lsl bytecode	255	255	11	11	-1	-1	-1	0
+c1.name.63	lookup	tga texture	255	255	12	12	-1	-1	-1	0
+c1.name.64	lookup	body part	255	255	13	13	-1	-1	-1	0
+c1.name.65	lookup	targa image	255	255	18	18	-1	-1	-1	0
+c1.name.66	lookup	jpeg image	255	255	19	19	-1	-1	-1	0
+c1.name.67	lookup	sym link	255	255	24	24	-1	-1	-1	0
+c1.name.68	lookup	sym folder link	255	255	25	25	-1	-1	-1	0
+c1.name.69	lookup	settings blob	255	255	56	56	-1	-1	-1	0
+c1.name.70	lookup	render material	255	255	57	57	-1	-1	-1	0
+c1.name.71	lookup	GLTF	255	255	58	58	58	-1	-1	0
+c1.name.72	lookup	GLTF binary	255	255	59	59	-1	-1	-1	0
+c1.name.73	lookup	attachment	255	255	-1	-1	-1	-1	-1	0
+c1.name.74	lookup	root	255	255	-1	-1	-1	9	-1	0
+c1.name.75	lookup	TEXTURE	255	255	-1	-1	0	-1	-1	0
+c1.name.76	lookup	SOUND	255	255	-1	-1	1	-1	-1	0
+c1.name.77	lookup	CALLINGCARD	255	255	-1	-1	2	-1	-1	0
+c1.name.78	lookup	LANDMARK	255	255	-1	-1	3	-1	-1	0
+c1.name.79	lookup	SCRIPT	255	255	-1	-1	4	-1	-1	0
+c1.name.80	lookup	CLOTHING	255	255	-1	-1	5	-1	-1	0
+c1.name.81	lookup	OBJECT	255	255	-1	-1	6	-1	-1	0
+c1.name.82	lookup	NOTECARD	255	255	-1	-1	7	-1	-1	0
+c1.name.83	lookup	CATEGORY	255	255	-1	-1	8	-1	-1	0
+c1.name.84	lookup	LSL_TEXT	255	255	-1	-1	10	-1	-1	0
+c1.name.85	lookup	LSL_BYTECODE	255	255	-1	-1	11	-1	-1	0
+c1.name.86	lookup	TEXTURE_TGA	255	255	-1	-1	12	-1	-1	0
+c1.name.87	lookup	BODYPART	255	255	-1	-1	13	-1	-1	0
+c1.name.88	lookup	SOUND_WAV	255	255	-1	-1	17	-1	-1	0
+c1.name.89	lookup	IMAGE_TGA	255	255	-1	-1	18	-1	-1	0
+c1.name.90	lookup	IMAGE_JPEG	255	255	-1	-1	19	-1	-1	0
+c1.name.91	lookup	ANIMATION	255	255	-1	-1	20	-1	-1	0
+c1.name.92	lookup	GESTURE	255	255	-1	-1	21	-1	-1	0
+c1.name.93	lookup	SIMSTATE	255	255	-1	-1	22	-1	-1	0
+c1.name.94	lookup	LINK	255	255	-1	-1	24	-1	-1	0
+c1.name.95	lookup	FOLDER_LINK	255	255	-1	-1	25	-1	-1	0
+c1.name.96	lookup	MESH	255	255	-1	-1	49	-1	-1	0
+c1.name.97	lookup	WIDGET	255	255	-1	-1	40	-1	-1	0
+c1.name.98	lookup	PERSON	255	255	-1	-1	45	-1	-1	0
+c1.name.99	lookup	SETTINGS	255	255	-1	-1	56	-1	-1	0
+c1.name.100	lookup	MATERIAL	255	255	-1	-1	57	-1	-1	0
+c1.name.101	lookup	GLTF_BIN	255	255	-1	-1	59	-1	-1	0
+c1.name.102	lookup	UNKNOWN	255	255	-1	-1	255	-1	-1	0
+c1.name.103	lookup	NONE	255	255	-1	-1	-1	-1	-1	0
+c1.name.104	lookup	texture_tga	255	255	-1	-1	12	-1	-1	0
+c1.name.105	lookup	Texture	255	255	-1	-1	0	-1	-1	0
+c1.name.106	lookup	tExture	255	255	-1	-1	0	-1	-1	0
+c1.name.107	lookup	Sound	255	255	-1	-1	1	-1	-1	0
+c1.name.108	lookup	Notecard	255	255	-1	-1	7	-1	-1	0
+c1.name.109	lookup	Landmark	255	255	-1	-1	3	-1	-1	0
+c1.name.110	lookup	NOT	255	255	-1	-1	-1	-1	-1	0
+c1.name.111	lookup	Copy	255	255	-1	-1	-1	-1	-1	0
+c1.name.112	lookup	texture 	255	255	-1	-1	-1	-1	-1	0
+c1.name.113	lookup	 texture	255	255	-1	-1	-1	-1	-1	0
+c1.name.114	lookup	texturexx	255	255	-1	-1	-1	-1	-1	0
+c1.name.115	lookup	landmarks	255	255	-1	-1	-1	-1	-1	0
+c1.name.116	lookup	objectxxx	255	255	-1	-1	-1	-1	-1	0
+c1.name.117	lookup	lsltextxx	255	255	-1	-1	-1	-1	-1	0
+c1.name.118	lookup	unknown	255	255	-1	-1	255	-1	-1	0
+c1.name.119	lookup	none	255	255	-1	-1	-1	-1	-1	0
+c1.name.120	lookup	null	255	255	-1	-1	-1	-1	-1	0
+c1.name.121	lookup	0	255	255	-1	-1	-1	-1	-1	0
+c1.name.122	lookup	6	255	255	-1	-1	-1	-1	-1	0
+c1.name.123	lookup	255	255	255	-1	-1	-1	-1	-1	0
+c1.name.124	lookup	texture\x0a	255	255	-1	-1	-1	-1	-1	0
+c1.name.125	lookup	tex	255	255	-1	-1	-1	-1	-1	0
+c1.name.126	lookup	glbinary	255	255	-1	-1	-1	-1	-1	0
+c1.name.127	lookup	material 	255	255	-1	-1	-1	-1	-1	0
+c1.name.128	lookup	\xc3\xa9	255	255	-1	-1	-1	-1	-1	0
+c1.name.129	lookup	folder\x09	255	255	-1	-1	-1	-1	-1	0
+c1.name.null	lookup	NULL	255	-1
+c1.typenames	asset.bin	5b0000001c7300000007746578747572657300000005736f756e64730000000863616c6c6361726473000000086c616e646d61726b73000000067363726970747300000008636c6f7468696e6773000000066f626a65637473000000086e6f746563617264730000000863617465676f727973000000076c736c7465787473000000076c736c627974657300000008747874725f7467617300000008626f6479706172747300000007736e645f7761767300000007696d675f74676173000000046a7065677300000007616e696d61746e730000000767657374757265730000000873696d737461746573000000046c696e6b73000000066c696e6b5f6673000000067769646765747300000006706572736f6e73000000046d657368730000000873657474696e677373000000086d6174657269616c7300000004676c74667300000005676c62696e5d
+c1.typenames	asset.txt	['texture','sound','callcard','landmark','script','clothing','object','notecard','category','lsltext','lslbyte','txtr_tga','bodypart','snd_wav','img_tga','jpeg','animatn','gesture','simstate','link','link_f','widget','person','mesh','settings','material','gltf','glbin']
+c1.typenames	folder.bin	5b0000001d7300000007746578747572657300000005736f756e64730000000863616c6c6361726473000000086c616e646d61726b7300000008636c6f7468696e6773000000066f626a65637473000000086e6f7465636172647300000008726f6f745f696e7673000000076c736c746578747300000008626f647970617274730000000574726173687300000008736e617073686f7473000000086c73746e64666e647300000007616e696d61746e73000000076765737475726573000000086661766f72697465730000000763757272656e7473000000066f757466697473000000086d795f6f7466747373000000046d6573687300000005696e626f7873000000066f7574626f78730000000862617369635f727473000000086d65726368616e74730000000573746f636b730000000776657273696f6e730000000873657474696e677373000000086d6174657269616c730000000873756974636173655d
+c1.typenames	folder.txt	['texture','sound','callcard','landmark','clothing','object','notecard','root_inv','lsltext','bodypart','trash','snapshot','lstndfnd','animatn','gesture','favorite','current','outfit','my_otfts','mesh','inbox','outbox','basic_rt','merchant','stock','version','settings','material','suitcase']
+c1.badlookup	values	llassettype_bad_lookup	llfoldertype_bad_lookup
+c1.flags.00000000	settings_from_flags	0
+c1.flags.00000001	settings_from_flags	1
+c1.flags.00000002	settings_from_flags	2
+c1.flags.00000003	settings_from_flags	3
+c1.flags.00000004	settings_from_flags	4
+c1.flags.00000005	settings_from_flags	5
+c1.flags.00000006	settings_from_flags	6
+c1.flags.00000007	settings_from_flags	7
+c1.flags.00000008	settings_from_flags	8
+c1.flags.00000009	settings_from_flags	9
+c1.flags.0000000a	settings_from_flags	10
+c1.flags.0000000b	settings_from_flags	11
+c1.flags.0000000c	settings_from_flags	12
+c1.flags.0000000d	settings_from_flags	13
+c1.flags.0000000e	settings_from_flags	14
+c1.flags.0000000f	settings_from_flags	15
+c1.flags.00000010	settings_from_flags	16
+c1.flags.00000011	settings_from_flags	17
+c1.flags.00000012	settings_from_flags	18
+c1.flags.00000013	settings_from_flags	19
+c1.flags.00000014	settings_from_flags	20
+c1.flags.00000015	settings_from_flags	21
+c1.flags.00000016	settings_from_flags	22
+c1.flags.00000017	settings_from_flags	23
+c1.flags.00000018	settings_from_flags	24
+c1.flags.00000019	settings_from_flags	25
+c1.flags.0000001a	settings_from_flags	26
+c1.flags.0000001b	settings_from_flags	27
+c1.flags.0000001c	settings_from_flags	28
+c1.flags.0000001d	settings_from_flags	29
+c1.flags.0000001e	settings_from_flags	30
+c1.flags.0000001f	settings_from_flags	31
+c1.flags.00000020	settings_from_flags	32
+c1.flags.00000021	settings_from_flags	33
+c1.flags.00000022	settings_from_flags	34
+c1.flags.00000023	settings_from_flags	35
+c1.flags.00000024	settings_from_flags	36
+c1.flags.00000025	settings_from_flags	37
+c1.flags.00000026	settings_from_flags	38
+c1.flags.00000027	settings_from_flags	39
+c1.flags.00000028	settings_from_flags	40
+c1.flags.00000029	settings_from_flags	41
+c1.flags.0000002a	settings_from_flags	42
+c1.flags.0000002b	settings_from_flags	43
+c1.flags.0000002c	settings_from_flags	44
+c1.flags.0000002d	settings_from_flags	45
+c1.flags.0000002e	settings_from_flags	46
+c1.flags.0000002f	settings_from_flags	47
+c1.flags.00000030	settings_from_flags	48
+c1.flags.00000031	settings_from_flags	49
+c1.flags.00000032	settings_from_flags	50
+c1.flags.00000033	settings_from_flags	51
+c1.flags.00000034	settings_from_flags	52
+c1.flags.00000035	settings_from_flags	53
+c1.flags.00000036	settings_from_flags	54
+c1.flags.00000037	settings_from_flags	55
+c1.flags.00000038	settings_from_flags	56
+c1.flags.00000039	settings_from_flags	57
+c1.flags.0000003a	settings_from_flags	58
+c1.flags.0000003b	settings_from_flags	59
+c1.flags.0000003c	settings_from_flags	60
+c1.flags.0000003d	settings_from_flags	61
+c1.flags.0000003e	settings_from_flags	62
+c1.flags.0000003f	settings_from_flags	63
+c1.flags.00000040	settings_from_flags	64
+c1.flags.00000041	settings_from_flags	65
+c1.flags.00000042	settings_from_flags	66
+c1.flags.00000043	settings_from_flags	67
+c1.flags.00000044	settings_from_flags	68
+c1.flags.00000045	settings_from_flags	69
+c1.flags.00000046	settings_from_flags	70
+c1.flags.00000047	settings_from_flags	71
+c1.flags.00000048	settings_from_flags	72
+c1.flags.00000049	settings_from_flags	73
+c1.flags.0000004a	settings_from_flags	74
+c1.flags.0000004b	settings_from_flags	75
+c1.flags.0000004c	settings_from_flags	76
+c1.flags.0000004d	settings_from_flags	77
+c1.flags.0000004e	settings_from_flags	78
+c1.flags.0000004f	settings_from_flags	79
+c1.flags.00000050	settings_from_flags	80
+c1.flags.00000051	settings_from_flags	81
+c1.flags.00000052	settings_from_flags	82
+c1.flags.00000053	settings_from_flags	83
+c1.flags.00000054	settings_from_flags	84
+c1.flags.00000055	settings_from_flags	85
+c1.flags.00000056	settings_from_flags	86
+c1.flags.00000057	settings_from_flags	87
+c1.flags.00000058	settings_from_flags	88
+c1.flags.00000059	settings_from_flags	89
+c1.flags.0000005a	settings_from_flags	90
+c1.flags.0000005b	settings_from_flags	91
+c1.flags.0000005c	settings_from_flags	92
+c1.flags.0000005d	settings_from_flags	93
+c1.flags.0000005e	settings_from_flags	94
+c1.flags.0000005f	settings_from_flags	95
+c1.flags.00000060	settings_from_flags	96
+c1.flags.00000061	settings_from_flags	97
+c1.flags.00000062	settings_from_flags	98
+c1.flags.00000063	settings_from_flags	99
+c1.flags.00000064	settings_from_flags	100
+c1.flags.00000065	settings_from_flags	101
+c1.flags.00000066	settings_from_flags	102
+c1.flags.00000067	settings_from_flags	103
+c1.flags.00000068	settings_from_flags	104
+c1.flags.00000069	settings_from_flags	105
+c1.flags.0000006a	settings_from_flags	106
+c1.flags.0000006b	settings_from_flags	107
+c1.flags.0000006c	settings_from_flags	108
+c1.flags.0000006d	settings_from_flags	109
+c1.flags.0000006e	settings_from_flags	110
+c1.flags.0000006f	settings_from_flags	111
+c1.flags.00000070	settings_from_flags	112
+c1.flags.00000071	settings_from_flags	113
+c1.flags.00000072	settings_from_flags	114
+c1.flags.00000073	settings_from_flags	115
+c1.flags.00000074	settings_from_flags	116
+c1.flags.00000075	settings_from_flags	117
+c1.flags.00000076	settings_from_flags	118
+c1.flags.00000077	settings_from_flags	119
+c1.flags.00000078	settings_from_flags	120
+c1.flags.00000079	settings_from_flags	121
+c1.flags.0000007a	settings_from_flags	122
+c1.flags.0000007b	settings_from_flags	123
+c1.flags.0000007c	settings_from_flags	124
+c1.flags.0000007d	settings_from_flags	125
+c1.flags.0000007e	settings_from_flags	126
+c1.flags.0000007f	settings_from_flags	127
+c1.flags.00000080	settings_from_flags	128
+c1.flags.00000081	settings_from_flags	129
+c1.flags.00000082	settings_from_flags	130
+c1.flags.00000083	settings_from_flags	131
+c1.flags.00000084	settings_from_flags	132
+c1.flags.00000085	settings_from_flags	133
+c1.flags.00000086	settings_from_flags	134
+c1.flags.00000087	settings_from_flags	135
+c1.flags.00000088	settings_from_flags	136
+c1.flags.00000089	settings_from_flags	137
+c1.flags.0000008a	settings_from_flags	138
+c1.flags.0000008b	settings_from_flags	139
+c1.flags.0000008c	settings_from_flags	140
+c1.flags.0000008d	settings_from_flags	141
+c1.flags.0000008e	settings_from_flags	142
+c1.flags.0000008f	settings_from_flags	143
+c1.flags.00000090	settings_from_flags	144
+c1.flags.00000091	settings_from_flags	145
+c1.flags.00000092	settings_from_flags	146
+c1.flags.00000093	settings_from_flags	147
+c1.flags.00000094	settings_from_flags	148
+c1.flags.00000095	settings_from_flags	149
+c1.flags.00000096	settings_from_flags	150
+c1.flags.00000097	settings_from_flags	151
+c1.flags.00000098	settings_from_flags	152
+c1.flags.00000099	settings_from_flags	153
+c1.flags.0000009a	settings_from_flags	154
+c1.flags.0000009b	settings_from_flags	155
+c1.flags.0000009c	settings_from_flags	156
+c1.flags.0000009d	settings_from_flags	157
+c1.flags.0000009e	settings_from_flags	158
+c1.flags.0000009f	settings_from_flags	159
+c1.flags.000000a0	settings_from_flags	160
+c1.flags.000000a1	settings_from_flags	161
+c1.flags.000000a2	settings_from_flags	162
+c1.flags.000000a3	settings_from_flags	163
+c1.flags.000000a4	settings_from_flags	164
+c1.flags.000000a5	settings_from_flags	165
+c1.flags.000000a6	settings_from_flags	166
+c1.flags.000000a7	settings_from_flags	167
+c1.flags.000000a8	settings_from_flags	168
+c1.flags.000000a9	settings_from_flags	169
+c1.flags.000000aa	settings_from_flags	170
+c1.flags.000000ab	settings_from_flags	171
+c1.flags.000000ac	settings_from_flags	172
+c1.flags.000000ad	settings_from_flags	173
+c1.flags.000000ae	settings_from_flags	174
+c1.flags.000000af	settings_from_flags	175
+c1.flags.000000b0	settings_from_flags	176
+c1.flags.000000b1	settings_from_flags	177
+c1.flags.000000b2	settings_from_flags	178
+c1.flags.000000b3	settings_from_flags	179
+c1.flags.000000b4	settings_from_flags	180
+c1.flags.000000b5	settings_from_flags	181
+c1.flags.000000b6	settings_from_flags	182
+c1.flags.000000b7	settings_from_flags	183
+c1.flags.000000b8	settings_from_flags	184
+c1.flags.000000b9	settings_from_flags	185
+c1.flags.000000ba	settings_from_flags	186
+c1.flags.000000bb	settings_from_flags	187
+c1.flags.000000bc	settings_from_flags	188
+c1.flags.000000bd	settings_from_flags	189
+c1.flags.000000be	settings_from_flags	190
+c1.flags.000000bf	settings_from_flags	191
+c1.flags.000000c0	settings_from_flags	192
+c1.flags.000000c1	settings_from_flags	193
+c1.flags.000000c2	settings_from_flags	194
+c1.flags.000000c3	settings_from_flags	195
+c1.flags.000000c4	settings_from_flags	196
+c1.flags.000000c5	settings_from_flags	197
+c1.flags.000000c6	settings_from_flags	198
+c1.flags.000000c7	settings_from_flags	199
+c1.flags.000000c8	settings_from_flags	200
+c1.flags.000000c9	settings_from_flags	201
+c1.flags.000000ca	settings_from_flags	202
+c1.flags.000000cb	settings_from_flags	203
+c1.flags.000000cc	settings_from_flags	204
+c1.flags.000000cd	settings_from_flags	205
+c1.flags.000000ce	settings_from_flags	206
+c1.flags.000000cf	settings_from_flags	207
+c1.flags.000000d0	settings_from_flags	208
+c1.flags.000000d1	settings_from_flags	209
+c1.flags.000000d2	settings_from_flags	210
+c1.flags.000000d3	settings_from_flags	211
+c1.flags.000000d4	settings_from_flags	212
+c1.flags.000000d5	settings_from_flags	213
+c1.flags.000000d6	settings_from_flags	214
+c1.flags.000000d7	settings_from_flags	215
+c1.flags.000000d8	settings_from_flags	216
+c1.flags.000000d9	settings_from_flags	217
+c1.flags.000000da	settings_from_flags	218
+c1.flags.000000db	settings_from_flags	219
+c1.flags.000000dc	settings_from_flags	220
+c1.flags.000000dd	settings_from_flags	221
+c1.flags.000000de	settings_from_flags	222
+c1.flags.000000df	settings_from_flags	223
+c1.flags.000000e0	settings_from_flags	224
+c1.flags.000000e1	settings_from_flags	225
+c1.flags.000000e2	settings_from_flags	226
+c1.flags.000000e3	settings_from_flags	227
+c1.flags.000000e4	settings_from_flags	228
+c1.flags.000000e5	settings_from_flags	229
+c1.flags.000000e6	settings_from_flags	230
+c1.flags.000000e7	settings_from_flags	231
+c1.flags.000000e8	settings_from_flags	232
+c1.flags.000000e9	settings_from_flags	233
+c1.flags.000000ea	settings_from_flags	234
+c1.flags.000000eb	settings_from_flags	235
+c1.flags.000000ec	settings_from_flags	236
+c1.flags.000000ed	settings_from_flags	237
+c1.flags.000000ee	settings_from_flags	238
+c1.flags.000000ef	settings_from_flags	239
+c1.flags.000000f0	settings_from_flags	240
+c1.flags.000000f1	settings_from_flags	241
+c1.flags.000000f2	settings_from_flags	242
+c1.flags.000000f3	settings_from_flags	243
+c1.flags.000000f4	settings_from_flags	244
+c1.flags.000000f5	settings_from_flags	245
+c1.flags.000000f6	settings_from_flags	246
+c1.flags.000000f7	settings_from_flags	247
+c1.flags.000000f8	settings_from_flags	248
+c1.flags.000000f9	settings_from_flags	249
+c1.flags.000000fa	settings_from_flags	250
+c1.flags.000000fb	settings_from_flags	251
+c1.flags.000000fc	settings_from_flags	252
+c1.flags.000000fd	settings_from_flags	253
+c1.flags.000000fe	settings_from_flags	254
+c1.flags.000000ff	settings_from_flags	255
+c1.flags.00000100	settings_from_flags	0
+c1.flags.00000101	settings_from_flags	1
+c1.flags.000001ff	settings_from_flags	255
+c1.flags.001f1102	settings_from_flags	2
+c1.flags.7fffffff	settings_from_flags	255
+c1.flags.80000002	settings_from_flags	2
+c1.flags.ffffffff	settings_from_flags	255
+c1.cat.00000000	category	00000000	5	(none)	01000000	02000000	06000000	00000000
+c1.cat.00000001	category	00000001	5	(none)	01000001	02000001	06000001	00000001
+c1.cat.00000100	category	00000100	5	(none)	01000100	02000100	06000100	00000100
+c1.cat.00000101	category	00000101	5	(none)	01000101	02000101	06000101	00000101
+c1.cat.00010000	category	00010000	5	Object	01010000	02010000	06010000	00010000
+c1.cat.00010001	category	00010001	5	Object	01010001	02010001	06010001	00010001
+c1.cat.00010100	category	00010100	5	Component	01010100	02010100	06010100	00010100
+c1.cat.00010101	category	00010101	5	NULL	01010101	02010101	06010101	00010101
+c1.cat.00020000	category	00020000	5	Object	01020000	02020000	06020000	00020000
+c1.cat.00020001	category	00020001	5	Object	01020001	02020001	06020001	00020001
+c1.cat.00020100	category	00020100	5	Component	01020100	02020100	06020100	00020100
+c1.cat.00020101	category	00020101	5	NULL	01020101	02020101	06020101	00020101
+c1.cat.00ff0000	category	00ff0000	5	Object	01ff0000	02ff0000	06ff0000	00ff0000
+c1.cat.00ff0001	category	00ff0001	5	Object	01ff0001	02ff0001	06ff0001	00ff0001
+c1.cat.00ff0100	category	00ff0100	5	Component	01ff0100	02ff0100	06ff0100	00ff0100
+c1.cat.00ff0101	category	00ff0101	5	NULL	01ff0101	02ff0101	06ff0101	00ff0101
+c1.cat.01000000	category	01000000	1	Object	01010000	01020000	01060000	01000000
+c1.cat.01000001	category	01000001	1	Object	01010001	01020001	01060001	01000001
+c1.cat.01000100	category	01000100	1	Object	01010100	01020100	01060100	01000100
+c1.cat.01000101	category	01000101	1	Object	01010101	01020101	01060101	01000101
+c1.cat.01010000	category	01010000	1	Component	01010100	01010200	01010600	01010000
+c1.cat.01010001	category	01010001	1	Component	01010101	01010201	01010601	01010001
+c1.cat.01010100	category	01010100	1	NULL	01010100	01010100	01010100	01010100
+c1.cat.01010101	category	01010101	1	NULL	01010101	01010101	01010101	01010101
+c1.cat.01020000	category	01020000	1	Component	01020100	01020200	01020600	01020000
+c1.cat.01020001	category	01020001	1	Component	01020101	01020201	01020601	01020001
+c1.cat.01020100	category	01020100	1	NULL	01020100	01020100	01020100	01020100
+c1.cat.01020101	category	01020101	1	NULL	01020101	01020101	01020101	01020101
+c1.cat.01ff0000	category	01ff0000	1	Component	01ff0100	01ff0200	01ff0600	01ff0000
+c1.cat.01ff0001	category	01ff0001	1	Component	01ff0101	01ff0201	01ff0601	01ff0001
+c1.cat.01ff0100	category	01ff0100	1	NULL	01ff0100	01ff0100	01ff0100	01ff0100
+c1.cat.01ff0101	category	01ff0101	1	NULL	01ff0101	01ff0101	01ff0101	01ff0101
+c1.cat.02000000	category	02000000	0	Clothing	02010000	02020000	02060000	02000000
+c1.cat.02000001	category	02000001	0	Clothing	02010001	02020001	02060001	02000001
+c1.cat.02000100	category	02000100	0	Clothing	02010100	02020100	02060100	02000100
+c1.cat.02000101	category	02000101	0	Clothing	02010101	02020101	02060101	02000101
+c1.cat.02010000	category	02010000	0	NULL	02010100	02010200	02010600	02010000
+c1.cat.02010001	category	02010001	0	NULL	02010101	02010201	02010601	02010001
+c1.cat.02010100	category	02010100	0	NULL	02010100	02010100	02010100	02010100
+c1.cat.02010101	category	02010101	0	NULL	02010101	02010101	02010101	02010101
+c1.cat.02020000	category	02020000	0	NULL	02020100	02020200	02020600	02020000
+c1.cat.02020001	category	02020001	0	NULL	02020101	02020201	02020601	02020001
+c1.cat.02020100	category	02020100	0	NULL	02020100	02020100	02020100	02020100
+c1.cat.02020101	category	02020101	0	NULL	02020101	02020101	02020101	02020101
+c1.cat.02ff0000	category	02ff0000	0	NULL	02ff0100	02ff0200	02ff0600	02ff0000
+c1.cat.02ff0001	category	02ff0001	0	NULL	02ff0101	02ff0201	02ff0601	02ff0001
+c1.cat.02ff0100	category	02ff0100	0	NULL	02ff0100	02ff0100	02ff0100	02ff0100
+c1.cat.02ff0101	category	02ff0101	0	NULL	02ff0101	02ff0101	02ff0101	02ff0101
+c1.cat.03000000	category	03000000	0	Texture	03010000	03020000	03060000	03000000
+c1.cat.03000001	category	03000001	0	Texture	03010001	03020001	03060001	03000001
+c1.cat.03000100	category	03000100	0	Texture	03010100	03020100	03060100	03000100
+c1.cat.03000101	category	03000101	0	Texture	03010101	03020101	03060101	03000101
+c1.cat.03010000	category	03010000	0	NULL	03010100	03010200	03010600	03010000
+c1.cat.03010001	category	03010001	0	NULL	03010101	03010201	03010601	03010001
+c1.cat.03010100	category	03010100	0	NULL	03010100	03010100	03010100	03010100
+c1.cat.03010101	category	03010101	0	NULL	03010101	03010101	03010101	03010101
+c1.cat.03020000	category	03020000	0	NULL	03020100	03020200	03020600	03020000
+c1.cat.03020001	category	03020001	0	NULL	03020101	03020201	03020601	03020001
+c1.cat.03020100	category	03020100	0	NULL	03020100	03020100	03020100	03020100
+c1.cat.03020101	category	03020101	0	NULL	03020101	03020101	03020101	03020101
+c1.cat.03ff0000	category	03ff0000	0	NULL	03ff0100	03ff0200	03ff0600	03ff0000
+c1.cat.03ff0001	category	03ff0001	0	NULL	03ff0101	03ff0201	03ff0601	03ff0001
+c1.cat.03ff0100	category	03ff0100	0	NULL	03ff0100	03ff0100	03ff0100	03ff0100
+c1.cat.03ff0101	category	03ff0101	0	NULL	03ff0101	03ff0101	03ff0101	03ff0101
+c1.cat.04000000	category	04000000	0	Sound	04010000	04020000	04060000	04000000
+c1.cat.04000001	category	04000001	0	Sound	04010001	04020001	04060001	04000001
+c1.cat.04000100	category	04000100	0	Sound	04010100	04020100	04060100	04000100
+c1.cat.04000101	category	04000101	0	Sound	04010101	04020101	04060101	04000101
+c1.cat.04010000	category	04010000	0	NULL	04010100	04010200	04010600	04010000
+c1.cat.04010001	category	04010001	0	NULL	04010101	04010201	04010601	04010001
+c1.cat.04010100	category	04010100	0	NULL	04010100	04010100	04010100	04010100
+c1.cat.04010101	category	04010101	0	NULL	04010101	04010101	04010101	04010101
+c1.cat.04020000	category	04020000	0	NULL	04020100	04020200	04020600	04020000
+c1.cat.04020001	category	04020001	0	NULL	04020101	04020201	04020601	04020001
+c1.cat.04020100	category	04020100	0	NULL	04020100	04020100	04020100	04020100
+c1.cat.04020101	category	04020101	0	NULL	04020101	04020101	04020101	04020101
+c1.cat.04ff0000	category	04ff0000	0	NULL	04ff0100	04ff0200	04ff0600	04ff0000
+c1.cat.04ff0001	category	04ff0001	0	NULL	04ff0101	04ff0201	04ff0601	04ff0001
+c1.cat.04ff0100	category	04ff0100	0	NULL	04ff0100	04ff0100	04ff0100	04ff0100
+c1.cat.04ff0101	category	04ff0101	0	NULL	04ff0101	04ff0101	04ff0101	04ff0101
+c1.cat.05000000	category	05000000	0	Landmark	05010000	05020000	05060000	05000000
+c1.cat.05000001	category	05000001	0	Landmark	05010001	05020001	05060001	05000001
+c1.cat.05000100	category	05000100	0	Landmark	05010100	05020100	05060100	05000100
+c1.cat.05000101	category	05000101	0	Landmark	05010101	05020101	05060101	05000101
+c1.cat.05010000	category	05010000	0	NULL	05010100	05010200	05010600	05010000
+c1.cat.05010001	category	05010001	0	NULL	05010101	05010201	05010601	05010001
+c1.cat.05010100	category	05010100	0	NULL	05010100	05010100	05010100	05010100
+c1.cat.05010101	category	05010101	0	NULL	05010101	05010101	05010101	05010101
+c1.cat.05020000	category	05020000	0	NULL	05020100	05020200	05020600	05020000
+c1.cat.05020001	category	05020001	0	NULL	05020101	05020201	05020601	05020001
+c1.cat.05020100	category	05020100	0	NULL	05020100	05020100	05020100	05020100
+c1.cat.05020101	category	05020101	0	NULL	05020101	05020101	05020101	05020101
+c1.cat.05ff0000	category	05ff0000	0	NULL	05ff0100	05ff0200	05ff0600	05ff0000
+c1.cat.05ff0001	category	05ff0001	0	NULL	05ff0101	05ff0201	05ff0601	05ff0001
+c1.cat.05ff0100	category	05ff0100	0	NULL	05ff0100	05ff0100	05ff0100	05ff0100
+c1.cat.05ff0101	category	05ff0101	0	NULL	05ff0101	05ff0101	05ff0101	05ff0101
+c1.cat.06000000	category	06000000	0	Component	06010000	06020000	06060000	06000000
+c1.cat.06000001	category	06000001	0	Component	06010001	06020001	06060001	06000001
+c1.cat.06000100	category	06000100	0	Component	06010100	06020100	06060100	06000100
+c1.cat.06000101	category	06000101	0	Component	06010101	06020101	06060101	06000101
+c1.cat.06010000	category	06010000	0	NULL	06010100	06010200	06010600	06010000
+c1.cat.06010001	category	06010001	0	NULL	06010101	06010201	06010601	06010001
+c1.cat.06010100	category	06010100	0	NULL	06010100	06010100	06010100	06010100
+c1.cat.06010101	category	06010101	0	NULL	06010101	06010101	06010101	06010101
+c1.cat.06020000	category	06020000	0	NULL	06020100	06020200	06020600	06020000
+c1.cat.06020001	category	06020001	0	NULL	06020101	06020201	06020601	06020001
+c1.cat.06020100	category	06020100	0	NULL	06020100	06020100	06020100	06020100
+c1.cat.06020101	category	06020101	0	NULL	06020101	06020101	06020101	06020101
+c1.cat.06ff0000	category	06ff0000	0	NULL	06ff0100	06ff0200	06ff0600	06ff0000
+c1.cat.06ff0001	category	06ff0001	0	NULL	06ff0101	06ff0201	06ff0601	06ff0001
+c1.cat.06ff0100	category	06ff0100	0	NULL	06ff0100	06ff0100	06ff0100	06ff0100
+c1.cat.06ff0101	category	06ff0101	0	NULL	06ff0101	06ff0101	06ff0101	06ff0101
+c1.catu32.632df71d	category	632df71d
+c1.catu32.58e72448	category	58e72448
+c1.catu32.e18e9f20	category	e18e9f20
+c1.catu32.efaffa01	category	efaffa01
+c1.catu32.544d066b	category	544d066b
+c1.catu32.234d2b89	category	234d2b89
+c1.catu32.056dabff	category	056dabff
+c1.catu32.1d9a06cd	category	1d9a06cd
+c1.catu32.e2daba12	category	e2daba12
+c1.catu32.22e1923d	category	22e1923d
+c1.catu32.0d7d5391	category	0d7d5391
+c1.catu32.0b92fa44	category	0b92fa44
+c1.catu32.209c6a56	category	209c6a56
+c1.catu32.ffba6f3d	category	ffba6f3d
+c1.catu32.c5e75b0c	category	c5e75b0c
+c1.catu32.2ced7908	category	2ced7908
+c1.catu32.45385964	category	45385964
+c1.catu32.6e5cf0a3	category	6e5cf0a3
+c1.catu32.d0775f79	category	d0775f79
+c1.catu32.6fd6d925	category	6fd6d925
+c1.catu32.8d742344	category	8d742344
+c1.catu32.d9992433	category	d9992433
+c1.catu32.048e1178	category	048e1178
+c1.catu32.62a320a1	category	62a320a1
+c1.catu32.11dbbf56	category	11dbbf56
+c1.catu32.e4ad64a9	category	e4ad64a9
+c1.catu32.1a89c419	category	1a89c419
+c1.catu32.2390a3c7	category	2390a3c7
+c1.catu32.8b7090b1	category	8b7090b1
+c1.catu32.28e0d7f6	category	28e0d7f6
+c1.catu32.78271856	category	78271856
+c1.catu32.0d793e54	category	0d793e54
+c1.catu32.4ef67eae	category	4ef67eae
+c1.catu32.0758f5bd	category	0758f5bd
+c1.catu32.0a991f50	category	0a991f50
+c1.catu32.28f27bf4	category	28f27bf4
+c1.catu32.ff02dd93	category	ff02dd93
+c1.catu32.5d3bd132	category	5d3bd132
+c1.catu32.9c6481ba	category	9c6481ba
+c1.catu32.7b1b6bb7	category	7b1b6bb7
+c1.catu32.a94cce6f	category	a94cce6f
+c1.catu32.83c58ff7	category	83c58ff7
+c1.catu32.f693e51f	category	f693e51f
+c1.catu32.192dddb9	category	192dddb9
+c1.catu32.0ae45e56	category	0ae45e56
+c1.catu32.a7af157b	category	a7af157b
+c1.catu32.43a5374b	category	43a5374b
+c1.catu32.4a285902	category	4a285902
+c1.catu32.2e6d87e1	category	2e6d87e1
+c1.catu32.c285fb3c	category	c285fb3c
+c1.catu32.2333e53d	category	2333e53d
+c1.catu32.ed808701	category	ed808701
+c1.catu32.59823386	category	59823386
+c1.catu32.0b6d6c2f	category	0b6d6c2f
+c1.catu32.6e06b1f8	category	6e06b1f8
+c1.catu32.3a27a6ea	category	3a27a6ea
+c1.catu32.7a5f7631	category	7a5f7631
+c1.catu32.5ca1fdfc	category	5ca1fdfc
+c1.catu32.03e0a6d9	category	03e0a6d9
+c1.catu32.34d5d857	category	34d5d857
+c1.catu32.34c80b24	category	34c80b24
+c1.catu32.5165f913	category	5165f913
+c1.catu32.47e0c04e	category	47e0c04e
+c1.catu32.7165bc3e	category	7165bc3e
+c1.cat.default	category	00000000	5	(none)
+c1.cat.none	category	00000000
+c1.tf.pack.00	flags	0
+c1.tf.pack.01	flags	2
+c1.tf.pack.10	flags	1
+c1.tf.pack.11	flags	3
+c1.tf.is	src0..255	0101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101
+c1.tf.is	dst0..255	0011001100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011001100110011
+c1.tf.is	own0..255	0000111100001111000011110000111100001111000011110000111100001111000011110000111100001111000011110000111100001111000011110000111100001111000011110000111100001111000011110000111100001111000011110000111100001111000011110000111100001111000011110000111100001111
+c1.tm.0	messages		
+c1.tm.1	messages	desc	desc
+c1.tm.2	messages	You paid L$10 to create a group.	 paid you L$10.
+c1.tm.3	messages	You paid L$10 to join a group.	 paid you L$10.
+c1.tm.4	messages	You paid L$10 to upload.	 paid you L$10.
+c1.tm.5	messages	You paid L$10.	 paid you L$10.
+c1.tm.6	messages	You paid Bob Resident L$25 for Thing.	Bob Resident paid you L$25 for Thing.
+c1.tm.7	messages	You paid Bob Resident L$25 for <unknown>.	Bob Resident paid you L$25 for <unknown>.
+c1.tm.8	messages	You paid Bob Resident L$25 for a parcel of land.	Bob Resident paid you L$25 for a parcel of land.
+c1.tm.9	messages	You paid Bob Resident L$25 for a land access pass.	Bob Resident paid you L$25 for a land access pass.
+c1.tm.10	messages	You paid Bob Resident L$25 for deeding land.	Bob Resident paid you L$25 for deeding land.
+c1.tm.11	messages	You paid Bob L$-5.	Bob paid you L$-5.
+c1.mask.00000000	mask_to_string	    	    
+c1.mask.00080000	mask_to_string	V   	V   
+c1.mask.00004000	mask_to_string	 M  	 M  
+c1.mask.00084000	mask_to_string	VM  	VM  
+c1.mask.00008000	mask_to_string	  C 	  C 
+c1.mask.00088000	mask_to_string	V C 	V C 
+c1.mask.0000c000	mask_to_string	 MC 	 MC 
+c1.mask.0008c000	mask_to_string	VMC 	VMC 
+c1.mask.00002000	mask_to_string	   T	   T
+c1.mask.00082000	mask_to_string	V  T	V  T
+c1.mask.00006000	mask_to_string	 M T	 M T
+c1.mask.00086000	mask_to_string	VM T	VM T
+c1.mask.0000a000	mask_to_string	  CT	  CT
+c1.mask.0008a000	mask_to_string	V CT	V CT
+c1.mask.0000e000	mask_to_string	 MCT	 MCT
+c1.mask.0008e000	mask_to_string	VMCT	VMCT
+c1.mask.00010000	mask_to_string	    	    
+c1.mask.00090000	mask_to_string	V   	V   
+c1.mask.00014000	mask_to_string	 M  	 M  
+c1.mask.00094000	mask_to_string	VM  	VM  
+c1.mask.00018000	mask_to_string	  C 	  C 
+c1.mask.00098000	mask_to_string	V C 	V C 
+c1.mask.0001c000	mask_to_string	 MC 	 MC 
+c1.mask.0009c000	mask_to_string	VMC 	VMC 
+c1.mask.00012000	mask_to_string	   T	   T
+c1.mask.00092000	mask_to_string	V  T	V  T
+c1.mask.00016000	mask_to_string	 M T	 M T
+c1.mask.00096000	mask_to_string	VM T	VM T
+c1.mask.0001a000	mask_to_string	  CT	  CT
+c1.mask.0009a000	mask_to_string	V CT	V CT
+c1.mask.0001e000	mask_to_string	 MCT	 MCT
+c1.mask.0009e000	mask_to_string	VMCT	VMCT
+c1.mask.00000000	mask_to_string	    	    
+c1.mask.7fffffff	mask_to_string	VMCT	VMCT
+c1.mask.ffffffff	mask_to_string	VMCT	VMCT
+c1.mask.0000e000	mask_to_string	 MCT	 MCT
+c1.mask.00002000	mask_to_string	   T	   T
+c1.mask.00004000	mask_to_string	 M  	 M  
+c1.mask.00008000	mask_to_string	  C 	  C 
+c1.mask.00010000	mask_to_string	    	    
+c1.mask.00080000	mask_to_string	V   	V   
+c1.mask.00000001	mask_to_string	    	    
+c1.mask.80000000	mask_to_string	    	    
+c1.mask.7fffbfff	mask_to_string	V CT	V CT
+c1.mask.7fff7fff	mask_to_string	VM T	VM T
+c1.mask.7fff3fff	mask_to_string	V  T	V  T
+c1.mask.7fffdfff	mask_to_string	VMC 	VMC 
+c1.mask.7fff9fff	mask_to_string	V C 	V C 
+c1.mask.7fff5fff	mask_to_string	VM  	VM  
+c1.mask.7fff1fff	mask_to_string	V   	V   
+c1.const	perm	00002000	00004000	00008000	00010000	00080000	80000000	00000000	7fffffff	0000e000	1	2	4	8	16
+c1.const	counts	60	255	-1	29	255	-1	101	-1	4	43	40	41	42	-1
+c1.const	misc	10	0	1	1024	0	1
+c1.const	transaction_flags	0	1	2	4	8	16
+c1.const	item_flags	40000000	00000001	00000100	00001000	00010000	00020000	00040000	00080000	00100000	00200000	000000ff	001f1100
