@@ -1,0 +1,4 @@
+<?xml version="1.0" ?>
+<llsd>
+<map><key>_created_categories</key><array /><key>_created_items</key><array><uuid>a0000000-0000-4000-8000-000000030181</uuid></array><key>_updated_category_versions</key><map><key>c0000000-0000-4000-8000-000000030182</key><integer>21</integer><key>c0000000-0000-4000-8000-000000000006</key><integer>25</integer><key>c0000000-0000-4000-8000-000000000005</key><integer>7</integer></map><key>http_result</key><map><key>success</key><boolean>true</boolean><key>type</key><integer>200</integer><key>status</key><integer>0</integer><key>message</key><string></string><key>url</key><string>https://random.example/</string><key>headers</key><map><key>content-type</key><string>application/llsd+xml</string></map></map></map>
+</llsd>

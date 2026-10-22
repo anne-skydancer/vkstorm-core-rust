@@ -1,0 +1,4 @@
+<?xml version="1.0" ?>
+<llsd>
+<map><key>category_id</key><uuid>c0000000-0000-4000-8000-000000000d30</uuid><key>parent_id</key><uuid>c0000000-0000-4000-8000-000000000001</uuid><key>name</key><string>Vanishing renamed</string><key>type_default</key><integer>-1</integer><key>agent_id</key><uuid>0a000000-0000-4000-8000-000000000001</uuid><key>version</key><integer>5</integer><key>_updated_category_versions</key><map><key>c0000000-0000-4000-8000-000000000d30</key><integer>5</integer></map><key>http_result</key><map><key>success</key><boolean>true</boolean><key>type</key><integer>200</integer><key>status</key><integer>0</integer><key>message</key><string></string><key>url</key><string>https://inventory.grid.example/cap/00000000-0000-4000-8000-00000000cafe/category/c0000000-0000-4000-8000-000000000d30</string><key>headers</key><map><key>content-type</key><string>application/llsd+xml</string></map></map></map>
+</llsd>
