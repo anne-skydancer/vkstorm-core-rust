@@ -339,6 +339,14 @@ fn planes_mut<const N: usize>(buffer: &mut [f32], bs: usize, n: usize) -> [&mut 
 }
 
 /// Mono source to `N` output planes (SoLoud's scalar 1->4/6/8 loops).
+///
+/// Bit-identical to SoLoud's per-sample `pan[k] += pani[k]; out[k] += s *
+/// pan[k]`, computed in two passes over chunks of 64 samples: the running
+/// pan sums for all channels (one 8-lane add per sample) stored per
+/// channel, then one contiguous multiply-add loop per output plane. The
+/// single-pass form (a scattered read-modify-write per plane and sample)
+/// compiled, under the viewer's fat LTO with AVX2, to code up to twice as
+/// slow as SoLoud's at 6 and 8 output channels.
 #[inline(always)]
 fn pan_mono<const N: usize>(
     buffer: &mut [f32],
@@ -348,21 +356,35 @@ fn pan_mono<const N: usize>(
     pan: &mut [f32; MAX_CHANNELS],
     pani: &[f32; MAX_CHANNELS],
 ) {
-    let o: [&mut [f32]; N] = planes_mut(buffer, bs, n);
+    const CHUNK: usize = 64;
+    let mut o: [&mut [f32]; N] = planes_mut(buffer, bs, n);
     let src = &scratch[..n];
-    let mut p = [0.0f32; N];
-    p.copy_from_slice(&pan[..N]);
-    let mut d = [0.0f32; N];
-    d.copy_from_slice(&pani[..N]);
-    for (j, &s) in src.iter().enumerate() {
-        for k in 0..N {
-            p[k] += d[k];
+    let mut p = [0.0f32; 8];
+    p[..N].copy_from_slice(&pan[..N]);
+    let mut d = [0.0f32; 8];
+    d[..N].copy_from_slice(&pani[..N]);
+    let mut cols = [[0.0f32; CHUNK]; 8];
+    let mut start = 0;
+    while start < n {
+        let len = CHUNK.min(n - start);
+        for j in 0..len {
+            for k in 0..8 {
+                p[k] += d[k];
+                cols[k][j] = p[k];
+            }
         }
-        for c in 0..N {
-            o[c][j] += s * p[c];
+        for (plane, col) in o.iter_mut().zip(&cols) {
+            for ((dst, &s), &pv) in plane[start..start + len]
+                .iter_mut()
+                .zip(&src[start..start + len])
+                .zip(&col[..len])
+            {
+                *dst += s * pv;
+            }
         }
+        start += len;
     }
-    pan[..N].copy_from_slice(&p);
+    pan[..N].copy_from_slice(&p[..N]);
 }
 
 /// The SSE 1->2 (`stereo == false`) and 2->2 (`stereo == true`) paths.
@@ -435,12 +457,14 @@ fn pan_sse_2(
     }
 }
 
-/// `clip_internal` (SSE path): `samples` is the stride (multiple of 16).
+/// `clip_internal` (SSE path): `samples` is the stride (multiple of 16),
+/// `plane` the distance between channel planes in `src` and `dst`.
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn clip(
     src: &[f32],
     dst: &mut [f32],
     samples: usize,
+    plane: usize,
     volume0: f32,
     volume1: f32,
     channels: usize,
@@ -452,7 +476,7 @@ pub(crate) fn clip(
     let samplequads = samples.div_ceil(4);
     let volumes = [v, v + vd, v + vd + vd, v + vd + vd + vd];
     vd *= 4.0;
-    let total = channels * samplequads * 4;
+    let total = channels.saturating_sub(1) * plane + samplequads * 4;
     let src = &src[..total];
     let dst = &mut dst[..total];
     if roundoff {
@@ -464,7 +488,7 @@ pub(crate) fn clip(
         const PW: f32 = 0.986_287_5;
         for ch in 0..channels {
             let mut vol = volumes;
-            let base = ch * samplequads * 4;
+            let base = ch * plane;
             for q in 0..samplequads {
                 let c = base + q * 4;
                 for l in 0..4 {
@@ -486,7 +510,7 @@ pub(crate) fn clip(
     } else {
         for ch in 0..channels {
             let mut vol = volumes;
-            let base = ch * samplequads * 4;
+            let base = ch * plane;
             for q in 0..samplequads {
                 let c = base + q * 4;
                 for l in 0..4 {
