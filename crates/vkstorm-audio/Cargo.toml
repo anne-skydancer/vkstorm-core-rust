@@ -55,3 +55,7 @@ windows-core = "=0.62.2"
 [[bench]]
 name = "mixer"
 harness = false
+
+[[example]]
+name = "render_music"
+required-features = ["link-curl"]
