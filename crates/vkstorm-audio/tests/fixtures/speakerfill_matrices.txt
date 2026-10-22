@@ -1,0 +1,490 @@
+# Speaker fill reference: today's VLC speakerfill filter and speakerfill_output module, recorded before the
+# Rust port by indra/llaudio/tests/speakerfill_record.cpp (built from vlc_speakerfill_test.cpp's harness) with
+# libvlc 3.0.21 Vetinari, the filter built by MSVC (vlc_speakerfill target), the output by llvm-mingw (vlc_speakerfill_output).
+# VLC channel order: L R ML MR RL RR RC C LFE; the output module maps it to FL FR SL SR BL BR BC FC LFE and
+# writes WAVEFORMATEXTENSIBLE order (FL FR FC LFE BL BR BC SL SR). Values are %.9g floats.
+
+# fill <source> <target mask> <impulse on input channel> -> bypass|fill, output channels in VLC order
+#   and the same frame in the device's WAVEFORMATEXTENSIBLE order (speakerfill-smooth-gain off)
+fill stereo none in=L -> bypass vlc[L,R]=1 0 device[FL,FR]=1 0
+fill stereo none in=R -> bypass vlc[L,R]=0 1 device[FL,FR]=0 1
+fill stereo 2.0 in=L -> bypass vlc[L,R]=1 0 device[FL,FR]=1 0
+fill stereo 2.0 in=R -> bypass vlc[L,R]=0 1 device[FL,FR]=0 1
+fill stereo 4.0 in=L -> fill vlc[L,R,RL,RR]=0.707106769 0 0.707106769 0 device[FL,FR,BL,BR]=0.707106769 0 0.707106769 0
+fill stereo 4.0 in=R -> fill vlc[L,R,RL,RR]=0 0.707106769 0 0.707106769 device[FL,FR,BL,BR]=0 0.707106769 0 0.707106769
+fill stereo 2.1 in=L -> fill vlc[L,R,LFE]=0.707106769 0 0 device[FL,FR,LFE]=0.707106769 0 0
+fill stereo 2.1 in=R -> fill vlc[L,R,LFE]=0 0.707106769 0 device[FL,FR,LFE]=0 0.707106769 0
+fill stereo 4.1rear in=L -> fill vlc[L,R,RL,RR,LFE]=0.707106769 0 0.707106769 0 0 device[FL,FR,LFE,BL,BR]=0.707106769 0 0 0.707106769 0
+fill stereo 4.1rear in=R -> fill vlc[L,R,RL,RR,LFE]=0 0.707106769 0 0.707106769 0 device[FL,FR,LFE,BL,BR]=0 0.707106769 0 0 0.707106769
+fill stereo 4.1side in=L -> fill vlc[L,R,ML,MR,LFE]=0.707106769 0 0.707106769 0 0 device[FL,FR,LFE,SL,SR]=0.707106769 0 0 0.707106769 0
+fill stereo 4.1side in=R -> fill vlc[L,R,ML,MR,LFE]=0 0.707106769 0 0.707106769 0 device[FL,FR,LFE,SL,SR]=0 0.707106769 0 0 0.707106769
+fill stereo 4.0side in=L -> fill vlc[L,R,ML,MR]=0.707106769 0 0.707106769 0 device[FL,FR,SL,SR]=0.707106769 0 0.707106769 0
+fill stereo 4.0side in=R -> fill vlc[L,R,ML,MR]=0 0.707106769 0 0.707106769 device[FL,FR,SL,SR]=0 0.707106769 0 0.707106769
+fill stereo 5.1rear in=L -> fill vlc[L,R,RL,RR,C,LFE]=0.707106769 0 0.707106769 0 0.353553385 0 device[FL,FR,FC,LFE,BL,BR]=0.707106769 0 0.353553385 0 0.707106769 0
+fill stereo 5.1rear in=R -> fill vlc[L,R,RL,RR,C,LFE]=0 0.707106769 0 0.707106769 0.353553385 0 device[FL,FR,FC,LFE,BL,BR]=0 0.707106769 0.353553385 0 0 0.707106769
+fill stereo 5.1side in=L -> fill vlc[L,R,ML,MR,C,LFE]=0.707106769 0 0.707106769 0 0.353553385 0 device[FL,FR,FC,LFE,SL,SR]=0.707106769 0 0.353553385 0 0.707106769 0
+fill stereo 5.1side in=R -> fill vlc[L,R,ML,MR,C,LFE]=0 0.707106769 0 0.707106769 0.353553385 0 device[FL,FR,FC,LFE,SL,SR]=0 0.707106769 0.353553385 0 0 0.707106769
+fill stereo 7.1 in=L -> fill vlc[L,R,ML,MR,RL,RR,C,LFE]=0.707106769 0 0.707106769 0 0.707106769 0 0.353553385 0 device[FL,FR,FC,LFE,BL,BR,SL,SR]=0.707106769 0 0.353553385 0 0.707106769 0 0.707106769 0
+fill stereo 7.1 in=R -> fill vlc[L,R,ML,MR,RL,RR,C,LFE]=0 0.707106769 0 0.707106769 0 0.707106769 0.353553385 0 device[FL,FR,FC,LFE,BL,BR,SL,SR]=0 0.707106769 0.353553385 0 0 0.707106769 0 0.707106769
+fill stereo 5.0rear(unsupported) in=L -> bypass vlc[L,R]=1 0 device[FL,FR]=1 0
+fill stereo 5.0rear(unsupported) in=R -> bypass vlc[L,R]=0 1 device[FL,FR]=0 1
+fill stereo 3.0(unsupported) in=L -> bypass vlc[L,R]=1 0 device[FL,FR]=1 0
+fill stereo 3.0(unsupported) in=R -> bypass vlc[L,R]=0 1 device[FL,FR]=0 1
+fill 5.1 none in=L -> bypass vlc[L,R,RL,RR,C,LFE]=1 0 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=1 0 0 0 0 0
+fill 5.1 none in=R -> bypass vlc[L,R,RL,RR,C,LFE]=0 1 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 1 0 0 0 0
+fill 5.1 none in=RL -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 1 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 1 0
+fill 5.1 none in=RR -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 1 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 0 1
+fill 5.1 none in=C -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 1 0 device[FL,FR,FC,LFE,BL,BR]=0 0 1 0 0 0
+fill 5.1 none in=LFE -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 0 1 device[FL,FR,FC,LFE,BL,BR]=0 0 0 1 0 0
+fill 5.1 2.0 in=L -> bypass vlc[L,R,RL,RR,C,LFE]=1 0 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=1 0 0 0 0 0
+fill 5.1 2.0 in=R -> bypass vlc[L,R,RL,RR,C,LFE]=0 1 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 1 0 0 0 0
+fill 5.1 2.0 in=RL -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 1 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 1 0
+fill 5.1 2.0 in=RR -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 1 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 0 1
+fill 5.1 2.0 in=C -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 1 0 device[FL,FR,FC,LFE,BL,BR]=0 0 1 0 0 0
+fill 5.1 2.0 in=LFE -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 0 1 device[FL,FR,FC,LFE,BL,BR]=0 0 0 1 0 0
+fill 5.1 4.0 in=L -> bypass vlc[L,R,RL,RR,C,LFE]=1 0 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=1 0 0 0 0 0
+fill 5.1 4.0 in=R -> bypass vlc[L,R,RL,RR,C,LFE]=0 1 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 1 0 0 0 0
+fill 5.1 4.0 in=RL -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 1 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 1 0
+fill 5.1 4.0 in=RR -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 1 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 0 1
+fill 5.1 4.0 in=C -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 1 0 device[FL,FR,FC,LFE,BL,BR]=0 0 1 0 0 0
+fill 5.1 4.0 in=LFE -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 0 1 device[FL,FR,FC,LFE,BL,BR]=0 0 0 1 0 0
+fill 5.1 2.1 in=L -> bypass vlc[L,R,RL,RR,C,LFE]=1 0 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=1 0 0 0 0 0
+fill 5.1 2.1 in=R -> bypass vlc[L,R,RL,RR,C,LFE]=0 1 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 1 0 0 0 0
+fill 5.1 2.1 in=RL -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 1 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 1 0
+fill 5.1 2.1 in=RR -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 1 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 0 1
+fill 5.1 2.1 in=C -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 1 0 device[FL,FR,FC,LFE,BL,BR]=0 0 1 0 0 0
+fill 5.1 2.1 in=LFE -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 0 1 device[FL,FR,FC,LFE,BL,BR]=0 0 0 1 0 0
+fill 5.1 4.1rear in=L -> bypass vlc[L,R,RL,RR,C,LFE]=1 0 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=1 0 0 0 0 0
+fill 5.1 4.1rear in=R -> bypass vlc[L,R,RL,RR,C,LFE]=0 1 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 1 0 0 0 0
+fill 5.1 4.1rear in=RL -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 1 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 1 0
+fill 5.1 4.1rear in=RR -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 1 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 0 1
+fill 5.1 4.1rear in=C -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 1 0 device[FL,FR,FC,LFE,BL,BR]=0 0 1 0 0 0
+fill 5.1 4.1rear in=LFE -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 0 1 device[FL,FR,FC,LFE,BL,BR]=0 0 0 1 0 0
+fill 5.1 4.1side in=L -> bypass vlc[L,R,RL,RR,C,LFE]=1 0 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=1 0 0 0 0 0
+fill 5.1 4.1side in=R -> bypass vlc[L,R,RL,RR,C,LFE]=0 1 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 1 0 0 0 0
+fill 5.1 4.1side in=RL -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 1 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 1 0
+fill 5.1 4.1side in=RR -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 1 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 0 1
+fill 5.1 4.1side in=C -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 1 0 device[FL,FR,FC,LFE,BL,BR]=0 0 1 0 0 0
+fill 5.1 4.1side in=LFE -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 0 1 device[FL,FR,FC,LFE,BL,BR]=0 0 0 1 0 0
+fill 5.1 4.0side in=L -> bypass vlc[L,R,RL,RR,C,LFE]=1 0 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=1 0 0 0 0 0
+fill 5.1 4.0side in=R -> bypass vlc[L,R,RL,RR,C,LFE]=0 1 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 1 0 0 0 0
+fill 5.1 4.0side in=RL -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 1 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 1 0
+fill 5.1 4.0side in=RR -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 1 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 0 1
+fill 5.1 4.0side in=C -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 1 0 device[FL,FR,FC,LFE,BL,BR]=0 0 1 0 0 0
+fill 5.1 4.0side in=LFE -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 0 1 device[FL,FR,FC,LFE,BL,BR]=0 0 0 1 0 0
+fill 5.1 5.1rear in=L -> bypass vlc[L,R,RL,RR,C,LFE]=1 0 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=1 0 0 0 0 0
+fill 5.1 5.1rear in=R -> bypass vlc[L,R,RL,RR,C,LFE]=0 1 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 1 0 0 0 0
+fill 5.1 5.1rear in=RL -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 1 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 1 0
+fill 5.1 5.1rear in=RR -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 1 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 0 1
+fill 5.1 5.1rear in=C -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 1 0 device[FL,FR,FC,LFE,BL,BR]=0 0 1 0 0 0
+fill 5.1 5.1rear in=LFE -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 0 1 device[FL,FR,FC,LFE,BL,BR]=0 0 0 1 0 0
+fill 5.1 5.1side in=L -> bypass vlc[L,R,RL,RR,C,LFE]=1 0 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=1 0 0 0 0 0
+fill 5.1 5.1side in=R -> bypass vlc[L,R,RL,RR,C,LFE]=0 1 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 1 0 0 0 0
+fill 5.1 5.1side in=RL -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 1 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 1 0
+fill 5.1 5.1side in=RR -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 1 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 0 1
+fill 5.1 5.1side in=C -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 1 0 device[FL,FR,FC,LFE,BL,BR]=0 0 1 0 0 0
+fill 5.1 5.1side in=LFE -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 0 1 device[FL,FR,FC,LFE,BL,BR]=0 0 0 1 0 0
+fill 5.1 7.1 in=L -> bypass vlc[L,R,RL,RR,C,LFE]=1 0 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=1 0 0 0 0 0
+fill 5.1 7.1 in=R -> bypass vlc[L,R,RL,RR,C,LFE]=0 1 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 1 0 0 0 0
+fill 5.1 7.1 in=RL -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 1 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 1 0
+fill 5.1 7.1 in=RR -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 1 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 0 1
+fill 5.1 7.1 in=C -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 1 0 device[FL,FR,FC,LFE,BL,BR]=0 0 1 0 0 0
+fill 5.1 7.1 in=LFE -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 0 1 device[FL,FR,FC,LFE,BL,BR]=0 0 0 1 0 0
+fill 5.1 5.0rear(unsupported) in=L -> bypass vlc[L,R,RL,RR,C,LFE]=1 0 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=1 0 0 0 0 0
+fill 5.1 5.0rear(unsupported) in=R -> bypass vlc[L,R,RL,RR,C,LFE]=0 1 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 1 0 0 0 0
+fill 5.1 5.0rear(unsupported) in=RL -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 1 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 1 0
+fill 5.1 5.0rear(unsupported) in=RR -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 1 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 0 1
+fill 5.1 5.0rear(unsupported) in=C -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 1 0 device[FL,FR,FC,LFE,BL,BR]=0 0 1 0 0 0
+fill 5.1 5.0rear(unsupported) in=LFE -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 0 1 device[FL,FR,FC,LFE,BL,BR]=0 0 0 1 0 0
+fill 5.1 3.0(unsupported) in=L -> bypass vlc[L,R,RL,RR,C,LFE]=1 0 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=1 0 0 0 0 0
+fill 5.1 3.0(unsupported) in=R -> bypass vlc[L,R,RL,RR,C,LFE]=0 1 0 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 1 0 0 0 0
+fill 5.1 3.0(unsupported) in=RL -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 1 0 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 1 0
+fill 5.1 3.0(unsupported) in=RR -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 1 0 0 device[FL,FR,FC,LFE,BL,BR]=0 0 0 0 0 1
+fill 5.1 3.0(unsupported) in=C -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 1 0 device[FL,FR,FC,LFE,BL,BR]=0 0 1 0 0 0
+fill 5.1 3.0(unsupported) in=LFE -> bypass vlc[L,R,RL,RR,C,LFE]=0 0 0 0 0 1 device[FL,FR,FC,LFE,BL,BR]=0 0 0 1 0 0
+fill mono none in=C -> bypass vlc[C]=1 device[FC]=1
+fill mono 2.0 in=C -> bypass vlc[C]=1 device[FC]=1
+fill mono 4.0 in=C -> bypass vlc[C]=1 device[FC]=1
+fill mono 2.1 in=C -> bypass vlc[C]=1 device[FC]=1
+fill mono 4.1rear in=C -> bypass vlc[C]=1 device[FC]=1
+fill mono 4.1side in=C -> bypass vlc[C]=1 device[FC]=1
+fill mono 4.0side in=C -> bypass vlc[C]=1 device[FC]=1
+fill mono 5.1rear in=C -> bypass vlc[C]=1 device[FC]=1
+fill mono 5.1side in=C -> bypass vlc[C]=1 device[FC]=1
+fill mono 7.1 in=C -> bypass vlc[C]=1 device[FC]=1
+fill mono 5.0rear(unsupported) in=C -> bypass vlc[C]=1 device[FC]=1
+fill mono 3.0(unsupported) in=C -> bypass vlc[C]=1 device[FC]=1
+
+# negotiate <device condition> <device mask> layout=<FSMusicSpatialSound> -> <result> device=<channels>[<mask>] published speakerfill-mask (VLC / device names); stereo 44100 Hz FL32 source unless noted
+negotiate speakers FL,FR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,LFE layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,LFE layout=21 -> ok device=3[FL,FR,LFE] stream=L,R,LFE published=L,R,LFE/FL,FR,LFE
+negotiate speakers FL,FR,LFE layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,LFE layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,LFE layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,LFE layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,LFE,BL,BR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,LFE,BL,BR layout=21 -> ok device=3[FL,FR,LFE] stream=L,R,LFE published=L,R,LFE/FL,FR,LFE
+negotiate speakers FL,FR,LFE,BL,BR layout=41 -> ok device=5[FL,FR,LFE,BL,BR] stream=L,R,RL,RR,LFE published=L,R,RL,RR,LFE/FL,FR,LFE,BL,BR
+negotiate speakers FL,FR,LFE,BL,BR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,LFE,BL,BR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,LFE,BL,BR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,BL,BR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,BL,BR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,BL,BR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,BL,BR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,BL,BR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,BL,BR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,LFE,SL,SR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,LFE,SL,SR layout=21 -> ok device=3[FL,FR,LFE] stream=L,R,LFE published=L,R,LFE/FL,FR,LFE
+negotiate speakers FL,FR,LFE,SL,SR layout=41 -> ok device=5[FL,FR,LFE,SL,SR] stream=L,R,ML,MR,LFE published=L,R,ML,MR,LFE/FL,FR,LFE,SL,SR
+negotiate speakers FL,FR,LFE,SL,SR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,LFE,SL,SR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,LFE,SL,SR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,FC,LFE,BL,BR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,FC,LFE,BL,BR layout=21 -> ok device=3[FL,FR,LFE] stream=L,R,LFE published=L,R,LFE/FL,FR,LFE
+negotiate speakers FL,FR,FC,LFE,BL,BR layout=41 -> ok device=5[FL,FR,LFE,BL,BR] stream=L,R,RL,RR,LFE published=L,R,RL,RR,LFE/FL,FR,LFE,BL,BR
+negotiate speakers FL,FR,FC,LFE,BL,BR layout=51 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=L,R,RL,RR,C,LFE/FL,FR,FC,LFE,BL,BR
+negotiate speakers FL,FR,FC,LFE,BL,BR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,FC,LFE,BL,BR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,FC,LFE,SL,SR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,FC,LFE,SL,SR layout=21 -> ok device=3[FL,FR,LFE] stream=L,R,LFE published=L,R,LFE/FL,FR,LFE
+negotiate speakers FL,FR,FC,LFE,SL,SR layout=41 -> ok device=5[FL,FR,LFE,SL,SR] stream=L,R,ML,MR,LFE published=L,R,ML,MR,LFE/FL,FR,LFE,SL,SR
+negotiate speakers FL,FR,FC,LFE,SL,SR layout=51 -> ok device=6[FL,FR,FC,LFE,SL,SR] stream=L,R,ML,MR,C,LFE published=L,R,ML,MR,C,LFE/FL,FR,FC,LFE,SL,SR
+negotiate speakers FL,FR,FC,LFE,SL,SR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,FC,LFE,SL,SR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,FC,LFE,BL,BR,SL,SR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate speakers FL,FR,FC,LFE,BL,BR,SL,SR layout=21 -> ok device=3[FL,FR,LFE] stream=L,R,LFE published=L,R,LFE/FL,FR,LFE
+negotiate speakers FL,FR,FC,LFE,BL,BR,SL,SR layout=41 -> ok device=5[FL,FR,LFE,BL,BR] stream=L,R,RL,RR,LFE published=L,R,RL,RR,LFE/FL,FR,LFE,BL,BR
+negotiate speakers FL,FR,FC,LFE,BL,BR,SL,SR layout=51 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=L,R,RL,RR,C,LFE/FL,FR,FC,LFE,BL,BR
+negotiate speakers FL,FR,FC,LFE,BL,BR,SL,SR layout=71 -> ok device=8[FL,FR,FC,LFE,BL,BR,SL,SR] stream=L,R,ML,MR,RL,RR,C,LFE published=L,R,ML,MR,RL,RR,C,LFE/FL,FR,FC,LFE,BL,BR,SL,SR
+negotiate speakers FL,FR,FC,LFE,BL,BR,SL,SR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE,BL,BR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE,BL,BR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE,BL,BR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE,BL,BR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE,BL,BR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE,BL,BR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,BL,BR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,BL,BR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,BL,BR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,BL,BR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,BL,BR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,BL,BR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE,SL,SR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE,SL,SR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE,SL,SR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE,SL,SR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE,SL,SR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,LFE,SL,SR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,BL,BR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,BL,BR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,BL,BR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,BL,BR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,BL,BR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,BL,BR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,SL,SR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,SL,SR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,SL,SR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,SL,SR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,SL,SR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,SL,SR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,BL,BR,SL,SR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,BL,BR,SL,SR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,BL,BR,SL,SR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,BL,BR,SL,SR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,BL,BR,SL,SR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate headphones FL,FR,FC,LFE,BL,BR,SL,SR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE,BL,BR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE,BL,BR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE,BL,BR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE,BL,BR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE,BL,BR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE,BL,BR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,BL,BR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,BL,BR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,BL,BR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,BL,BR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,BL,BR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,BL,BR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE,SL,SR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE,SL,SR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE,SL,SR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE,SL,SR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE,SL,SR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,LFE,SL,SR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,BL,BR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,BL,BR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,BL,BR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,BL,BR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,BL,BR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,BL,BR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,SL,SR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,SL,SR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,SL,SR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,SL,SR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,SL,SR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,SL,SR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate mixformat-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate source-5.1 FL,FR layout=0 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR layout=21 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR layout=41 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR layout=51 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR layout=71 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR layout=99 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE layout=0 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE layout=21 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE layout=41 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE layout=51 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE layout=71 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE layout=99 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE,BL,BR layout=0 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE,BL,BR layout=21 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE,BL,BR layout=41 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE,BL,BR layout=51 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE,BL,BR layout=71 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE,BL,BR layout=99 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,BL,BR layout=0 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,BL,BR layout=21 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,BL,BR layout=41 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,BL,BR layout=51 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,BL,BR layout=71 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,BL,BR layout=99 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE,SL,SR layout=0 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE,SL,SR layout=21 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE,SL,SR layout=41 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE,SL,SR layout=51 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE,SL,SR layout=71 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,LFE,SL,SR layout=99 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,BL,BR layout=0 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,BL,BR layout=21 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,BL,BR layout=41 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,BL,BR layout=51 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,BL,BR layout=71 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,BL,BR layout=99 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,SL,SR layout=0 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,SL,SR layout=21 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,SL,SR layout=41 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,SL,SR layout=51 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,SL,SR layout=71 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,SL,SR layout=99 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,BL,BR,SL,SR layout=0 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,BL,BR,SL,SR layout=21 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,BL,BR,SL,SR layout=41 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,BL,BR,SL,SR layout=51 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,BL,BR,SL,SR layout=71 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate source-5.1 FL,FR,FC,LFE,BL,BR,SL,SR layout=99 -> ok device=6[FL,FR,FC,LFE,BL,BR] stream=L,R,RL,RR,C,LFE published=-/-
+negotiate formfactor-fails FL,FR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE,BL,BR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE,BL,BR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE,BL,BR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE,BL,BR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE,BL,BR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE,BL,BR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,BL,BR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,BL,BR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,BL,BR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,BL,BR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,BL,BR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,BL,BR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE,SL,SR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE,SL,SR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE,SL,SR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE,SL,SR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE,SL,SR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,LFE,SL,SR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,BL,BR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,BL,BR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,BL,BR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,BL,BR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,BL,BR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,BL,BR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,SL,SR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,SL,SR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,SL,SR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,SL,SR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,SL,SR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,SL,SR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate formfactor-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate initialize-fails FL,FR layout=0 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR layout=21 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR layout=41 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR layout=51 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR layout=71 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR layout=99 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE layout=0 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE layout=21 -> failed device=3[FL,FR,LFE] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE layout=41 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE layout=51 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE layout=71 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE layout=99 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE,BL,BR layout=0 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE,BL,BR layout=21 -> failed device=3[FL,FR,LFE] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE,BL,BR layout=41 -> failed device=5[FL,FR,LFE,BL,BR] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE,BL,BR layout=51 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE,BL,BR layout=71 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE,BL,BR layout=99 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,BL,BR layout=0 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,BL,BR layout=21 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,BL,BR layout=41 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,BL,BR layout=51 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,BL,BR layout=71 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,BL,BR layout=99 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE,SL,SR layout=0 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE,SL,SR layout=21 -> failed device=3[FL,FR,LFE] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE,SL,SR layout=41 -> failed device=5[FL,FR,LFE,SL,SR] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE,SL,SR layout=51 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE,SL,SR layout=71 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,LFE,SL,SR layout=99 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,BL,BR layout=0 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,BL,BR layout=21 -> failed device=3[FL,FR,LFE] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,BL,BR layout=41 -> failed device=5[FL,FR,LFE,BL,BR] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,BL,BR layout=51 -> failed device=6[FL,FR,FC,LFE,BL,BR] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,BL,BR layout=71 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,BL,BR layout=99 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,SL,SR layout=0 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,SL,SR layout=21 -> failed device=3[FL,FR,LFE] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,SL,SR layout=41 -> failed device=5[FL,FR,LFE,SL,SR] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,SL,SR layout=51 -> failed device=6[FL,FR,FC,LFE,SL,SR] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,SL,SR layout=71 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,SL,SR layout=99 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=0 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=21 -> failed device=3[FL,FR,LFE] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=41 -> failed device=5[FL,FR,LFE,BL,BR] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=51 -> failed device=6[FL,FR,FC,LFE,BL,BR] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=71 -> failed device=8[FL,FR,FC,LFE,BL,BR,SL,SR] stream=- published=-/-
+negotiate initialize-fails FL,FR,FC,LFE,BL,BR,SL,SR layout=99 -> failed device=2[FL,FR] stream=- published=-/-
+negotiate surround-rejected FL,FR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE,BL,BR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE,BL,BR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE,BL,BR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE,BL,BR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE,BL,BR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE,BL,BR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,BL,BR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,BL,BR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,BL,BR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,BL,BR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,BL,BR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,BL,BR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE,SL,SR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE,SL,SR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE,SL,SR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE,SL,SR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE,SL,SR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,LFE,SL,SR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,BL,BR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,BL,BR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,BL,BR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,BL,BR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,BL,BR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,BL,BR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,SL,SR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,SL,SR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,SL,SR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,SL,SR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,SL,SR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,SL,SR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,BL,BR,SL,SR layout=0 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,BL,BR,SL,SR layout=21 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,BL,BR,SL,SR layout=41 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,BL,BR,SL,SR layout=51 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,BL,BR,SL,SR layout=71 -> ok device=2[FL,FR] stream=L,R published=-/-
+negotiate surround-rejected FL,FR,FC,LFE,BL,BR,SL,SR layout=99 -> ok device=2[FL,FR] stream=L,R published=-/-
+
+# gain curve: setMusicGain(volume) publishes speakerfill-gain (llvlcspeakerfillconfig.cpp)
+curve volume=0 -> gain=0
+curve volume=0.0500000007 -> gain=0.000125000006
+curve volume=0.100000001 -> gain=0.00100000005
+curve volume=0.104999997 -> gain=0.00115762488
+curve volume=0.125 -> gain=0.001953125
+curve volume=0.25 -> gain=0.015625
+curve volume=0.5 -> gain=0.125
+curve volume=0.75 -> gain=0.421875
+curve volume=0.899999976 -> gain=0.728999913
+curve volume=1 -> gain=1
+curve muted: setMusicGain(0.5, muted) -> gain=0.125 music-hard-mute=1 (the filter writes 0 while hard-muted)
+
+# ramp: per-sample gain on a constant 1.0 input after speakerfill-gain changes; the filter ramps
+#   linearly over rate/20 samples from the current gain, partition-independent (blocks of 37 frames)
+ramp rate=44100 1->0.25 samples=2215 [0]=1 [110]=0.962581992 [221]=0.924823821 [332]=0.887065649 [442]=0.849647641 [553]=0.81188947 [664]=0.774131298 [774]=0.73671329 [885]=0.698955119 [996]=0.661196947 [1107]=0.623438776 [1217]=0.586020768 [1328]=0.548262596 [1439]=0.510504425 [1549]=0.473088801 [1660]=0.435333937 [1771]=0.397579074 [1881]=0.360164344 [1992]=0.322409481 [2103]=0.284654617 [2214]=0.25
+ramp rate=44100 0.25->1 retargeted to 0 at 1102 samples=1102 [0]=0.25 [110]=0.28741473 [220]=0.324829459 [330]=0.362244189 [440]=0.399658918 [550]=0.437073648 [660]=0.474488378 [770]=0.51190412 [880]=0.549322128 [990]=0.586740136 [1101]=0.624498308
+ramp rate=44100 ...->0 samples=2215 [0]=0.624838471 [110]=0.593668818 [221]=0.562215805 [332]=0.530762792 [442]=0.499593139 [553]=0.468140125 [664]=0.436687112 [774]=0.405517459 [885]=0.374064445 [996]=0.342611432 [1107]=0.311158419 [1217]=0.279988766 [1328]=0.248535663 [1439]=0.217080995 [1549]=0.185909703 [1660]=0.154455036 [1771]=0.123000368 [1881]=0.0918290764 [1992]=0.0603744388 [2103]=0.0289201681 [2214]=0
+ramp rate=44100 open at gain 0.125: first sample 0.125 (no ramp from 1 at startup)
+ramp rate=48000 1->0.25 samples=2410 [0]=1 [120]=0.962499142 [240]=0.924998283 [361]=0.887184918 [481]=0.84968406 [602]=0.811870694 [722]=0.774369836 [843]=0.73655647 [963]=0.699055612 [1084]=0.661242247 [1204]=0.623741388 [1324]=0.58624053 [1445]=0.548427165 [1565]=0.510926306 [1686]=0.473112941 [1806]=0.435612082 [1927]=0.397798717 [2047]=0.360297859 [2168]=0.322484493 [2288]=0.284983635 [2409]=0.25
+ramp rate=48000 0.25->1 retargeted to 0 at 1200 samples=1200 [0]=0.25 [119]=0.287188351 [239]=0.324689209 [359]=0.362190068 [479]=0.399690926 [599]=0.437191784 [719]=0.474692643 [839]=0.512193501 [959]=0.549694359 [1079]=0.587195218 [1199]=0.624696076
+ramp rate=48000 ...->0 samples=2410 [0]=0.625008583 [120]=0.59375906 [240]=0.562509537 [361]=0.530999601 [481]=0.499750078 [602]=0.468240142 [722]=0.436990619 [843]=0.405480683 [963]=0.37423116 [1084]=0.342721224 [1204]=0.311471701 [1324]=0.280222178 [1445]=0.248712167 [1565]=0.217460856 [1686]=0.185949117 [1806]=0.154697806 [1927]=0.123186119 [2047]=0.0919357017 [2168]=0.0604248643 [2288]=0.0291744471 [2409]=0
+ramp rate=48000 open at gain 0.125: first sample 0.125 (no ramp from 1 at startup)
+
+# fade: music-fade-command = serial<<32 | round(seconds*1000)<<16 | round(target*65535); envelope from
+#   the current transition to the target over ms*rate/1000 samples, linear; speakerfill-gain 1 (no ramp);
+#   completion published after the block holding the final sample, fence = pts + (frame+1)*1e6/rate
+fade rate=44100 in 3.0s initial=0 target=1 samples=132301 [0]=0 [4410]=0.0333333351 [8820]=0.0666666701 [13230]=0.100000001 [17640]=0.13333334 [22050]=0.166666672 [26460]=0.200000003 [30870]=0.233333334 [35280]=0.266666681 [39690]=0.300000012 [44100]=0.333333343 [48510]=0.366666675 [52920]=0.400000006 [57330]=0.433333337 [61740]=0.466666669 [66150]=0.5 [70560]=0.533333361 [74970]=0.566666663 [79380]=0.600000024 [83790]=0.633333325 [88200]=0.666666687 [92610]=0.699999988 [97020]=0.733333349 [101430]=0.766666651 [105840]=0.800000012 [110250]=0.833333313 [114660]=0.866666675 [119070]=0.899999976 [123480]=0.933333337 [127890]=0.966666639 [132300]=1
+fade rate=44100 in 3.0s initial=0 target=1 duration_samples=132300 completed_after_frame=132608 fence_us=4000022 (block pts 1000000 + position*1e6/rate, blocks of 512)
+fade rate=44100 out 2.0s initial=1 target=0 samples=88201 [0]=1 [2940]=0.966666639 [5880]=0.933333337 [8820]=0.899999976 [11760]=0.866666675 [14700]=0.833333313 [17640]=0.800000012 [20580]=0.766666651 [23520]=0.733333349 [26460]=0.699999988 [29400]=0.666666627 [32340]=0.633333325 [35280]=0.600000024 [38220]=0.566666663 [41160]=0.533333302 [44100]=0.5 [47040]=0.466666639 [49980]=0.433333337 [52920]=0.399999976 [55860]=0.366666675 [58800]=0.333333313 [61740]=0.300000012 [64680]=0.266666651 [67620]=0.233333349 [70560]=0.199999988 [73500]=0.166666687 [76440]=0.133333325 [79380]=0.100000024 [82320]=0.0666666627 [85260]=0.0333333611 [88200]=0
+fade rate=44100 out 2.0s initial=1 target=0 duration_samples=88200 completed_after_frame=88576 fence_us=3000022 (block pts 1000000 + position*1e6/rate, blocks of 512)
+fade rate=48000 in 3.0s initial=0 target=1 samples=144001 [0]=0 [4800]=0.0333333351 [9600]=0.0666666701 [14400]=0.100000001 [19200]=0.13333334 [24000]=0.166666672 [28800]=0.200000003 [33600]=0.233333334 [38400]=0.266666681 [43200]=0.300000012 [48000]=0.333333343 [52800]=0.366666675 [57600]=0.400000006 [62400]=0.433333337 [67200]=0.466666669 [72000]=0.5 [76800]=0.533333361 [81600]=0.566666663 [86400]=0.600000024 [91200]=0.633333325 [96000]=0.666666687 [100800]=0.699999988 [105600]=0.733333349 [110400]=0.766666651 [115200]=0.800000012 [120000]=0.833333313 [124800]=0.866666675 [129600]=0.899999976 [134400]=0.933333337 [139200]=0.966666639 [144000]=1
+fade rate=48000 in 3.0s initial=0 target=1 duration_samples=144000 completed_after_frame=144384 fence_us=4000020 (block pts 1000000 + position*1e6/rate, blocks of 512)
+fade rate=48000 out 2.0s initial=1 target=0 samples=96001 [0]=1 [3200]=0.966666639 [6400]=0.933333337 [9600]=0.899999976 [12800]=0.866666675 [16000]=0.833333313 [19200]=0.800000012 [22400]=0.766666651 [25600]=0.733333349 [28800]=0.699999988 [32000]=0.666666627 [35200]=0.633333325 [38400]=0.600000024 [41600]=0.566666663 [44800]=0.533333302 [48000]=0.5 [51200]=0.466666639 [54400]=0.433333337 [57600]=0.399999976 [60800]=0.366666675 [64000]=0.333333313 [67200]=0.300000012 [70400]=0.266666651 [73600]=0.233333349 [76800]=0.199999988 [80000]=0.166666687 [83200]=0.133333325 [86400]=0.100000024 [89600]=0.0666666627 [92800]=0.0333333611 [96000]=0
+fade rate=48000 out 2.0s initial=1 target=0 duration_samples=96000 completed_after_frame=96256 fence_us=3000020 (block pts 1000000 + position*1e6/rate, blocks of 512)
