@@ -9,7 +9,7 @@ see README.md. The driver:
 
 1. runs it twice with VKS_TASK_DUMP=<scratch>/a and <scratch>/b. A dump run
    always exits non-zero (a dump is never a passing test); the driver checks
-   that each run wrote all four sets and nothing else failed;
+   that each run wrote all five dump-writing tests (four sets, set 1 in two) and nothing else failed;
 2. compares the two trees byte for byte and stops if they differ (a
    non-deterministic recording is never installed);
 3. replaces crates/vkstorm-inventory/tests/fixtures/task/ in this repository
@@ -33,7 +33,7 @@ import sys
 import tempfile
 
 KEPT = ("README.md", ".gitattributes")
-SETS = 4
+SETS = 5  # dump-writing tests: set 1 named, set 2, set 3, set 4, set 1 random
 
 
 def replace_tree(src, dest):

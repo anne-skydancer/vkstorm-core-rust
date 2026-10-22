@@ -31,7 +31,7 @@ constructor and destructor lines, which are kept as checked text in
 
 ### The copy check
 
-`indra/newview/tests/check_r4a_copies.py`, run by the test itself (test 7)
+`indra/newview/tests/check_r4a_copies.py`, run by the test itself (test 8)
 and standalone, checks every region of both files against the live source.
 Both sides are normalised: comments removed, string and character literals
 kept verbatim, whitespace outside literals collapsed within each line, empty
@@ -142,7 +142,7 @@ names the platform), binary inputs byte for byte, and the large sweeps by
 the SHA-256 of their canonical text, whole and per block of 97 units. A
 failure names the file, the content line, the case or trace it belongs to,
 and the expected and actual lines; a digest failure names the block and its
-unit range. Test 6 fails on any file missing from, or unexpected in, this
+unit range. Test 7 fails on any file missing from, or unexpected in, this
 directory (README.md and .gitattributes included). A dump run
 (`VKS_TASK_DUMP=<dir>`) writes the fixtures and always fails;
 `regenerate.py` dumps twice, requires identical trees, installs, and
@@ -191,7 +191,9 @@ none) the call is not made and the line says `not-called`.
   `DeleteOnCompletion` = 1, `UseBigPackets` = 0, `VFileID` null,
   `VFileType` -1).
 - `task_files_random_samples.txt`, inputs `random/random_NNNN.inv`: a seeded
-  sweep of 3000 mutated files (generator below); every 97th case (0, 97, ...)
+  sweep of 3000 mutated files (generator below), run as a test of its own
+  (test 6) after the named cases, so that a change which crashes on some
+  mutated file still reports the named cases first; every 97th case (0, 97, ...)
   is kept with its input; `digests_set1.txt` holds the SHA-256 of the
   concatenated case text of all 3000 and of each block of 97.
 

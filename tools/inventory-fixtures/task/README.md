@@ -22,7 +22,7 @@ python tools/inventory-fixtures/task/check_set1_inputs.py
 ```
 
 `regenerate.py` runs the executable twice with `VKS_TASK_DUMP` (a dump run
-always exits non-zero; the driver checks that all four sets were written and
+always exits non-zero; the driver checks that all four sets (five tests) were written and
 nothing else failed), requires the two trees to be byte-identical, replaces
 both fixture trees (keeping `README.md` and `.gitattributes`), and, with
 `--viewer`, replays against the new viewer fixtures, which must pass. Its
