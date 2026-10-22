@@ -30,6 +30,15 @@
 set -euo pipefail
 OUT=${1:?usage: make_fixtures.sh OUTDIR}
 ENC=${FDK_AAC_ENC:?set FDK_AAC_ENC to the aac-enc of fdk-aac v3.0.0}
+# Resolve the encoder before changing to OUTDIR: a path (relative ones are
+# taken from the caller's directory) becomes absolute, a bare command name is
+# looked up in PATH. The other tools are bare names looked up in PATH.
+if [[ "$ENC" == */* ]]; then
+    ENC="$(cd "$(dirname -- "$ENC")" && pwd)/$(basename -- "$ENC")"
+else
+    ENC=$(command -v -- "$ENC") || { echo "make_fixtures.sh: $FDK_AAC_ENC not found in PATH" >&2; exit 1; }
+fi
+[ -x "$ENC" ] || { echo "make_fixtures.sh: $ENC is not an executable" >&2; exit 1; }
 mkdir -p "$OUT"
 cd "$OUT"
 W=$(mktemp -d)
