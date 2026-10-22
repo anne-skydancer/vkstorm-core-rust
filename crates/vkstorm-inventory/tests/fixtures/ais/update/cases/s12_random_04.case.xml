@@ -24,6 +24,8 @@
     <integer>0</integer>
     <integer>12000</integer>
    </array>
+   <key>yield_extra_us</key>
+   <array />
   </map>
   <key>large</key>
   <boolean>false</boolean>

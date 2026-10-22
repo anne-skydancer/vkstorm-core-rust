@@ -1,35 +1,8 @@
 <?xml version="1.0" ?>
 <llsd>
- <map>
-  <key>error_code</key>
-  <integer>404</integer>
-  <key>error_description</key>
-  <string>item not found</string>
-  <key>item_id</key>
-  <uuid>a0000000-0000-4000-8000-000000000a02</uuid>
-  <key>http_result</key>
-  <map>
-   <key>success</key>
-   <boolean>false</boolean>
-   <key>type</key>
-   <integer>404</integer>
-   <key>status</key>
-   <integer>1</integer>
-   <key>message</key>
-   <string>Not Found</string>
-   <key>url</key>
-   <string>https://inventory.grid.example/cap/00000000-0000-4000-8000-00000000cafe/item/a0000000-0000-4000-8000-000000000a02</string>
-   <key>headers</key>
-   <map>
-    <key>content-type</key>
-    <string>application/llsd+xml</string>
-   </map>
-   <key>error_body</key>
-   <string>&lt;?xml version="1.0" ?&gt;
+<map><key>error_code</key><integer>404</integer><key>error_description</key><string>item not found</string><key>item_id</key><uuid>a0000000-0000-4000-8000-000000000a02</uuid><key>http_result</key><map><key>success</key><boolean>false</boolean><key>type</key><integer>404</integer><key>status</key><integer>1</integer><key>message</key><string>Not Found</string><key>url</key><string>https://inventory.grid.example/cap/00000000-0000-4000-8000-00000000cafe/item/a0000000-0000-4000-8000-000000000a02</string><key>headers</key><map><key>content-type</key><string>application/llsd+xml</string></map><key>error_body</key><string>&lt;?xml version="1.0" ?&gt;
 &lt;llsd&gt;
 &lt;map&gt;&lt;key&gt;error_code&lt;/key&gt;&lt;integer&gt;404&lt;/integer&gt;&lt;key&gt;error_description&lt;/key&gt;&lt;string&gt;item not found&lt;/string&gt;&lt;key&gt;item_id&lt;/key&gt;&lt;uuid&gt;a0000000-0000-4000-8000-000000000a02&lt;/uuid&gt;&lt;/map&gt;
 &lt;/llsd&gt;
-</string>
-  </map>
- </map>
+</string></map></map>
 </llsd>

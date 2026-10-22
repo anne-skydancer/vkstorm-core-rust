@@ -1,8 +1,32 @@
 # case s10a_large_recursive (digest and sample of the full output); review rendering of s10a_large_recursive.digest.llsd, one op per line
 # generator: INTEGRATION_TEST_llaisupdate_parity (indra/newview/tests/llaisupdate_parity_test.cpp), dump mode
-# viewer commit: a6d6a04641cfc97b919a258e1fe20fd0dbd8a18f (llaisapi.cpp blob b3ca253a86300c1f9d14713a9b3ff2522e79a3c7)
+# viewer commit: d2fb99af07705f5ee3e7223261a6d0205be7d494 (llaisapi.cpp blob b3ca253a86300c1f9d14713a9b3ff2522e79a3c7)
 # platform: windows
 case = 's10a_large_recursive'
+== never/chunks (23)
+[0] {'first':i0,'last':i1999,'sha256':'772507d79064c66e3d87490ece7dd44dc51b99450152d273260680120440090a'}
+[1] {'first':i2000,'last':i3999,'sha256':'b3a1fde4c64e970fd19ce6711805755d5717177522b3278958c443dd5a8cba6d'}
+[2] {'first':i4000,'last':i5999,'sha256':'a6c201f011068bc9bedc8e96f7acf9a28bee3c327b4c0808b9d2125ad00fd0aa'}
+[3] {'first':i6000,'last':i7999,'sha256':'4c82567408f4845a2f2d8647b5c666890af0584e4f8b4452fa9ccc89744de7d0'}
+[4] {'first':i8000,'last':i9999,'sha256':'68562405399b8006ec65d38e51a1e2e7328c08a08ea1024b5aa52805341891fa'}
+[5] {'first':i10000,'last':i11999,'sha256':'db0006e6a109e167679073b297af419c88b9c210b187fe2dab635ca7d8a81893'}
+[6] {'first':i12000,'last':i13999,'sha256':'7951b40ed35bc1b21ec815ea11da00dd9aa25125ba83bfc74def363eaaf58485'}
+[7] {'first':i14000,'last':i15999,'sha256':'51a589b987a18f1d149bb3d4ffede0f6aaf42e6d27fd790f826a519900fac058'}
+[8] {'first':i16000,'last':i17999,'sha256':'e579c55ffb515ba390e46389de09bf411975137c512a9d6035c3a76b95a81c1a'}
+[9] {'first':i18000,'last':i19999,'sha256':'c1ffe9e6b7c09b93a9b4a88154ff483a16c24592ffd83396e8b8ead772124210'}
+[10] {'first':i20000,'last':i21999,'sha256':'09b19f559747358ca68c0def28c6e4dd6a313b491c78f81d27cc162973307c51'}
+[11] {'first':i22000,'last':i23999,'sha256':'5b9465e16906395d227195c5a37e2b07b6fde496edb30d76edfd34dd0a9f906e'}
+[12] {'first':i24000,'last':i25999,'sha256':'d5867f5755702f052fc3eecb95b8f9cefbeb62443dc59ded948ef11fb81bd9c0'}
+[13] {'first':i26000,'last':i27999,'sha256':'ef2b69fc2175a45400197499c00b936ba697a39c94c03a332b4b380674583af7'}
+[14] {'first':i28000,'last':i29999,'sha256':'6a41414d5a875c3c7e7a272bbd40d7c08d4198a3154fc7b70374708dbb88ccdc'}
+[15] {'first':i30000,'last':i31999,'sha256':'fe32298290693fd92fdf6e9c06437a1d9e988be175709b438b0b0e2dfd41e6c1'}
+[16] {'first':i32000,'last':i33999,'sha256':'cc85694fc167a09d23acaf15f2083314af87211ca6a410b5fe37a4cfb5707be8'}
+[17] {'first':i34000,'last':i35999,'sha256':'9c3bcdaa0dbf43676123db81f93772c5919c00c514e157fdc3e4a5fbea476f3f'}
+[18] {'first':i36000,'last':i37999,'sha256':'c4f98c2d8ffea970876b9ed439caa47162f6d5d044d7221a12c05a20827e36d8'}
+[19] {'first':i38000,'last':i39999,'sha256':'71173363597504a183257b91dcfbee4705510a1363732d6883356114e81b7382'}
+[20] {'first':i40000,'last':i41999,'sha256':'cffb54a466c07a8345d90f0eb1fe24a61f25123d1c4f9730c0c9f423bb7f6de9'}
+[21] {'first':i42000,'last':i43999,'sha256':'7cb2721758e0789dd0e638ff4f5a0552406c8fbc1de7d9adbf536e445d7bfa25'}
+[22] {'first':i44000,'last':i45410,'sha256':'ff85aa15b642e25e3ba3a4f31b33d34c89a9b89d6da827d7056c29ff9d291691'}
 never/counts = {'callback':i1,'notifyObservers':i406,'q.getCategory':i2000,'q.getItem':i20500,'q.getVersion':i3,'step':i1,'updateCategory':i2000,'updateItem':i20500}
 == never/events (408)
 [0] {'index':i0,'op':'step','type':'FETCHCATEGORYCHILDREN'}
@@ -520,6 +544,30 @@ never/ops_sha256 = 'f7a2f5aaea89366df03c9f6e0c53d96687c87b0d29f449f8bdfbb94c262e
 [37] {'exists':0,'mask':i512,'model':'added','obj':{'asset_id':ua0000000-0000-4000-8000-0000001001f3,'complete':1,'created_at':i1700000500,'desc':'','faulted':0,'favorite':0,'flags':i0,'inv_type':i0,'item_id':ub0000000-0000-4000-8000-0000001001f3,'name':'Link 0499','parent_id':uc0000000-0000-4000-8000-0000001007cc,'permissions':{'base_mask':i532480,'creator_id':u0a000000-0000-4000-8000-000000000001,'everyone_mask':i0,'group_id':u00000000-0000-0000-0000-000000000000,'group_mask':i0,'is_owner_group':0,'last_owner_id':u00000000-0000-0000-0000-000000000000,'next_owner_mask':i0,'owner_id':u0a000000-0000-4000-8000-000000000001,'owner_mask':i0},'running':0,'runtime':'','sale_info':{'sale_price':i10,'sale_type':i0},'thumbnail_id':u00000000-0000-0000-0000-000000000000,'transaction_id':u00000000-0000-0000-0000-000000000000,'type':i24},'op':'updateItem','parent_known':1}
 [38] {'changed':i45,'op':'notifyObservers'}
 [39] {'id':uc0000000-0000-4000-8000-000000100000,'op':'callback'}
+== sched/chunks (23)
+[0] {'first':i0,'last':i1999,'sha256':'57b3555709939de662d2839d2f43306dc50b3ce7c8ac817b4a52def93054df92'}
+[1] {'first':i2000,'last':i3999,'sha256':'8f84a74b4351d99bd82f96d8810bab6987c9b2ab240897b47396c379e61ebf52'}
+[2] {'first':i4000,'last':i5999,'sha256':'6ce4103ca2b4d7a28fc5812a03c6c43bcafcd67bb2db6492b78d9187997f3445'}
+[3] {'first':i6000,'last':i7999,'sha256':'67bb22aceecfe63b68c6bb5dafe9e574dfda1baeb0639a6dfb637d19b754d64e'}
+[4] {'first':i8000,'last':i9999,'sha256':'f33ad6b4c21c44eeca87da2d4bfd1f717affdb14a75afc9fa7dfa5fc599d5c1e'}
+[5] {'first':i10000,'last':i11999,'sha256':'1bed81345226ddbe67513857ab3cfc7c19eb362001b1e2852f046979f316e422'}
+[6] {'first':i12000,'last':i13999,'sha256':'861175395fd880f14906f9f1e5b71df305d73cc3d3b9869b8065b2b74358a572'}
+[7] {'first':i14000,'last':i15999,'sha256':'1183b72c708e14b333762a9f21202eb7f81e66880e4e7c5f38ba6e701cfff9ee'}
+[8] {'first':i16000,'last':i17999,'sha256':'b726158c98ea19242c6fe2a4e1c0582b95501b2d232cb4ea17a92cc782ef1e41'}
+[9] {'first':i18000,'last':i19999,'sha256':'9f46b62173ab9b65e166a93e54cba951214d257236d24f4e96dbfa4c54557bc4'}
+[10] {'first':i20000,'last':i21999,'sha256':'40b4f2cf04256df9ce4cd4f2a26216fb23c021066fcccc32ccf70b24260c608c'}
+[11] {'first':i22000,'last':i23999,'sha256':'b57f2af16d4a77142642e688210d87a014a542b28ff567f99e5a1a0a6a27e484'}
+[12] {'first':i24000,'last':i25999,'sha256':'0b4be47284dc50bf859e5f330ff03ce777ea5a3ee10bbfdd5b68235e726247e6'}
+[13] {'first':i26000,'last':i27999,'sha256':'ae2fee8fb04fb242cea22a103eacd4b51da3330e63b0cc538744c8c76ba2d3de'}
+[14] {'first':i28000,'last':i29999,'sha256':'643e791585ef72fd7d00a45420b18d4d973a9b643f4c21277f73b004e72817fd'}
+[15] {'first':i30000,'last':i31999,'sha256':'364e134ea44f2e239172cd8e3be54270e4e2660ce26f620d39aa8be49919df8e'}
+[16] {'first':i32000,'last':i33999,'sha256':'8703a8851044e3a5e3ea598d1c754cc3a9bafa0c705dcbe68398dd31cfa28a1b'}
+[17] {'first':i34000,'last':i35999,'sha256':'be5fde2f89bb15ea9bb2ef832133ea3b5e7081c929e1ae2d6be9dba017084a79'}
+[18] {'first':i36000,'last':i37999,'sha256':'58f3701c37e6b658f61dae746565cabb2ebb86c40a168775c3871f1155f9509e'}
+[19] {'first':i38000,'last':i39999,'sha256':'2dbed91a390447736d8549debbd1ae0e6ad937f9dcea5c057ff518223080dbee'}
+[20] {'first':i40000,'last':i41999,'sha256':'cbdfbaa52efd11b53bf9e4edfe01d3fadd5047da146992ad51e85816606d48c6'}
+[21] {'first':i42000,'last':i43999,'sha256':'abf5fee0ec4fca24579a16ff774d49d985fbaf4be4c62069b19634678ad2ec61'}
+[22] {'first':i44000,'last':i45467,'sha256':'78e9111af208b89d0f186620bfb9f1ad32df3f16770f80fea4e9dd765e5edf32'}
 sched/counts = {'callback':i1,'notifyObservers':i406,'q.getCategory':i2000,'q.getItem':i20500,'q.getVersion':i3,'step':i1,'updateCategory':i2000,'updateItem':i20500,'yield':i57}
 == sched/events (465)
 [0] {'index':i0,'op':'step','type':'FETCHCATEGORYCHILDREN'}

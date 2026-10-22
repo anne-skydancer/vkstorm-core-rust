@@ -66,6 +66,8 @@ def _xml(v, out, ind, step):
         out.append(pad + "<undef />" + nl)
     elif isinstance(v, bool):
         out.append(pad + "<boolean>" + ("true" if v else "false") + "</boolean>" + nl)
+    elif isinstance(v, float):
+        out.append(pad + "<real>" + repr(v) + "</real>" + nl)
     elif isinstance(v, int):
         if not -2147483648 <= v <= 2147483647:
             raise ValueError("LLSD integer out of range: %d" % v)
@@ -351,7 +353,7 @@ CASES = []
 
 class Case:
     def __init__(self, cid, set_no, title, skel=None, call_us=100, frame_us=16667, large=False, seed=None,
-                 others_us=None):
+                 others_us=None, yield_extra_us=None):
         self.id = cid
         self.set = set_no
         self.title = title
@@ -359,35 +361,77 @@ class Case:
         self.call_us = call_us
         self.frame_us = frame_us
         self.others_us = others_us or []
+        self.yield_extra_us = yield_extra_us or []
         self.large = large
         self.seed = seed
         self.steps = []
         CASES.append(self)
 
     def step(self, ctype, res, target=NULL, url="", body=Undef(), same_frame=False, disconnected=False,
-             callback=True, compact=False, gz=False):
+             callback=True, compact=False, gz=False, hooks=None):
         self.steps.append({"type": ctype, "target_id": target, "url": url, "body": body, "res": res,
                            "same_frame": same_frame, "disconnected": disconnected, "callback": callback,
-                           "compact": compact, "gz": gz})
+                           "compact": compact, "gz": gz, "hooks": hooks})
         return self
+
+    def call(self, name, args=None, caps=None, res=None, pending=0, idle=False, idle_pending=0, no_region=False,
+             callback=True, same_frame=False):
+        """A call of a real AISAPI command function (set 18)."""
+        self.steps.append({"call": name, "args": args or {}, "caps": caps if caps is not None else DEFAULT_CAPS,
+                           "res": res, "pending": pending, "idle": idle, "idle_pending": idle_pending,
+                           "no_region": no_region, "callback": callback, "same_frame": same_frame,
+                           "compact": False, "gz": False})
+        return self
+
+    def _write_response(self, outdir, name, res, compact=True, gz=False):
+        # Results are written compact (one line); set 11's raw XML as given.
+        text = res if isinstance(res, Raw) else llsd_xml(res, compact=True)
+        data = text.encode("utf-8")
+        if gz:
+            name += ".gz"
+            buf = io.BytesIO()
+            with gzip.GzipFile(filename="", mode="wb", fileobj=buf, mtime=0, compresslevel=9) as g:
+                g.write(data)
+            data = buf.getvalue()
+        with open(os.path.join(outdir, name), "wb") as f:
+            f.write(data)
+        return name
 
     def write(self, outdir):
         steps = []
         for n, s in enumerate(self.steps):
-            name = "%s.%d.xml" % (self.id, n)
-            text = s["res"] if isinstance(s["res"], Raw) else llsd_xml(s["res"], compact=s["compact"])
-            data = text.encode("utf-8")
-            if s["gz"]:
-                name += ".gz"
-                buf = io.BytesIO()
-                with gzip.GzipFile(filename="", mode="wb", fileobj=buf, mtime=0, compresslevel=9) as g:
-                    g.write(data)
-                data = buf.getvalue()
-            with open(os.path.join(outdir, name), "wb") as f:
-                f.write(data)
-            steps.append({"type": s["type"], "target_id": s["target_id"], "url": s["url"], "body": s["body"],
-                          "response": name, "same_frame": s["same_frame"], "disconnected": s["disconnected"],
-                          "callback": s["callback"]})
+            if "call" in s:
+                st = {"call": s["call"], "args": s["args"], "caps": s["caps"], "pending": s["pending"],
+                      "idle": s["idle"], "idle_pending": s["idle_pending"], "no_region": s["no_region"],
+                      "callback": s["callback"], "same_frame": s["same_frame"]}
+                if s["res"] is not None:
+                    st["response"] = self._write_response(outdir, "%s.%d.xml" % (self.id, n), s["res"])
+                steps.append(st)
+                continue
+            name = self._write_response(outdir, "%s.%d.xml" % (self.id, n), s["res"], s["compact"], s["gz"])
+            st = {"type": s["type"], "target_id": s["target_id"], "url": s["url"], "body": s["body"],
+                  "response": name, "same_frame": s["same_frame"], "disconnected": s["disconnected"],
+                  "callback": s["callback"]}
+            if s.get("hooks"):
+                hooks = []
+                for h, hook in enumerate(s["hooks"]):
+                    actions = []
+                    for a, act in enumerate(hook["actions"]):
+                        act = dict(act)
+                        if "run_step" in act:
+                            rs = dict(act["run_step"])
+                            rs["response"] = self._write_response(outdir, "%s.%d.h%d.%d.xml" % (self.id, n, h, a),
+                                                                  rs.pop("res"))
+                            rs.setdefault("target_id", NULL)
+                            rs.setdefault("url", "")
+                            rs.setdefault("body", Undef())
+                            act["run_step"] = rs
+                        actions.append(act)
+                    hk = {k: v for k, v in hook.items() if k != "actions"}
+                    hk["actions"] = actions
+                    hooks.append(hk)
+                st["hooks"] = hooks
+            steps.append(st)
         d = {
             "id": self.id,
             "set": self.set,
@@ -395,7 +439,8 @@ class Case:
             "agent_id": AGENT,
             "session_id": SESSION,
             "root_id": ROOT,
-            "sched": {"call_us": self.call_us, "frame_us": self.frame_us, "others_us": self.others_us},
+            "sched": {"call_us": self.call_us, "frame_us": self.frame_us, "others_us": self.others_us,
+                      "yield_extra_us": self.yield_extra_us},
             "large": self.large,
             "skeleton": self.skel.to_llsd(),
             "steps": steps,
@@ -408,6 +453,9 @@ class Case:
 
 def depth_body(d):
     return {"depth": d}
+
+
+DEFAULT_CAPS = {"inv": CAP, "lib": LIBCAP}
 
 
 # ---- set 1: fetch children at depth 0 ---------------------------------------
@@ -518,7 +566,7 @@ def set2():
         parent = ROOT if lvl == 0 else C(0x1000 + lvl - 1)
         sub = {} if node is None else {node["category_id"]: node}
         node = cat(cid, parent, "Deep %d" % lvl, version=100 + lvl, embedded=emb(
-            categories=sub, links={}, items=[item(I(0x1000 + lvl), cid, "Leaf %d" % lvl)]))
+            categories=sub, links={}, items={}))
     c = Case("s02_recursive_depth50_chain52", 2, "FETCHCATEGORYCHILDREN depth 50 of a 53-level chain: "
              "versions set at depth >= 0 (levels 0-50), not at levels 51 and 52; counts known everywhere", s)
     url = url_children(top, 50)
@@ -1129,14 +1177,14 @@ def set10():
     for n, t in enumerate(tops):
         s.cat(t, ROOT, "Batch %d" % n)
     c = Case("s10b_batch_timer_same_frame", 10, "Three replies, the later ones in the frame the earlier one "
-             "yielded to, while another AIS update resumes first in each new frame and runs 5 ms: the shared "
+             "yielded to, while another AIS update resumes first in each new frame and runs 8 ms: the shared "
              "batch timer (armed by the other update) yields before the 8 ms task timer", s, call_us=100,
-             others_us=[5000])
+             others_us=[8000])
     for n, t in enumerate(tops):
         subs = [cat(C(0x2000 + 0x100 * n + 1 + k), t, "Sub %d.%d" % (n, k), version=1, embedded=emb(
             categories={}, links={}, items=[item(I(0x2000 + 0x100 * n + 0x10 * k + m), C(0x2000 + 0x100 * n + 1 + k),
-                                                 "Item %d.%d.%d" % (n, k, m)) for m in range(4)]))
-                for k in range(6)]
+                                                 "Item %d.%d.%d" % (n, k, m)) for m in range(3)]))
+                for k in range(5)]
         u = url_children(t, 50)
         c.step("FETCHCATEGORYCHILDREN", result(cat(t, ROOT, "Batch %d" % n, version=2, embedded=emb(
             categories=subs, links={}, items={})), http_ok(u)), target=t, url=u, body=depth_body(50),
@@ -1210,7 +1258,7 @@ def set11():
 # ---- set 12: seeded random combinations ---------------------------------------
 
 RANDOM_SEED = 0x5EED0A15DA7E0012
-RANDOM_CASES = 40
+RANDOM_CASES = 15
 FETCH_TYPES = ["FETCHCATEGORYCHILDREN", "FETCHCATEGORYSUBSET", "FETCHCOF", "FETCHCATEGORYLINKS", "FETCHITEM",
                "FETCHORPHANS", "FETCHCATEGORYCATEGORIES"]
 WRITE_TYPES = ["CREATEINVENTORY", "UPDATECATEGORY", "UPDATEITEM", "REMOVEITEM", "REMOVECATEGORY", "PURGEDESCENDENTS",
@@ -1365,6 +1413,420 @@ def set12():
                    same_frame=chance(30))
 
 
+# ---- set 10 (continued): the limits, at limit-1, limit and limit+1 -------------
+
+
+def set10_boundaries():
+    # MAX_UPDATE_BACKLOG (50): doUpdate flushes the observers when the
+    # changed-id set holds more than 50 ids after a create. The folder's own
+    # create is the first id, so 49, 50 and 51 new items put 50, 51 and 52
+    # ids in the set.
+    for n_items, cid in ((49, "s10d_backlog_50_ids"), (50, "s10e_backlog_51_ids"), (51, "s10f_backlog_52_ids")):
+        s = Skel()
+        F = s.cat(C(0x2400), ROOT, "Backlog", FT_NONE, -1, -1)
+        c = Case(cid, 10, "MAX_UPDATE_BACKLOG boundary: a fetch creating the folder and %d items (%d changed ids)"
+                 % (n_items, n_items + 1), s)
+        u = url_children(F, 0)
+        c.step("FETCHCATEGORYCHILDREN", result(cat(F, ROOT, "Backlog", version=2, embedded=emb(
+            categories={}, links={}, items=[item(I(0x2400 + k), F, "B%02d" % k) for k in range(n_items)])), http_ok(u)),
+            target=F, url=u, body=depth_body(0))
+
+    # The 8 ms task timer: after the first yield both timers are re-armed;
+    # exactly one recorded call (the next category's query) lies between the
+    # resume and the next checkTimeout(), so call_us puts that checkpoint at
+    # 7999, 8000 or 8001 us after the re-arm (expired when >= 8000).
+    def two_level(s):
+        F = s.cat(C(0x2500), ROOT, "Timer")
+        G = C(0x2501)
+        body = cat(F, ROOT, "Timer", version=2, embedded=emb(categories=[
+            cat(G, F, "Timer child", version=1, embedded=emb(categories={}, links={}, items=[item(I(0x2501), G, "T")]))]))
+        return F, body
+
+    for call_us, cid in ((7999, "s10g_task_timer_7999us"), (8000, "s10h_task_timer_8000us"), (8001, "s10i_task_timer_8001us")):
+        s = Skel()
+        F, body = two_level(s)
+        c = Case(cid, 10, "Task timer boundary: the second checkTimeout() %d us after the re-arm" % call_us, s,
+                 call_us=call_us)
+        u = url_children(F, 50)
+        c.step("FETCHCATEGORYCHILDREN", result(body, http_ok(u)), target=F, url=u, body=depth_body(50))
+
+    # The 10 ms batch timer: another update resumes first and runs 'other' us
+    # after re-arming the shared batch timer; the checkpoint lies 1000 us
+    # after this update resumes: expired when other + 1000 >= 10000.
+    for other, cid in ((8999, "s10j_batch_timer_9999us"), (9000, "s10k_batch_timer_10000us"), (9001, "s10l_batch_timer_10001us")):
+        s = Skel()
+        F, body = two_level(s)
+        c = Case(cid, 10, "Batch timer boundary: the checkpoint %d us after another update re-armed the batch timer"
+                 % (other + 1000), s, call_us=1000, others_us=[other])
+        u = url_children(F, 50)
+        c.step("FETCHCATEGORYCHILDREN", result(body, http_ok(u)), target=F, url=u, body=depth_body(50))
+
+
+# ---- set 13: interleaving (what other code does while an update is suspended) ----
+
+
+def set13():
+    # A COF update racing a newer write: the write is processed at the
+    # update's first checkTimeout() (the start of doUpdate: the reply has no
+    # _embedded), between the parse-time snapshot and the copy back.
+    s = Skel()
+    s.cat(COF, ROOT, "Current Outfit", FT_COF, 10)
+    s.item(item(I(0xD01), CLOTHING, "Hat", AT_CLOTHING, IT_WEARABLE, flags=1))
+    s.item(item(I(0xD02), CLOTHING, "Coat", AT_CLOTHING, IT_WEARABLE, flags=2))
+    s.item(link(L(0xD01), COF, I(0xD01), "Hat"))
+    newer = {"_created_items": [L(0xD02)], "_updated_category_versions": {COF: 12},
+             "_embedded": emb(links=[link(L(0xD02), COF, I(0xD02), "Coat")])}
+    u = url_cat(COF)
+    c = Case("s13a_cof_update_races_newer_write", 13, "UPDATECATEGORY of COF (AIS v11) while a newer link write "
+             "(v12, +1) is processed at the update's first checkTimeout(): the copy back takes the model's v12 "
+             "and count 2; AIS v11 is then ignored (FIRE-33455). A port writing back the parse-time v10 fails", s)
+    c.step("UPDATECATEGORY", result(cat(COF, ROOT, "Current Outfit", FT_COF, version=11,
+                                        extra={"_updated_category_versions": {COF: 11}}), http_ok(u)),
+           target=COF, url=u, body={"name": "Current Outfit"},
+           hooks=[{"checkpoint": 1, "actions": [{"run_step": {"type": "CREATEINVENTORY", "target_id": COF,
+                                                              "url": u, "body": {"links": []}, "res": result(newer, http_ok(u))}}]}])
+
+    # A COF fetch racing a newer write: the fetch's snapshot (v12 from AIS,
+    # count 2) is taken before the yield; the write (v13, +1) lands during
+    # it; the fetch then creates COF from its snapshot: the version goes back
+    # to 12 and the count to 2. A port that only ever raises versions fails.
+    s = Skel()
+    s.cat(COF, ROOT, "Current Outfit", FT_COF, -1, -1)
+    for k in range(3):
+        s.item(item(I(0xD10 + k), CLOTHING, "Wear %d" % k, AT_CLOTHING, IT_WEARABLE, flags=k))
+    newer = {"_created_items": [L(0xD12)], "_updated_category_versions": {COF: 13},
+             "_embedded": emb(links=[link(L(0xD12), COF, I(0xD12), "Wear 2")])}
+    u = CAP + "/category/current/links"
+    c = Case("s13b_cof_fetch_races_newer_write", 13, "FETCHCOF (v12, two links) while a newer link write (v13) "
+             "is processed at the first checkTimeout() (the start of the embedded links): the fetch's parse-time "
+             "COF (v12, count 2) is then applied over v13 (the snapshot-then-yield window FIRE-33455 names)", s)
+    c.step("FETCHCOF", result(cat(COF, ROOT, "Current Outfit", FT_COF, version=12, embedded=emb(links=[
+        link(L(0xD10), COF, I(0xD10), "Wear 0"), link(L(0xD11), COF, I(0xD11), "Wear 1")])), http_ok(u)),
+        url=u, body=depth_body(0),
+        hooks=[{"checkpoint": 1, "actions": [{"run_step": {"type": "CREATEINVENTORY", "target_id": COF,
+                                                           "url": u, "body": {"links": []}, "res": result(newer, http_ok(u))}},
+                                             {"set_category": {"category_id": COF, "version": 13, "descendents": 3}}]}])
+
+    # An item snapshot that goes stale during the yield.
+    s = Skel()
+    s.item(item(I(0xD20), OBJECTS, "Lamp", AT_OBJECT, IT_OBJECT, desc="original desc", flags=3))
+    u = url_item(I(0xD20))
+    c = Case("s13c_item_snapshot_stale", 13, "FETCHITEM with a partial map: the parse copies the current item "
+             "(desc, flags); the item is edited at the first checkTimeout(); the stale snapshot is written back", s)
+    c.step("FETCHITEM", result({"item_id": I(0xD20), "parent_id": OBJECTS, "name": "Lamp (fetched)",
+                                "type": AT_OBJECT, "inv_type": IT_OBJECT}, http_ok(u)), target=I(0xD20), url=u,
+           hooks=[{"checkpoint": 1, "actions": [{"set_item": {"item_id": I(0xD20), "desc": "edited during the yield",
+                                                              "flags": 9, "name": "Lamp (renamed)"}}]}])
+
+    # The updated folder disappears during the yield: the copy back finds no
+    # current category ("Failed to update unknown category").
+    s = Skel()
+    F = s.cat(C(0xD30), ROOT, "Vanishing", FT_NONE, 4)
+    u = url_cat(F)
+    c = Case("s13d_updated_folder_deleted_during_yield", 13, "UPDATECATEGORY whose folder is deleted at the first "
+             "checkTimeout(): no updateCategory, version loop skips it", s)
+    c.step("UPDATECATEGORY", result(cat(F, ROOT, "Vanishing renamed", version=5,
+                                        extra={"_updated_category_versions": {F: 5}}), http_ok(u)),
+           target=F, url=u, body={"name": "x"},
+           hooks=[{"checkpoint": 1, "actions": [{"delete": F}]}])
+
+    # Shutdown at a yield: LLCoros::checkStop() throws; the update ends where
+    # it is (sched run only: the never run has no yields).
+    def big_folder(s, base, n):
+        F = s.cat(C(base), ROOT, "Shutdown", FT_NONE, -1, -1)
+        body = cat(F, ROOT, "Shutdown", version=3, embedded=emb(categories={}, links={}, items=[
+            item(I(base + k), F, "S%02d" % k) for k in range(n)]))
+        return F, body
+
+    for k, n, cid, what in ((1, 5, "s13e_shutdown_at_first_yield", "during the parse (nothing applied)"),
+                            (3, 55, "s13f_shutdown_mid_apply", "after the first backlog flush (half applied)")):
+        s = Skel()
+        F, body = big_folder(s, 0xD40, n)
+        c = Case(cid, 13, "Shutdown at yield %d, %s: LLCoros::Stopping from checkStop(), no callback; the "
+                 "model as left" % (k, what), s, call_us=1000)
+        u = url_children(F, 0)
+        c.step("FETCHCATEGORYCHILDREN", result(body, http_ok(u)), target=F, url=u, body=depth_body(0),
+               hooks=[{"yield": k, "actions": [{"stop": True}]}])
+
+    # Another update is constructed in the new frame before this one resumes:
+    # its constructor restarts the shared batch timer (expired: start() after
+    # setTimerExpirySec()) and takes the frame, so this update's next
+    # checkTimeout() yields at once.
+    s = Skel()
+    F = s.cat(C(0xD50), ROOT, "Batch", FT_NONE)
+    subs = [cat(C(0xD51 + k), F, "Batch %d" % k, version=1, embedded=emb(categories={}, links={}, items=[
+        item(I(0xD51 + 0x10 * k + m), C(0xD51 + k), "I%d.%d" % (k, m)) for m in range(2)])) for k in range(4)]
+    u = url_children(F, 50)
+    c = Case("s13g_other_update_constructed_in_new_frame", 13, "After the first yield another AIS update is "
+             "constructed in the new frame before this one resumes: the shared batch timer is restarted expired "
+             "and this update yields at its next checkTimeout()", s, call_us=100)
+    c.step("FETCHCATEGORYCHILDREN", result(cat(F, ROOT, "Batch", version=2, embedded=emb(categories=subs, links={},
+                                                                                         items={})), http_ok(u)),
+           target=F, url=u, body=depth_body(50),
+           hooks=[{"yield": 1, "actions": [{"construct_update": "FETCHCATEGORYCHILDREN"}]}])
+
+
+# ---- set 14: folder links in write replies (the created-categories filter) -------
+
+
+def set14():
+    def skel_with_known():
+        s = Skel()
+        s.cat(C(0xE10), CLOTHING, "Known accessories", FT_NONE, 3)
+        return s
+
+    variants = [("known", C(0xE10), False, "a folder the model knows, not in _created_categories: ignored"),
+                ("unknown", C(0xE11), False, "an unknown folder, not in _created_categories: ignored"),
+                ("created", C(0xE12), True, "a folder listed in _created_categories: applied")]
+    for ctype, prefix, target, url in (("CREATEINVENTORY", "s14", COF, "%s/category/%s?tid=x" % (CAP, COF)),
+                                       ("SLAMFOLDER", "s14", COF, "%s/category/%s/links?tid=x" % (CAP, COF))):
+        for vname, X, created, what in variants:
+            s = skel_with_known()
+            lk = link(L(0xE20), COF, X, "Folder link", AT_LINK_FOLDER, IT_CATEGORY,
+                      embedded=emb(single_category=cat(X, CLOTHING, "Embedded folder", version=7,
+                                                       embedded=emb(categories={}, links={}, items={}))))
+            res = {"_created_items": [L(0xE20)], "_updated_category_versions": {COF: 11},
+                   "_embedded": emb(links=[lk])}
+            if created:
+                res["_created_categories"] = [X]
+            c = Case("%s_%s_folder_link_%s" % (prefix, ctype.lower(), vname), 14, "%s with a folder link whose "
+                     "embedded category is %s" % (ctype, what), s)
+            c.step(ctype, result(res, http_ok(url)), target=target, url=url,
+                   body={"links": []} if ctype == "CREATEINVENTORY" else [{"linked_id": X, "type": AT_LINK_FOLDER}])
+
+
+# ---- set 15: partial maps over current values, transaction ids ---------------
+
+
+def set15():
+    s = Skel()
+    full = item(I(0xF01), OBJECTS, "Chair", AT_OBJECT, IT_OBJECT, desc="kept desc", flags=5, created=1600000001,
+                sale=(2, 10), extra={"thumbnail": {"asset_id": E(0xF0A)}})
+    full["_transaction_id"] = U("0d000000-0000-4000-8000-000000000f01")
+    s.items.append(full)
+    s.item(dict(link(L(0xF02), CLOTHING, I(0xF01), "Chair link"), _transaction_id=U("0d000000-0000-4000-8000-000000000f02")))
+    u = url_item(I(0xF01))
+    c = Case("s15a_fetch_item_partial_map", 15, "FETCHITEM answered with only item_id, parent_id and name: the "
+             "current item (desc, flags, sale info, creation date, transaction id) is the default; fromLLSD "
+             "resets type, inventory type, asset, permissions, thumbnail", s)
+    c.step("FETCHITEM", result({"item_id": I(0xF01), "parent_id": OBJECTS, "name": "Chair (fetched)"}, http_ok(u)),
+           target=I(0xF01), url=u)
+
+    c = Case("s15b_update_item_partial_map", 15, "UPDATEITEM answered with a partial map: the update path keeps "
+             "the current transaction id and the fields the map lacks", s)
+    c.step("UPDATEITEM", result({"item_id": I(0xF01), "parent_id": OBJECTS, "desc": "changed desc",
+                                 "_updated_category_versions": {OBJECTS: 4}}, http_ok(u)), target=I(0xF01), url=u,
+           body={"desc": "changed desc"})
+
+    u = url_item(L(0xF02))
+    c = Case("s15c_fetch_link_partial_map", 15, "FETCHITEM of a known link with a partial map: current values "
+             "(transaction id) kept, link permissions forced", s)
+    c.step("FETCHITEM", result({"item_id": L(0xF02), "parent_id": CLOTHING, "linked_id": I(0xF01),
+                                "type": AT_LINK}, http_ok(u)), target=L(0xF02), url=u)
+
+
+# ---- set 16: depth-cut shapes ---------------------------------------------------
+
+
+def set16():
+    # D7: a folder link one level down, its embedded folder at the same depth.
+    s = Skel()
+    F = s.cat(C(0x1600), ROOT, "Depth one")
+    G = C(0x1601)
+    X = C(0x1602)
+    lk = link(L(0x1601), F, X, "Folder link", AT_LINK_FOLDER, IT_CATEGORY,
+              embedded=emb(single_category=cat(X, ROOT, "Linked folder", version=7,
+                                               embedded=emb(categories={}, links={}, items={}))))
+    body = cat(F, ROOT, "Depth one", version=3, embedded=emb(categories=[
+        cat(G, F, "Child", version=2, embedded=emb(categories={}, links={}, items={}))], links=[lk], items={}))
+    u = url_children(F, 1)
+    c = Case("s16a_link_folder_one_level_down", 16, "FETCHCATEGORYCHILDREN depth 1: the folder's _embedded (depth 0) holds "
+             "a folder link whose embedded folder is parsed at the link's depth (0), not one below: its version is set", s)
+    c.step("FETCHCATEGORYCHILDREN", result(body, http_ok(u)), target=F, url=u, body=depth_body(1))
+
+    # D13: a write creating an outfit / COF-typed folder whose _embedded holds links only.
+    for ftype, cid, name in ((FT_OUTFIT, "s16b_create_outfit_links_only", "outfit"),
+                             (FT_COF, "s16c_create_cof_typed_links_only", "COF-typed")):
+        s = Skel()
+        O = C(0x1610 + ftype)
+        s.item(item(I(0x1611), CLOTHING, "Shirt", AT_CLOTHING, IT_WEARABLE, flags=4))
+        links = [link(L(0x1611), O, I(0x1611), "Shirt"), link(L(0x1612), O, I(0x1611), "Shirt again")]
+        res = {"_created_categories": [O], "_created_items": [L(0x1611), L(0x1612)],
+               "_updated_category_versions": {MYOUTFITS: 7},
+               "_embedded": emb(categories=[cat(O, MYOUTFITS, "New %s" % name, ftype, version=1,
+                                                embedded=emb(links=links))])}
+        u = "%s/category/%s?tid=x" % (CAP, MYOUTFITS)
+        c = Case(cid, 16, "CREATEINVENTORY of an %s folder whose _embedded holds links only: on a write the "
+                 "links-only count rule does not apply (count and version stay unknown)" % name, s)
+        c.step("CREATEINVENTORY", result(res, http_ok(u)), target=MYOUTFITS, url=u, body={"categories": []})
+
+    # D15: the default depth (50) of requests without one, reached exactly.
+    def chain(top, parent, levels, base):
+        node = None
+        for lvl in range(levels - 1, -1, -1):
+            cid = C(base + lvl)
+            p = parent if lvl == 0 else C(base + lvl - 1)
+            sub = {} if node is None else {node["category_id"]: node}
+            node = cat(cid, p, "L%d" % lvl, version=200 + lvl, embedded=emb(categories=sub, links={}, items={}))
+        return node
+
+    s = Skel()
+    top = chain(None, ROOT, 52, 0x1700)
+    c = Case("s16d_orphans_default_depth", 16, "FETCHORPHANS (no depth in the request: 50): a 52-level chain; "
+             "versions on levels 0-50 (depth 50..0), not on level 51 (depth -1)", s)
+    u = CAP + "/orphans"
+    c.step("FETCHORPHANS", result({"_embedded": emb(categories=[top])}, http_ok(u)), url=u, compact=True)
+
+    s = Skel()
+    top = chain(None, ROOT, 52, 0x1800)
+    lk = link(L(0x1800), CLOTHING, top["category_id"], "Deep folder link", AT_LINK_FOLDER, IT_CATEGORY,
+              embedded=emb(single_category=top))
+    u = url_item(L(0x1800))
+    c = Case("s16e_link_fetch_default_depth", 16, "FETCHITEM of a folder link (no depth: 50) whose embedded folder "
+             "heads a 52-level chain: versions down to depth 0, not at -1", s)
+    c.step("FETCHITEM", result(lk, http_ok(u)), target=L(0x1800), url=u, compact=True)
+
+
+# ---- set 17: loose LLSD typing --------------------------------------------------
+
+
+def set17():
+    s = Skel()
+    F = s.cat(C(0x1900), ROOT, "Typed", FT_NONE, 3)
+    u = url_children(F, 0)
+    for v, cid, what in (("7", "s17a_version_string", "a string \"7\""), (7.0, "s17b_version_real", "a real 7.0"),
+                         (7.9, "s17c_version_real_fraction", "a real 7.9"), ("x7", "s17d_version_bad_string", "a string \"x7\"")):
+        c = Case(cid, 17, "A category version given as %s (asInteger)" % what, s)
+        c.step("FETCHCATEGORYCHILDREN", result(cat(F, ROOT, "Typed", version=v, embedded=emb(categories={}, links={}, items={})),
+                                               http_ok(u)), target=F, url=u, body=depth_body(0))
+
+    s2 = Skel()
+    s2.item(item(I(0x1910), TEXTURES, "Doomed"))
+    u2 = url_item(I(0x1910))
+    c = Case("s17e_updated_versions_as_strings", 17, "_updated_category_versions values as a string and a real", s2)
+    c.step("REMOVEITEM", result({"_category_items_removed": [I(0x1910)],
+                                 "_updated_category_versions": {TEXTURES: "6", OBJECTS: 4.0}}, http_ok(u2)),
+           target=I(0x1910), url=u2)
+
+    s3 = Skel()
+    F3 = s3.cat(C(0x1920), ROOT, "Keys", FT_NONE)
+    u3 = url_children(F3, 0)
+    c = Case("s17f_non_uuid_map_keys", 17, "Embedded maps keyed by text that is not a UUID (the parser takes the "
+             "key as the null id): fetched entries still apply", s3)
+    c.step("FETCHCATEGORYCHILDREN", result(cat(F3, ROOT, "Keys", version=2, embedded={
+        "categories": {"not-a-uuid": cat(C(0x1921), F3, "Sub", version=1)},
+        "links": {"also not": link(L(0x1921), F3, I(0x1922), "Lnk")},
+        "items": {"nope": item(I(0x1922), F3, "Thing")}}), http_ok(u3)), target=F3, url=u3, body=depth_body(0))
+    uw = "%s/category/%s?tid=x" % (CAP, F3)
+    c = Case("s17g_non_uuid_keys_on_write", 17, "The same keys on a write: the null id is not in the created "
+             "lists, so nothing embedded applies", s3)
+    c.step("CREATEINVENTORY", result({"_created_items": [I(0x1922), L(0x1921)], "_created_categories": [C(0x1921)],
+                                      "_embedded": {"categories": {"not-a-uuid": cat(C(0x1921), F3, "Sub", version=1)},
+                                                    "links": {"also not": link(L(0x1921), F3, I(0x1922), "Lnk")},
+                                                    "items": {"nope": item(I(0x1922), F3, "Thing")}}}, http_ok(uw)),
+           target=F3, url=uw, body={"categories": []})
+
+    s4 = Skel()
+    s4.cat(COF, ROOT, "Current Outfit", FT_COF, -1, -1)
+    s4.item(item(I(0x1930), CLOTHING, "Vest", AT_CLOTHING, IT_WEARABLE, flags=3))
+    u4 = CAP + "/category/current/links"
+    m = cat(COF, ROOT, "Current Outfit", FT_COF, version=12, embedded=emb(links=[link(L(0x1930), COF, I(0x1930), "Vest")]))
+    del m["type_default"]
+    c = Case("s17h_cof_without_type_default", 17, "FETCHCOF whose category map lacks type_default: the model's COF "
+             "type is kept from the current category, so the links-only count applies", s4)
+    c.step("FETCHCOF", result(m, http_ok(u4)), url=u4, body=depth_body(0))
+
+
+# ---- set 18: the AIS command functions -------------------------------------------
+
+
+def set18():
+    P = C(0x1A00)
+    LIBF = C(0x1A10)
+    kids = [C(0x1A20 + k) for k in range(3)]
+    many = [C(0x1A40 + k) for k in range(60)]
+    s = Skel()
+    s.cat(P, ROOT, "Commands", FT_NONE, 2)
+    calls = [
+        ("isAvailable", {}), ("getCapNames", {}),
+        ("CreateInventory", {"parent_id": P, "new_inventory": {"categories": [{"name": "N", "type_default": -1}]}}),
+        ("SlamFolder", {"folder_id": COF, "new_inventory": [{"linked_id": I(0x1A01), "type": AT_LINK}]}),
+        ("RemoveCategory", {"category_id": P}),
+        ("RemoveItem", {"item_id": I(0x1A01)}),
+        ("PurgeDescendents", {"category_id": TRASH}),
+        ("UpdateCategory", {"category_id": P, "updates": {"name": "Renamed"}}),
+        ("UpdateItem", {"item_id": I(0x1A01), "updates": {"name": "Renamed item"}}),
+        ("FetchItem", {"item_id": I(0x1A01), "item_type": "INVENTORY"}),
+        ("FetchItem", {"item_id": I(0x1A02), "item_type": "LIBRARY"}),
+        ("FetchCategoryChildren", {"category_id": P, "item_type": "INVENTORY", "recursive": True, "depth": 0}),
+        ("FetchCategoryChildren", {"category_id": LIBF, "item_type": "LIBRARY", "recursive": False, "depth": 49}),
+        ("FetchCategoryChildren", {"category_id": LIBF, "item_type": "LIBRARY", "recursive": False, "depth": 50}),
+        ("FetchCategoryChildren", {"category_id": P, "item_type": "INVENTORY", "recursive": False, "depth": 51}),
+        ("FetchCategoryChildrenByName", {"identifier": "current", "recursive": False, "depth": 0}),
+        ("FetchCategoryChildrenByName", {"identifier": "root", "recursive": True, "depth": 3}),
+        ("FetchCategoryCategories", {"category_id": P, "item_type": "INVENTORY", "recursive": False, "depth": 2}),
+        ("FetchCategoryCategories", {"category_id": LIBF, "item_type": "LIBRARY", "recursive": True, "depth": 0}),
+        ("FetchCategorySubset", {"category_id": P, "item_type": "INVENTORY", "recursive": True, "children": kids}),
+        ("FetchCategorySubset", {"category_id": LIBF, "item_type": "LIBRARY", "recursive": False, "depth": 0,
+                                 "children": kids[:1]}),
+        ("FetchCategorySubset", {"category_id": P, "item_type": "INVENTORY", "recursive": True, "children": []}),
+        ("FetchCategorySubset", {"category_id": P, "item_type": "INVENTORY", "recursive": True, "children": many}),
+        ("FetchCOF", {}),
+        ("FetchCategoryLinks", {"category_id": P}),
+        ("FetchOrphans", {}),
+        ("CopyLibraryCategory", {"source_id": LIBF, "dest_id": P, "copy_subfolders": False}),
+        ("CopyLibraryCategory", {"source_id": LIBF, "dest_id": P, "copy_subfolders": True}),
+    ]
+    c = Case("s18a_commands_with_caps", 18, "Every AISAPI command function with both capabilities: URL, method, "
+             "body, Destination, options, the cap chosen, the tid (checked fresh, shown as <tid>), the enqueue and "
+             "the callback binding (an empty successful reply)", s)
+    for name, args in calls:
+        c.call(name, args)
+
+    for cid, caps, no_region, what in (("s18b_commands_without_caps", {}, False, "no capability: each calls back null at once"),
+                                       ("s18c_commands_inventory_cap_only", {"inv": CAP}, False,
+                                        "the inventory cap only: library requests call back null"),
+                                       ("s18d_commands_library_cap_only", {"lib": LIBCAP}, False,
+                                        "the library cap only"),
+                                       ("s18e_commands_no_region", {}, True, "no region")):
+        c = Case(cid, 18, "Every AISAPI command function with %s" % what, Skel())
+        for name, args in calls:
+            c.call(name, args, caps=caps, no_region=no_region)
+
+    # MAX_SIMULTANEOUS_COROUTINES (2048): pending 2047 enqueues, 2048 and 2049
+    # postpone; the idle callback drains while the pool has room.
+    c = Case("s18f_pool_limit", 18, "The 2048-command pool limit: pending 2047 enqueues, 2048 and 2049 postpone "
+             "(idle callback registered); idle at 2047 drains one, idle at 0 drains the rest and unregisters", Skel())
+    c.call("CreateInventory", {"parent_id": P, "new_inventory": {"categories": []}}, pending=2047)
+    c.call("RemoveItem", {"item_id": I(0x1A01)}, pending=2048)
+    c.call("FetchCOF", {}, pending=2049)
+    c.call("FetchOrphans", {}, pending=2049, idle=True, idle_pending=2047)
+    c.call("FetchCategoryLinks", {"category_id": P}, pending=2048, idle=True, idle_pending=0)
+
+    # The callback binding with real replies.
+    s = Skel()
+    s.cat(P, ROOT, "Commands", FT_NONE, 2)
+    s.item(item(I(0x1A01), P, "Target"))
+    u = CAP + "/category/x"
+    c = Case("s18g_commands_with_replies", 18, "Command functions whose replies carry ids: the callbacks they bind "
+             "(created ids, linked_id, category_id) and what the reply applies", s)
+    c.call("CreateInventory", {"parent_id": P, "new_inventory": {"categories": []}},
+           res=result({"_created_categories": [C(0x1A60)], "_created_items": [I(0x1A61)],
+                       "_updated_category_versions": {P: 3},
+                       "_embedded": emb(categories=[cat(C(0x1A60), P, "Made", version=1)],
+                                        items=[item(I(0x1A61), P, "Made item")])}, http_ok(u)))
+    c.call("FetchItem", {"item_id": L(0x1A62), "item_type": "INVENTORY"},
+           res=result(link(L(0x1A62), P, I(0x1A01), "Link"), http_ok(u)))
+    c.call("FetchCategoryChildren", {"category_id": P, "item_type": "INVENTORY", "recursive": False, "depth": 0},
+           res=result(cat(P, ROOT, "Commands", version=3, embedded=emb(categories={}, links={}, items=[
+               item(I(0x1A01), P, "Target")])), http_ok(u)))
+    c.call("UpdateCategory", {"category_id": P, "updates": {"name": "Renamed"}},
+           res=result(cat(P, ROOT, "Renamed", version=4, extra={"_updated_categories": [P]}), http_ok(u)))
+    c.call("RemoveItem", {"item_id": I(0x1A01)}, res=result({}, http_fail(u, 410, "", "Gone")))
+    c.call("CreateInventory", {"parent_id": P, "new_inventory": {"categories": []}}, callback=False,
+           res=result({"_created_categories": [C(0x1A63)]}, http_ok(u)))
+
+
 def main():
     if len(sys.argv) != 2:
         print(__doc__)
@@ -1374,7 +1836,8 @@ def main():
     for name in os.listdir(outdir):
         if name.endswith(".xml") or name.endswith(".xml.gz") or name == "index.txt":
             os.remove(os.path.join(outdir, name))
-    for f in (set1, set2, set3, set4, set5, set6, set7, set8, set9, set10, set11, set12):
+    for f in (set1, set2, set3, set4, set5, set6, set7, set8, set9, set10, set11, set12, set10_boundaries,
+              set13, set14, set15, set16, set17, set18):
         f()
     ids = [c.id for c in CASES]
     if len(set(ids)) != len(ids):

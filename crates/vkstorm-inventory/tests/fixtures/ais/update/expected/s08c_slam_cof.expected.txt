@@ -1,6 +1,6 @@
 # case s08c_slam_cof; review rendering of s08c_slam_cof.expected.llsd, one op per line
 # generator: INTEGRATION_TEST_llaisupdate_parity (indra/newview/tests/llaisupdate_parity_test.cpp), dump mode
-# viewer commit: a6d6a04641cfc97b919a258e1fe20fd0dbd8a18f (llaisapi.cpp blob b3ca253a86300c1f9d14713a9b3ff2522e79a3c7)
+# viewer commit: d2fb99af07705f5ee3e7223261a6d0205be7d494 (llaisapi.cpp blob b3ca253a86300c1f9d14713a9b3ff2522e79a3c7)
 # platform: windows
 case = 's08c_slam_cof'
 == never/final/categories (9)

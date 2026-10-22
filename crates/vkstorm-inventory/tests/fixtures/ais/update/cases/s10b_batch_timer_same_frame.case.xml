@@ -6,7 +6,7 @@
   <key>set</key>
   <integer>10</integer>
   <key>title</key>
-  <string>Three replies, the later ones in the frame the earlier one yielded to, while another AIS update resumes first in each new frame and runs 5 ms: the shared batch timer (armed by the other update) yields before the 8 ms task timer</string>
+  <string>Three replies, the later ones in the frame the earlier one yielded to, while another AIS update resumes first in each new frame and runs 8 ms: the shared batch timer (armed by the other update) yields before the 8 ms task timer</string>
   <key>agent_id</key>
   <uuid>0a000000-0000-4000-8000-000000000001</uuid>
   <key>session_id</key>
@@ -21,8 +21,10 @@
    <integer>16667</integer>
    <key>others_us</key>
    <array>
-    <integer>5000</integer>
+    <integer>8000</integer>
    </array>
+   <key>yield_extra_us</key>
+   <array />
   </map>
   <key>large</key>
   <boolean>false</boolean>
