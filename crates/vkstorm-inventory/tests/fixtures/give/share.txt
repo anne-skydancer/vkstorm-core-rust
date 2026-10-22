@@ -1,10 +1,19 @@
 # vkstorm inventory oracle r4b: give/share
 # what: set 7: the share dialog callback (give_inventory_cb)
 # generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
-# viewer: 472ecf270d
+# viewer: c465598e38
 # platform: windows-msvc-1944
 # seed: none (fixed case list)
 # format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested
+one_item	input.00	agent id=000000a1-0000-4000-8000-000000000001 session=000000a1-0000-4000-8000-000000000002 avatar_valid=1 fullname="Oracle Tester" sitting=0 dnd=0 groups=[]
+one_item	input.01	worn attachments=[] wearables=[] active_gestures=[]
+one_item	input.02	limits max_inventory_items_transfer=42 system_folder_overrides=[ ] (other folder types: 000000f0-0000-4000-8000-<type as U16>)
+one_item	input.03	settings AutoAcceptNewInventory=0 FSCreateGiveInventoryParticleEffect=1 FSDismissGroupNoticeAttachmentsToTrash=0 FSLogAutoAcceptInventoryToChat=1 FSNotifyIncomingObjectSpam=1 FSNotifyIncomingObjectSpamFrom=1 FSShowAutoAcceptInventoryInNotifications=1 FSUseLegacyInventoryAcceptMessages=0 LogInventoryDecline=1 ShowInInventory=0 ShowNewInventory=1 UseLegacyIMLogNames=1 FSOfferThrottleMaxCount=5
+one_item	input.04	rlv enabled=0 forbid_give_to_rlv=0 shared_root=00000000-0000-0000-0000-000000000000 can_show_names=1 locked_attachment=0 unsit=0 sittp=0 share_blocked=[] nearby=[]
+one_item	input.05	mutes [ ] legacy [ ]
+one_item	input.06	im_sessions=[] avatar_names [ 000000b2-0000-4000-8000-000000000001="other.sender" ]
+one_item	input.07	item 00000061-0000-4000-8000-000000000001 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000001 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+one_item	input.90	share option=0 avatars=[ 000000b2-0000-4000-8000-000000000001 ] selected=[00000061-0000-4000-8000-000000000001]
 one_item	e00	share option=0 selected=1 avatars=1
 one_item	e01	uuid.generate 7a000000-0000-4000-8000-000000000001
 one_item	e02	pack dialog=4 to=000000b2-0000-4000-8000-000000000001 message="Shared Item" bucket=0700000061000040008000000000000001
@@ -21,7 +30,26 @@ one_item	e11	recent_people.add 000000b2-0000-4000-8000-000000000001
 one_item	e12	floater.hide avatar_picker
 one_item	e13	notify ItemsShared args=21 payload=21
 one_item	note.e13	args ! payload !
+cancel	input.00	agent id=000000a1-0000-4000-8000-000000000001 session=000000a1-0000-4000-8000-000000000002 avatar_valid=1 fullname="Oracle Tester" sitting=0 dnd=0 groups=[]
+cancel	input.01	worn attachments=[] wearables=[] active_gestures=[]
+cancel	input.02	limits max_inventory_items_transfer=42 system_folder_overrides=[ ] (other folder types: 000000f0-0000-4000-8000-<type as U16>)
+cancel	input.03	settings AutoAcceptNewInventory=0 FSCreateGiveInventoryParticleEffect=1 FSDismissGroupNoticeAttachmentsToTrash=0 FSLogAutoAcceptInventoryToChat=1 FSNotifyIncomingObjectSpam=1 FSNotifyIncomingObjectSpamFrom=1 FSShowAutoAcceptInventoryInNotifications=1 FSUseLegacyInventoryAcceptMessages=0 LogInventoryDecline=1 ShowInInventory=0 ShowNewInventory=1 UseLegacyIMLogNames=1 FSOfferThrottleMaxCount=5
+cancel	input.04	rlv enabled=0 forbid_give_to_rlv=0 shared_root=00000000-0000-0000-0000-000000000000 can_show_names=1 locked_attachment=0 unsit=0 sittp=0 share_blocked=[] nearby=[]
+cancel	input.05	mutes [ ] legacy [ ]
+cancel	input.06	im_sessions=[] avatar_names [ 000000b2-0000-4000-8000-000000000001="other.sender" ]
+cancel	input.07	item 00000061-0000-4000-8000-000000000001 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000001 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+cancel	input.90	share option=1 avatars=[ 000000b2-0000-4000-8000-000000000001 ] selected=[00000061-0000-4000-8000-000000000001]
 cancel	e00	share option=1 selected=1 avatars=1
+two_items	input.00	agent id=000000a1-0000-4000-8000-000000000001 session=000000a1-0000-4000-8000-000000000002 avatar_valid=1 fullname="Oracle Tester" sitting=0 dnd=0 groups=[]
+two_items	input.01	worn attachments=[] wearables=[] active_gestures=[]
+two_items	input.02	limits max_inventory_items_transfer=42 system_folder_overrides=[ ] (other folder types: 000000f0-0000-4000-8000-<type as U16>)
+two_items	input.03	settings AutoAcceptNewInventory=0 FSCreateGiveInventoryParticleEffect=1 FSDismissGroupNoticeAttachmentsToTrash=0 FSLogAutoAcceptInventoryToChat=1 FSNotifyIncomingObjectSpam=1 FSNotifyIncomingObjectSpamFrom=1 FSShowAutoAcceptInventoryInNotifications=1 FSUseLegacyInventoryAcceptMessages=0 LogInventoryDecline=1 ShowInInventory=0 ShowNewInventory=1 UseLegacyIMLogNames=1 FSOfferThrottleMaxCount=5
+two_items	input.04	rlv enabled=0 forbid_give_to_rlv=0 shared_root=00000000-0000-0000-0000-000000000000 can_show_names=1 locked_attachment=0 unsit=0 sittp=0 share_blocked=[] nearby=[]
+two_items	input.05	mutes [ ] legacy [ ]
+two_items	input.06	im_sessions=[] avatar_names [ 000000b2-0000-4000-8000-000000000001="other.sender" ]
+two_items	input.07	item 00000061-0000-4000-8000-000000000001 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000001 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+two_items	input.08	item 00000061-0000-4000-8000-000000000002 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000002 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+two_items	input.90	share option=0 avatars=[ 000000b2-0000-4000-8000-000000000001 ] selected=[00000061-0000-4000-8000-000000000001,00000061-0000-4000-8000-000000000002]
 two_items	e00	share option=0 selected=2 avatars=1
 two_items	e01	uuid.generate 7a000000-0000-4000-8000-000000000001
 two_items	e02	pack dialog=4 to=000000b2-0000-4000-8000-000000000001 message="Shared Item" bucket=0700000061000040008000000000000001
@@ -50,6 +78,17 @@ two_items	e22	recent_people.add 000000b2-0000-4000-8000-000000000001
 two_items	e23	floater.hide avatar_picker
 two_items	e24	notify ItemsShared args=21 payload=21
 two_items	note.e24	args ! payload !
+folder_first_then_item	input.00	agent id=000000a1-0000-4000-8000-000000000001 session=000000a1-0000-4000-8000-000000000002 avatar_valid=1 fullname="Oracle Tester" sitting=0 dnd=0 groups=[]
+folder_first_then_item	input.01	worn attachments=[] wearables=[] active_gestures=[]
+folder_first_then_item	input.02	limits max_inventory_items_transfer=42 system_folder_overrides=[ ] (other folder types: 000000f0-0000-4000-8000-<type as U16>)
+folder_first_then_item	input.03	settings AutoAcceptNewInventory=0 FSCreateGiveInventoryParticleEffect=1 FSDismissGroupNoticeAttachmentsToTrash=0 FSLogAutoAcceptInventoryToChat=1 FSNotifyIncomingObjectSpam=1 FSNotifyIncomingObjectSpamFrom=1 FSShowAutoAcceptInventoryInNotifications=1 FSUseLegacyInventoryAcceptMessages=0 LogInventoryDecline=1 ShowInInventory=0 ShowNewInventory=1 UseLegacyIMLogNames=1 FSOfferThrottleMaxCount=5
+folder_first_then_item	input.04	rlv enabled=0 forbid_give_to_rlv=0 shared_root=00000000-0000-0000-0000-000000000000 can_show_names=1 locked_attachment=0 unsit=0 sittp=0 share_blocked=[] nearby=[]
+folder_first_then_item	input.05	mutes [ ] legacy [ ]
+folder_first_then_item	input.06	im_sessions=[] avatar_names [ 000000b2-0000-4000-8000-000000000001="other.sender" ]
+folder_first_then_item	input.07	cat 00000061-0000-4000-8000-000000000001 parent=0000001f-0000-4000-8000-000000000001 pref=-1 complete=1 name="Shared Folder"
+folder_first_then_item	input.08	item 00000061-0000-4000-8000-000000000002 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000002 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+folder_first_then_item	input.09	item 00000062-0000-4000-8000-000000000001 parent=00000061-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000001 flags=0 finished=1 name="inside" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+folder_first_then_item	input.90	share option=0 avatars=[ 000000b2-0000-4000-8000-000000000001 ] selected=[00000061-0000-4000-8000-000000000001,00000061-0000-4000-8000-000000000002]
 folder_first_then_item	e00	share option=0 selected=2 avatars=1
 folder_first_then_item	e01	model.findCategoryUUIDForType 14 -> 000000f0-0000-4000-8000-00000000000e
 folder_first_then_item	e02	recent_people.add 000000b2-0000-4000-8000-000000000001
@@ -68,6 +107,18 @@ folder_first_then_item	e13	im.system_message session=00000013-0000-0000-0000-000
 folder_first_then_item	e14	floater.hide avatar_picker
 folder_first_then_item	e15	notify ItemsShared args=21 payload=21
 folder_first_then_item	note.e15	args ! payload !
+item_then_folder_then_item	input.00	agent id=000000a1-0000-4000-8000-000000000001 session=000000a1-0000-4000-8000-000000000002 avatar_valid=1 fullname="Oracle Tester" sitting=0 dnd=0 groups=[]
+item_then_folder_then_item	input.01	worn attachments=[] wearables=[] active_gestures=[]
+item_then_folder_then_item	input.02	limits max_inventory_items_transfer=42 system_folder_overrides=[ ] (other folder types: 000000f0-0000-4000-8000-<type as U16>)
+item_then_folder_then_item	input.03	settings AutoAcceptNewInventory=0 FSCreateGiveInventoryParticleEffect=1 FSDismissGroupNoticeAttachmentsToTrash=0 FSLogAutoAcceptInventoryToChat=1 FSNotifyIncomingObjectSpam=1 FSNotifyIncomingObjectSpamFrom=1 FSShowAutoAcceptInventoryInNotifications=1 FSUseLegacyInventoryAcceptMessages=0 LogInventoryDecline=1 ShowInInventory=0 ShowNewInventory=1 UseLegacyIMLogNames=1 FSOfferThrottleMaxCount=5
+item_then_folder_then_item	input.04	rlv enabled=0 forbid_give_to_rlv=0 shared_root=00000000-0000-0000-0000-000000000000 can_show_names=1 locked_attachment=0 unsit=0 sittp=0 share_blocked=[] nearby=[]
+item_then_folder_then_item	input.05	mutes [ ] legacy [ ]
+item_then_folder_then_item	input.06	im_sessions=[] avatar_names [ 000000b2-0000-4000-8000-000000000001="other.sender" ]
+item_then_folder_then_item	input.07	cat 00000061-0000-4000-8000-000000000002 parent=0000001f-0000-4000-8000-000000000001 pref=-1 complete=1 name="Shared Folder"
+item_then_folder_then_item	input.08	item 00000061-0000-4000-8000-000000000001 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000001 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+item_then_folder_then_item	input.09	item 00000061-0000-4000-8000-000000000003 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000003 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+item_then_folder_then_item	input.10	item 00000062-0000-4000-8000-000000000002 parent=00000061-0000-4000-8000-000000000002 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000002 flags=0 finished=1 name="inside" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+item_then_folder_then_item	input.90	share option=0 avatars=[ 000000b2-0000-4000-8000-000000000001 ] selected=[00000061-0000-4000-8000-000000000001,00000061-0000-4000-8000-000000000002,00000061-0000-4000-8000-000000000003]
 item_then_folder_then_item	e00	share option=0 selected=3 avatars=1
 item_then_folder_then_item	e01	uuid.generate 7a000000-0000-4000-8000-000000000001
 item_then_folder_then_item	e02	pack dialog=4 to=000000b2-0000-4000-8000-000000000001 message="Shared Item" bucket=0700000061000040008000000000000001
@@ -98,6 +149,18 @@ item_then_folder_then_item	e24	im.system_message session=00000013-0000-0000-0000
 item_then_folder_then_item	e25	floater.hide avatar_picker
 item_then_folder_then_item	e26	notify ItemsShared args=21 payload=21
 item_then_folder_then_item	note.e26	args ! payload !
+two_folders	input.00	agent id=000000a1-0000-4000-8000-000000000001 session=000000a1-0000-4000-8000-000000000002 avatar_valid=1 fullname="Oracle Tester" sitting=0 dnd=0 groups=[]
+two_folders	input.01	worn attachments=[] wearables=[] active_gestures=[]
+two_folders	input.02	limits max_inventory_items_transfer=42 system_folder_overrides=[ ] (other folder types: 000000f0-0000-4000-8000-<type as U16>)
+two_folders	input.03	settings AutoAcceptNewInventory=0 FSCreateGiveInventoryParticleEffect=1 FSDismissGroupNoticeAttachmentsToTrash=0 FSLogAutoAcceptInventoryToChat=1 FSNotifyIncomingObjectSpam=1 FSNotifyIncomingObjectSpamFrom=1 FSShowAutoAcceptInventoryInNotifications=1 FSUseLegacyInventoryAcceptMessages=0 LogInventoryDecline=1 ShowInInventory=0 ShowNewInventory=1 UseLegacyIMLogNames=1 FSOfferThrottleMaxCount=5
+two_folders	input.04	rlv enabled=0 forbid_give_to_rlv=0 shared_root=00000000-0000-0000-0000-000000000000 can_show_names=1 locked_attachment=0 unsit=0 sittp=0 share_blocked=[] nearby=[]
+two_folders	input.05	mutes [ ] legacy [ ]
+two_folders	input.06	im_sessions=[] avatar_names [ 000000b2-0000-4000-8000-000000000001="other.sender" ]
+two_folders	input.07	cat 00000061-0000-4000-8000-000000000001 parent=0000001f-0000-4000-8000-000000000001 pref=-1 complete=1 name="Shared Folder"
+two_folders	input.08	cat 00000061-0000-4000-8000-000000000002 parent=0000001f-0000-4000-8000-000000000001 pref=-1 complete=1 name="Shared Folder"
+two_folders	input.09	item 00000062-0000-4000-8000-000000000001 parent=00000061-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000001 flags=0 finished=1 name="inside" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+two_folders	input.10	item 00000062-0000-4000-8000-000000000002 parent=00000061-0000-4000-8000-000000000002 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000002 flags=0 finished=1 name="inside" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+two_folders	input.90	share option=0 avatars=[ 000000b2-0000-4000-8000-000000000001 ] selected=[00000061-0000-4000-8000-000000000001,00000061-0000-4000-8000-000000000002]
 two_folders	e00	share option=0 selected=2 avatars=1
 two_folders	e01	model.findCategoryUUIDForType 14 -> 000000f0-0000-4000-8000-00000000000e
 two_folders	e02	recent_people.add 000000b2-0000-4000-8000-000000000001
@@ -116,6 +179,17 @@ two_folders	e13	im.system_message session=00000013-0000-0000-0000-000000000000 i
 two_folders	e14	floater.hide avatar_picker
 two_folders	e15	notify ItemsShared args=21 payload=21
 two_folders	note.e15	args ! payload !
+nocopy_items	input.00	agent id=000000a1-0000-4000-8000-000000000001 session=000000a1-0000-4000-8000-000000000002 avatar_valid=1 fullname="Oracle Tester" sitting=0 dnd=0 groups=[]
+nocopy_items	input.01	worn attachments=[] wearables=[] active_gestures=[]
+nocopy_items	input.02	limits max_inventory_items_transfer=42 system_folder_overrides=[ ] (other folder types: 000000f0-0000-4000-8000-<type as U16>)
+nocopy_items	input.03	settings AutoAcceptNewInventory=0 FSCreateGiveInventoryParticleEffect=1 FSDismissGroupNoticeAttachmentsToTrash=0 FSLogAutoAcceptInventoryToChat=1 FSNotifyIncomingObjectSpam=1 FSNotifyIncomingObjectSpamFrom=1 FSShowAutoAcceptInventoryInNotifications=1 FSUseLegacyInventoryAcceptMessages=0 LogInventoryDecline=1 ShowInInventory=0 ShowNewInventory=1 UseLegacyIMLogNames=1 FSOfferThrottleMaxCount=5
+nocopy_items	input.04	rlv enabled=0 forbid_give_to_rlv=0 shared_root=00000000-0000-0000-0000-000000000000 can_show_names=1 locked_attachment=0 unsit=0 sittp=0 share_blocked=[] nearby=[]
+nocopy_items	input.05	mutes [ ] legacy [ ]
+nocopy_items	input.06	im_sessions=[] avatar_names [ 000000b2-0000-4000-8000-000000000001="other.sender" ]
+nocopy_items	input.07	item 00000061-0000-4000-8000-000000000001 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000001 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=00086000 group_mask=00000000 everyone=00000000 next=7fffffff
+nocopy_items	input.08	item 00000061-0000-4000-8000-000000000002 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000002 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+nocopy_items	input.09	item 00000061-0000-4000-8000-000000000003 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000003 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=00086000 group_mask=00000000 everyone=00000000 next=7fffffff
+nocopy_items	input.90	share option=0 avatars=[ 000000b2-0000-4000-8000-000000000001 ] selected=[00000061-0000-4000-8000-000000000001,00000061-0000-4000-8000-000000000002,00000061-0000-4000-8000-000000000003]
 nocopy_items	e00	share option=0 selected=3 avatars=1
 nocopy_items	e01	uuid.generate 7a000000-0000-4000-8000-000000000001
 nocopy_items	e02	pack dialog=4 to=000000b2-0000-4000-8000-000000000001 message="Shared Item" bucket=0700000061000040008000000000000002
@@ -131,6 +205,16 @@ nocopy_items	e10	im.system_message session=00000013-0000-0000-0000-000000000000 
 nocopy_items	e11	recent_people.add 000000b2-0000-4000-8000-000000000001
 nocopy_items	e12	notify CannotCopyWarning args=7b000000016b000000054954454d537300000027536861726564204974656d7b776f7264735f736570617261746f727d536861726564204974656d7d payload=7b000000036b000000086167656e745f696475000000b20000400080000000000000016b000000056974656d735b00000002750000006100004000800000000000000175000000610000400080000000000000035d6b00000014737563636573735f6e6f74696669636174696f6e730000000b4974656d735368617265647d functor=1
 nocopy_items	note.e12	args {'ITEMS':'Shared Item{words_separator}Shared Item'} payload {'agent_id':u000000b2-0000-4000-8000-000000000001,'items':[u00000061-0000-4000-8000-000000000001,u00000061-0000-4000-8000-000000000003],'success_notification':'ItemsShared'}
+nocopy_two_avatars	input.00	agent id=000000a1-0000-4000-8000-000000000001 session=000000a1-0000-4000-8000-000000000002 avatar_valid=1 fullname="Oracle Tester" sitting=0 dnd=0 groups=[]
+nocopy_two_avatars	input.01	worn attachments=[] wearables=[] active_gestures=[]
+nocopy_two_avatars	input.02	limits max_inventory_items_transfer=42 system_folder_overrides=[ ] (other folder types: 000000f0-0000-4000-8000-<type as U16>)
+nocopy_two_avatars	input.03	settings AutoAcceptNewInventory=0 FSCreateGiveInventoryParticleEffect=1 FSDismissGroupNoticeAttachmentsToTrash=0 FSLogAutoAcceptInventoryToChat=1 FSNotifyIncomingObjectSpam=1 FSNotifyIncomingObjectSpamFrom=1 FSShowAutoAcceptInventoryInNotifications=1 FSUseLegacyInventoryAcceptMessages=0 LogInventoryDecline=1 ShowInInventory=0 ShowNewInventory=1 UseLegacyIMLogNames=1 FSOfferThrottleMaxCount=5
+nocopy_two_avatars	input.04	rlv enabled=0 forbid_give_to_rlv=0 shared_root=00000000-0000-0000-0000-000000000000 can_show_names=1 locked_attachment=0 unsit=0 sittp=0 share_blocked=[] nearby=[]
+nocopy_two_avatars	input.05	mutes [ ] legacy [ ]
+nocopy_two_avatars	input.06	im_sessions=[] avatar_names [ 000000b2-0000-4000-8000-000000000001="other.sender" ]
+nocopy_two_avatars	input.07	item 00000061-0000-4000-8000-000000000001 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000001 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=00086000 group_mask=00000000 everyone=00000000 next=7fffffff
+nocopy_two_avatars	input.08	item 00000061-0000-4000-8000-000000000002 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000002 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+nocopy_two_avatars	input.90	share option=0 avatars=[ 000000b2-0000-4000-8000-000000000001 000000b2-0000-4000-8000-000000000002 ] selected=[00000061-0000-4000-8000-000000000001,00000061-0000-4000-8000-000000000002]
 nocopy_two_avatars	e00	share option=0 selected=2 avatars=2
 nocopy_two_avatars	e01	uuid.generate 7a000000-0000-4000-8000-000000000001
 nocopy_two_avatars	e02	pack dialog=4 to=000000b2-0000-4000-8000-000000000001 message="Shared Item" bucket=0700000061000040008000000000000002
@@ -146,6 +230,16 @@ nocopy_two_avatars	e10	im.system_message session=00000013-0000-0000-0000-0000000
 nocopy_two_avatars	e11	recent_people.add 000000b2-0000-4000-8000-000000000001
 nocopy_two_avatars	e12	notify CannotCopyWarning args=7b000000016b000000054954454d53730000000b536861726564204974656d7d payload=7b000000036b000000086167656e745f696475000000b20000400080000000000000016b000000056974656d735b0000000175000000610000400080000000000000015d6b00000014737563636573735f6e6f74696669636174696f6e730000000b4974656d735368617265647d functor=1
 nocopy_two_avatars	note.e12	args {'ITEMS':'Shared Item'} payload {'agent_id':u000000b2-0000-4000-8000-000000000001,'items':[u00000061-0000-4000-8000-000000000001],'success_notification':'ItemsShared'}
+copy_two_avatars	input.00	agent id=000000a1-0000-4000-8000-000000000001 session=000000a1-0000-4000-8000-000000000002 avatar_valid=1 fullname="Oracle Tester" sitting=0 dnd=0 groups=[]
+copy_two_avatars	input.01	worn attachments=[] wearables=[] active_gestures=[]
+copy_two_avatars	input.02	limits max_inventory_items_transfer=42 system_folder_overrides=[ ] (other folder types: 000000f0-0000-4000-8000-<type as U16>)
+copy_two_avatars	input.03	settings AutoAcceptNewInventory=0 FSCreateGiveInventoryParticleEffect=1 FSDismissGroupNoticeAttachmentsToTrash=0 FSLogAutoAcceptInventoryToChat=1 FSNotifyIncomingObjectSpam=1 FSNotifyIncomingObjectSpamFrom=1 FSShowAutoAcceptInventoryInNotifications=1 FSUseLegacyInventoryAcceptMessages=0 LogInventoryDecline=1 ShowInInventory=0 ShowNewInventory=1 UseLegacyIMLogNames=1 FSOfferThrottleMaxCount=5
+copy_two_avatars	input.04	rlv enabled=0 forbid_give_to_rlv=0 shared_root=00000000-0000-0000-0000-000000000000 can_show_names=1 locked_attachment=0 unsit=0 sittp=0 share_blocked=[] nearby=[]
+copy_two_avatars	input.05	mutes [ ] legacy [ ]
+copy_two_avatars	input.06	im_sessions=[] avatar_names [ 000000b2-0000-4000-8000-000000000001="other.sender" ]
+copy_two_avatars	input.07	item 00000061-0000-4000-8000-000000000001 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000001 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+copy_two_avatars	input.08	item 00000061-0000-4000-8000-000000000002 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000002 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+copy_two_avatars	input.90	share option=0 avatars=[ 000000b2-0000-4000-8000-000000000001 000000b2-0000-4000-8000-000000000002 ] selected=[00000061-0000-4000-8000-000000000001,00000061-0000-4000-8000-000000000002]
 copy_two_avatars	e00	share option=0 selected=2 avatars=2
 copy_two_avatars	e01	uuid.generate 7a000000-0000-4000-8000-000000000001
 copy_two_avatars	e02	pack dialog=4 to=000000b2-0000-4000-8000-000000000001 message="Shared Item" bucket=0700000061000040008000000000000001
@@ -198,6 +292,17 @@ copy_two_avatars	e44	recent_people.add 000000b2-0000-4000-8000-000000000002
 copy_two_avatars	e45	floater.hide avatar_picker
 copy_two_avatars	e46	notify ItemsShared args=21 payload=21
 copy_two_avatars	note.e46	args ! payload !
+folder_two_avatars	input.00	agent id=000000a1-0000-4000-8000-000000000001 session=000000a1-0000-4000-8000-000000000002 avatar_valid=1 fullname="Oracle Tester" sitting=0 dnd=0 groups=[]
+folder_two_avatars	input.01	worn attachments=[] wearables=[] active_gestures=[]
+folder_two_avatars	input.02	limits max_inventory_items_transfer=42 system_folder_overrides=[ ] (other folder types: 000000f0-0000-4000-8000-<type as U16>)
+folder_two_avatars	input.03	settings AutoAcceptNewInventory=0 FSCreateGiveInventoryParticleEffect=1 FSDismissGroupNoticeAttachmentsToTrash=0 FSLogAutoAcceptInventoryToChat=1 FSNotifyIncomingObjectSpam=1 FSNotifyIncomingObjectSpamFrom=1 FSShowAutoAcceptInventoryInNotifications=1 FSUseLegacyInventoryAcceptMessages=0 LogInventoryDecline=1 ShowInInventory=0 ShowNewInventory=1 UseLegacyIMLogNames=1 FSOfferThrottleMaxCount=5
+folder_two_avatars	input.04	rlv enabled=0 forbid_give_to_rlv=0 shared_root=00000000-0000-0000-0000-000000000000 can_show_names=1 locked_attachment=0 unsit=0 sittp=0 share_blocked=[] nearby=[]
+folder_two_avatars	input.05	mutes [ ] legacy [ ]
+folder_two_avatars	input.06	im_sessions=[] avatar_names [ 000000b2-0000-4000-8000-000000000001="other.sender" ]
+folder_two_avatars	input.07	cat 00000061-0000-4000-8000-000000000001 parent=0000001f-0000-4000-8000-000000000001 pref=-1 complete=1 name="Shared Folder"
+folder_two_avatars	input.08	item 00000061-0000-4000-8000-000000000004 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000004 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+folder_two_avatars	input.09	item 00000062-0000-4000-8000-000000000001 parent=00000061-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000001 flags=0 finished=1 name="inside" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+folder_two_avatars	input.90	share option=0 avatars=[ 000000b2-0000-4000-8000-000000000001 000000b2-0000-4000-8000-000000000002 ] selected=[00000061-0000-4000-8000-000000000001,00000061-0000-4000-8000-000000000004]
 folder_two_avatars	e00	share option=0 selected=2 avatars=2
 folder_two_avatars	e01	model.findCategoryUUIDForType 14 -> 000000f0-0000-4000-8000-00000000000e
 folder_two_avatars	e02	recent_people.add 000000b2-0000-4000-8000-000000000001
@@ -230,9 +335,36 @@ folder_two_avatars	e26	im.system_message session=00000013-0000-0000-0000-0000000
 folder_two_avatars	e27	floater.hide avatar_picker
 folder_two_avatars	e28	notify ItemsShared args=21 payload=21
 folder_two_avatars	note.e28	args ! payload !
+nocopy_folder	input.00	agent id=000000a1-0000-4000-8000-000000000001 session=000000a1-0000-4000-8000-000000000002 avatar_valid=1 fullname="Oracle Tester" sitting=0 dnd=0 groups=[]
+nocopy_folder	input.01	worn attachments=[] wearables=[] active_gestures=[]
+nocopy_folder	input.02	limits max_inventory_items_transfer=42 system_folder_overrides=[ ] (other folder types: 000000f0-0000-4000-8000-<type as U16>)
+nocopy_folder	input.03	settings AutoAcceptNewInventory=0 FSCreateGiveInventoryParticleEffect=1 FSDismissGroupNoticeAttachmentsToTrash=0 FSLogAutoAcceptInventoryToChat=1 FSNotifyIncomingObjectSpam=1 FSNotifyIncomingObjectSpamFrom=1 FSShowAutoAcceptInventoryInNotifications=1 FSUseLegacyInventoryAcceptMessages=0 LogInventoryDecline=1 ShowInInventory=0 ShowNewInventory=1 UseLegacyIMLogNames=1 FSOfferThrottleMaxCount=5
+nocopy_folder	input.04	rlv enabled=0 forbid_give_to_rlv=0 shared_root=00000000-0000-0000-0000-000000000000 can_show_names=1 locked_attachment=0 unsit=0 sittp=0 share_blocked=[] nearby=[]
+nocopy_folder	input.05	mutes [ ] legacy [ ]
+nocopy_folder	input.06	im_sessions=[] avatar_names [ 000000b2-0000-4000-8000-000000000001="other.sender" ]
+nocopy_folder	input.07	cat 00000061-0000-4000-8000-000000000001 parent=0000001f-0000-4000-8000-000000000001 pref=-1 complete=1 name="Shared Folder"
+nocopy_folder	input.08	item 00000062-0000-4000-8000-000000000001 parent=00000061-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000001 flags=0 finished=1 name="inside" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=00086000 group_mask=00000000 everyone=00000000 next=7fffffff
+nocopy_folder	input.90	share option=0 avatars=[ 000000b2-0000-4000-8000-000000000001 ] selected=[00000061-0000-4000-8000-000000000001]
 nocopy_folder	e00	share option=0 selected=1 avatars=1
 nocopy_folder	e01	model.findCategoryUUIDForType 14 -> 000000f0-0000-4000-8000-00000000000e
 nocopy_folder	e02	notify CannotCopyCountItems args=7b000000016b00000005434f554e547300000001317d payload=7b000000036b000000086167656e745f696475000000b20000400080000000000000016b00000009666f6c6465725f696475000000610000400080000000000000016b00000014737563636573735f6e6f74696669636174696f6e730000000b4974656d735368617265647d functor=1
 nocopy_folder	note.e02	args {'COUNT':'1'} payload {'agent_id':u000000b2-0000-4000-8000-000000000001,'folder_id':u00000061-0000-4000-8000-000000000001,'success_notification':'ItemsShared'}
+no_avatars	input.00	agent id=000000a1-0000-4000-8000-000000000001 session=000000a1-0000-4000-8000-000000000002 avatar_valid=1 fullname="Oracle Tester" sitting=0 dnd=0 groups=[]
+no_avatars	input.01	worn attachments=[] wearables=[] active_gestures=[]
+no_avatars	input.02	limits max_inventory_items_transfer=42 system_folder_overrides=[ ] (other folder types: 000000f0-0000-4000-8000-<type as U16>)
+no_avatars	input.03	settings AutoAcceptNewInventory=0 FSCreateGiveInventoryParticleEffect=1 FSDismissGroupNoticeAttachmentsToTrash=0 FSLogAutoAcceptInventoryToChat=1 FSNotifyIncomingObjectSpam=1 FSNotifyIncomingObjectSpamFrom=1 FSShowAutoAcceptInventoryInNotifications=1 FSUseLegacyInventoryAcceptMessages=0 LogInventoryDecline=1 ShowInInventory=0 ShowNewInventory=1 UseLegacyIMLogNames=1 FSOfferThrottleMaxCount=5
+no_avatars	input.04	rlv enabled=0 forbid_give_to_rlv=0 shared_root=00000000-0000-0000-0000-000000000000 can_show_names=1 locked_attachment=0 unsit=0 sittp=0 share_blocked=[] nearby=[]
+no_avatars	input.05	mutes [ ] legacy [ ]
+no_avatars	input.06	im_sessions=[] avatar_names [ 000000b2-0000-4000-8000-000000000001="other.sender" ]
+no_avatars	input.07	item 00000061-0000-4000-8000-000000000001 parent=0000001f-0000-4000-8000-000000000001 type=7 inv_type=7 asset=000000aa-0000-4000-8000-000000000001 flags=0 finished=1 name="Shared Item" creator=000000b2-0000-4000-8000-000000000009 owner=000000a1-0000-4000-8000-000000000001 last_owner=000000a1-0000-4000-8000-000000000001 group=00000000-0000-0000-0000-000000000000 group_owned=0 base=7fffffff owner_mask=0008e000 group_mask=00000000 everyone=00000000 next=7fffffff
+no_avatars	input.90	share option=0 avatars=[ ] selected=[00000061-0000-4000-8000-000000000001]
 no_avatars	e00	share option=0 selected=1 avatars=0
+empty_selection	input.00	agent id=000000a1-0000-4000-8000-000000000001 session=000000a1-0000-4000-8000-000000000002 avatar_valid=1 fullname="Oracle Tester" sitting=0 dnd=0 groups=[]
+empty_selection	input.01	worn attachments=[] wearables=[] active_gestures=[]
+empty_selection	input.02	limits max_inventory_items_transfer=42 system_folder_overrides=[ ] (other folder types: 000000f0-0000-4000-8000-<type as U16>)
+empty_selection	input.03	settings AutoAcceptNewInventory=0 FSCreateGiveInventoryParticleEffect=1 FSDismissGroupNoticeAttachmentsToTrash=0 FSLogAutoAcceptInventoryToChat=1 FSNotifyIncomingObjectSpam=1 FSNotifyIncomingObjectSpamFrom=1 FSShowAutoAcceptInventoryInNotifications=1 FSUseLegacyInventoryAcceptMessages=0 LogInventoryDecline=1 ShowInInventory=0 ShowNewInventory=1 UseLegacyIMLogNames=1 FSOfferThrottleMaxCount=5
+empty_selection	input.04	rlv enabled=0 forbid_give_to_rlv=0 shared_root=00000000-0000-0000-0000-000000000000 can_show_names=1 locked_attachment=0 unsit=0 sittp=0 share_blocked=[] nearby=[]
+empty_selection	input.05	mutes [ ] legacy [ ]
+empty_selection	input.06	im_sessions=[] avatar_names [ 000000b2-0000-4000-8000-000000000001="other.sender" ]
+empty_selection	input.90	share option=0 avatars=[ 000000b2-0000-4000-8000-000000000001 ] selected=[]
 empty_selection	e00	share option=0 selected=0 avatars=1

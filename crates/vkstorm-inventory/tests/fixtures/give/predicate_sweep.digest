@@ -1,11 +1,52 @@
 # vkstorm inventory oracle r4b: give/predicate_sweep (digest)
 # what: set 7: random permission masks through the predicates
 # generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
-# viewer: 472ecf270d
+# viewer: c465598e38
 # platform: windows-msvc-1944
 # seed: 0x5234425052450004
 # format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested
 lines=20000
 cases=20000
 sample_modulus=100
+chunk_cases=512
 sha256=342f9da7f3153be1326e02e4b304d295f2f32bbb1694e729117ceadb9ad75c57
+chunk=0 first=pred_00000 last=pred_00511 cases=512 sha256=3d539405a4c1541fd5f4a17dad304befa3dd5b76dac88965588043df1443cf0d
+chunk=1 first=pred_00512 last=pred_01023 cases=512 sha256=eafecde25df761d963f8ea70907b735836e056a8d1f9be4dffd6e7245bf74032
+chunk=2 first=pred_01024 last=pred_01535 cases=512 sha256=d9263d1d7206c2f2a5a4e9f26ddb57e0cf6e7806bca6a725bcb636e5745d0d00
+chunk=3 first=pred_01536 last=pred_02047 cases=512 sha256=78287806f96fe184898ca1f328464f21876695e7a1c9520ca7c21f09a8c11280
+chunk=4 first=pred_02048 last=pred_02559 cases=512 sha256=eec5f9650684cf0c60d75a66137e363656dca127b6de2e34609d4aa78d277639
+chunk=5 first=pred_02560 last=pred_03071 cases=512 sha256=7ac0335b6cef8ade636e862192e6dd4081982f4c86a83f0e7307bb1c91ea073b
+chunk=6 first=pred_03072 last=pred_03583 cases=512 sha256=1631f5296d7bfe1dc93064ebaebef052e2b536f7f522fe69f6b41cd69b661e1d
+chunk=7 first=pred_03584 last=pred_04095 cases=512 sha256=f4b4d51e211d4a16258567e683865a64a9e9f2d753875d85c4d9f85de02585ad
+chunk=8 first=pred_04096 last=pred_04607 cases=512 sha256=e7efc4d03e7fdb1e490522565d571b8906df0745b5004bb6d4279633e07be866
+chunk=9 first=pred_04608 last=pred_05119 cases=512 sha256=38fe8ac57de36507fedbdd70f0f60fee6c686dacbb27fa7f81ae8c8d64b1e0b6
+chunk=10 first=pred_05120 last=pred_05631 cases=512 sha256=be25fd1fda87359e11abcb64449a8bd555fdcc00d2197fd6cc83d95339598d8b
+chunk=11 first=pred_05632 last=pred_06143 cases=512 sha256=eff81bb4a85cd1e14ee12c418a4c595431b9e31f8adbeb6d285b0b3f3990688c
+chunk=12 first=pred_06144 last=pred_06655 cases=512 sha256=b7a0c1a558c8c22caf64740c3117e08feca1480015534765bb00b3a83e8916ab
+chunk=13 first=pred_06656 last=pred_07167 cases=512 sha256=0e1288385d1d5f422ecdeb31be2f3c6ff64116049c51ea1f650f8fbdf7f05549
+chunk=14 first=pred_07168 last=pred_07679 cases=512 sha256=b49a36b05738f321675a6df6b52774e0f9eb85a14794f91508f1643f8fbcd8c9
+chunk=15 first=pred_07680 last=pred_08191 cases=512 sha256=9c57c4164b3d50da761594d4daf9422d2da3a01c7fd446117574f844250c3ba6
+chunk=16 first=pred_08192 last=pred_08703 cases=512 sha256=190595cd6a0f55a255ece826d67e2f17d755a0fd86100163a3afadb439a44a3d
+chunk=17 first=pred_08704 last=pred_09215 cases=512 sha256=6525ec0b833db2cfb643ecc8bd2e8f72d712ca96010f1e7cbee4df3b019f1a7a
+chunk=18 first=pred_09216 last=pred_09727 cases=512 sha256=961fdd102e1ce918fbc3e81dca26d2020aeaefad843c558c6000ce428059a0ff
+chunk=19 first=pred_09728 last=pred_10239 cases=512 sha256=37e483b95e1b257753e4590f8330ae82e1e5d09d3ad6a3088a17e90faa96732b
+chunk=20 first=pred_10240 last=pred_10751 cases=512 sha256=2bd5a4626c06a9bbebb9b02a3e3c882ca8cd841593cf5a1b951711ea555ecd31
+chunk=21 first=pred_10752 last=pred_11263 cases=512 sha256=3d3c5b9aa122d74e90fffa77138f30c33768da6362dc5af1c11b34c63d4c2146
+chunk=22 first=pred_11264 last=pred_11775 cases=512 sha256=076c7998b31c2101720363479930f5ece2b80abf3453f65f37e174093c80986f
+chunk=23 first=pred_11776 last=pred_12287 cases=512 sha256=3239ae53c327b16affd0f79d3792f636f069b5044129b02e1a21c77c69d9b2fe
+chunk=24 first=pred_12288 last=pred_12799 cases=512 sha256=edc9d49d7c5f9dcc3963dd25f6588c310e38e8ba5e8ca6bdd470861b13ef5fbc
+chunk=25 first=pred_12800 last=pred_13311 cases=512 sha256=4e12c1daf18231f374d232b25783f7bca13625d2f4de25ffbb32f7371b7f16f1
+chunk=26 first=pred_13312 last=pred_13823 cases=512 sha256=d3c8c88e5172c746c34f9e394e7e96613c7afe2a7a4cad91b6d058804405dc52
+chunk=27 first=pred_13824 last=pred_14335 cases=512 sha256=ebe1f16d83b33e81ff8eba83ab3e6470d28ebfbb2b8cce098850f08b2ef84420
+chunk=28 first=pred_14336 last=pred_14847 cases=512 sha256=897b9e1e8a9e086416803681131231368aae9393bdcacc7046c104a2432fe171
+chunk=29 first=pred_14848 last=pred_15359 cases=512 sha256=9e006da3c46d323cf8c2f4c65ad5e14b2fc7d0636c49cf2c82bfab7296e15436
+chunk=30 first=pred_15360 last=pred_15871 cases=512 sha256=18c3a20d83468c54819132e9db77c2d8373fde2d0762e34952b8573036e63f25
+chunk=31 first=pred_15872 last=pred_16383 cases=512 sha256=b0182d847dbbc54f9e2794d4aa26b0c2f996ad91624416e479acdc9f0322b9fd
+chunk=32 first=pred_16384 last=pred_16895 cases=512 sha256=dbfab9ae3a12b74f0406a201a075c3367f89c29c412a10aa0b53a18dae43dc8c
+chunk=33 first=pred_16896 last=pred_17407 cases=512 sha256=d0ec7b0ef031611e339a770d539546b6dde810af7c9a101464743a974f389562
+chunk=34 first=pred_17408 last=pred_17919 cases=512 sha256=0874bf984a287f719c7dc5d033dfce58e19d8df43fae4a2ed76ebef6c0194d6a
+chunk=35 first=pred_17920 last=pred_18431 cases=512 sha256=dad062994236e20ee1bc749adb2154d86f30819afa248fd89337792e34f4318a
+chunk=36 first=pred_18432 last=pred_18943 cases=512 sha256=16f056d2c41d81eaab7b00a58e692a49fc0a94b5b0edfb89c80602e38e77a9db
+chunk=37 first=pred_18944 last=pred_19455 cases=512 sha256=d4c93e91041c412bbcaac6f33a5a98366254db1ffa884f793d01486b8c800cb2
+chunk=38 first=pred_19456 last=pred_19967 cases=512 sha256=b703a8f03b6d2fb68e0b49e29f7a93dfe95052310d5edc6e302c6bd6c3b7b2b0
+chunk=39 first=pred_19968 last=pred_19999 cases=32 sha256=b24f4f8b346cd9a6298575c60fbe6109c0b918c35b725e307b4ae6cde7c80265

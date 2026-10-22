@@ -1,11 +1,24 @@
 # vkstorm inventory oracle r4b: offer/incoming_sweep (digest)
 # what: set 5: random received offers
 # generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
-# viewer: 472ecf270d
+# viewer: c465598e38
 # platform: windows-msvc-1944
 # seed: 0x5234424f46460002
 # format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested
 lines=27465
 cases=5892
-sample_modulus=30
+sample_modulus=60
+chunk_cases=512
 sha256=9c0d6e7ba2bfa0c2e4b84db7432cdb78c8348ed0559fb254396e5dc463ae36a9
+chunk=0 first=incoming_0000 last=incoming_0524 cases=512 sha256=1b6b30d5e6310b0f3b3d0afebb4e5bd092f17b7aeacdacbdf96182ed01a1033e
+chunk=1 first=incoming_0525 last=incoming_1043 cases=512 sha256=22b815ab8513627c1f45923b28962d31bc5b9fbf2de04cce0ff3235619bd7c31
+chunk=2 first=incoming_1044 last=incoming_1560 cases=512 sha256=728fb0bb95c6ce3451606a5fd9ef62c41f6ea226219fbae803ac10f542693585
+chunk=3 first=incoming_1561 last=incoming_2082 cases=512 sha256=5078955d1aafa3614233a706bc5fad237cd54b5b8d5ad40ebc38dea7da6982a4
+chunk=4 first=incoming_2083 last=incoming_2603 cases=512 sha256=df01230d51c70a93597dea910447ac2eac7cff19d4e587234ecd39f68e3bbb0e
+chunk=5 first=incoming_2604 last=incoming_3122 cases=512 sha256=7a48f96f6c2af1ce76952a5c3b37287a574daf7ebeb60f6092ca6d025743d44d
+chunk=6 first=incoming_3123 last=incoming_3646 cases=512 sha256=1d0197269e88cc230dbc6797655ff68018233f586e7648f2e75d3315b516f54a
+chunk=7 first=incoming_3647 last=incoming_4171 cases=512 sha256=df1d2d6c5702178d1cde2505c09e899abf5300424dc876040cd1d3e584e1968a
+chunk=8 first=incoming_4172 last=incoming_4694 cases=512 sha256=4a3b018c95617a8795d83b3646cd147528314a90938568bb0173bfc631af0b1e
+chunk=9 first=incoming_4695 last=incoming_5217 cases=512 sha256=06273b479e99f4fe56b1f513e8cf3d92b1b0efcff48f68af091818ca7d180c75
+chunk=10 first=incoming_5218 last=incoming_5738 cases=512 sha256=f6e8d4f774c958d50c5e5baca5bc48af07a1ad238a03e5fd78e7bd9092e573cb
+chunk=11 first=incoming_5739 last=incoming_5999 cases=260 sha256=74ed3dcd3006176a426c59052c682de84b206b583bf316add92d6ea291510b87

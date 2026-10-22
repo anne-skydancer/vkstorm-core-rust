@@ -1,7 +1,7 @@
 # vkstorm inventory oracle r4b: offer/throttle
 # what: set 6: check_offer_throttle traces
 # generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
-# viewer: 472ecf270d
+# viewer: c465598e38
 # platform: windows-msvc-1944
 # seed: none (fixed case list)
 # format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested

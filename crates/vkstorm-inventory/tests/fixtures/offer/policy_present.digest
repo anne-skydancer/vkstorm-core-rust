@@ -1,0 +1,13 @@
+# vkstorm inventory oracle r4b: offer/policy_present (digest)
+# what: set 6 supplement: offered object already in the model, default settings
+# generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
+# viewer: c465598e38
+# platform: windows-msvc-1944
+# seed: none (fixed case list)
+# format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested
+lines=3848
+cases=512
+sample_modulus=8
+chunk_cases=512
+sha256=fd3b254bbfc8e75ff67072b0492b7cacff1f33c3a850f69a34467f5f78ea9cd2
+chunk=0 first=d4.self0.mute_none.dnd0.aa0.legacy0.rlv0.grlv_no.forbid0.type_cat.accept.interactive.dismiss0.logdecl1.present last=d37.self0.mute_none.dnd0.aa1.legacy1.rlv0.grlv_no.forbid0.type_note.closed.forced.dismiss0.logdecl1.present cases=512 sha256=fd3b254bbfc8e75ff67072b0492b7cacff1f33c3a850f69a34467f5f78ea9cd2

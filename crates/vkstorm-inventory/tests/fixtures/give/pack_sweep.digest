@@ -1,11 +1,20 @@
 # vkstorm inventory oracle r4b: give/pack_sweep (digest)
 # what: set 4: pack_instant_message over random names and buckets
 # generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
-# viewer: 472ecf270d
+# viewer: c465598e38
 # platform: windows-msvc-1944
 # seed: 0x52344250414b0001
 # format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested
 lines=8000
 cases=4000
-sample_modulus=50
+sample_modulus=100
+chunk_cases=512
 sha256=4a51bad171a8aa147756f3cf48fc71d39f41cf78a6db840d306f6a603d9068ef
+chunk=0 first=pack_0000 last=pack_0511 cases=512 sha256=bd37666ee8cc5db6895aed28dd65a320e9c25bd9633aaacac46674f8cf942cb9
+chunk=1 first=pack_0512 last=pack_1023 cases=512 sha256=06b1727e3457aa8a5837fb0aa6be3d105479c1a7caec740f637c20b24b50809d
+chunk=2 first=pack_1024 last=pack_1535 cases=512 sha256=a3d9eb5e0cbd3ab288ad8d129ade69acf8a46a7c4e0474ed239d924c1bcde3d5
+chunk=3 first=pack_1536 last=pack_2047 cases=512 sha256=541170b3c3b8212b91caa22da67d11da7c57b3e7ef295aed4f5833b43f94ca4f
+chunk=4 first=pack_2048 last=pack_2559 cases=512 sha256=4ff13ce1f2c5ae645f50de5c5c26ed5bba90931b78d6f83a1680fd224049ef8d
+chunk=5 first=pack_2560 last=pack_3071 cases=512 sha256=bfb78c6d3104b59ed0dde7f386cd8850bbf27569a07fc9057bd04d809f22e5d3
+chunk=6 first=pack_3072 last=pack_3583 cases=512 sha256=5f29c4889a24758ef95f2d2d692836abe9d9da9593e1e03bb8360ff2edafd4d2
+chunk=7 first=pack_3584 last=pack_3999 cases=416 sha256=e0682c11b8d5704acfad05cffe218888dd1b027b1b7715b12d2226eca6974829

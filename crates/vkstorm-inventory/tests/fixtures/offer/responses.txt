@@ -1,7 +1,7 @@
 # vkstorm inventory oracle r4b: offer/responses
 # what: set 4: accept and decline packets (sendReceiveResponse, send_decline_response) for dialogs 4, 9, 32, 37
 # generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
-# viewer: 472ecf270d
+# viewer: c465598e38
 # platform: windows-msvc-1944
 # seed: none (fixed case list)
 # format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested

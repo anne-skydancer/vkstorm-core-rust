@@ -17,9 +17,12 @@ python tools/inventory-fixtures/offer/regenerate.py \
 ```
 
 On Linux the executable is under `build-linux-64/newview/` (the script sets
-`LD_LIBRARY_PATH`). The dump takes about 25 s; the 589,824-case policy table
-dominates. Format, digests, samples, the policy projection and the runtime
-edges are described in the fixtures' `README.md` files.
+`LD_LIBRARY_PATH`). The script dumps twice into fresh temporary directories,
+requires byte-identical dumps (a dump exits non-zero by design and is accepted
+only with its `DUMP_COMPLETE` marker), replaces both fixture trees and replays
+them. One dump takes about 1 minute; the 589,824-case policy table dominates.
+Format, the W6/W7 seam, input records, digests and chunk digests, samples,
+outcome classes, generators and runtime edges: the fixtures' `README.md` files.
 
 For a Rust test: every non-header line is `<case>\t<key>\t<value>`; skip lines
 whose key starts with `note.`. A digest file's `sha256` is over every
