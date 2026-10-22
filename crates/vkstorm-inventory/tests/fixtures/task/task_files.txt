@@ -205,6 +205,21 @@ case metadata_line_over_254 input=files/metadata_line_over_254.inv bytes=1815 sh
   [0] item uuid=A parent=obj type=-1 name="" thumb=null fav=0 runtime="" created=0 asset=null desc="" invtype=255 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=bc00046b
   [1] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
  helpers root=obj contents=[A] count{-1:1,8:1} byasset{null:none} bytype{null/-1:A}
+case unknown_24 input=files/unknown_24.inv bytes=2366 sha256=9901f7083ea6a74ebe962736041ca02640da22142839aacf1ad8473f67619150
+ direct returned=1 removed=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | callback L1 ser=0 inv=[C,B,A,obj]
+ inventory 4 entries root obj
+  [0] item uuid=C parent=obj type=10 name="Script C" thumb=null fav=0 runtime="" created=1700000000 asset=assetC desc="copyable" invtype=10 flags=00000000 sale=0/10 base=00082000 owner=00082000 group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2fa435a8
+  [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+  [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+  [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+ helpers root=obj contents=[C,B,A] count{10:1,6:1,7:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/10:C,assetB/6:B,assetA/7:A}
+case unknown_24_between input=files/unknown_24_between.inv bytes=1704 sha256=ad745cc830a21a7957369f3570133eb5ba1ccccda011d31fd54d953f6708cfb9
+ direct returned=1 removed=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | callback L1 ser=0 inv=[B,A,obj]
+ inventory 3 entries root obj
+  [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+  [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+  [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+ helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A}
 case unknown_25 input=files/unknown_25.inv bytes=2376 sha256=ae3faab14de329f10d5591f4f4466d8ae3f580f982a445e4500fac7efea7e53f
  direct returned=1 removed=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | callback L1 ser=0 inv=[C,B,A,obj]
  inventory 4 entries root obj

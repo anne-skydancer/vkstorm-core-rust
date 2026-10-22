@@ -175,8 +175,11 @@ none) the call is not made and the line says `not-called`.
   id, running, faulted, CRC. Cases marked `via_xfer` also run the bytes
   through ReplyTaskInventory -> xfer -> `processTaskInvFile` with the pending
   list `[assetP, assetE, assetA]` and record the list afterwards.
-  `missing_file` is the open failure. `toplevel_line_253` ... `_300` put a
-  top-level line of that many characters between two blocks;
+  `missing_file` is the open failure. Limits are pinned on both sides:
+  `unknown_24`/`_25`/`_26` (also `_between` blocks) for the 25 tolerated
+  unknown top-level tokens, `desc_line_253`/`_254`/`_255` inside an item and
+  `toplevel_line_253` ... `_300` (a top-level line of that many characters
+  between two blocks) for the 255-character line cap;
   `item_type_missing_shares_asset` has an item without a type line (AT_NONE)
   sharing A's asset; `duplicate_item_id` has two items with A's id.
 - `scrub.txt`: Filename values through the real builder and reader,
