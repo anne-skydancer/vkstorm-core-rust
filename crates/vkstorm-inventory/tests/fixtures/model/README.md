@@ -11,8 +11,10 @@ specification. Every corpus but C10 comes from the dump mode of
 (`indra/llinventory/tests/llinventory_tool.cpp`), and C10 is the public Linden
 Library cache. The values come from the frozen copies in
 `indra/llinventory/tests/llinventory_oracle.{h,cpp}`. Those copies were made at
-viewer commit `472ecf270d` (branch `codex/rust-inventory`), so a later
-regeneration still records the C++ as it was before the port.
+viewer commit `040ec69cfe`. That commit is `codex/rust-inventory` at `472ecf270d` with the approved inventory
+bug fixes merged (branch `codex/inventory-bugfix-model-rust`: `913990ebe3` bug 1, `b67c371a89` bug 4,
+`d680ea60a7` bug 38, `8d3e1742df` bug 28; see *Port rules*), so a later regeneration still records the
+fixed C++ as it was before the port.
 
 The same bytes are kept in the viewer (`indra/llinventory/tests/fixtures/`)
 and in vkstorm-core-rust (`crates/vkstorm-inventory/tests/fixtures/model/`).
@@ -32,15 +34,22 @@ three ways:
   chunked digest, and C10 field by field. A difference is reported as
   `<corpus>: case <id> field <field>.<column>: expected <x> actual <y>`. A
   digest mismatch names its case range, for example `c3r cases [12000, 13000)`.
-- It checks the fixture tree itself (test 5): a missing or an unexpected file,
-  and a missing or an unexpected `digests.txt` entry, fail.
+- It checks the fixture tree itself (test 5): a missing or an unexpected file
+  fails. So does a `digests.txt` that does not hold exactly the expected keys:
+  each stream's total and each of its chunks, so an unexpected chunk key under
+  a known stream fails too.
 
 The test opens no fixed resources: its message system binds an OS-assigned
 UDP port, and it writes no files. After the test, the build runs
 `check_r1_copies.py` (a post-build step in `indra/llinventory/CMakeLists.txt`).
 That check does the following:
 - It requires each frozen copy to match its live source exactly once, after
-  removing comments and `#if 0` blocks. String and character literals are
+  joining backslash line splices and removing comments and `#if 0` blocks. A
+  statement spliced onto a `//` line is therefore inside the comment and is
+  flagged. The preprocessor conditionals around the match must be the ones
+  around the region at copy time (each region records them: an include guard
+  for a header, none otherwise), so a region moved into the dead `#else` of
+  `#if 1 <new> #else <original> #endif` is flagged. String and character literals are
   compared verbatim; whitespace is collapsed only outside literals.
 - It fences the viewer members the copied subclass functions depend on
   (`mTransactionID`, `mOwnerID`, `mVersion`, `VERSION_UNKNOWN`, `getCRC32`,
@@ -51,7 +60,7 @@ That check does the following:
   change to any of them rebuilds the test and re-runs the check.
 - A port step that replaces a copied source on purpose narrows the run to the
   sources it did not replace (`--only indra/newview --allow-partial`). It
-  checks the frozen copies once against `--at 472ecf270d`. A partial run
+  checks the frozen copies once against `--at 040ec69cfe`. A partial run
   without `--allow-partial` is refused.
 
 Recorded on Windows (MSVC 19.44.35229, RelWithDebInfo, the Release feature
@@ -59,7 +68,8 @@ set) and on Linux (WSL Ubuntu 26.04 with GCC 15.2 and with GCC 14.3, CI's Linux
 configuration). The committed files are the Windows recording. The Linux
 recording has the same bytes in every file apart from the `# platform:` header
 line (see *Runtime edges* for the five values that differ by C runtime and how
-they are written).
+they are written). The fixed C++ was recorded the same way: Windows, then
+GCC 15 and GCC 14 with identical bodies.
 
 ## Files
 
@@ -119,18 +129,21 @@ A reader's `ret` comes before the stream columns, as in `ret state pos rest`.
 
 ### Marked values
 
-- `UB`: the C++ reads an uninitialised variable here. The value is not
-  comparable, and the comparer skips a column only when the *expected* value is
-  `UB`; an actual `UB` against a concrete expectation is a difference. The
-  cases, and what each build produced, are listed below. The rows carrying `UB`
-  masks also record `item.invariants` and `perm.invariants`. These are the
-  `fix()` invariants that hold whatever the garbage, compared exactly:
-  owner ⊆ base, group ⊆ owner, everyone ⊆ owner, next ⊆ base, everyone
-  without MODIFY, and a no-transfer base that is not group owned leaving group
-  and everyone without COPY.
-- `RT(win=<x>;linux=<y>[;crate=<z>|;required=<z>])`: the value depends on the
-  C runtime. `crate=` is the value the crate's own mapping must give, and
-  `required=` is the outcome a port must produce (*Port rules*). The recorder
+- `UB`: the C++ would read an uninitialised variable here, so the value is not
+  comparable. The comparer skips a column only when the *expected* value is
+  `UB`. Since bug 38 no case in these corpora is undefined (see runtime edge
+  2), so no fixture value is `UB`; the marker is kept for a future case.
+- `item.invariants`, `perm.invariants`, `item.no_widening` and
+  `perm.no_widening` are recorded for the corrupt-input cases, compared
+  exactly:
+  - invariants: owner ⊆ base, group ⊆ owner, everyone ⊆ owner, next ⊆ base,
+    everyone without MODIFY, and a no-transfer base that is not group owned
+    leaves group and everyone without COPY;
+  - no_widening: for each of base, owner, group, everyone and next, no bit
+    beyond the same input without the corrupt line, then group ownership not
+    newly set.
+- `RT(win=<x>;linux=<y>[;crate=<z>])`: the value depends on the C runtime.
+  `crate=` is the value the crate's own mapping must give (*Port rules*). The recorder
   writes this form only when the platform's own value equals the stated one.
   Otherwise it writes `RT-MISMATCH(...)`, which fails the comparison.
 
@@ -222,7 +235,7 @@ Each case appends the five resulting masks (base, owner, group, everyone, next) 
 ### C4 sale info
 
 `c4_sale.txt` covers:
-- types {0, 1, 2, 3, -1, 4, 200, 255} x prices {`INT_MIN`, -1, 0, 10, `INT_MAX`}: the raw state, the CRC, the two-argument constructor, the setters, the legacy text and its re-import, the LLSD form and its re-import, the `operator LLSD`, `ll_create_sd_from_sale_info`/`ll_sale_info_from_sd`, and the hyphenated `packMessage`/`unpackMessage`. For the invalid types the legacy text is the prefix written before the null name, with `legacy.outcome` (runtime edge 3);
+- types {0, 1, 2, 3, -1, 4, 200, 255} x prices {`INT_MIN`, -1, 0, 10, `INT_MAX`}: the raw state, the CRC, the two-argument constructor, the setters, the legacy text and its re-import, the LLSD form and its re-import, the `operator LLSD`, `ll_create_sd_from_sale_info`/`ll_sale_info_from_sd`, and the hyphenated `packMessage`/`unpackMessage`. For the invalid types the legacy text writes `not` (bug 1), and `legacy.outcome` is the stream state (`good`);
 - `accumulate` over nine sale states, all pairs (`c4.acc`), including the price overflow (a runtime edge, below);
 - `fromLLSD` over 20 `sale_type` values x 13 `sale_price` values, absent included;
 - `perm_mask` as Binary of 0/3/4/5 bytes, as Integer, as String and as undef;
@@ -250,7 +263,7 @@ A record holds these fields:
 - `legacy`: `exportLegacyStream` with the asset key;
 - `legacy.nokey`: the asset line written without the key, and whether the rest is byte-identical;
 - `legacy.ret`;
-- for a sale type outside 0..3 (`c5.sale.{-1,4,200,255}.10`), in place of the three fields above: `legacy` (the bytes written, which end at `\t\tsale_type\t`), `legacy.outcome` (with and without the key) and `legacy.nokey.prefix`;
+- for a sale type outside 0..3 (`c5.sale.{-1,4,200,255}.10`), in place of the three fields above: `legacy` (the whole item, with `not` since bug 1), `legacy.outcome` (the stream state with and without the key, `good`) and `legacy.nokey.prefix` (the text written without the key);
 - `legacy.reimport`: into the previous item, plus its stream;
 - `legacy.object`: `LLInventoryObject::exportLegacyStream` on the item;
 - `llsd`: `asLLSD`;
@@ -305,7 +318,7 @@ has the result of each reader:
 - `P`: permissions (`perm` = `ret` + permissions, `perm.stream`);
 - `S`: sale info (`sale` = type price has_perm_mask perm_mask ret, `sale.stream`);
 - `N`: notecard. `notecard` holds ret, version, embedded version, item count and text. It is followed by `notecard.item.<k>`, `notecard.stream` and, when the import succeeded, `notecard.export` (`exportStream`). A text or export over 4096 bytes is written `len=<n>;sha256=<hex>`.
-- Rows with `UB` masks also hold `item.invariants` and `perm.invariants` (see *Marked values*).
+- The corrupt-input cases (`c6.perm.mask.first_fails`, `c6.perm.mask.stale`, `c6.perm.group_owned.first_fails`, `c6.perm.group_owned.junk`, `c6.perm.id.first_empty`) also hold `item.invariants`, `item.no_widening`, `perm.invariants` and `perm.no_widening` (see *Marked values*).
 
 Most inputs are the standard item text (`std_item_lines()`, 28 lines) with one
 change, followed by `NEXT\tline\n`, so that the stream position after the
@@ -500,52 +513,38 @@ Each is stated here, and none is chosen silently.
    `type`, `type_default` and `version`. Every other String coercion in the
    corpora gives the same value on both platforms. The port rule is under
    *Port rules*.
-2. **Uninitialised locals in the legacy readers** (`UB`). The legacy readers
-   read an uninitialised local in three places:
-   - `S32 date` in `LLInventoryItem::importLegacyStream`, when `creation_date`'s value does not parse (`c6.date.abc`, `c6.kw.date` whose stale value is the description, `c6.kw.date.first`);
-   - `U32 mask` in `LLPermissions::importLegacyStream`, when the block's first mask or `group_owned` line does not parse (`c6.perm.mask.first_fails`, `c6.perm.group_owned.first_fails`; the four other masks inherit the garbage through `fix()`);
-   - `char uuid_str[256]`, when an id keyword is the block's first value-less line (`c6.perm.id.first_empty`).
+2. **Uninitialised locals in the legacy readers: defined since bug 38**
+   (`d680ea60a7`). The legacy readers read an uninitialised local in three
+   places:
+   - `S32 date` in `LLInventoryItem::importLegacyStream`, when `creation_date`'s value does not parse;
+   - `U32 mask` in `LLPermissions::importLegacyStream`, when the block's first mask or `group_owned` line does not parse;
+   - `char uuid_str[256]`, when an id keyword is the block's first value-less line.
 
-   The values below were observed. Build 1 is the first recording; build 2
-   is this one, after the cases were added. Columns marked "probe" ran the
-   case alone (`llinventory_tool probe ub`); the rest ran inside the full
-   corpus, which leaves different residue on the stack.
+   The fix initialises them to 0, 0 and the empty string, and the recorded
+   values are now plain expected values: `c6.date.abc`, `c6.kw.date` and
+   `c6.kw.date.first` give date 0. `c6.perm.mask.first_fails` gives masks
+   `00000000` in both readers (no_widening `111111`).
+   `c6.perm.group_owned.first_fails` gives group_owned 0, and
+   `c6.perm.id.first_empty` gives creator null.
 
-   | case | Windows build 1 | Windows build 2 | GCC 15 build 1 | GCC 15 build 2 | GCC 14 build 2 (probe) |
-   |---|---|---|---|---|---|
-   | `c6.date.abc` date | 0 | -1266450432 | 0 | 0 | 0 |
-   | `c6.kw.date` date | 15 | 15 | 0 | 0 | 0 |
-   | `c6.kw.date.first` date | 0 | -1266450432 | 91719616 | 402 | 402 |
-   | `c6.perm.mask.first_fails` masks, item reader | `00000030` x5 | `00000030` x5 | `746e6576`… | `746e6576`… | `6e6f6973`… |
-   | `c6.perm.mask.first_fails` masks, permissions reader | `00082000` x5 | `00082000` x5 | `00082000` x5 | `00082000` x5 | `00082000` x5 |
-   | `c6.perm.group_owned.first_fails` group_owned | 1 | 1 | 1 | 1 | 1 |
-   | `c6.perm.id.first_empty` creator, item reader | null | null | null | `U(66)` in the full run; null in the probe | null |
+   Before the fix the values were undefined, and they changed between builds
+   of the same compiler. For example, Windows `c6.date.abc` gave 0 in one
+   build and -1266450432 in the next, and GCC 15's item reader in
+   `c6.perm.id.first_empty` picked up a stale `U(66)` from an earlier case.
+   This is why they were `UB` until the fix. No other uninitialised read
+   remains in these corpora, so nothing stays `UB`.
+3. **A null sale-type name in the legacy writer: defined since bug 1**
+   (`913990ebe3`). `LLSaleInfo::exportLegacyStream` with a sale type outside
+   0..3 used to stream `lookup()`'s `NULL`: the MSVC runtime crashed, and
+   libstdc++ failed the stream and dropped the rest of the output. It now
+   writes `not`, as `asLLSD` does, and the stream stays good:
+   - `c4.tp.{-1,4,200,255}.*` record the whole block with `legacy.outcome` `good`;
+   - `c5.sale.{-1,4,200,255}.10` record the whole item, with both outcomes `good`;
+   - their re-import now reads the whole item.
 
-   In the first recording some of these values agreed across platforms, so
-   the coordinator asked (F6) to record those as expected values. The second
-   build disproved it. With the new cases, the same code and the same compiler
-   gave a different date for `c6.date.abc` on Windows. On Linux the item
-   reader's creator in `c6.perm.id.first_empty` took a stale `U(66)` from an
-   earlier case. A value that changes with the surrounding code would make the
-   test fail on unrelated edits, so every one of them stays `UB` and is not
-   compared. What does hold is compared: the `fix()` invariants
-   (`*.invariants`), and every other field of the same rows. The port must
-   choose a defined value, as survey 1 §4.3 item 2 proposes.
-3. **A null sale-type name in the legacy writer**
-   (`RT(win=crash;linux=fb;required=fb)`). `LLSaleInfo::exportLegacyStream`
-   with a sale type outside 0..3 streams `lookup()`'s `NULL`, and the two
-   runtimes react differently:
-   - With libstdc++ the stream gets `failbit|badbit` and every later write is
-     dropped. The output therefore ends at `\t\tsale_type\t`, and an item's
-     export stops at the same place.
-   - With the MSVC runtime the process takes an access violation. The harness
-     runs these exports under a structured exception handler on Windows, so
-     the crash is observed and the bytes written before it are recorded.
-     Those bytes are the same prefix.
-
-   The fixtures record the prefix (`legacy`) and the outcome
-   (`legacy.outcome`) for `c4.tp.{-1,4,200,255}.*` and
-   `c5.sale.{-1,4,200,255}.10`. `asLLSD` writes `not` for the same items.
+   The harness still runs these exports under a structured exception handler
+   on Windows, so a regression to the null name is reported as `crash`, not
+   fatal.
 4. **Signed overflow in `LLSaleInfo::accumulate`** (`c4.acc.*` with
    `INT_MAX`). This is undefined behaviour. Both compilers wrap, and the
    wrapped value is recorded. The random stream does not draw overflowing
@@ -567,7 +566,7 @@ Each is stated here, and none is chosen silently.
    casts in the readers) are formally unspecified. Both compilers store the
    integer, and that is what is recorded.
 
-## Port rules (required behaviour, coordinator decisions F5)
+## Port rules (required behaviour; coordinator decisions F5, updated after the bug fixes)
 
 1. **LLSD coercions.** In the viewer, the port keeps the C++ `LLSD`
    coercions: the C++ walker extracts each key with them (survey 1 §6). The
@@ -575,13 +574,28 @@ Each is stated here, and none is chosen silently.
    with the MSVC runtime and 0 with libstdc++. The crate's own mapping over
    `vkstorm_llsd::Value` follows vkstorm-llsd, which always gives 16. A
    crate test reads the `crate=` value of `RT(...)`.
-2. **The legacy export of a sale type outside 0..3** must write the shared
-   prefix, ending `\t\tsale_type\t`, and nothing after it. It must leave the
-   stream failed and bad (`fb`): the libstdc++ outcome, `required=fb`. A port
-   that writes anything else after the prefix fails, for example `not`. The
-   Windows crash of the pre-port C++ has no outcome to reproduce. The viewer
-   test accepts `crash` only from the pre-port C++ on Windows; a port gives
-   `fb` there too, which the stated value also accepts.
+2. **The legacy export of a sale type outside 0..3** writes `not`, as the
+   fixed C++ does (bug 1, `913990ebe3`): the whole block, with the stream
+   good. The earlier "prefix, then a failed and bad stream" rule is withdrawn,
+   and so is the crash.
+3. **The legacy readers' failed conversions** give the values of bug 38
+   (`d680ea60a7`): a creation date that does not parse is 0. A first mask or
+   `group_owned` that does not parse is 0. An id keyword without a value is
+   the null UUID. These are plain expected values, not `UB`. The
+   `fix()` invariants and the no-widening checks stay; the port must keep them
+   true for every corrupt input.
+4. **The no-widening rule, as the C++ has it.** A corrupt *mask* line never
+   widens a permission: no_widening is `111111` for
+   `c6.perm.mask.first_fails`, `c6.perm.mask.stale` and
+   `c6.perm.group_owned.first_fails`. A corrupt `group_owned` line *after*
+   other masks is different (`c6.perm.group_owned.junk`). It reuses the last
+   parsed mask (`00082000`), which is not 0, so it sets group ownership:
+   no_widening `111110`. This is deterministic C++ behaviour (bug 38 does not
+   change it), and the port reproduces it unless the user decides otherwise
+   (see the report).
+5. **`LLCategory`** (bug 4, `b67c371a89`) stays inside its tables for unknown
+   top bytes. The corpora record top bytes 0..6 only, whose outputs are
+   unchanged.
 
 ## Behaviour worth knowing (recorded as it is)
 
