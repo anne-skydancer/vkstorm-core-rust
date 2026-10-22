@@ -7,6 +7,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+vkstorm-vorbis = { path = "../vkstorm-vorbis" }
 # Linux output backends (libpulse, libasound) are loaded at run time.
 libloading = "=0.9.0"
 
@@ -31,3 +32,6 @@ windows-core = "=0.62.2"
 
 [dev-dependencies]
 
+[[bench]]
+name = "mixer"
+harness = false

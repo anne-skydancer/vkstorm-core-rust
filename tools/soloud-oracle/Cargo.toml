@@ -1,0 +1,11 @@
+[package]
+name = "soloud-oracle"
+description = "Parity and timing harness for vkstorm-audio's mixer, WAV reader and asset decoder against the viewer's SoLoud and LLVorbisDecodeState (see c/)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+vkstorm-audio = { path = "../../crates/vkstorm-audio" }
+

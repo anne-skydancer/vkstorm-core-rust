@@ -13,5 +13,9 @@
 //! - [`stream`]: parcel music: HTTP/ICY streaming, playlists, demuxing and
 //!   decoding, metadata, reconnects.
 
+pub mod asset;
 pub mod device;
+pub mod engine;
+pub mod mixer;
 pub mod music;
+pub mod wav;
