@@ -24,27 +24,46 @@ members they use from `llviewerinventory.cpp` lines 87-88, 104-233,
 335-408 and 547-601 (blob `a13210dce6`). The copies are verbatim; they reach
 fakes for the viewer singletons by ordinary name lookup in the namespace
 `vks_task_oracle` (`llinventory_task_oracle.h`, `llinventory_task_oracle_fakes.cpp`).
-The oracle's own `LLViewerObject` mirrors the live declarations and the
-constructor and destructor lines, which are kept as checked text in
-`llinventory_task_oracle_decls.h` (`llviewerobject.cpp` 303-308 and 370-375,
-`llviewerobject.h` 548-578 and 972-997).
+The oracle's own `LLViewerObject` mirrors the live declarations, the
+constructor and destructor lines and `permYouOwner()`, which are kept as
+checked text in `llinventory_task_oracle_decls.h`: `llviewerobject.cpp`
+303-308 (initialisers), 370-375 and 404-414 (destructor, including
+`clearInventoryListeners()`), 7062-7084 (`permYouOwner`), and
+`llviewerobject.h` 546-603, 729-730, 769-776, 915-919, 931-934 (declarations)
+and 972-997 (state members).
 
 ### The copy check
 
 `indra/newview/tests/check_r4a_copies.py`, run by the test itself (test 8)
-and standalone, checks every region of both files against the live source.
-Both sides are normalised: comments removed, string and character literals
-kept verbatim, whitespace outside literals collapsed within each line, empty
-lines dropped; in the live file `#if 0` blocks are dropped too. A region
-passes only if its lines occur exactly once, consecutively, in the live file.
-So reindenting or rewording a comment passes, while a token or literal
-change, a statement folded into a `//` comment, code moved under `#if 0` or
-`/* */` with a changed version beside it, and a duplicated region all fail.
+and standalone, checks every region of both files against the live source
+(the approach of R1's `check_r1_copies.py`). Both sides are normalised:
+backslash-newline splices are joined first, so a statement spliced onto a
+`//` line becomes part of the comment; `#if 0` blocks are dropped; comments
+are removed outside string and character literals; literals are kept
+verbatim; whitespace outside literals collapses within each line; empty lines
+are dropped. A region passes only if its lines occur exactly once,
+consecutively, in the live file, and the preprocessor conditionals enclosing
+the match are the ones recorded for it at copy time (the region's
+`// conditionals:` line; the include guard for the header regions). So
+reindenting or rewording a comment passes, while a token or literal change, a
+statement folded or spliced into a `//` comment, code moved under `#if 0` or
+`/* */` with a changed version beside it, a duplicated region, and a wrap such
+as `#if 1 <new> #else <original> #endif` or `#ifdef OPENSIM ... #else
+<original> #endif` all fail.
+
 An identifier fence then requires every live line of `llviewerobject.cpp`
-and `llviewerobject.h` that names `mInventory*`, `mInvRequest*`,
-`mExpectedInventorySerialNum` or `mPendingInventoryItemsIDs` to lie inside a
-checked region or on the script's (empty) allowlist. The check stays in
-force until W5 retires the copies.
+and `llviewerobject.h` that names the task-inventory state (`mInventory*`,
+`mInvRequest*`, `mExpectedInventorySerialNum`, `mPendingInventoryItemsIDs`)
+or a task-inventory method (`requestInventory`, `clearInventoryListeners`,
+`fetchInventoryFromServer`, `doInventoryCallback`, the update, remove, move,
+lookup and loader methods, ...) to lie inside a checked region or on the
+script's allowlist (empty for these two files): a new call site such as a new
+`requestInventory()` call fails. The same fence covers `llviewerinventory.cpp`
+and `.h` for the members and helpers the copies use (`mIsComplete`,
+`mTransactionID`, `mIsRunning`, `mIsFaulted`,
+`LLLocalizedInventoryItemsDictionary`, `localizeInventoryObjectName`,
+`copyViewerItem`), whose other uses are allowlisted line by line. The check
+stays in force until W5 retires the copies.
 
 ### The boundary (inputs in, actions out)
 
@@ -67,9 +86,23 @@ Filename, read through the message getters), `loadTaskInvFile(filename)`,
 `moveInventory(folder_id, item_id)`,
 `saveScript(item, active, is_new, template_id)`,
 `createInventoryItem(asset_type, inventory_type, sub_type, name, description, permissions, params, callback)`,
-`deleteInventoryItem(item_id)`, and the read helpers `getInventoryRoot`,
-`getInventoryContents`, `countInventoryContents(type)`,
-`getInventoryItemByAsset(asset)` and `getInventoryItemByAsset(asset, type)`.
+`deleteInventoryItem(item_id)`, the request state and lookups
+`isInventoryPending`, `getInventoryObject(id)`, `getInventoryItem(id)`,
+`isAssetInInventory(item, type)`, `getInventoryRoot`, `getInventoryContents`,
+`countInventoryContents(type)`, `getInventoryItemByAsset(asset)` and
+`getInventoryItemByAsset(asset, type)`, and the accessors
+`clearInventoryListeners`, `hasInventoryListeners`, `isInventoryDirty` and
+`getInventorySerial`.
+
+Which belong to the W5 boundary: everything above except the four accessors
+is decision logic (the request state machine, the loaders, the local
+mutations and the message contents, the owner guess, and the lookup rules:
+first match, the AT_CATEGORY/AT_NONE filters, the type match), which the W5
+implementation answers. The accessors (`clearInventoryListeners`,
+`hasInventoryListeners`, `isInventoryDirty`, `getInventorySerial`) and the
+listener registration are object bookkeeping; they go through the boundary
+too, so the fixtures pin them, and a W5 implementation may forward them to
+the C++ object unchanged.
 
 Inputs, asynchronous (delivered through the fakes to whatever the
 implementation registered): an xfer completion (the callback and user data
@@ -89,6 +122,16 @@ every entry in list order, `mPendingInventoryItemsIDs`,
 URL and body, `timer.start`, `callback L<n>` with serial and entries,
 `floater.hide`, the create-item callback); the cache files left behind; and
 the return values of the calls.
+
+### For W5: one executor source
+
+When W5 retires the frozen copies, the C++ that carries out the Rust
+decisions' actions (the executor: state updates, messages sent, timers and
+coroutines, xfer calls, listener notifications) must be **one source file
+compiled into both the viewer and this test**. The W5 boundary implementation
+calls the Rust decisions over FFI and that same executor; it must not carry a
+test-only copy of the glue, so this test cannot pass against an executor that
+differs from the one the viewer runs.
 
 ### Real code and fakes
 
@@ -124,8 +167,9 @@ Real code is used wherever it links outside the viewer:
 Determinism: patterned UUIDs; xorshift64* for the two random sweeps (seeds
 in the file headers, generators specified below); no wall clock (timers fire
 on events); every process works in its own directory under the build tree
-(`VKS_TASK_WORK_DIR/pid-<pid>`, removed at exit), never in the system
-temporary directory.
+(`VKS_TASK_WORK_DIR/pid-<pid>`, removed at exit; a crashed run cannot remove
+its own, so at startup every `pid-<n>` directory whose process is no longer
+running is removed), never in the system temporary directory.
 
 Run, replay and regenerate:
 
@@ -156,10 +200,16 @@ blobs, platform, seed) and a legend. After the entries of any inventory, a
 `helpers` line records the read helpers over it: `getInventoryRoot`,
 `getInventoryContents`, `countInventoryContents` for every type present,
 `getInventoryItemByAsset` for every item's asset (`byasset`) and with its
-type (`bytype`). Those lookups cast entries of a matching type to
-`LLViewerInventoryItem` without a check; where that would cast a plain
-`LLInventoryObject` (an `inv_object` whose type is neither category nor
-none) the call is not made and the line says `not-called`.
+type (`bytype`), `getInventoryObject` and `getInventoryItem` for every id
+present (`byid`: what the first match is, and whether `getInventoryItem`
+returns it, another entry, or NULL), `isAssetInInventory` for every item with
+its type (`inasset`), and `hasInventoryListeners`, `isInventoryDirty`,
+`getInventorySerial` and `isInventoryPending` (`state`). The asset lookups
+cast entries of a matching type to `LLViewerInventoryItem` without a check;
+where that would cast a plain `LLInventoryObject` (an `inv_object` whose type
+is neither category nor none) the call is not made and the line says
+`not-called`. `clearInventoryListeners` is exercised by the trace event
+`clearlisteners` (`clear_listeners`).
 
 ### Set 1: task inventory files (`loadTaskInvFile`)
 
@@ -259,14 +309,18 @@ by alphabet index) and the trace text exactly as in the sample files.
   (selected object, group-owned old item, known owner, guessed owner, not
   owner, AT_OBJECT not atomic, no inventory, a rich item with transaction
   id, flags, sale, masks and a creation date above `INT_MAX`), the owner
-  change with next-owner mask `PERM_MOVE` for a notecard and an AT_OBJECT on
-  the selected and not-owner branches (`is_atomic`: `PERM_TRANSFER` is added
-  to the new base only for the notecard), `updateMaterialInventory`, the
+  change with next-owner mask `PERM_MOVE` on every branch of the guess
+  (`_next_move` cases: selected, group-owned, known owner and not owner, each
+  for a notecard and an AT_OBJECT, and a script on the selected branch;
+  `is_atomic`: `PERM_TRANSFER` is added to the new base for the notecard and
+  the script, not for the AT_OBJECT), `updateMaterialInventory`, the
   local-only updates, RemoveTaskInventory (present, absent, a duplicated id:
-  the first match only is removed), MoveTaskInventory (null and explicit
-  folder, copyable, no-copy, absent), RequestTaskInventory (and a duplicate
-  request dropped while pending), RezScript with and without
-  `NewScriptInfo`, RequestXfer and AbortXfer from the real xfer manager (a
+  the first match only is removed), `deleteInventoryItem` itself on a
+  duplicated id (`delete_duplicate_id_direct`), MoveTaskInventory (null and
+  explicit folder, copyable, no-copy, absent), RequestTaskInventory (and a
+  duplicate request dropped while pending), RezScript with and without
+  `NewScriptInfo` (a template with no asset sends it whether or not the script
+  is new: `rezscript_template_not_new`), RequestXfer and AbortXfer from the real xfer manager (a
   newer reply replacing the transfer, a delayed refetch aborting it), and
   the capability URL. RequestXfer/AbortXfer ids are random and shown as
   `<xfer id real#k>`; they are zeroed in `body` (and in `wire` when the

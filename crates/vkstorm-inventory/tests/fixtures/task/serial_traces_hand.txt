@@ -14,7 +14,7 @@
 #  cap.nocontents 200 without contents; timer fires the oldest pending timer; upd.known updateInventory(A edited, key 0);
 #  upd.guess (C, absent); upd.new (D, is_new); upd.asset (E with A's asset, key 1); remove A; move.nocopy B; move.copy A;
 #  create.ok|fail createInventoryItem then the POST answered success true|false; die/revive the object in gObjectList;
-#  select (selection manager holds owner=other group=othergroup); notowner (permYouOwner false); listen/unlisten;
+#  select (selection manager holds owner=other group=othergroup); notowner (permYouOwner false); listen/unlisten; clearlisteners;
 #  set.serial=<n>/set.expected=<n> set the fields directly.
 # Standard file/contents: Contents (obj), A copyable notecard (assetA), B no-copy object (assetB).
 trace udp/L1 udp_load : req rep.exp xfer.ok
@@ -333,3 +333,11 @@ trace udp/L2 two_listeners : req rep.exp xfer.ok unlisten upd.new
  xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | xfer.complete id=1001 code=0; callback L2 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[B,A,obj]
  unlisten | st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | -
  upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | msg.send UpdateTaskInventory
+trace udp/L2 clear_listeners : req rep.exp xfer.ok clearlisteners upd.new remove req
+ req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send RequestTaskInventory
+ rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | xfer.complete id=1001 code=0; callback L2 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[B,A,obj]
+ clearlisteners | st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | -
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | msg.send UpdateTaskInventory
+ remove | st=S ser=0 exp=2 xid=0 dirty=0 inv=[B,obj] cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ req | st=S ser=0 exp=2 xid=0 dirty=0 inv=[B,obj] cache=[] | -

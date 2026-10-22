@@ -14,7 +14,7 @@
 #  cap.nocontents 200 without contents; timer fires the oldest pending timer; upd.known updateInventory(A edited, key 0);
 #  upd.guess (C, absent); upd.new (D, is_new); upd.asset (E with A's asset, key 1); remove A; move.nocopy B; move.copy A;
 #  create.ok|fail createInventoryItem then the POST answered success true|false; die/revive the object in gObjectList;
-#  select (selection manager holds owner=other group=othergroup); notowner (permYouOwner false); listen/unlisten;
+#  select (selection manager holds owner=other group=othergroup); notowner (permYouOwner false); listen/unlisten; clearlisteners;
 #  set.serial=<n>/set.expected=<n> set the fields directly.
 # Standard file/contents: Contents (obj), A copyable notecard (assetA), B no-copy object (assetB).
 # udp alphabet: req dirty rep.lo rep.cur rep.exp rep.hi rep.none xfer.ok xfer.err xfer.nofile timer upd.known upd.guess upd.new remove move.nocopy create.ok

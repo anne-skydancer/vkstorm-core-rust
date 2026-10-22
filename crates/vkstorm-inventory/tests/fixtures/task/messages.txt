@@ -51,7 +51,7 @@ case update_key0_new udp
    [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
    [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A}
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A} byid{B:item/same,A:item/same,obj:object/null} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_key0_selected udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[A,B,obj]
@@ -91,7 +91,7 @@ case update_key0_selected udp
    [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="edited" invtype=7 flags=00000000 sale=0/10 base=00082000 owner=00082000 group=00000000 every=00000000 next=00082000 creator=creator ownerid=other lastowner=agent groupid=othergroup groupowned=0 complete=1 txn=null running=0 faulted=0 crc=352437e2
    [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B}
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B} byid{A:item/same,B:item/same,obj:object/null} inasset{A:1,B:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_key0_group_owned udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[A,B,obj]
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[A,B,obj]
@@ -131,7 +131,7 @@ case update_key0_group_owned udp
    [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="edited" invtype=7 flags=00000000 sale=0/10 base=00082000 owner=00082000 group=00000000 every=00000000 next=00082000 creator=creator ownerid=null lastowner=agent groupid=othergroup groupowned=1 complete=1 txn=null running=0 faulted=0 crc=30e436c2
    [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B}
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B} byid{A:item/same,B:item/same,obj:object/null} inasset{A:1,B:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_key0_owner_known udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[A,B,obj]
@@ -171,7 +171,7 @@ case update_key0_owner_known udp
    [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="edited" invtype=7 flags=00000000 sale=0/10 base=00082000 owner=00082000 group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=other groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2fe436c2
    [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B}
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B} byid{A:item/same,B:item/same,obj:object/null} inasset{A:1,B:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_key0_guess_owner udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[C,B,A,obj]
@@ -212,7 +212,7 @@ case update_key0_guess_owner udp
    [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
    [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[C,B,A] count{7:2,6:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/7:C,assetB/6:B,assetA/7:A}
+  helpers root=obj contents=[C,B,A] count{7:2,6:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/7:C,assetB/6:B,assetA/7:A} byid{C:item/same,B:item/same,A:item/same,obj:object/null} inasset{C:1,B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_key0_guess_not_owner udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[C,B,A,obj]
@@ -253,7 +253,7 @@ case update_key0_guess_not_owner udp
    [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
    [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[C,B,A] count{7:2,6:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/7:C,assetB/6:B,assetA/7:A}
+  helpers root=obj contents=[C,B,A] count{7:2,6:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/7:C,assetB/6:B,assetA/7:A} byid{C:item/same,B:item/same,A:item/same,obj:object/null} inasset{C:1,B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_key0_object_type_not_atomic udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[C,B,A,obj]
@@ -294,7 +294,7 @@ case update_key0_object_type_not_atomic udp
    [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
    [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[C,B,A] count{6:2,7:1,8:1} byasset{assetB:C,assetA:A} bytype{assetB/6:C,assetA/7:A}
+  helpers root=obj contents=[C,B,A] count{6:2,7:1,8:1} byasset{assetB:C,assetA:A} bytype{assetB/6:C,assetA/7:A} byid{C:item/same,B:item/same,A:item/same,obj:object/null} inasset{C:1,B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_key1_by_asset_known udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=[E,B,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[E,B,obj]
@@ -334,7 +334,7 @@ case update_key1_by_asset_known udp
    [0] item uuid=E parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="by asset" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=agent groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=30d3f6c0
    [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[E,B] count{7:1,6:1,8:1} byasset{assetA:E,assetB:B} bytype{assetA/7:E,assetB/6:B}
+  helpers root=obj contents=[E,B] count{7:1,6:1,8:1} byasset{assetA:E,assetB:B} bytype{assetA/7:E,assetB/6:B} byid{E:item/same,B:item/same,obj:object/null} inasset{E:1,B:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_key1_by_asset_guess udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=0 xid=0 dirty=0 inv=[E,B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[E,B,A,obj]
@@ -375,7 +375,7 @@ case update_key1_by_asset_guess udp
    [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
    [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[E,B,A] count{7:2,6:1,8:1} byasset{assetE:E,assetB:B,assetA:A} bytype{assetE/7:E,assetB/6:B,assetA/7:A}
+  helpers root=obj contents=[E,B,A] count{7:2,6:1,8:1} byasset{assetE:E,assetB:B,assetA:A} bytype{assetE/7:E,assetB/6:B,assetA/7:A} byid{E:item/same,B:item/same,A:item/same,obj:object/null} inasset{E:1,B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_no_inventory udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
   after st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
@@ -412,7 +412,7 @@ case update_no_inventory udp
       [0] CreationDate = 00f15365
       [0] CRC = a0f5932b
   inventory null
-  helpers root=none contents=[] count{} byasset{} bytype{}
+  helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_rich_item udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[A,B,obj]
@@ -452,7 +452,7 @@ case update_rich_item udp
    [0] item uuid=A parent=obj type=7 name="Rich item with a name longer than sixty-three characters, cut b" thumb=null fav=0 runtime="" created=-1294967296 asset=assetA desc="Desc    with   pipe" invtype=7 flags=ffffffff sale=1/1234 base=7fffffff owner=7fffbfff group=00008000 every=00080000 next=7fffdfff creator=creator ownerid=agent lastowner=agent groupid=null groupowned=0 complete=1 txn=txn running=0 faulted=0 crc=815fd91d
    [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B}
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B} byid{A:item/same,B:item/same,obj:object/null} inasset{A:1,B:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_material_new udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,A,obj] | msg.send UpdateTaskInventory
@@ -492,7 +492,7 @@ case update_material_new udp
    [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
    [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A}
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A} byid{B:item/same,A:item/same,obj:object/null} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_selected_notecard_next_move udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[A,B,obj]
@@ -532,7 +532,7 @@ case update_selected_notecard_next_move udp
    [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="atomic" invtype=7 flags=00000000 sale=0/10 base=00082000 owner=00082000 group=00000000 every=00000000 next=00080000 creator=creator ownerid=other lastowner=agent groupid=othergroup groupowned=0 complete=1 txn=null running=0 faulted=0 crc=352437e2
    [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B}
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B} byid{A:item/same,B:item/same,obj:object/null} inasset{A:1,B:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_selected_object_next_move udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]
@@ -572,7 +572,7 @@ case update_selected_object_next_move udp
    [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="not atomic" invtype=6 flags=00000000 sale=0/10 base=00080000 owner=00080000 group=00000000 every=00000000 next=00080000 creator=creator ownerid=other lastowner=agent groupid=othergroup groupowned=0 complete=1 txn=null running=0 faulted=0 crc=3723f7e0
    [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
    [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A}
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A} byid{B:item/same,A:item/same,obj:object/null} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_notowner_notecard_next_move udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[C,B,A,obj]
@@ -613,7 +613,7 @@ case update_notowner_notecard_next_move udp
    [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
    [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[C,B,A] count{7:2,6:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/7:C,assetB/6:B,assetA/7:A}
+  helpers root=obj contents=[C,B,A] count{7:2,6:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/7:C,assetB/6:B,assetA/7:A} byid{C:item/same,B:item/same,A:item/same,obj:object/null} inasset{C:1,B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_notowner_object_next_move udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[C,B,A,obj]
@@ -654,7 +654,217 @@ case update_notowner_object_next_move udp
    [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
    [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[C,B,A] count{6:2,7:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/6:C,assetB/6:B,assetA/7:A}
+  helpers root=obj contents=[C,B,A] count{6:2,7:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/6:C,assetB/6:B,assetA/7:A} byid{C:item/same,B:item/same,A:item/same,obj:object/null} inasset{C:1,B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
+case update_groupowned_notecard_next_move udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[A,B,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[A,B,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=125
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060a0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f000a080012070700050a00030b4e6f746563617264204100010761746f6d69630002f15365a0f5932b
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000a0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f0000000000000000000008000000000000000000000000000000000000070700000000000a0000000b4e6f7465636172642041000761746f6d69630000f15365a0f5932b
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000a
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00000800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 07
+      [0] InvType = 07
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e6f746563617264204100 "Notecard A\x00"
+      [0] Description = 61746f6d696300 "atomic\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = a0f5932b
+  inventory 3 entries root obj
+   [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="atomic" invtype=7 flags=00000000 sale=0/10 base=00082000 owner=00082000 group=00000000 every=00000000 next=00080000 creator=creator ownerid=null lastowner=agent groupid=othergroup groupowned=1 complete=1 txn=null running=0 faulted=0 crc=30e436c2
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B} byid{A:item/same,B:item/same,obj:object/null} inasset{A:1,B:1} state{listeners=1 dirty=0 serial=0 pending=0}
+case update_groupowned_object_next_move udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=127
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060b0b0005400001800006aaa0000540000180000606a00005400001800006010010ff7fff7fff7fff7f000a080012060600050a0003094f626a656374204200010b6e6f742061746f6d69630002f153659ef5922d
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000b0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ff7fff7fff7fff7f0000000000000000000008000000000000000000000000000000000000060600000000000a000000094f626a6563742042000b6e6f742061746f6d69630000f153659ef5922d
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000b
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ff7fff7f
+      [0] OwnerMask = ff7fff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00000800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 06
+      [0] InvType = 06
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4f626a656374204200 "Object B\x00"
+      [0] Description = 6e6f742061746f6d696300 "not atomic\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = 9ef5922d
+  inventory 3 entries root obj
+   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="not atomic" invtype=6 flags=00000000 sale=0/10 base=00080000 owner=00080000 group=00000000 every=00000000 next=00080000 creator=creator ownerid=null lastowner=agent groupid=othergroup groupowned=1 complete=1 txn=null running=0 faulted=0 crc=32e3f6c0
+   [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A} byid{B:item/same,A:item/same,obj:object/null} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
+case update_known_notecard_next_move udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[A,B,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=125
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060a0b0005400001800006aaa0000540000180000606a00005400001800006040010ffffff7fffffff7f000a080012070700050a00030b4e6f746563617264204100010761746f6d69630002f15365a0f5932e
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000a0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000400000000000000000000000000000000ffffff7fffffff7f0000000000000000000008000000000000000000000000000000000000070700000000000a0000000b4e6f7465636172642041000761746f6d69630000f15365a0f5932e
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000a
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000004
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00000800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 07
+      [0] InvType = 07
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4e6f746563617264204100 "Notecard A\x00"
+      [0] Description = 61746f6d696300 "atomic\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = a0f5932e
+  inventory 3 entries root obj
+   [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="atomic" invtype=7 flags=00000000 sale=0/10 base=00082000 owner=00082000 group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=other groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2fe436c2
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B} byid{A:item/same,B:item/same,obj:object/null} inasset{A:1,B:1} state{listeners=1 dirty=0 serial=0 pending=0}
+case update_known_object_next_move udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=127
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060b0b0005400001800006aaa0000540000180000606a00005400001800006040010ff7fff7fff7fff7f000a080012060600050a0003094f626a656374204200010b6e6f742061746f6d69630002f153659ef59230
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000b0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000400000000000000000000000000000000ff7fff7fff7fff7f0000000000000000000008000000000000000000000000000000000000060600000000000a000000094f626a6563742042000b6e6f742061746f6d69630000f153659ef59230
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000b
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000004
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ff7fff7f
+      [0] OwnerMask = ff7fff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00000800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 06
+      [0] InvType = 06
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 4f626a656374204200 "Object B\x00"
+      [0] Description = 6e6f742061746f6d696300 "not atomic\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = 9ef59230
+  inventory 3 entries root obj
+   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="not atomic" invtype=6 flags=00000000 sale=0/10 base=00080000 owner=00080000 group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=other groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=31e3f6c0
+   [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A} byid{B:item/same,A:item/same,obj:object/null} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
+case update_selected_script_next_move udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=1 xid=0 dirty=0 inv=[C,B,A,obj] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[C,B,A,obj]
+  packets 1
+  packet UpdateTaskInventory flags=c0 zerocoded=1 wirelen=125
+    wire c00000000000ffff011ea0000540000180000601a0000540000180000602e11000031a00054000018000060c0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f000a0800120a0a00050a0003095363726970742043000109636f707961626c650002f15365a6f5932f
+    body 400000000000ffff011ea0000000000040008000000000000001a0000000000040008000000000000002e1100000001a00000000004000800000000000000c0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f00000000000000000000080000000000000000000000000000000000000a0a00000000000a0000000953637269707420430009636f707961626c650000f15365a6f5932f
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+    UpdateData count=1
+      [0] LocalID = e1100000
+      [0] Key = 00
+    InventoryData count=1
+      [0] ItemID = 1a00000000004000800000000000000c
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00000800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 0a
+      [0] InvType = 0a
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 536372697074204300 "Script C\x00"
+      [0] Description = 636f707961626c6500 "copyable\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = a6f5932f
+  inventory 4 entries root obj
+   [0] item uuid=C parent=obj type=10 name="Script C" thumb=null fav=0 runtime="" created=1700000000 asset=assetC desc="copyable" invtype=10 flags=00000000 sale=0/10 base=00082000 owner=00082000 group=00000000 every=00000000 next=00080000 creator=creator ownerid=other lastowner=agent groupid=othergroup groupowned=0 complete=1 txn=null running=0 faulted=0 crc=392437e8
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[C,B,A] count{10:1,6:1,7:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/10:C,assetB/6:B,assetA/7:A} byid{C:item/same,B:item/same,A:item/same,obj:object/null} inasset{C:1,B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
+case delete_duplicate_id_direct udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,A,obj]
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | -
+  packets 0
+  inventory 3 entries root obj
+   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A} byid{B:item/same,A:item/same,obj:object/null} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case remove_duplicate_id udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,A,obj]
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,A,obj] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
@@ -672,7 +882,7 @@ case remove_duplicate_id udp
    [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
    [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A}
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A} byid{B:item/same,A:item/same,obj:object/null} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_local_known udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | callback L1 ser=0 inv=[A,B,obj]
@@ -681,7 +891,7 @@ case update_local_known udp
    [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="local" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=agent groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2cd3f6c0
    [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B}
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetA:A,assetB:B} bytype{assetA/7:A,assetB/6:B} byid{A:item/same,B:item/same,obj:object/null} inasset{A:1,B:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case update_viewer_asset udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,B,obj] | callback L1 ser=0 inv=[A,B,obj]
@@ -690,7 +900,7 @@ case update_viewer_asset udp
    [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetE desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=agent groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=30d3f6c0
    [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetE:A,assetB:B} bytype{assetE/7:A,assetB/6:B}
+  helpers root=obj contents=[A,B] count{7:1,6:1,8:1} byasset{assetE:A,assetB:B} bytype{assetE/7:A,assetB/6:B} byid{A:item/same,B:item/same,obj:object/null} inasset{A:1,B:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case remove_present udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,obj] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
@@ -707,7 +917,7 @@ case remove_present udp
   inventory 2 entries root obj
    [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [1] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[B] count{6:1,8:1} byasset{assetB:B} bytype{assetB/6:B}
+  helpers root=obj contents=[B] count{6:1,8:1} byasset{assetB:B} bytype{assetB/6:B} byid{B:item/same,obj:object/null} inasset{B:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case remove_absent udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,A,obj] | floater.hide item_properties {id=E,object=obj}; floater.hide properties E; msg.send RemoveTaskInventory; callback L1 ser=0 inv=[B,A,obj]
@@ -725,7 +935,7 @@ case remove_absent udp
    [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
    [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A}
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A} byid{B:item/same,A:item/same,obj:object/null} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case move_null_folder_copyable udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | msg.send MoveTaskInventory
@@ -744,7 +954,7 @@ case move_null_folder_copyable udp
    [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
    [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A}
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A} byid{B:item/same,A:item/same,obj:object/null} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case move_explicit_folder_nocopy udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=[A,obj] | msg.send MoveTaskInventory
@@ -762,7 +972,7 @@ case move_explicit_folder_nocopy udp
   inventory 2 entries root obj
    [0] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
    [1] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[A] count{7:1,8:1} byasset{assetA:A} bytype{assetA/7:A}
+  helpers root=obj contents=[A] count{7:1,8:1} byasset{assetA:A} bytype{assetA/7:A} byid{A:item/same,obj:object/null} inasset{A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case move_absent udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | msg.send MoveTaskInventory
@@ -781,7 +991,7 @@ case move_absent udp
    [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
    [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A}
+  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A} byid{B:item/same,A:item/same,obj:object/null} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case request_udp udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
   after st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory
@@ -795,7 +1005,7 @@ case request_udp udp
     InventoryData count=1
       [0] LocalID = e1100000
   inventory null
-  helpers root=none contents=[] count{} byasset{} bytype{}
+  helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=1}
 case request_udp_pending_dropped udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
   after st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory
@@ -809,7 +1019,7 @@ case request_udp_pending_dropped udp
     InventoryData count=1
       [0] LocalID = e1100000
   inventory null
-  helpers root=none contents=[] count{} byasset{} bytype{}
+  helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=1}
 case rezscript_new_template udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send RezScript
@@ -849,7 +1059,7 @@ case rezscript_new_template udp
     NewScriptInfo count=1
       [0] TemplateID = 7e000000000040008000000000000001
   inventory null
-  helpers root=none contents=[] count{} byasset{} bytype{}
+  helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=0}
 case rezscript_asset_with_template udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
   after st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | msg.send RezScript; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[C,B,A,obj]
@@ -892,7 +1102,51 @@ case rezscript_asset_with_template udp
    [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
    [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
    [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
-  helpers root=obj contents=[C,B,A] count{10:1,6:1,7:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/10:C,assetB/6:B,assetA/7:A}
+  helpers root=obj contents=[C,B,A] count{10:1,6:1,7:1,8:1} byasset{assetC:C,assetB:B,assetA:A} bytype{assetC/10:C,assetB/6:B,assetA/7:A} byid{C:item/same,B:item/same,A:item/same,obj:object/null} inasset{C:1,B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
+case rezscript_template_not_new udp
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | msg.send RezScript; callback L1 ser=0 inv=[B,A,obj]; callback L1 ser=0 inv=[C,B,A,obj]
+  packets 1
+  packet RezScript flags=c0 zerocoded=1 wirelen=146
+    wire c00000000000ffff0130a0000540000180000601a0000540000180000602a0000540000180000603e1100002011a00054000018000060c0b0005400001800006aaa0000540000180000606a00005400001800006010010ffffff7fffffff7f0009200800120a0a00050a000307536372697074000109636f707961626c650002f1536581f45323017e000540000180000601
+    body 400000000000ffff0130a0000000000040008000000000000001a0000000000040008000000000000002a0000000000040008000000000000003e1100000011a00000000004000800000000000000c0b0000000000400080000000000000aaa0000000000040008000000000000006a000000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f00000000000000000020080000000000000000000000000000000000000a0a00000000000a000000075363726970740009636f707961626c650000f1536581f45323017e000000000040008000000000000001
+    AgentData count=1
+      [0] AgentID = a0000000000040008000000000000001
+      [0] SessionID = a0000000000040008000000000000002
+      [0] GroupID = a0000000000040008000000000000003
+    UpdateBlock count=1
+      [0] ObjectLocalID = e1100000
+      [0] Enabled = 01
+    InventoryBlock count=1
+      [0] ItemID = 1a00000000004000800000000000000c
+      [0] FolderID = 0b0000000000400080000000000000aa
+      [0] CreatorID = a0000000000040008000000000000006
+      [0] OwnerID = a0000000000040008000000000000001
+      [0] GroupID = 00000000000000000000000000000000
+      [0] BaseMask = ffffff7f
+      [0] OwnerMask = ffffff7f
+      [0] GroupMask = 00000000
+      [0] EveryoneMask = 00000000
+      [0] NextOwnerMask = 00200800
+      [0] GroupOwned = 00
+      [0] TransactionID = 00000000000000000000000000000000
+      [0] Type = 0a
+      [0] InvType = 0a
+      [0] Flags = 00000000
+      [0] SaleType = 00
+      [0] SalePrice = 0a000000
+      [0] Name = 53637269707400 "Script\x00"
+      [0] Description = 636f707961626c6500 "copyable\x00"
+      [0] CreationDate = 00f15365
+      [0] CRC = 81f45323
+    NewScriptInfo count=1
+      [0] TemplateID = 7e000000000040008000000000000001
+  inventory 4 entries root obj
+   [0] item uuid=C parent=obj type=10 name="Script" thumb=null fav=0 runtime="" created=1700000000 asset=null desc="copyable" invtype=10 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=agent groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2493f5a1
+   [1] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
+   [2] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+   [3] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+  helpers root=obj contents=[C,B,A] count{10:1,6:1,7:1,8:1} byasset{null:C,assetB:B,assetA:A} bytype{null/10:C,assetB/6:B,assetA/7:A} byid{C:item/same,B:item/same,A:item/same,obj:object/null} inasset{C:1,B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case rezscript_new_no_template udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
   after st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send RezScript
@@ -931,7 +1185,7 @@ case rezscript_new_no_template udp
       [0] CRC = 81f45323
     NewScriptInfo count=0
   inventory null
-  helpers root=none contents=[] count{} byasset{} bytype{}
+  helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=0}
 case xfer_request udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
   after st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | msg.send RequestTaskInventory; xfer.request local=<cache>/inventory_obj.tmp remote=inventory_obj.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
@@ -956,7 +1210,7 @@ case xfer_request udp
       [0] VFileID = 00000000000000000000000000000000
       [0] VFileType = ffff
   inventory null
-  helpers root=none contents=[] count{} byasset{} bytype{}
+  helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=1}
 case xfer_replaced_by_newer_reply udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
   after st=X ser=1 exp=1 xid=real#2 dirty=0 inv=- | msg.send RequestTaskInventory; xfer.request local=<cache>/inventory_first.tmp remote=inventory_first.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1; xfer.request local=<cache>/inventory_second.tmp remote=inventory_second.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#2; xfer.abort id=real#1 code=-1
@@ -998,7 +1252,7 @@ case xfer_replaced_by_newer_reply udp
       [0] ID = <xfer id real#1>
       [0] Result = ffffffff
   inventory null
-  helpers root=none contents=[] count{} byasset{} bytype{}
+  helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=1 pending=1}
 case xfer_aborted_by_delayed_fetch udp
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
   after st=W ser=1 exp=3 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory; xfer.request local=<cache>/inventory_first.tmp remote=inventory_first.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1; xfer.abort id=real#1 code=-1; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
@@ -1029,18 +1283,18 @@ case xfer_aborted_by_delayed_fetch udp
       [0] ID = <xfer id real#1>
       [0] Result = ffffffff
   inventory null
-  helpers root=none contents=[] count{} byasset{} bytype{}
+  helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=1 pending=1}
 case cap_request_url cap
   before st=S ser=0 exp=0 xid=0 dirty=0 inv=-
   after st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
   pending GET https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
   packets 0
   inventory null
-  helpers root=none contents=[] count{} byasset{} bytype{}
+  helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=1}
 case cap_request_url_after_load cap
   before st=S ser=9 exp=9 xid=0 dirty=0 inv=[B,A,obj]
   after st=X ser=9 exp=9 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
   pending GET https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
   packets 0
   inventory null
-  helpers root=none contents=[] count{} byasset{} bytype{}
+  helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=9 pending=1}
