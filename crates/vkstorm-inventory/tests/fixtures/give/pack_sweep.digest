@@ -1,0 +1,11 @@
+# vkstorm inventory oracle r4b: give/pack_sweep (digest)
+# what: set 4: pack_instant_message over random names and buckets
+# generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
+# viewer: 472ecf270d
+# platform: windows-msvc-1944
+# seed: 0x52344250414b0001
+# format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested
+lines=8000
+cases=4000
+sample_modulus=50
+sha256=4a51bad171a8aa147756f3cf48fc71d39f41cf78a6db840d306f6a603d9068ef

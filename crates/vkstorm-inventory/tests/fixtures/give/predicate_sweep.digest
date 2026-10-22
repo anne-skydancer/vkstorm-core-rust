@@ -1,0 +1,11 @@
+# vkstorm inventory oracle r4b: give/predicate_sweep (digest)
+# what: set 7: random permission masks through the predicates
+# generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
+# viewer: 472ecf270d
+# platform: windows-msvc-1944
+# seed: 0x5234425052450004
+# format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested
+lines=20000
+cases=20000
+sample_modulus=100
+sha256=342f9da7f3153be1326e02e4b304d295f2f32bbb1694e729117ceadb9ad75c57

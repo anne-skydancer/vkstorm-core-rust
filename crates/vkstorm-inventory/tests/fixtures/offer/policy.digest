@@ -1,0 +1,11 @@
+# vkstorm inventory oracle r4b: offer/policy (digest)
+# what: set 6: the offer policy cross product (projection; see README)
+# generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
+# viewer: 472ecf270d
+# platform: windows-msvc-1944
+# seed: none (fixed case list)
+# format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested
+lines=3052220
+cases=589824
+sample_modulus=4001
+sha256=5fcda67185720ad7cc10dc6be35366bcffa1f2f0584d0b3474fbf56b86dc7785

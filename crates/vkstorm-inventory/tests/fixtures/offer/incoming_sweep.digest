@@ -1,0 +1,11 @@
+# vkstorm inventory oracle r4b: offer/incoming_sweep (digest)
+# what: set 5: random received offers
+# generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
+# viewer: 472ecf270d
+# platform: windows-msvc-1944
+# seed: 0x5234424f46460002
+# format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested
+lines=27465
+cases=5892
+sample_modulus=30
+sha256=9c0d6e7ba2bfa0c2e4b84db7432cdb78c8348ed0559fb254396e5dc463ae36a9

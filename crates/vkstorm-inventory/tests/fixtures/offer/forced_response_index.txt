@@ -1,0 +1,56 @@
+# vkstorm inventory oracle r4b: offer/forced_response_index
+# what: set 6: forceResponse element indexing (Show=0 Keep=1 Discard=2 Mute=3)
+# generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
+# viewer: 472ecf270d
+# platform: windows-msvc-1944
+# seed: none (fixed case list)
+# format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested
+form_UserGiveItem	element0	name=Show button_index=3
+form_UserGiveItem	element1	name=Keep button_index=0
+form_UserGiveItem	element2	name=Discard button_index=1
+form_UserGiveItem	element3	name=Mute button_index=2
+form_UserGiveItemLegacy	element0	name=Show button_index=3
+form_UserGiveItemLegacy	element1	name=Accept button_index=0
+form_UserGiveItemLegacy	element2	name=Discard button_index=1
+form_UserGiveItemLegacy	element3	name=ShowSilent button_index=6
+form_UserGiveItemLegacy	element4	name=AcceptSilent button_index=4
+form_UserGiveItemLegacy	element5	name=DiscardSilent button_index=5
+form_UserGiveItemLegacy	element6	name=Mute button_index=2
+form_ObjectGiveItem	element0	name=Keep button_index=0
+form_ObjectGiveItem	element1	name=Discard button_index=1
+form_ObjectGiveItem	element2	name=Mute button_index=2
+form_OwnObjectGiveItem	element0	name=Keep button_index=0
+form_OwnObjectGiveItem	element1	name=Discard button_index=1
+force_0	e00	forceResponse(0)
+force_0	e01	notification.respond UserGiveItem live=0 selected=Keep
+force_0	e02	offer.respond im=4 from=000000b2-0000-4000-8000-000000000001 from_group=0 from_object=0 txn=000000d4-0000-4000-8000-000000000001 folder=000000f0-0000-4000-8000-000000000007 object=000000e5-0000-4000-8000-000000000001 type=7 from_name="other.sender" desc="Gift" host=10.0.0.9:13005 persist=1
+force_0	e03	notify SystemMessageTip args=7b000000016b000000074d45535341474573000000266f746865722e73656e646572207b496e764f6666657247617665596f757d20476966747b2e7d7d payload=21
+force_0	note.e03	args {'MESSAGE':'other.sender {InvOfferGaveYou} Gift{.}'} payload !
+index_0	element_used	1 -> Keep (button 0)
+index_0	if_button_index_were_used	0 -> Show (button 3)
+force_1	e00	forceResponse(1)
+force_1	e01	notification.respond UserGiveItem live=0 selected=Discard
+force_1	e02	offer.respond im=4 from=000000b2-0000-4000-8000-000000000001 from_group=0 from_object=0 txn=000000d4-0000-4000-8000-000000000001 folder=000000f0-0000-4000-8000-000000000007 object=000000e5-0000-4000-8000-000000000001 type=7 from_name="other.sender" desc="Gift" host=10.0.0.9:13005 persist=1
+force_1	e03	fetch.start LLDiscardAgentOffer ids=[000000e5-0000-4000-8000-000000000001] complete=[] incomplete=[000000e5-0000-4000-8000-000000000001]
+force_1	e04	model.addObserver LLDiscardAgentOffer
+index_1	element_used	2 -> Discard (button 1)
+index_1	if_button_index_were_used	1 -> Keep (button 0)
+force_2	e00	forceResponse(2)
+force_2	e01	notification.respond UserGiveItem live=0 selected=Mute
+force_2	e02	offer.respond im=4 from=000000b2-0000-4000-8000-000000000001 from_group=0 from_object=0 txn=000000d4-0000-4000-8000-000000000001 folder=000000f0-0000-4000-8000-000000000007 object=000000e5-0000-4000-8000-000000000001 type=7 from_name="other.sender" desc="Gift" host=10.0.0.9:13005 persist=1
+force_2	e03	fetch.start LLDiscardAgentOffer ids=[000000e5-0000-4000-8000-000000000001] complete=[] incomplete=[000000e5-0000-4000-8000-000000000001]
+force_2	e04	model.addObserver LLDiscardAgentOffer
+index_2	element_used	3 -> Mute (button 2)
+index_2	if_button_index_were_used	2 -> Discard (button 1)
+force_3	e00	forceResponse(3)
+index_3	element_used	-1 -> - (button -1)
+index_3	if_button_index_were_used	3 -> Mute (button 2)
+force_4	e00	forceResponse(4)
+index_4	element_used	-1 -> - (button -1)
+index_4	if_button_index_were_used	4 -> - (button -1)
+force_5	e00	forceResponse(5)
+index_5	element_used	-1 -> - (button -1)
+index_5	if_button_index_were_used	5 -> - (button -1)
+force_6	e00	forceResponse(6)
+index_6	element_used	-1 -> - (button -1)
+index_6	if_button_index_were_used	6 -> - (button -1)

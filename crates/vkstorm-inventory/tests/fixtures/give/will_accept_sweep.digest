@@ -1,0 +1,11 @@
+# vkstorm inventory oracle r4b: give/will_accept_sweep (digest)
+# what: set 7: willObjectAcceptInventory, every combination
+# generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
+# viewer: 472ecf270d
+# platform: windows-msvc-1944
+# seed: none (fixed case list)
+# format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested
+lines=102400
+cases=102400
+sample_modulus=101
+sha256=68dcfdeb54b05f6b75624c1f3d3797b0919f3563529ccaad78b952f2a446df84

@@ -1,0 +1,94 @@
+# vkstorm inventory oracle r4b: offer/throttle
+# what: set 6: check_offer_throttle traces
+# generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
+# viewer: 472ecf270d
+# platform: windows-msvc-1944
+# seed: none (fixed case list)
+# format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested
+default_burst	e00	t=0.00 check_only=0 from="giver" -> 1
+default_burst	e01	t=0.10 check_only=0 from="giver" -> 1
+default_burst	e02	t=0.20 check_only=0 from="giver" -> 1
+default_burst	e03	t=0.30 check_only=0 from="giver" -> 1
+default_burst	e04	t=0.40 check_only=0 from="giver" -> 1
+default_burst	e05	notify SystemMessage args=7b000000016b000000074d45535341474573000000477b4974656d73436f6d696e67496e546f6f4661737446726f6d7c4150505f4e414d453d56756c6b616e73746f726d7c46524f4d5f4e414d453d67697665727c54494d453d31307d7d payload=21
+default_burst	note.e05	args {'MESSAGE':'{ItemsComingInTooFastFrom|APP_NAME=Vulkanstorm|FROM_NAME=giver|TIME=10}'} payload !
+default_burst	e06	t=0.50 check_only=0 from="giver" -> 0
+default_burst	e07	t=0.60 check_only=0 from="giver" -> 0
+default_burst	e08	t=0.70 check_only=0 from="giver" -> 0
+default_burst	e09	t=0.90 check_only=1 from="giver" -> 0
+default_burst	e10	t=10.50 check_only=1 from="giver" -> 1
+default_burst	e11	t=10.50 check_only=0 from="giver" -> 1
+default_burst	e12	t=10.60 check_only=0 from="" -> 1
+anonymous_burst	e00	t=0.00 check_only=0 from="" -> 1
+anonymous_burst	e01	t=0.10 check_only=0 from="" -> 1
+anonymous_burst	e02	t=0.20 check_only=0 from="" -> 1
+anonymous_burst	e03	t=0.30 check_only=0 from="" -> 1
+anonymous_burst	e04	t=0.40 check_only=0 from="" -> 1
+anonymous_burst	e05	notify SystemMessage args=7b000000016b000000074d45535341474573000000337b4974656d73436f6d696e67496e546f6f466173747c4150505f4e414d453d56756c6b616e73746f726d7c54494d453d31307d7d payload=21
+anonymous_burst	note.e05	args {'MESSAGE':'{ItemsComingInTooFast|APP_NAME=Vulkanstorm|TIME=10}'} payload !
+anonymous_burst	e06	t=0.50 check_only=0 from="" -> 0
+anonymous_burst	e07	t=0.60 check_only=0 from="" -> 0
+anonymous_burst	e08	t=0.70 check_only=0 from="" -> 0
+anonymous_burst	e09	t=0.90 check_only=1 from="" -> 0
+anonymous_burst	e10	t=10.50 check_only=1 from="" -> 1
+anonymous_burst	e11	t=10.50 check_only=0 from="" -> 1
+anonymous_burst	e12	t=10.60 check_only=0 from="" -> 1
+max_2	e00	t=0.00 check_only=0 from="giver" -> 1
+max_2	e01	t=0.10 check_only=0 from="giver" -> 1
+max_2	e02	notify SystemMessage args=7b000000016b000000074d45535341474573000000477b4974656d73436f6d696e67496e546f6f4661737446726f6d7c4150505f4e414d453d56756c6b616e73746f726d7c46524f4d5f4e414d453d67697665727c54494d453d31307d7d payload=21
+max_2	note.e02	args {'MESSAGE':'{ItemsComingInTooFastFrom|APP_NAME=Vulkanstorm|FROM_NAME=giver|TIME=10}'} payload !
+max_2	e03	t=0.20 check_only=0 from="giver" -> 0
+max_2	e04	t=0.30 check_only=0 from="giver" -> 0
+max_2	e05	t=0.40 check_only=0 from="giver" -> 0
+max_2	e06	t=0.50 check_only=0 from="giver" -> 0
+max_2	e07	t=0.60 check_only=0 from="giver" -> 0
+max_2	e08	t=0.70 check_only=0 from="giver" -> 0
+max_2	e09	t=0.90 check_only=1 from="giver" -> 0
+max_2	e10	t=10.50 check_only=1 from="giver" -> 1
+max_2	e11	t=10.50 check_only=0 from="giver" -> 1
+max_2	e12	t=10.60 check_only=0 from="" -> 1
+max_0	e00	t=0.00 check_only=0 from="giver" -> 1
+max_0	e01	notify SystemMessage args=7b000000016b000000074d45535341474573000000477b4974656d73436f6d696e67496e546f6f4661737446726f6d7c4150505f4e414d453d56756c6b616e73746f726d7c46524f4d5f4e414d453d67697665727c54494d453d31307d7d payload=21
+max_0	note.e01	args {'MESSAGE':'{ItemsComingInTooFastFrom|APP_NAME=Vulkanstorm|FROM_NAME=giver|TIME=10}'} payload !
+max_0	e02	t=0.10 check_only=0 from="giver" -> 0
+max_0	e03	t=0.20 check_only=0 from="giver" -> 0
+max_0	e04	t=0.30 check_only=0 from="giver" -> 0
+max_0	e05	t=0.40 check_only=0 from="giver" -> 0
+max_0	e06	t=0.50 check_only=0 from="giver" -> 0
+max_0	e07	t=0.60 check_only=0 from="giver" -> 0
+max_0	e08	t=0.70 check_only=0 from="giver" -> 0
+max_0	e09	t=0.90 check_only=1 from="giver" -> 0
+max_0	e10	t=10.50 check_only=1 from="giver" -> 1
+max_0	e11	t=10.50 check_only=0 from="giver" -> 1
+max_0	e12	notify SystemMessage args=7b000000016b000000074d45535341474573000000337b4974656d73436f6d696e67496e546f6f466173747c4150505f4e414d453d56756c6b616e73746f726d7c54494d453d31307d7d payload=21
+max_0	note.e12	args {'MESSAGE':'{ItemsComingInTooFast|APP_NAME=Vulkanstorm|TIME=10}'} payload !
+max_0	e13	t=10.60 check_only=0 from="" -> 0
+before_started	e00	t=0.00 check_only=0 from="giver" -> 1
+before_started	e01	t=0.10 check_only=0 from="giver" -> 1
+before_started	e02	t=0.20 check_only=0 from="giver" -> 1
+before_started	e03	t=0.30 check_only=0 from="giver" -> 1
+before_started	e04	t=0.40 check_only=0 from="giver" -> 1
+before_started	e05	t=0.50 check_only=0 from="giver" -> 1
+before_started	e06	t=0.60 check_only=0 from="giver" -> 1
+before_started	e07	t=0.70 check_only=0 from="giver" -> 1
+before_started	e08	t=0.90 check_only=1 from="giver" -> 0
+before_started	e09	t=10.50 check_only=1 from="giver" -> 1
+before_started	e10	t=10.50 check_only=0 from="giver" -> 1
+before_started	e11	t=10.60 check_only=0 from="" -> 1
+notices_off	e00	t=0.00 check_only=0 from="giver" -> 1
+notices_off	e01	t=0.10 check_only=0 from="giver" -> 1
+notices_off	e02	t=0.20 check_only=0 from="giver" -> 1
+notices_off	e03	t=0.30 check_only=0 from="giver" -> 1
+notices_off	e04	t=0.40 check_only=0 from="giver" -> 1
+notices_off	e05	t=0.50 check_only=0 from="giver" -> 0
+notices_off	e06	t=0.60 check_only=0 from="giver" -> 0
+notices_off	e07	t=0.70 check_only=0 from="giver" -> 0
+notices_off	e08	t=0.90 check_only=1 from="giver" -> 0
+notices_off	e09	t=10.50 check_only=1 from="giver" -> 1
+notices_off	e10	t=10.50 check_only=0 from="giver" -> 1
+notices_off	e11	t=10.60 check_only=0 from="" -> 1
+check_only_first	e00	t=0.00 check_only=1 from="x" -> 1
+check_only_first	e01	t=0.00 check_only=0 from="x" -> 1
+check_only_first	e02	t=0.00 check_only=1 from="x" -> 0
+check_only_first	e03	t=9.99 check_only=1 from="x" -> 0
+check_only_first	e04	t=10.00 check_only=1 from="x" -> 1

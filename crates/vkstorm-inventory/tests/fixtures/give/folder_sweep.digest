@@ -1,0 +1,11 @@
+# vkstorm inventory oracle r4b: give/folder_sweep (digest)
+# what: set 7: random folder trees given and answered
+# generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
+# viewer: 472ecf270d
+# platform: windows-msvc-1944
+# seed: 0x523442464f4c0003
+# format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested
+lines=28171
+cases=1500
+sample_modulus=15
+sha256=3725a3b989aebf598c63da6b0e79d3974204a1f99e594123fc0d5b680f450496
