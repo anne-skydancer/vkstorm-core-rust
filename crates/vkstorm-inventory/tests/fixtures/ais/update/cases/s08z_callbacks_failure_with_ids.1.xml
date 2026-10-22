@@ -1,0 +1,46 @@
+<?xml version="1.0" ?>
+<llsd>
+ <map>
+  <key>category_id</key>
+  <uuid>c0000000-0000-4000-8000-0000000009f1</uuid>
+  <key>item_id</key>
+  <uuid>a0000000-0000-4000-8000-0000000009f1</uuid>
+  <key>linked_id</key>
+  <uuid>a0000000-0000-4000-8000-0000000009f2</uuid>
+  <key>_created_categories</key>
+  <array>
+   <uuid>c0000000-0000-4000-8000-0000000009f3</uuid>
+   <uuid>c0000000-0000-4000-8000-0000000009f2</uuid>
+  </array>
+  <key>_created_items</key>
+  <array>
+   <uuid>a0000000-0000-4000-8000-0000000009f4</uuid>
+   <uuid>a0000000-0000-4000-8000-0000000009f3</uuid>
+  </array>
+  <key>_updated_categories</key>
+  <array>
+   <uuid>c0000000-0000-4000-8000-0000000009f5</uuid>
+   <uuid>c0000000-0000-4000-8000-0000000009f4</uuid>
+  </array>
+  <key>http_result</key>
+  <map>
+   <key>success</key>
+   <boolean>false</boolean>
+   <key>type</key>
+   <integer>400</integer>
+   <key>status</key>
+   <integer>1</integer>
+   <key>message</key>
+   <string></string>
+   <key>url</key>
+   <string>https://cb.example/</string>
+   <key>headers</key>
+   <map>
+    <key>content-type</key>
+    <string>application/llsd+xml</string>
+   </map>
+   <key>error_body</key>
+   <string>&lt;llsd&gt;&lt;map /&gt;&lt;/llsd&gt;</string>
+  </map>
+ </map>
+</llsd>

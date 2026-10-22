@@ -1,0 +1,56 @@
+<?xml version="1.0" ?>
+<llsd>
+ <map>
+  <key>category_id</key>
+  <uuid>c0000000-0000-4000-8000-000000000350</uuid>
+  <key>parent_id</key>
+  <uuid>c0000000-0000-4000-8000-000000000001</uuid>
+  <key>name</key>
+  <string>Ownerless</string>
+  <key>type_default</key>
+  <integer>-1</integer>
+  <key>version</key>
+  <integer>2</integer>
+  <key>_embedded</key>
+  <map>
+   <key>categories</key>
+   <map>
+    <key>c0000000-0000-4000-8000-000000000351</key>
+    <map>
+     <key>category_id</key>
+     <uuid>c0000000-0000-4000-8000-000000000351</uuid>
+     <key>parent_id</key>
+     <uuid>c0000000-0000-4000-8000-000000000350</uuid>
+     <key>name</key>
+     <string>Owned child</string>
+     <key>type_default</key>
+     <integer>-1</integer>
+     <key>agent_id</key>
+     <uuid>0a000000-0000-4000-8000-0000000000ff</uuid>
+    </map>
+   </map>
+   <key>links</key>
+   <map />
+   <key>items</key>
+   <map />
+  </map>
+  <key>http_result</key>
+  <map>
+   <key>success</key>
+   <boolean>true</boolean>
+   <key>type</key>
+   <integer>200</integer>
+   <key>status</key>
+   <integer>0</integer>
+   <key>message</key>
+   <string></string>
+   <key>url</key>
+   <string>https://inventory.grid.example/cap/00000000-0000-4000-8000-00000000cafe/category/c0000000-0000-4000-8000-000000000350/children?depth=0</string>
+   <key>headers</key>
+   <map>
+    <key>content-type</key>
+    <string>application/llsd+xml</string>
+   </map>
+  </map>
+ </map>
+</llsd>

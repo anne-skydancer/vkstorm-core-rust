@@ -1,0 +1,42 @@
+<?xml version="1.0" ?>
+<llsd>
+ <map>
+  <key>category_id</key>
+  <uuid>c0000000-0000-4000-8000-000000031503</uuid>
+  <key>parent_id</key>
+  <uuid>c0000000-0000-4000-8000-00000000000e</uuid>
+  <key>name</key>
+  <string>R21 cat 503</string>
+  <key>type_default</key>
+  <integer>-1</integer>
+  <key>agent_id</key>
+  <uuid>0a000000-0000-4000-8000-000000000001</uuid>
+  <key>version</key>
+  <integer>2</integer>
+  <key>_created_items</key>
+  <array />
+  <key>_category_items_removed</key>
+  <array>
+   <uuid>a0000000-0000-4000-8000-000000031501</uuid>
+   <uuid>a0000000-0000-4000-8000-000000031500</uuid>
+  </array>
+  <key>http_result</key>
+  <map>
+   <key>success</key>
+   <boolean>true</boolean>
+   <key>type</key>
+   <integer>200</integer>
+   <key>status</key>
+   <integer>0</integer>
+   <key>message</key>
+   <string></string>
+   <key>url</key>
+   <string>https://random.example/</string>
+   <key>headers</key>
+   <map>
+    <key>content-type</key>
+    <string>application/llsd+xml</string>
+   </map>
+  </map>
+ </map>
+</llsd>

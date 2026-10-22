@@ -1,0 +1,34 @@
+<?xml version="1.0" ?>
+<llsd>
+ <map>
+  <key>_created_categories</key>
+  <array />
+  <key>_created_items</key>
+  <array />
+  <key>_updated_category_versions</key>
+  <map>
+   <key>c0000000-0000-4000-8000-000000000001</key>
+   <integer>-1</integer>
+  </map>
+  <key>http_result</key>
+  <map>
+   <key>success</key>
+   <boolean>false</boolean>
+   <key>type</key>
+   <integer>404</integer>
+   <key>status</key>
+   <integer>1</integer>
+   <key>message</key>
+   <string>error</string>
+   <key>url</key>
+   <string>https://random.example/</string>
+   <key>headers</key>
+   <map>
+    <key>content-type</key>
+    <string>application/llsd+xml</string>
+   </map>
+   <key>error_body</key>
+   <string></string>
+  </map>
+ </map>
+</llsd>

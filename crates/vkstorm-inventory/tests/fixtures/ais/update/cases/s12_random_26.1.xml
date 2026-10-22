@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<llsd>
+ <map>
+  <key>http_result</key>
+  <map>
+   <key>success</key>
+   <boolean>false</boolean>
+   <key>type</key>
+   <integer>404</integer>
+   <key>status</key>
+   <integer>1</integer>
+   <key>message</key>
+   <string>error</string>
+   <key>url</key>
+   <string>https://random.example/</string>
+   <key>headers</key>
+   <map>
+    <key>content-type</key>
+    <string>application/llsd+xml</string>
+   </map>
+   <key>error_body</key>
+   <string></string>
+  </map>
+ </map>
+</llsd>

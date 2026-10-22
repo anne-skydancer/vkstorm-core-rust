@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<llsd>
+ <map>
+  <key>http_result</key>
+  <map>
+   <key>success</key>
+   <boolean>false</boolean>
+   <key>type</key>
+   <integer>410</integer>
+   <key>status</key>
+   <integer>1</integer>
+   <key>message</key>
+   <string>Gone</string>
+   <key>url</key>
+   <string>https://inventory.grid.example/cap/00000000-0000-4000-8000-00000000cafe/item/a0000000-0000-4000-8000-000000000a01</string>
+   <key>headers</key>
+   <map>
+    <key>content-type</key>
+    <string>application/llsd+xml</string>
+   </map>
+   <key>error_body</key>
+   <string></string>
+  </map>
+ </map>
+</llsd>
