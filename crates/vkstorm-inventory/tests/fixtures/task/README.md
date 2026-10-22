@@ -246,7 +246,10 @@ by alphabet index) and the trace text exactly as in the sample files.
   (packet id, bytes 1-4, zeroed; no acks are appended since nothing is
   received), the zero-expanded body, and every block and variable as raw
   bytes; then the entries. A StartPingCheck marker sent through the same
-  socket after each action delimits the capture. Cases: UpdateTaskInventory
+  socket after each action delimits the capture (a marker missing after 30 s
+  fails the case); before the first capture, markers are resent every 500 ms
+  until one arrives, since on Windows the first datagram of a new loopback
+  flow was seen to arrive seconds late under load. Cases: UpdateTaskInventory
   with key 0 and 1 through each branch of `doUpdateInventory`'s owner guess
   (selected object, group-owned old item, known owner, guessed owner, not
   owner, AT_OBJECT not atomic, no inventory, a rich item with transaction
