@@ -11,21 +11,48 @@ specification. Every corpus but C10 comes from the dump mode of
 (`indra/llinventory/tests/llinventory_tool.cpp`), and C10 is the public Linden
 Library cache. The values come from the frozen copies in
 `indra/llinventory/tests/llinventory_oracle.{h,cpp}`. Those copies were made at
-viewer commit `472ecf270d` (branch `codex/rust-inventory`) and are checked by
-`check_r1_copies.py`, so a later regeneration still records the C++ as it was
-before the port.
+viewer commit `472ecf270d` (branch `codex/rust-inventory`), so a later
+regeneration still records the C++ as it was before the port.
 
 The same bytes are kept in the viewer (`indra/llinventory/tests/fixtures/`)
 and in vkstorm-core-rust (`crates/vkstorm-inventory/tests/fixtures/model/`).
 `tools/inventory-fixtures/model/regenerate.py` in vkstorm-core-rust writes both.
-Never edit them by hand.
+It dumps twice, each run into its own new directory, and replaces nothing
+unless both dumps end with the recording status, are byte-identical and hold
+exactly the expected files. After the replacement it checks that the two trees
+are byte-identical. `llinventory_tool dump` exits 3 on success, never 0, so a
+recording can never pass for a test run. A missing `--library` input fails the
+dump. Never edit the fixtures by hand.
 
-`INTEGRATION_TEST_llinventory_parity` (viewer) checks the live classes in two
-ways. It compares them with the frozen copies in process, over every corpus.
-It also replays these files against them: the structured corpora line by line,
-the random streams by digest and by sample, the exhaustive sweeps by digest,
-and C10 field by field. A difference is reported as
-`<corpus>: case <id> field <field>.<column>: expected <x> actual <y>`.
+`INTEGRATION_TEST_llinventory_parity` (viewer) checks the live classes in
+three ways:
+- It compares them with the frozen copies in process, over every corpus.
+- It replays these files against them: the structured corpora line by line,
+  the random streams by chunked digest and by sample, the exhaustive sweeps by
+  chunked digest, and C10 field by field. A difference is reported as
+  `<corpus>: case <id> field <field>.<column>: expected <x> actual <y>`. A
+  digest mismatch names its case range, for example `c3r cases [12000, 13000)`.
+- It checks the fixture tree itself (test 5): a missing or an unexpected file,
+  and a missing or an unexpected `digests.txt` entry, fail.
+
+The test opens no fixed resources: its message system binds an OS-assigned
+UDP port, and it writes no files. After the test, the build runs
+`check_r1_copies.py` (a post-build step in `indra/llinventory/CMakeLists.txt`).
+That check does the following:
+- It requires each frozen copy to match its live source exactly once, after
+  removing comments and `#if 0` blocks. String and character literals are
+  compared verbatim; whitespace is collapsed only outside literals.
+- It fences the viewer members the copied subclass functions depend on
+  (`mTransactionID`, `mOwnerID`, `mVersion`, `VERSION_UNKNOWN`, `getCRC32`,
+  `packMessage`, `exportLLSD`, `importLLSD`, `setVersion`, the cache labels).
+  Every line of `llviewerinventory.{h,cpp}` that touches one of them must be
+  copied or appear on the script's reviewed allowlist.
+- Every copied and fenced source is an object dependency of the oracle, so a
+  change to any of them rebuilds the test and re-runs the check.
+- A port step that replaces a copied source on purpose narrows the run to the
+  sources it did not replace (`--only indra/newview --allow-partial`). It
+  checks the frozen copies once against `--at 472ecf270d`. A partial run
+  without `--allow-partial` is refused.
 
 Recorded on Windows (MSVC 19.44.35229, RelWithDebInfo, the Release feature
 set) and on Linux (WSL Ubuntu 26.04 with GCC 15.2 and with GCC 14.3, CI's Linux
@@ -40,20 +67,20 @@ they are written).
 |---|---|---:|---:|
 | `c1_types.txt` | C1 type tables: `LLAssetType`, `LLInventoryType`, `LLFolderType`, `LLSaleInfo` names, `LLSettingsType`, `inventory_and_asset_types_match` over (-1..255)², reverse lookups, `getTypeNames`, `LLCategory`, transaction flags and messages, `mask_to_string`, constants | 1280 | 2848 |
 | `c2_normalisers.txt` | C2 `correctInventoryName`, `correctInventoryDescription`, bare `replaceNonstandardASCII` with and without `\|`, `rename`, the constructors, `setDescription` | 1234 | 2468 |
-| `c3_permissions.txt` | C3 structured permission cases | 3170 | 3290 |
-| `c3_random_sample.txt` | C3 random stream, sample (stream: 200000 cases, digest in `digests.txt`) | 399 | 1596 |
-| `c4_sale.txt` | C4 structured sale-info cases | 394 | 1176 |
+| `c3_permissions.txt` | C3 structured permission cases | 3328 | 3463 |
+| `c3_random_sample.txt` | C3 random stream, sample (stream: 200000 cases, digests in `digests.txt`) | 399 | 1596 |
+| `c4_sale.txt` | C4 structured sale-info cases | 394 | 1196 |
 | `c4_random_sample.txt` | C4 random stream, sample (stream: 100000 cases) | 299 | 973 |
-| `c5_items.txt` | C5 generated items, full records | 280 | 6424 |
-| `c5_matrix.txt` | C5 every asset type x inventory type, compact (full records: digest `c5mf`) | 972 | 972 |
+| `c5_items.txt` | C5 generated items, full records | 280 | 6440 |
+| `c5_matrix.txt` | C5 every asset type x inventory type, compact (full records: digests `c5mf`) | 972 | 972 |
 | `c5_random_sample.txt` | C5 random items, sample (stream: 20000 cases) | 19 | 437 |
 | `c5_categories.txt` | C5 generated categories (all four LLSD dialects, legacy) and `LLInventoryObject` | 151 | 3522 |
-| `c6_legacy.txt` | C6 malformed legacy text through the item, object, category, permissions and sale-info readers, and notecards through `LLNotecard::importStream` | 253 | 2666 |
-| `c7_item_llsd.txt` | C7 LLSD input of `LLInventoryItem::fromLLSD` | 2105 | 2195 |
+| `c6_legacy.txt` | C6 malformed legacy text through the item, object, category, permissions and sale-info readers, and notecards through `LLNotecard::importStream` | 293 | 3074 |
+| `c7_item_llsd.txt` | C7 LLSD input of `LLInventoryItem::fromLLSD` | 2129 | 2219 |
 | `c8_category_llsd.txt` | C8 LLSD input of `LLInventoryCategory::fromLLSD`, `importLLSD`/`importLLSDMap` and the viewer subclass's cache keys | 656 | 1520 |
-| `c9_messages.txt` | C9 message blocks through the real `LLMessageSystem` with `scripts/messages/message_template.msg` | 829 | 2213 |
+| `c9_messages.txt` | C9 message blocks through the real `LLMessageSystem` with `scripts/messages/message_template.msg` | 832 | 2222 |
 | `c10_library.txt.gz` | C10 every Library item and category: `fromLLSD`/`importLLSDMap`, byte identity of the re-serialization, the fields (gzip of text) | 6075 | 6076 |
-| `digests.txt` | digests of the random streams and the exhaustive sweeps | | 9 |
+| `digests.txt` | digests of the random streams and the exhaustive sweeps, whole and per chunk | | 423 |
 | `library/ba2a564a-f0f1-4b82-9c61-b7520bfcd09f.inv.llsd.gz` | the Linden Library inventory cache, unchanged (see C10) | | |
 
 ## Line format
@@ -93,13 +120,19 @@ A reader's `ret` comes before the stream columns, as in `ret state pos rest`.
 ### Marked values
 
 - `UB`: the C++ reads an uninitialised variable here. The value is not
-  comparable, and the comparer skips it. The cases, and what each platform
-  produced, are listed below.
-- `RT(win=<x>;linux=<y>)`: the value depends on the C runtime. The recorder
+  comparable, and the comparer skips a column only when the *expected* value is
+  `UB`; an actual `UB` against a concrete expectation is a difference. The
+  cases, and what each build produced, are listed below. The rows carrying `UB`
+  masks also record `item.invariants` and `perm.invariants`. These are the
+  `fix()` invariants that hold whatever the garbage, compared exactly:
+  owner ⊆ base, group ⊆ owner, everyone ⊆ owner, next ⊆ base, everyone
+  without MODIFY, and a no-transfer base that is not group owned leaving group
+  and everyone without COPY.
+- `RT(win=<x>;linux=<y>[;crate=<z>|;required=<z>])`: the value depends on the
+  C runtime. `crate=` is the value the crate's own mapping must give, and
+  `required=` is the outcome a port must produce (*Port rules*). The recorder
   writes this form only when the platform's own value equals the stated one.
   Otherwise it writes `RT-MISMATCH(...)`, which fails the comparison.
-- `SKIPPED: null sale type name (runtime edge, see README)`: a legacy export of
-  a sale type outside 0..3 would stream a null `const char*` (see below).
 
 ## Fixed inputs
 
@@ -161,8 +194,8 @@ The inputs are:
 - `fix` over the mask edges (base x the rest, both values of `mIsGroupOwned`);
 - `initMasks` with five arguments (`fixFairUse` + `fix`) over base x next;
 - `initMasks(inventory type)` for -1..30 and 255;
-- `accumulate` over all pairs of eight sample states (`c3_states()`);
-- `setOwnerAndGroup` over agent/owner/group in {null, A, B, G}, both atomic forms, from four states;
+- `accumulate` over all pairs of nine sample states (`c3_states()`);
+- `setOwnerAndGroup` over agent/owner/group in {null, A, B, G}, both atomic forms, from states 0, 1, 2, 3 and 8. In state 8 the next-owner mask has neither copy nor transfer, so `is_atomic` changes the outcome: `c3.soag.8.A.B.G.0` gives base `00084000` and `.1` gives `00086000`;
 - `deedToGroup`;
 - each `set*Bits`, set and clear, over six bit sets, agents {null, A, B} and groups {null, G, H};
 - for every state: the queries, `getSafeOwner` (owned states only, because it generates a random UUID otherwise), `setLastOwner`, `set`, `==`/`!=`, the legacy text and its re-import, the LLSD form and its re-import, `ll_fill_sd_from_permissions` into a non-empty map, `importLLSD` over another state, and the hyphenated LLSD `packMessage`/`unpackMessage`, which have no caller;
@@ -180,12 +213,16 @@ The exhaustive sweeps run in process only and are recorded as digests:
 - `c3x.fix.alpha4.go<0|1>`: the same over {T, C, bit 0, bit 31} (2^20). Together with the first sweep this covers bits 0 and 31; a single 7-bit alphabet over five masks would be 2^35 cases;
 - `c3x.initmasks5`: `initMasks(b, o, e, g, n)` with base and next over the 7-bit alphabet {T, M, C, MOVE, EXPORT, bit 0, bit 31} and owner, everyone, group over {`7fffffff`, 0, T|C, M|MOVE, `ffffffff`} (2048000 cases).
 
-The enumeration order is in `c3x_fix`/`c3x_fair`. Each case appends the five resulting masks (base, owner, group, everyone, next) as little-endian U32, and the digest is the SHA-256 of all those bytes.
+The enumeration is exact, so a regenerator reproduces it.
+- `c3x_fix(i, go, alphabet)`: with 5 bits per mask (alphabet 5) or 4 (alphabet 4), base is `a(i & m)`, owner `a((i >> b) & m)`, group `a((i >> 2b) & m)`, everyone `a((i >> 3b) & m)` and next `a((i >> 4b) & m)`. `a` maps bit 0..4 to T, M, C, MOVE, EXPORT (alphabet 5) or to T, C, bit 0, bit 31 (alphabet 4). Ids are null and `mIsGroupOwned` is `go`; then `fix()`.
+- `c3x_fair(i)`: base is `alpha7(i & 127)` and next `alpha7((i >> 7) & 127)`, where `alpha7` is alphabet 5 plus bit 0 (value 32) and bit 31 (value 64). With `k = i >> 14`, owner is `others[k % 5]`, everyone `others[(k / 5) % 5]` and group `others[(k / 25) % 5]`, with `others` = {`7fffffff`, 0, T|C, M|MOVE, `ffffffff`}; then `initMasks(base, owner, everyone, group, next)`.
+
+Each case appends the five resulting masks (base, owner, group, everyone, next) as little-endian U32. The digest is the SHA-256 of those bytes, whole and in chunks of 2^20 cases.
 
 ### C4 sale info
 
 `c4_sale.txt` covers:
-- types {0, 1, 2, 3, -1, 4, 200, 255} x prices {`INT_MIN`, -1, 0, 10, `INT_MAX`}: the raw state, the CRC, the two-argument constructor, the setters, the legacy text and its re-import (valid types only), the LLSD form and its re-import, the `operator LLSD`, `ll_create_sd_from_sale_info`/`ll_sale_info_from_sd`, and the hyphenated `packMessage`/`unpackMessage`;
+- types {0, 1, 2, 3, -1, 4, 200, 255} x prices {`INT_MIN`, -1, 0, 10, `INT_MAX`}: the raw state, the CRC, the two-argument constructor, the setters, the legacy text and its re-import, the LLSD form and its re-import, the `operator LLSD`, `ll_create_sd_from_sale_info`/`ll_sale_info_from_sd`, and the hyphenated `packMessage`/`unpackMessage`. For the invalid types the legacy text is the prefix written before the null name, with `legacy.outcome` (runtime edge 3);
 - `accumulate` over nine sale states, all pairs (`c4.acc`), including the price overflow (a runtime edge, below);
 - `fromLLSD` over 20 `sale_type` values x 13 `sale_price` values, absent included;
 - `perm_mask` as Binary of 0/3/4/5 bytes, as Integer, as String and as undef;
@@ -213,6 +250,7 @@ A record holds these fields:
 - `legacy`: `exportLegacyStream` with the asset key;
 - `legacy.nokey`: the asset line written without the key, and whether the rest is byte-identical;
 - `legacy.ret`;
+- for a sale type outside 0..3 (`c5.sale.{-1,4,200,255}.10`), in place of the three fields above: `legacy` (the bytes written, which end at `\t\tsale_type\t`), `legacy.outcome` (with and without the key) and `legacy.nokey.prefix`;
 - `legacy.reimport`: into the previous item, plus its stream;
 - `legacy.object`: `LLInventoryObject::exportLegacyStream` on the item;
 - `llsd`: `asLLSD`;
@@ -266,7 +304,8 @@ has the result of each reader:
 - `C`: category (`cat`);
 - `P`: permissions (`perm` = `ret` + permissions, `perm.stream`);
 - `S`: sale info (`sale` = type price has_perm_mask perm_mask ret, `sale.stream`);
-- `N`: notecard. `notecard` holds ret, version, embedded version, item count and text. It is followed by `notecard.item.<k>`, `notecard.stream` and, when the import succeeded, `notecard.export` (`exportStream`).
+- `N`: notecard. `notecard` holds ret, version, embedded version, item count and text. It is followed by `notecard.item.<k>`, `notecard.stream` and, when the import succeeded, `notecard.export` (`exportStream`). A text or export over 4096 bytes is written `len=<n>;sha256=<hex>`.
+- Rows with `UB` masks also hold `item.invariants` and `perm.invariants` (see *Marked values*).
 
 Most inputs are the standard item text (`std_item_lines()`, 28 lines) with one
 change, followed by `NEXT\tline\n`, so that the stream position after the
@@ -282,18 +321,26 @@ item is visible. The cases are:
 - eight UUID spellings (upper case, 35 characters, other characters in the hyphen slots, invalid, 37, 34, no hyphens, empty);
 - legacy `creator_mask`, `group_owned`, stale and malformed masks;
 - `perm_mask` 0, no-copy, `e000`, `ffffffff` and keyword-only;
+- `c6.permmask.o<owner>.pm<perm_mask>`: the owner mask {`0008e000`, `7fffffff`, `00006000`}, which may differ from the base `7fffffff`, against `perm_mask` {0, `00004000` (modify only), `00080000` (move only), `00008000` (copy only), `00002000`, `0008e000`}. These pin both fix-up rules: 0 takes the *owner* mask, and a mask without copy gains transfer;
+- `c6.permmask.salefirst.*`: the `sale_info` block before the permissions block;
 - sale types and prices;
 - `flags` and `creation_date` spellings;
 - unknown keywords and braces;
-- type and inventory-type names.
+- type and inventory-type names;
+- `c6.token.{253,254,255}`: a single token of that length ending in `7`, then a keyword-only `flags` line. These pin the `%254s` width: with 254 the stale value is the description, with a narrower width it would be `7`;
+- `c6.meta.notprefix` (spaceless XML starting `<!--x--><llsd>`) and `c6.meta.bareMap` (a `<map>` without `<llsd>`). The reader parses metadata only when the value starts with `<llsd>`;
+- `LLUUID::set` leniency: each hyphen slot replaced alone (`c6.uuid.slot{8,13,18,23}`), mixed case, the 35-character form with each hyphen removed, and a non-hex digit.
 
 Object, category, sale-block and permissions-block inputs, empty inputs, and
-16 notecards complete the corpus. The notecards are: empty; one item; three
+22 notecards complete the corpus. The notecards are: empty; one item; three
 items; versions 1 and 3; an item with a blank line after its permissions
 block; a long line; a metadata line; an item without its closing brace; a
 text length that is too short and one that is too long; count -1; count 2
-with one item; CRLF; garbage; UTF-8 text. `c6.nc.export` is a notecard of
-three C5 items written by `exportStream` and read back.
+with one item; CRLF; garbage; UTF-8 text. `c6.nc.limit<max>.len<n>` gives a
+text length of `max-1`, `max` and `max+1`, with the default limit
+(`LLNotecard::MAX_SIZE`, 65536) and with a constructed limit of 64.
+`c6.nc.export` is a notecard of three C5 items written by `exportStream` and
+read back.
 
 `LLViewerObject::loadTaskInvFile` is not in this corpus: recorder R4a owns it.
 
@@ -312,7 +359,8 @@ The other C7 cases are:
 - `c7.assetkeys.<mask>`: the `asset_id`/`linked_id`/`shadow_id` subsets;
 - `c7.thumbs.*`: `thumbnail` with `thumbnail_id`;
 - `c7.script.*`: `script`, `metadata.script`, both, and `metadata` without `script`;
-- `c7.permmask.*`: `sale_info.perm_mask` forms, with and without `permissions`;
+- `c7.permmask.*`: `sale_info.perm_mask` forms, with and without `permissions`. `bin4mod` (`00 00 40 00`) and `bin4move` (`00 08 00 00`) pin the "no copy adds transfer" rule, and `bin4copy` (`00 00 80 00`) the case where it does not apply;
+- `c7.uuidstr.*`: `asset_id` and `item_id` given as Strings. The forms are plain, leading and trailing space, TAB and LF, no hyphens, empty, 34 and 37 characters, upper case, each hyphen slot replaced, and each hyphen removed (35 characters);
 - `c7.perm.<key>.<value>`: permissions keys x value types, with `ll_permissions_from_sd`;
 - `c7.perm.derived_group`: `is_owner_group` is never read;
 - `c7.reuse.*`: one object reused across six records, as the legacy fetch loop does.
@@ -345,9 +393,9 @@ back through `LLMessageSystem::dispatchTemplate` into the template reader
 (rung three's classes).
 
 The other C9 cases are:
-- `c9.udp.*`: raw `ItemData` blocks (invalid type bytes, inventory types, sale types 3/4/200/255, prices, the 16 names, raw permissions, date -1, flags) with the CRC the frozen copy computes;
+- `c9.udp.*`: raw `ItemData` blocks with the CRC the frozen copy computes. They cover invalid type bytes, inventory types, sale types 3/4/200/255, prices, the 16 names, raw permissions, date -1 and flags. `c9.udp.strlen.{254,255,256}` puts names and descriptions at the builder's `Variable 1` limit minus one, at it, and plus one;
 - `c9.udp.multi`: four blocks into one reused object;
-- `UpdateInventoryFolder` from `LLInventoryCategory::packMessage` for every C5 category, unpacked again;
+- `UpdateInventoryFolder` from `LLViewerInventoryCategory::packMessage` (the frozen copy the viewer's senders use) for every C5 category, unpacked again;
 - `c9.folder.raw`;
 - `c9.agg.<u8>`: `LLAggregatePermissions::unpackMessage` of all 256 bytes, then `packMessage` and the byte read back;
 - `c9.aggagg.<a>`: `aggregate(LLAggregatePermissions)` over the 64 valid states, one hex byte per right-hand state;
@@ -374,24 +422,75 @@ item (5585) re-serializes byte-identically (`c10.summary`).
 
 ## Random streams and digests
 
-The generator is xorshift64* (`Rng` in the tool): `x ^= x >> 12; x ^= x << 25;
-x ^= x >> 27; return x * 0x2545F4914F6CDD1D`. The seeds are `c3r`
-`0x7633000000000001`, `c4r` `0x7634000000000001` and `c5r` `0x7635000000000001`
-(each file's header repeats its seed). The inputs are drawn by `draw_c3`,
-`draw_c4` and `draw_item`, with `draw_perm`, `draw_id`, `draw_mask` and
-`draw_price`. The draw order is the code's statement order, and a port's test
-transcribes those functions. A stream's digest is the SHA-256 of its lines,
-each followed by `\n`. `digests.txt` lists `<stream> <cases> <lines>
-<sha256>`. The sample files hold the cases with `i < 200 || i % 1000 == 0`
-(`c5r`: `i < 10 || i % 2000 == 0`). `c5mf` (the full records of the C5
-matrix) has a digest only.
+The generator is xorshift64* (`Rng` in the tool). The state is a U64, and a
+seed of 0 is replaced by `0x9E3779B97F4A7C15`. Each `next()` step is:
+
+```
+x = state; x ^= x >> 12; x ^= x << 25; x ^= x >> 27; state = x; return x * 0x2545F4914F6CDD1D
+```
+
+Two helpers build on it: `below(n) = next() % n` and `coin() = next() & 1`.
+The seeds are `c3r` `0x7633000000000001`, `c4r` `0x7634000000000001` and
+`c5r` `0x7635000000000001`; each file's header repeats its seed.
+
+Every draw below is one statement after another, in the order written, and no
+draw depends on argument evaluation order. A conditional draws its condition
+first, then only the chosen branch.
+
+**Helpers:**
+- `draw_id`: `[null, A, B, G][below(4)]`.
+- `draw_mask`: `v = next()`. If `v & 1`, `kMaskEdges[(v >> 1) % 18]` (the C3 edge list, in its README order: 0, `7fffffff`, `ffffffff`, `e000`, `2000`, `4000`, `8000`, `10000`, `80000`, 1, `80000000`, `7fffbfff`, `7fff7fff`, `7fff3fff`, `7fffdfff`, `7fff9fff`, `7fff5fff`, `7fff1fff`); otherwise `(U32)(v >> 32)`.
+- `draw_perm`: creator, owner, last owner and group by `draw_id`; base, owner, group, everyone and next by `draw_mask`; then group_owned by `coin()`.
+
+**c3r case i:**
+1. The state by `draw_perm`.
+2. `op = below(12)`, indexing accumulate, setOwnerAndGroup, deedToGroup, setBaseBits, setOwnerBits, setGroupBits, setEveryoneBits, setNextOwnerBits, initMasks5, fix, importLLSD, legacy.
+3. The op's arguments:
+   - op 0: another `draw_perm`;
+   - op 1: agent, owner and group by `draw_id`, then atomic by `coin`;
+   - op 2: agent and group by `draw_id`;
+   - ops 3 and 4: agent by `draw_id`, set by `coin`, then the bits;
+   - ops 5-7: agent and group by `draw_id`, set by `coin`, then the bits;
+   - op 8: five `draw_mask`;
+   - ops 9-11: nothing.
+
+   The bits are `kDrawBits[below(10)]` = {T, M, C, MOVE, EXPORT, 1, `80000000`, T|M|C, `7fffffff`, `ffffffff`}.
+
+**c4r case i:**
+- `draw_sale_type` = `[0,1,2,3,0,1,2,3,-1,4,200,255,127,-128][below(14)]`.
+- `draw_price`: `v = next()`. If `v & 1`, `[INT_MIN, -1, 0, 10, INT_MAX][(v >> 1) % 5]`; else if `v & 2`, `(v >> 8) % 100000`; else `(S32)(U32)(v >> 32)`.
+- The draw order is type1, price1, `op = below(4)`, type2, price2, then `sd_kind = below(3)`.
+
+**c5r case i (`draw_item`), from the base item:**
+1. type `= kAssetTypes[below(36)]` and inv_type `= kInvTypes[below(27)]`, both in the order of the C5 lists in the tool.
+2. The asset by `below(5)`: null, `U(a3)`, MAGIC, NOT_MAGIC, or 16 bytes from two `next()` values written little-endian (bytes 0-7, then 8-15).
+3. The thumbnail: `coin()` ? null : `U(b1)`.
+4. The favorite by `coin()`.
+5. The runtime: `["", "luau", 60 x "r", "lu au"][below(4)]`.
+6. The flags: `coin()` ? `kFlags[below(7)]` : `(U32)next()`.
+7. The permissions by `draw_perm`.
+8. The sale type by `below(4)`, then the price by `draw_price`.
+9. The name `c5_names()[below(16)].first`, then the description `c5_names()[below(16)].second`.
+10. The date: `coin()` ? `[0, 1, INT_MAX, INT_MIN, -1, 1700000000][below(6)]` : `(S32)(U32)next()`.
+
+**c5mf case i:** the base item with type `kAssetTypes[i / 27]` and inv_type `kInvTypes[i % 27]`.
+
+A stream's digest is the SHA-256 of its lines, each followed by `\n`.
+`digests.txt` lists `<name> <cases> <lines> <sha256>`. Each stream has its
+total (`c3r`) and one entry per chunk (`c3r@<first>-<end>`, a half-open range
+of cases). For the sampled streams the chunks are as long as the sample
+spacing, so every chunk starts at a committed sample case: 1000 for `c3r` and
+`c4r`, 2000 for `c5r`. For `c5mf` a chunk is the 27 inventory types of one
+asset type. The exhaustive sweeps have chunks of 2^20 cases. The sample files
+hold the cases with `i < 200 || i % 1000 == 0` (`c5r`:
+`i < 10 || i % 2000 == 0`), and `c5mf` has digests only.
 
 ## Runtime edges
 
 These are the values that depend on the C runtime or on undefined behaviour.
 Each is stated here, and none is chosen silently.
 
-1. **LLSD String → Integer of `"0x10"`** (`RT(win=16;linux=0)`, five values:
+1. **LLSD String → Integer of `"0x10"`** (`RT(win=16;linux=0;crate=16)`, five values:
    `c7.created_at.str.0x10.{0,1}`, `c8.type.str.0x10`,
    `c8.type_default.str.0x10`, `c8.version.str.0x10`). `LLSD::asInteger()` of
    a String is `(int)asReal()`, an `istringstream >> F64`. The MSVC runtime
@@ -399,33 +498,54 @@ Each is stated here, and none is chosen silently.
    does not reach EOF and the value is 0. This is the C++ `LLSD` class
    (llcommon), and the inventory code inherits it through `created_at`,
    `type`, `type_default` and `version`. Every other String coercion in the
-   corpora gives the same value on both platforms.
+   corpora gives the same value on both platforms. The port rule is under
+   *Port rules*.
 2. **Uninitialised locals in the legacy readers** (`UB`). The legacy readers
    read an uninitialised local in three places:
    - `S32 date` in `LLInventoryItem::importLegacyStream`, when `creation_date`'s value does not parse (`c6.date.abc`, `c6.kw.date` whose stale value is the description, `c6.kw.date.first`);
    - `U32 mask` in `LLPermissions::importLegacyStream`, when the block's first mask or `group_owned` line does not parse (`c6.perm.mask.first_fails`, `c6.perm.group_owned.first_fails`; the four other masks inherit the garbage through `fix()`);
    - `char uuid_str[256]`, when an id keyword is the block's first value-less line (`c6.perm.id.first_empty`).
 
-   The values each platform produced are below. They were stable across runs
-   of the same binary, but they are undefined:
+   The values below were observed. Build 1 is the first recording; build 2
+   is this one, after the cases were added. Columns marked "probe" ran the
+   case alone (`llinventory_tool probe ub`); the rest ran inside the full
+   corpus, which leaves different residue on the stack.
 
-   | case | Windows (MSVC) | Linux (GCC 15) |
-   |---|---|---|
-   | `c6.date.abc` date | 0 | 0 |
-   | `c6.kw.date` date | 15 | 0 |
-   | `c6.kw.date.first` date | 0 | 91719616 |
-   | `c6.perm.mask.first_fails` masks, item reader | `00000030` x5 | `746e6576 746e6576 746e6576 746e2576 746e6576` |
-   | `c6.perm.mask.first_fails` masks, permissions reader | `00082000` x5 | `00082000` x5 |
-   | `c6.perm.group_owned.first_fails` group_owned | 1 | 1 |
-   | `c6.perm.id.first_empty` creator | null | null |
+   | case | Windows build 1 | Windows build 2 | GCC 15 build 1 | GCC 15 build 2 | GCC 14 build 2 (probe) |
+   |---|---|---|---|---|---|
+   | `c6.date.abc` date | 0 | -1266450432 | 0 | 0 | 0 |
+   | `c6.kw.date` date | 15 | 15 | 0 | 0 | 0 |
+   | `c6.kw.date.first` date | 0 | -1266450432 | 91719616 | 402 | 402 |
+   | `c6.perm.mask.first_fails` masks, item reader | `00000030` x5 | `00000030` x5 | `746e6576`… | `746e6576`… | `6e6f6973`… |
+   | `c6.perm.mask.first_fails` masks, permissions reader | `00082000` x5 | `00082000` x5 | `00082000` x5 | `00082000` x5 | `00082000` x5 |
+   | `c6.perm.group_owned.first_fails` group_owned | 1 | 1 | 1 | 1 | 1 |
+   | `c6.perm.id.first_empty` creator, item reader | null | null | null | `U(66)` in the full run; null in the probe | null |
 
-   The port must choose a defined value, as survey 1 §4.3 item 2 proposes.
-3. **A null sale-type name in the legacy writer.** `LLSaleInfo::exportLegacyStream`
-   with a sale type outside 0..3 streams `lookup()`'s `NULL`. On Windows the
-   process crashes (access violation, observed with `llinventory_tool probe
-   null-sale-export`). With libstdc++ the stream gets `badbit|failbit` and
-   every later write is dropped, so the output ends at `\t\tsale_type\t`. The
-   fixtures record `SKIPPED` for these exports, and `asLLSD` writes `not`.
+   In the first recording some of these values agreed across platforms, so
+   the coordinator asked (F6) to record those as expected values. The second
+   build disproved it. With the new cases, the same code and the same compiler
+   gave a different date for `c6.date.abc` on Windows. On Linux the item
+   reader's creator in `c6.perm.id.first_empty` took a stale `U(66)` from an
+   earlier case. A value that changes with the surrounding code would make the
+   test fail on unrelated edits, so every one of them stays `UB` and is not
+   compared. What does hold is compared: the `fix()` invariants
+   (`*.invariants`), and every other field of the same rows. The port must
+   choose a defined value, as survey 1 §4.3 item 2 proposes.
+3. **A null sale-type name in the legacy writer**
+   (`RT(win=crash;linux=fb;required=fb)`). `LLSaleInfo::exportLegacyStream`
+   with a sale type outside 0..3 streams `lookup()`'s `NULL`, and the two
+   runtimes react differently:
+   - With libstdc++ the stream gets `failbit|badbit` and every later write is
+     dropped. The output therefore ends at `\t\tsale_type\t`, and an item's
+     export stops at the same place.
+   - With the MSVC runtime the process takes an access violation. The harness
+     runs these exports under a structured exception handler on Windows, so
+     the crash is observed and the bytes written before it are recorded.
+     Those bytes are the same prefix.
+
+   The fixtures record the prefix (`legacy`) and the outcome
+   (`legacy.outcome`) for `c4.tp.{-1,4,200,255}.*` and
+   `c5.sale.{-1,4,200,255}.10`. `asLLSD` writes `not` for the same items.
 4. **Signed overflow in `LLSaleInfo::accumulate`** (`c4.acc.*` with
    `INT_MAX`). This is undefined behaviour. Both compilers wrap, and the
    wrapped value is recorded. The random stream does not draw overflowing
@@ -447,11 +567,27 @@ Each is stated here, and none is chosen silently.
    casts in the readers) are formally unspecified. Both compilers store the
    integer, and that is what is recorded.
 
+## Port rules (required behaviour, coordinator decisions F5)
+
+1. **LLSD coercions.** In the viewer, the port keeps the C++ `LLSD`
+   coercions: the C++ walker extracts each key with them (survey 1 §6). The
+   viewer test therefore keeps the per-platform values of runtime edge 1, 16
+   with the MSVC runtime and 0 with libstdc++. The crate's own mapping over
+   `vkstorm_llsd::Value` follows vkstorm-llsd, which always gives 16. A
+   crate test reads the `crate=` value of `RT(...)`.
+2. **The legacy export of a sale type outside 0..3** must write the shared
+   prefix, ending `\t\tsale_type\t`, and nothing after it. It must leave the
+   stream failed and bad (`fb`): the libstdc++ outcome, `required=fb`. A port
+   that writes anything else after the prefix fails, for example `not`. The
+   Windows crash of the pre-port C++ has no outcome to reproduce. The viewer
+   test accepts `crash` only from the pre-port C++ on Windows; a port gives
+   `fb` there too, which the stated value also accepts.
+
 ## Behaviour worth knowing (recorded as it is)
 
 - The item CRC covers the last owner and the thumbnail, and neither travels in
   an item message block. A block packed from an item with a last owner
-  therefore fails the CRC check on unpack: 318 of the 319 `unpack.fresh`
+  therefore fails the CRC check on unpack: 321 of the 322 `unpack.fresh`
   verdicts are 0, and the only verdict of 1 is `c5.perm.default`, whose last
   owner is null. No caller checks the verdict.
 - `LLInventoryItem::unpackMessage` does not touch the last owner, thumbnail,

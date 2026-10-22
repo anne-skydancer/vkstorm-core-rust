@@ -1,4 +1,4 @@
-# vkstorm-inventory model fixture: C4 sale info, random stream (sample: cases i < 200 and i % 1000 == 0 of 100000; digest in digests.txt)
+# vkstorm-inventory model fixture: C4 sale info, random stream (sample: cases i < 200 and i % 1000 == 0 of 100000; digests in digests.txt)
 # generator: llinventory_tool dump (indra/llinventory/tests/llinventory_tool.cpp); values from the frozen copies in llinventory_oracle.cpp
 # viewer source: 472ecf270d
 # platform: windows x86_64, MSVC 1944 (194435229), 64-bit time_t

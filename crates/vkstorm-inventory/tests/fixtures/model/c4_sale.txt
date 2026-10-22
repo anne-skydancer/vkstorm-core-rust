@@ -311,7 +311,8 @@ c4.tp.-1.-2147483648	raw	-1	-2147483648
 c4.tp.-1.-2147483648	crc	78f8cf6a	1
 c4.tp.-1.-2147483648	ctor	-1	0
 c4.tp.-1.-2147483648	setters	-1	0
-c4.tp.-1.-2147483648	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.-1.-2147483648	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.-1.-2147483648	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.-1.-2147483648	llsd.bin	7b000000026b0000000a73616c655f707269636569800000006b0000000973616c655f7479706573000000036e6f747d
 c4.tp.-1.-2147483648	llsd.txt	{'sale_price':i-2147483648,'sale_type':'not'}
 c4.tp.-1.-2147483648	llsd.operator.bin	7b000000026b0000000a73616c655f707269636569800000006b0000000973616c655f7479706573000000036e6f747d
@@ -324,7 +325,8 @@ c4.tp.-1.-1	raw	-1	-1
 c4.tp.-1.-1	crc	f8f8cf69	1
 c4.tp.-1.-1	ctor	-1	0
 c4.tp.-1.-1	setters	-1	0
-c4.tp.-1.-1	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.-1.-1	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.-1.-1	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.-1.-1	llsd.bin	7b000000026b0000000a73616c655f707269636569ffffffff6b0000000973616c655f7479706573000000036e6f747d
 c4.tp.-1.-1	llsd.txt	{'sale_price':i-1,'sale_type':'not'}
 c4.tp.-1.-1	llsd.operator.bin	7b000000026b0000000a73616c655f707269636569ffffffff6b0000000973616c655f7479706573000000036e6f747d
@@ -337,7 +339,8 @@ c4.tp.-1.0	raw	-1	0
 c4.tp.-1.0	crc	f8f8cf6a	1
 c4.tp.-1.0	ctor	-1	0
 c4.tp.-1.0	setters	-1	0
-c4.tp.-1.0	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.-1.0	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.-1.0	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.-1.0	llsd.bin	7b000000026b0000000a73616c655f707269636569000000006b0000000973616c655f7479706573000000036e6f747d
 c4.tp.-1.0	llsd.txt	{'sale_price':i0,'sale_type':'not'}
 c4.tp.-1.0	llsd.operator.bin	7b000000026b0000000a73616c655f707269636569000000006b0000000973616c655f7479706573000000036e6f747d
@@ -350,7 +353,8 @@ c4.tp.-1.10	raw	-1	10
 c4.tp.-1.10	crc	f8f8cf74	1
 c4.tp.-1.10	ctor	-1	10
 c4.tp.-1.10	setters	-1	10
-c4.tp.-1.10	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.-1.10	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.-1.10	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.-1.10	llsd.bin	7b000000026b0000000a73616c655f7072696365690000000a6b0000000973616c655f7479706573000000036e6f747d
 c4.tp.-1.10	llsd.txt	{'sale_price':i10,'sale_type':'not'}
 c4.tp.-1.10	llsd.operator.bin	7b000000026b0000000a73616c655f7072696365690000000a6b0000000973616c655f7479706573000000036e6f747d
@@ -363,7 +367,8 @@ c4.tp.-1.2147483647	raw	-1	2147483647
 c4.tp.-1.2147483647	crc	78f8cf69	1
 c4.tp.-1.2147483647	ctor	-1	2147483647
 c4.tp.-1.2147483647	setters	-1	2147483647
-c4.tp.-1.2147483647	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.-1.2147483647	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.-1.2147483647	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.-1.2147483647	llsd.bin	7b000000026b0000000a73616c655f7072696365697fffffff6b0000000973616c655f7479706573000000036e6f747d
 c4.tp.-1.2147483647	llsd.txt	{'sale_price':i2147483647,'sale_type':'not'}
 c4.tp.-1.2147483647	llsd.operator.bin	7b000000026b0000000a73616c655f7072696365697fffffff6b0000000973616c655f7479706573000000036e6f747d
@@ -376,7 +381,8 @@ c4.tp.4.-2147483648	raw	4	-2147483648
 c4.tp.4.-2147483648	crc	9c1cc258	1
 c4.tp.4.-2147483648	ctor	4	0
 c4.tp.4.-2147483648	setters	4	0
-c4.tp.4.-2147483648	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.4.-2147483648	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.4.-2147483648	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.4.-2147483648	llsd.bin	7b000000026b0000000a73616c655f707269636569800000006b0000000973616c655f7479706573000000036e6f747d
 c4.tp.4.-2147483648	llsd.txt	{'sale_price':i-2147483648,'sale_type':'not'}
 c4.tp.4.-2147483648	llsd.operator.bin	7b000000026b0000000a73616c655f707269636569800000006b0000000973616c655f7479706573000000036e6f747d
@@ -389,7 +395,8 @@ c4.tp.4.-1	raw	4	-1
 c4.tp.4.-1	crc	1c1cc257	1
 c4.tp.4.-1	ctor	4	0
 c4.tp.4.-1	setters	4	0
-c4.tp.4.-1	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.4.-1	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.4.-1	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.4.-1	llsd.bin	7b000000026b0000000a73616c655f707269636569ffffffff6b0000000973616c655f7479706573000000036e6f747d
 c4.tp.4.-1	llsd.txt	{'sale_price':i-1,'sale_type':'not'}
 c4.tp.4.-1	llsd.operator.bin	7b000000026b0000000a73616c655f707269636569ffffffff6b0000000973616c655f7479706573000000036e6f747d
@@ -402,7 +409,8 @@ c4.tp.4.0	raw	4	0
 c4.tp.4.0	crc	1c1cc258	1
 c4.tp.4.0	ctor	4	0
 c4.tp.4.0	setters	4	0
-c4.tp.4.0	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.4.0	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.4.0	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.4.0	llsd.bin	7b000000026b0000000a73616c655f707269636569000000006b0000000973616c655f7479706573000000036e6f747d
 c4.tp.4.0	llsd.txt	{'sale_price':i0,'sale_type':'not'}
 c4.tp.4.0	llsd.operator.bin	7b000000026b0000000a73616c655f707269636569000000006b0000000973616c655f7479706573000000036e6f747d
@@ -415,7 +423,8 @@ c4.tp.4.10	raw	4	10
 c4.tp.4.10	crc	1c1cc262	1
 c4.tp.4.10	ctor	4	10
 c4.tp.4.10	setters	4	10
-c4.tp.4.10	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.4.10	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.4.10	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.4.10	llsd.bin	7b000000026b0000000a73616c655f7072696365690000000a6b0000000973616c655f7479706573000000036e6f747d
 c4.tp.4.10	llsd.txt	{'sale_price':i10,'sale_type':'not'}
 c4.tp.4.10	llsd.operator.bin	7b000000026b0000000a73616c655f7072696365690000000a6b0000000973616c655f7479706573000000036e6f747d
@@ -428,7 +437,8 @@ c4.tp.4.2147483647	raw	4	2147483647
 c4.tp.4.2147483647	crc	9c1cc257	1
 c4.tp.4.2147483647	ctor	4	2147483647
 c4.tp.4.2147483647	setters	4	2147483647
-c4.tp.4.2147483647	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.4.2147483647	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.4.2147483647	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.4.2147483647	llsd.bin	7b000000026b0000000a73616c655f7072696365697fffffff6b0000000973616c655f7479706573000000036e6f747d
 c4.tp.4.2147483647	llsd.txt	{'sale_price':i2147483647,'sale_type':'not'}
 c4.tp.4.2147483647	llsd.operator.bin	7b000000026b0000000a73616c655f7072696365697fffffff6b0000000973616c655f7479706573000000036e6f747d
@@ -441,7 +451,8 @@ c4.tp.200.-2147483648	raw	200	-2147483648
 c4.tp.200.-2147483648	crc	fd9df530	1
 c4.tp.200.-2147483648	ctor	200	0
 c4.tp.200.-2147483648	setters	200	0
-c4.tp.200.-2147483648	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.200.-2147483648	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.200.-2147483648	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.200.-2147483648	llsd.bin	7b000000026b0000000a73616c655f707269636569800000006b0000000973616c655f7479706573000000036e6f747d
 c4.tp.200.-2147483648	llsd.txt	{'sale_price':i-2147483648,'sale_type':'not'}
 c4.tp.200.-2147483648	llsd.operator.bin	7b000000026b0000000a73616c655f707269636569800000006b0000000973616c655f7479706573000000036e6f747d
@@ -454,7 +465,8 @@ c4.tp.200.-1	raw	200	-1
 c4.tp.200.-1	crc	7d9df52f	1
 c4.tp.200.-1	ctor	200	0
 c4.tp.200.-1	setters	200	0
-c4.tp.200.-1	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.200.-1	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.200.-1	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.200.-1	llsd.bin	7b000000026b0000000a73616c655f707269636569ffffffff6b0000000973616c655f7479706573000000036e6f747d
 c4.tp.200.-1	llsd.txt	{'sale_price':i-1,'sale_type':'not'}
 c4.tp.200.-1	llsd.operator.bin	7b000000026b0000000a73616c655f707269636569ffffffff6b0000000973616c655f7479706573000000036e6f747d
@@ -467,7 +479,8 @@ c4.tp.200.0	raw	200	0
 c4.tp.200.0	crc	7d9df530	1
 c4.tp.200.0	ctor	200	0
 c4.tp.200.0	setters	200	0
-c4.tp.200.0	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.200.0	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.200.0	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.200.0	llsd.bin	7b000000026b0000000a73616c655f707269636569000000006b0000000973616c655f7479706573000000036e6f747d
 c4.tp.200.0	llsd.txt	{'sale_price':i0,'sale_type':'not'}
 c4.tp.200.0	llsd.operator.bin	7b000000026b0000000a73616c655f707269636569000000006b0000000973616c655f7479706573000000036e6f747d
@@ -480,7 +493,8 @@ c4.tp.200.10	raw	200	10
 c4.tp.200.10	crc	7d9df53a	1
 c4.tp.200.10	ctor	200	10
 c4.tp.200.10	setters	200	10
-c4.tp.200.10	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.200.10	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.200.10	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.200.10	llsd.bin	7b000000026b0000000a73616c655f7072696365690000000a6b0000000973616c655f7479706573000000036e6f747d
 c4.tp.200.10	llsd.txt	{'sale_price':i10,'sale_type':'not'}
 c4.tp.200.10	llsd.operator.bin	7b000000026b0000000a73616c655f7072696365690000000a6b0000000973616c655f7479706573000000036e6f747d
@@ -493,7 +507,8 @@ c4.tp.200.2147483647	raw	200	2147483647
 c4.tp.200.2147483647	crc	fd9df52f	1
 c4.tp.200.2147483647	ctor	200	2147483647
 c4.tp.200.2147483647	setters	200	2147483647
-c4.tp.200.2147483647	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.200.2147483647	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.200.2147483647	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.200.2147483647	llsd.bin	7b000000026b0000000a73616c655f7072696365697fffffff6b0000000973616c655f7479706573000000036e6f747d
 c4.tp.200.2147483647	llsd.txt	{'sale_price':i2147483647,'sale_type':'not'}
 c4.tp.200.2147483647	llsd.operator.bin	7b000000026b0000000a73616c655f7072696365697fffffff6b0000000973616c655f7479706573000000036e6f747d
@@ -506,7 +521,8 @@ c4.tp.255.-2147483648	raw	255	-2147483648
 c4.tp.255.-2147483648	crc	8029656a	1
 c4.tp.255.-2147483648	ctor	255	0
 c4.tp.255.-2147483648	setters	255	0
-c4.tp.255.-2147483648	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.255.-2147483648	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.255.-2147483648	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.255.-2147483648	llsd.bin	7b000000026b0000000a73616c655f707269636569800000006b0000000973616c655f7479706573000000036e6f747d
 c4.tp.255.-2147483648	llsd.txt	{'sale_price':i-2147483648,'sale_type':'not'}
 c4.tp.255.-2147483648	llsd.operator.bin	7b000000026b0000000a73616c655f707269636569800000006b0000000973616c655f7479706573000000036e6f747d
@@ -519,7 +535,8 @@ c4.tp.255.-1	raw	255	-1
 c4.tp.255.-1	crc	00296569	1
 c4.tp.255.-1	ctor	255	0
 c4.tp.255.-1	setters	255	0
-c4.tp.255.-1	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.255.-1	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.255.-1	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.255.-1	llsd.bin	7b000000026b0000000a73616c655f707269636569ffffffff6b0000000973616c655f7479706573000000036e6f747d
 c4.tp.255.-1	llsd.txt	{'sale_price':i-1,'sale_type':'not'}
 c4.tp.255.-1	llsd.operator.bin	7b000000026b0000000a73616c655f707269636569ffffffff6b0000000973616c655f7479706573000000036e6f747d
@@ -532,7 +549,8 @@ c4.tp.255.0	raw	255	0
 c4.tp.255.0	crc	0029656a	1
 c4.tp.255.0	ctor	255	0
 c4.tp.255.0	setters	255	0
-c4.tp.255.0	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.255.0	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.255.0	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.255.0	llsd.bin	7b000000026b0000000a73616c655f707269636569000000006b0000000973616c655f7479706573000000036e6f747d
 c4.tp.255.0	llsd.txt	{'sale_price':i0,'sale_type':'not'}
 c4.tp.255.0	llsd.operator.bin	7b000000026b0000000a73616c655f707269636569000000006b0000000973616c655f7479706573000000036e6f747d
@@ -545,7 +563,8 @@ c4.tp.255.10	raw	255	10
 c4.tp.255.10	crc	00296574	1
 c4.tp.255.10	ctor	255	10
 c4.tp.255.10	setters	255	10
-c4.tp.255.10	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.255.10	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.255.10	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.255.10	llsd.bin	7b000000026b0000000a73616c655f7072696365690000000a6b0000000973616c655f7479706573000000036e6f747d
 c4.tp.255.10	llsd.txt	{'sale_price':i10,'sale_type':'not'}
 c4.tp.255.10	llsd.operator.bin	7b000000026b0000000a73616c655f7072696365690000000a6b0000000973616c655f7479706573000000036e6f747d
@@ -558,7 +577,8 @@ c4.tp.255.2147483647	raw	255	2147483647
 c4.tp.255.2147483647	crc	80296569	1
 c4.tp.255.2147483647	ctor	255	2147483647
 c4.tp.255.2147483647	setters	255	2147483647
-c4.tp.255.2147483647	legacy	SKIPPED: null sale type name (runtime edge, see README)
+c4.tp.255.2147483647	legacy	\x09sale_info\x090\x0a\x09{\x0a\x09\x09sale_type\x09
+c4.tp.255.2147483647	legacy.outcome	RT(win=crash;linux=fb;required=fb)
 c4.tp.255.2147483647	llsd.bin	7b000000026b0000000a73616c655f7072696365697fffffff6b0000000973616c655f7479706573000000036e6f747d
 c4.tp.255.2147483647	llsd.txt	{'sale_price':i2147483647,'sale_type':'not'}
 c4.tp.255.2147483647	llsd.operator.bin	7b000000026b0000000a73616c655f7072696365697fffffff6b0000000973616c655f7479706573000000036e6f747d
