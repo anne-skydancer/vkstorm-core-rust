@@ -4,7 +4,9 @@
 # platform: windows-msvc
 # trace <udp|cap>/<listeners> [label] : <events>
 #  <event> | st=<S stopped|W wait|P pending|X xfer> ser=<mInventorySerialNum> exp=<mExpectedInventorySerialNum>
-#            xid=<mInvRequestXFerId> dirty=<mInventoryDirty> inv=<entries front..back, or -> | <side effects in order>
+#            xid=<mInvRequestXFerId> dirty=<mInventoryDirty> inv=<entries front..back, or ->
+#            cache=<task inventory files of the trace still in the cache> | <side effects in order>
+# digests of the complete sweeps: digests_set3.txt
 # events: req requestInventory; dirty dirtyInventory; rep.lo|cur|exp|hi ReplyTaskInventory with serial expected-1 |
 #  current | expected | expected+1 and filename inv_s<serial>.tmp; rep.none empty filename; rep=<n>;
 #  xfer.ok|err|nofile complete the oldest live xfer with the standard file | error -1 | no file (xfer.ok.newest: the newest);
@@ -15,748 +17,748 @@
 #  select (selection manager holds owner=other group=othergroup); notowner (permYouOwner false); listen/unlisten;
 #  set.serial=<n>/set.expected=<n> set the fields directly.
 # Standard file/contents: Contents (obj), A copyable notecard (assetA), B no-copy object (assetB).
-# 18018 traces in the order of serial_traces_len1_2.txt; every 97th (0, 97, ...) is kept here; the SHA-256 of all of them, concatenated, is in digests.txt
+# 18018 traces in the order of serial_traces_len1_2.txt; every 97th (0, 97, ...) is kept here; the SHA-256 of all of them, concatenated, and of each block of 97 starting at a sample, is in digests_set3.txt
 trace udp/L0 : req req req
- req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory
- req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | -
- req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | -
+ req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send RequestTaskInventory
+ req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | -
+ req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | -
 trace udp/L0 : req rep.hi upd.guess
- req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory
- rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
- upd.guess | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | msg.send UpdateTaskInventory
+ req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send RequestTaskInventory
+ rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
+ upd.guess | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace udp/L0 : req upd.known xfer.ok
- req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory
- upd.known | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- xfer.ok | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
+ req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send RequestTaskInventory
+ upd.known | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ xfer.ok | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
 trace udp/L0 : dirty req rep.lo
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send RequestTaskInventory
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
 trace udp/L0 : dirty rep.hi remove
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- rep.hi | st=X ser=1 exp=1 xid=1001 dirty=1 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
- remove | st=X ser=1 exp=2 xid=1001 dirty=1 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ rep.hi | st=X ser=1 exp=1 xid=1001 dirty=1 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
+ remove | st=X ser=1 exp=2 xid=1001 dirty=1 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
 trace udp/L0 : dirty upd.known xfer.nofile
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- upd.known | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | msg.send UpdateTaskInventory
- xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | xfer.complete none-live
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | msg.send UpdateTaskInventory
+ xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | xfer.complete none-live
 trace udp/L0 : rep.lo req rep.exp
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- req | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | -
- rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ req | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | -
+ rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
 trace udp/L0 : rep.lo rep.hi create.ok
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
- create.ok | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | create.callback success=0 message="Capability not available"
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
+ create.ok | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | create.callback success=0 message="Capability not available"
 trace udp/L0 : rep.lo upd.known upd.known
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- upd.known | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- upd.known | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ upd.known | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.known | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace udp/L0 : rep.cur req rep.none
- rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- req | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | -
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""
+ rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ req | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | -
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
 trace udp/L0 : rep.cur rep.none dirty
- rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=[obj] | -
+ rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=[obj] cache=[] | -
 trace udp/L0 : rep.cur upd.known upd.new
- rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- upd.known | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | msg.send UpdateTaskInventory
- upd.new | st=X ser=0 exp=1 xid=1001 dirty=0 inv=- | msg.send UpdateTaskInventory
+ rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ upd.known | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.new | st=X ser=0 exp=1 xid=1001 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace udp/L0 : rep.exp req xfer.err
- rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- req | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | -
- xfer.err | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | xfer.complete id=1001 code=-1
+ rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ req | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | -
+ xfer.err | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | xfer.complete id=1001 code=-1
 trace udp/L0 : rep.exp rep.none rep.cur
- rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""
- rep.cur | st=X ser=0 exp=0 xid=1002 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1002 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
+ rep.cur | st=X ser=0 exp=0 xid=1002 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1002 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
 trace udp/L0 : rep.exp upd.known move.nocopy
- rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- upd.known | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | msg.send UpdateTaskInventory
- move.nocopy | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | msg.send MoveTaskInventory
+ rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ upd.known | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ move.nocopy | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
 trace udp/L0 : rep.hi req timer
- rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
- req | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | -
- timer | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | timer.fire none-pending
+ rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
+ req | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | -
+ timer | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | timer.fire none-pending
 trace udp/L0 : rep.hi rep.none rep.hi
- rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
- rep.none | st=S ser=1 exp=1 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=1 filename=""
- rep.hi | st=X ser=2 exp=2 xid=1002 dirty=0 inv=[obj] | in ReplyTaskInventory serial=2 filename="inv_s2.tmp"; xfer.request id=1002 local=<cache>/inv_s2.tmp remote=inv_s2.tmp path=4 delete=1 priority=1 big=0
+ rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
+ rep.none | st=S ser=1 exp=1 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=1 filename=""
+ rep.hi | st=X ser=2 exp=2 xid=1002 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=2 filename="inv_s2.tmp"; xfer.request id=1002 local=<cache>/inv_s2.tmp remote=inv_s2.tmp path=4 delete=1 priority=1 big=0
 trace udp/L0 : rep.hi upd.guess req
- rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
- upd.guess | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | msg.send UpdateTaskInventory
- req | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | -
+ rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
+ upd.guess | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ req | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | -
 trace udp/L0 : rep.none req upd.guess
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""
- req | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | -
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,obj] | msg.send UpdateTaskInventory
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
+ req | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | -
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,obj] cache=[] | msg.send UpdateTaskInventory
 trace udp/L0 : rep.none rep.none xfer.ok
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""
- xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | xfer.complete none-live
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | xfer.complete none-live
 trace udp/L0 : rep.none upd.guess rep.lo
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,obj] | msg.send UpdateTaskInventory
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=[C,obj] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,obj] cache=[] | msg.send UpdateTaskInventory
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=[C,obj] cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
 trace udp/L0 : xfer.ok req remove
- xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory
- remove | st=P ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send RequestTaskInventory
+ remove | st=P ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
 trace udp/L0 : xfer.ok rep.none xfer.nofile
- xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""
- xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | xfer.complete none-live
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
+ xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | xfer.complete none-live
 trace udp/L0 : xfer.ok upd.guess rep.exp
- xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
 trace udp/L0 : xfer.err req create.ok
- xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory
- create.ok | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | create.callback success=0 message="Capability not available"
+ xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send RequestTaskInventory
+ create.ok | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | create.callback success=0 message="Capability not available"
 trace udp/L0 : xfer.err rep.none upd.known
- xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=[A,obj] | msg.send UpdateTaskInventory
+ xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=[A,obj] cache=[] | msg.send UpdateTaskInventory
 trace udp/L0 : xfer.err upd.guess rep.none
- xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""
+ xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
 trace udp/L0 : xfer.nofile dirty dirty
- xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
+ xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
 trace udp/L0 : xfer.nofile rep.none upd.new
- xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=[obj] | msg.send UpdateTaskInventory
+ xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=[obj] cache=[] | msg.send UpdateTaskInventory
 trace udp/L0 : xfer.nofile upd.guess xfer.err
- xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
+ xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
 trace udp/L0 : timer dirty rep.cur
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- rep.cur | st=X ser=0 exp=0 xid=1001 dirty=1 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ rep.cur | st=X ser=0 exp=0 xid=1001 dirty=1 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
 trace udp/L0 : timer rep.none move.nocopy
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | msg.send MoveTaskInventory
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | msg.send MoveTaskInventory
 trace udp/L0 : timer upd.guess timer
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
 trace udp/L0 : upd.known dirty rep.hi
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- rep.hi | st=X ser=1 exp=1 xid=1001 dirty=1 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ rep.hi | st=X ser=1 exp=1 xid=1001 dirty=1 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
 trace udp/L0 : upd.known xfer.ok req
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send RequestTaskInventory
 trace udp/L0 : upd.known upd.guess upd.guess
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace udp/L0 : upd.guess dirty xfer.ok
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- xfer.ok | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | xfer.complete none-live
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | xfer.complete none-live
 trace udp/L0 : upd.guess xfer.ok rep.lo
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
 trace udp/L0 : upd.guess upd.guess remove
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
 trace udp/L0 : upd.new dirty xfer.nofile
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- dirty | st=S ser=0 exp=1 xid=0 dirty=1 inv=- | -
- xfer.nofile | st=S ser=0 exp=1 xid=0 dirty=1 inv=- | xfer.complete none-live
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ dirty | st=S ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | -
+ xfer.nofile | st=S ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | xfer.complete none-live
 trace udp/L0 : upd.new xfer.ok rep.exp
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- xfer.ok | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | xfer.complete none-live
- rep.exp | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ xfer.ok | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ rep.exp | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
 trace udp/L0 : upd.new upd.guess create.ok
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- upd.guess | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- create.ok | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | create.callback success=0 message="Capability not available"
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.guess | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ create.ok | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | create.callback success=0 message="Capability not available"
 trace udp/L0 : remove dirty upd.known
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- dirty | st=S ser=0 exp=1 xid=0 dirty=1 inv=- | -
- upd.known | st=S ser=0 exp=1 xid=0 dirty=1 inv=- | msg.send UpdateTaskInventory
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ dirty | st=S ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | -
+ upd.known | st=S ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | msg.send UpdateTaskInventory
 trace udp/L0 : remove xfer.ok rep.none
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- xfer.ok | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | xfer.complete none-live
- rep.none | st=S ser=1 exp=1 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=1 filename=""
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ xfer.ok | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ rep.none | st=S ser=1 exp=1 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=1 filename=""
 trace udp/L0 : remove upd.new dirty
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- upd.new | st=S ser=0 exp=2 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- dirty | st=S ser=0 exp=2 xid=0 dirty=1 inv=- | -
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ upd.new | st=S ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ dirty | st=S ser=0 exp=2 xid=0 dirty=1 inv=- cache=[] | -
 trace udp/L0 : move.nocopy dirty upd.new
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- upd.new | st=S ser=0 exp=1 xid=0 dirty=1 inv=- | msg.send UpdateTaskInventory
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | msg.send UpdateTaskInventory
 trace udp/L0 : move.nocopy xfer.ok xfer.err
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
 trace udp/L0 : move.nocopy upd.new rep.cur
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- rep.cur | st=W ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 5
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ rep.cur | st=W ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 5
 trace udp/L0 : create.ok dirty move.nocopy
- create.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | create.callback success=0 message="Capability not available"
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | msg.send MoveTaskInventory
+ create.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | create.callback success=0 message="Capability not available"
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | msg.send MoveTaskInventory
 trace udp/L0 : create.ok xfer.ok timer
- create.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | create.callback success=0 message="Capability not available"
- xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
+ create.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | create.callback success=0 message="Capability not available"
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
 trace udp/L0 : create.ok upd.new rep.hi
- create.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | create.callback success=0 message="Capability not available"
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- rep.hi | st=X ser=2 exp=2 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=2 filename="inv_s2.tmp"; xfer.request id=1001 local=<cache>/inv_s2.tmp remote=inv_s2.tmp path=4 delete=1 priority=1 big=0
+ create.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | create.callback success=0 message="Capability not available"
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ rep.hi | st=X ser=2 exp=2 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=2 filename="inv_s2.tmp"; xfer.request id=1001 local=<cache>/inv_s2.tmp remote=inv_s2.tmp path=4 delete=1 priority=1 big=0
 trace udp/L1 : req rep.lo req
- req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- req | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | -
+ req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send RequestTaskInventory
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ req | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | -
 trace udp/L1 : req xfer.ok upd.guess
- req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory
- xfer.ok | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- upd.guess | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send RequestTaskInventory
+ xfer.ok | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ upd.guess | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace udp/L1 : req upd.new xfer.ok
- req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory
- upd.new | st=P ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- xfer.ok | st=P ser=0 exp=1 xid=0 dirty=0 inv=- | xfer.complete none-live
+ req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send RequestTaskInventory
+ upd.new | st=P ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ xfer.ok | st=P ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
 trace udp/L1 : dirty rep.lo rep.lo
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=1 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- rep.lo | st=W ser=-1 exp=-1 xid=0 dirty=1 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=1 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ rep.lo | st=W ser=-1 exp=-1 xid=0 dirty=1 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
 trace udp/L1 : dirty xfer.ok remove
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- xfer.ok | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | xfer.complete none-live
- remove | st=S ser=0 exp=1 xid=0 dirty=1 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | xfer.complete none-live
+ remove | st=S ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
 trace udp/L1 : dirty upd.new xfer.nofile
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- upd.new | st=S ser=0 exp=1 xid=0 dirty=1 inv=- | msg.send UpdateTaskInventory
- xfer.nofile | st=S ser=0 exp=1 xid=0 dirty=1 inv=- | xfer.complete none-live
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | msg.send UpdateTaskInventory
+ xfer.nofile | st=S ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | xfer.complete none-live
 trace udp/L1 : rep.lo rep.lo rep.exp
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- rep.lo | st=W ser=-1 exp=-1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
- rep.exp | st=X ser=-1 exp=-1 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; xfer.request id=1001 local=<cache>/inv_s-1.tmp remote=inv_s-1.tmp path=4 delete=1 priority=1 big=0
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ rep.lo | st=W ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
+ rep.exp | st=X ser=-1 exp=-1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; xfer.request id=1001 local=<cache>/inv_s-1.tmp remote=inv_s-1.tmp path=4 delete=1 priority=1 big=0
 trace udp/L1 : rep.lo xfer.ok create.ok
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- xfer.ok | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- create.ok | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | create.callback success=0 message="Capability not available"
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ xfer.ok | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ create.ok | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | create.callback success=0 message="Capability not available"
 trace udp/L1 : rep.lo upd.new upd.known
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- upd.new | st=W ser=-1 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- upd.known | st=W ser=-1 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ upd.new | st=W ser=-1 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.known | st=W ser=-1 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace udp/L1 : rep.cur rep.lo rep.none
- rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; xfer.abort id=1001 code=-1; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
+ rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; xfer.abort id=1001 code=-1; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
 trace udp/L1 : rep.cur xfer.err dirty
- rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- xfer.err | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | xfer.complete id=1001 code=-1
- dirty | st=X ser=0 exp=0 xid=1001 dirty=1 inv=- | -
+ rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ xfer.err | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | xfer.complete id=1001 code=-1
+ dirty | st=X ser=0 exp=0 xid=1001 dirty=1 inv=- cache=[] | -
 trace udp/L1 : rep.cur upd.new upd.new
- rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- upd.new | st=X ser=0 exp=1 xid=1001 dirty=0 inv=- | msg.send UpdateTaskInventory
- upd.new | st=X ser=0 exp=2 xid=1001 dirty=0 inv=- | msg.send UpdateTaskInventory
+ rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ upd.new | st=X ser=0 exp=1 xid=1001 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.new | st=X ser=0 exp=2 xid=1001 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace udp/L1 : rep.exp rep.lo xfer.err
- rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; xfer.abort id=1001 code=-1; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- xfer.err | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
+ rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; xfer.abort id=1001 code=-1; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ xfer.err | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
 trace udp/L1 : rep.exp xfer.err rep.cur
- rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- xfer.err | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | xfer.complete id=1001 code=-1
- rep.cur | st=X ser=0 exp=0 xid=1002 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1002 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0; xfer.abort id=1001 code=-1
+ rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ xfer.err | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | xfer.complete id=1001 code=-1
+ rep.cur | st=X ser=0 exp=0 xid=1002 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1002 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0; xfer.abort id=1001 code=-1
 trace udp/L1 : rep.exp upd.new move.nocopy
- rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- upd.new | st=X ser=0 exp=1 xid=1001 dirty=0 inv=- | msg.send UpdateTaskInventory
- move.nocopy | st=X ser=0 exp=1 xid=1001 dirty=0 inv=- | msg.send MoveTaskInventory
+ rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ upd.new | st=X ser=0 exp=1 xid=1001 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ move.nocopy | st=X ser=0 exp=1 xid=1001 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
 trace udp/L1 : rep.hi rep.lo timer
- rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
- rep.lo | st=W ser=0 exp=1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.abort id=1001 code=-1; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- timer | st=P ser=0 exp=1 xid=0 dirty=0 inv=- | timer.fire 1; msg.send RequestTaskInventory
+ rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
+ rep.lo | st=W ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.abort id=1001 code=-1; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ timer | st=P ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | timer.fire 1; msg.send RequestTaskInventory
 trace udp/L1 : rep.hi xfer.err rep.hi
- rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
- xfer.err | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | xfer.complete id=1001 code=-1
- rep.hi | st=X ser=2 exp=2 xid=1002 dirty=0 inv=- | in ReplyTaskInventory serial=2 filename="inv_s2.tmp"; xfer.request id=1002 local=<cache>/inv_s2.tmp remote=inv_s2.tmp path=4 delete=1 priority=1 big=0; xfer.abort id=1001 code=-1
+ rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
+ xfer.err | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | xfer.complete id=1001 code=-1
+ rep.hi | st=X ser=2 exp=2 xid=1002 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=2 filename="inv_s2.tmp"; xfer.request id=1002 local=<cache>/inv_s2.tmp remote=inv_s2.tmp path=4 delete=1 priority=1 big=0; xfer.abort id=1001 code=-1
 trace udp/L1 : rep.hi remove req
- rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
- remove | st=X ser=1 exp=2 xid=1001 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- req | st=X ser=1 exp=2 xid=1001 dirty=0 inv=- | -
+ rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
+ remove | st=X ser=1 exp=2 xid=1001 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ req | st=X ser=1 exp=2 xid=1001 dirty=0 inv=- cache=[] | -
 trace udp/L1 : rep.none rep.lo upd.guess
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- upd.guess | st=S ser=-1 exp=0 xid=0 dirty=0 inv=[C,obj] | msg.send UpdateTaskInventory; callback L1 ser=-1 inv=[obj]; callback L1 ser=-1 inv=[C,obj]
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ upd.guess | st=S ser=-1 exp=0 xid=0 dirty=0 inv=[C,obj] cache=[] | msg.send UpdateTaskInventory; callback L1 ser=-1 inv=[obj]; callback L1 ser=-1 inv=[C,obj]
 trace udp/L1 : rep.none xfer.err xfer.ok
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
- xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | xfer.complete none-live
- xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | xfer.complete none-live
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
+ xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | xfer.complete none-live
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | xfer.complete none-live
 trace udp/L1 : rep.none remove rep.lo
- rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=[obj] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory; callback L1 ser=0 inv=[obj]
- rep.lo | st=W ser=0 exp=0 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 5
+ rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=[obj] cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory; callback L1 ser=0 inv=[obj]
+ rep.lo | st=W ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 5
 trace udp/L1 : xfer.ok rep.lo remove
- xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- remove | st=W ser=-1 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ remove | st=W ser=-1 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
 trace udp/L1 : xfer.ok xfer.err xfer.nofile
- xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
 trace udp/L1 : xfer.ok remove rep.exp
- xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- rep.exp | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ rep.exp | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
 trace udp/L1 : xfer.err rep.lo create.ok
- xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- create.ok | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | create.callback success=0 message="Capability not available"
+ xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ create.ok | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | create.callback success=0 message="Capability not available"
 trace udp/L1 : xfer.err xfer.err upd.known
- xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace udp/L1 : xfer.err remove rep.none
- xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- rep.none | st=S ser=1 exp=1 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=1 filename=""; callback L1 ser=1 inv=[obj]
+ xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ rep.none | st=S ser=1 exp=1 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=1 filename=""; callback L1 ser=1 inv=[obj]
 trace udp/L1 : xfer.nofile rep.cur dirty
- xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- dirty | st=X ser=0 exp=0 xid=1001 dirty=1 inv=- | -
+ xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ dirty | st=X ser=0 exp=0 xid=1001 dirty=1 inv=- cache=[] | -
 trace udp/L1 : xfer.nofile xfer.err upd.new
- xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace udp/L1 : xfer.nofile remove xfer.err
- xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- xfer.err | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | xfer.complete none-live
+ xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ xfer.err | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
 trace udp/L1 : timer rep.cur rep.cur
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
- rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- rep.cur | st=X ser=0 exp=0 xid=1002 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1002 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0; xfer.abort id=1001 code=-1
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ rep.cur | st=X ser=0 exp=0 xid=1002 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1002 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0; xfer.abort id=1001 code=-1
 trace udp/L1 : timer xfer.err move.nocopy
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
- xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
 trace udp/L1 : timer remove timer
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- timer | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | timer.fire none-pending
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ timer | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
 trace udp/L1 : upd.known rep.cur rep.hi
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- rep.hi | st=X ser=1 exp=1 xid=1002 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1002 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0; xfer.abort id=1001 code=-1
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ rep.hi | st=X ser=1 exp=1 xid=1002 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1002 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0; xfer.abort id=1001 code=-1
 trace udp/L1 : upd.known xfer.nofile req
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send RequestTaskInventory
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send RequestTaskInventory
 trace udp/L1 : upd.known remove upd.guess
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- upd.guess | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ upd.guess | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace udp/L1 : upd.guess rep.cur xfer.ok
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | xfer.complete id=1001 code=0; callback L1 ser=0 inv=[B,A,obj]
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ xfer.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | xfer.complete id=1001 code=0; callback L1 ser=0 inv=[B,A,obj]
 trace udp/L1 : upd.guess xfer.nofile rep.lo
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
 trace udp/L1 : upd.guess remove remove
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- remove | st=S ser=0 exp=2 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ remove | st=S ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
 trace udp/L1 : upd.new rep.cur xfer.nofile
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- rep.cur | st=W ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 5
- xfer.nofile | st=W ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ rep.cur | st=W ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 5
+ xfer.nofile | st=W ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
 trace udp/L1 : upd.new xfer.nofile rep.exp
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- xfer.nofile | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | xfer.complete none-live
- rep.exp | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ xfer.nofile | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ rep.exp | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
 trace udp/L1 : upd.new remove create.ok
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- remove | st=S ser=0 exp=2 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- create.ok | st=S ser=0 exp=2 xid=0 dirty=0 inv=- | create.callback success=0 message="Capability not available"
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ remove | st=S ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ create.ok | st=S ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | create.callback success=0 message="Capability not available"
 trace udp/L1 : remove rep.cur upd.known
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- rep.cur | st=W ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 5
- upd.known | st=W ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ rep.cur | st=W ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 5
+ upd.known | st=W ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace udp/L1 : remove xfer.nofile rep.none
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- xfer.nofile | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | xfer.complete none-live
- rep.none | st=S ser=1 exp=1 xid=0 dirty=0 inv=[obj] | in ReplyTaskInventory serial=1 filename=""; callback L1 ser=1 inv=[obj]
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ xfer.nofile | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ rep.none | st=S ser=1 exp=1 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=1 filename=""; callback L1 ser=1 inv=[obj]
 trace udp/L1 : remove move.nocopy dirty
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- move.nocopy | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- dirty | st=S ser=0 exp=1 xid=0 dirty=1 inv=- | -
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ move.nocopy | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ dirty | st=S ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | -
 trace udp/L1 : move.nocopy rep.cur upd.new
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- upd.new | st=X ser=0 exp=1 xid=1001 dirty=0 inv=- | msg.send UpdateTaskInventory
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ upd.new | st=X ser=0 exp=1 xid=1001 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace udp/L1 : move.nocopy xfer.nofile xfer.err
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ xfer.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
 trace udp/L1 : move.nocopy move.nocopy rep.cur
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
 trace udp/L1 : create.ok rep.cur move.nocopy
- create.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | create.callback success=0 message="Capability not available"
- rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- move.nocopy | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- | msg.send MoveTaskInventory
+ create.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | create.callback success=0 message="Capability not available"
+ rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
+ move.nocopy | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
 trace udp/L1 : create.ok xfer.nofile timer
- create.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | create.callback success=0 message="Capability not available"
- xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.complete none-live
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
+ create.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | create.callback success=0 message="Capability not available"
+ xfer.nofile | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | xfer.complete none-live
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
 trace udp/L1 : create.ok move.nocopy rep.hi
- create.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | create.callback success=0 message="Capability not available"
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
+ create.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | create.callback success=0 message="Capability not available"
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
 trace cap/L0 : req cap.ok cap.ok
- req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | http.complete GET Http_200
- cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | http.complete none-pending GET
+ req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete GET Http_200
+ cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete none-pending GET
 trace cap/L0 : req upd.known cap.stale
- req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- upd.known | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- cap.stale | st=W ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] | http.complete GET Http_200; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ upd.known | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.stale | st=W ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete GET Http_200; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
 trace cap/L0 : dirty req cap.304
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete GET Http_304
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_304
 trace cap/L0 : dirty cap.304 cap.err
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- cap.304 | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | http.complete none-pending GET
- cap.err | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | http.complete none-pending GET
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ cap.304 | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | http.complete none-pending GET
+ cap.err | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : dirty upd.new cap.nocontents
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- upd.new | st=S ser=0 exp=1 xid=0 dirty=1 inv=- | msg.send UpdateTaskInventory
- cap.nocontents | st=S ser=0 exp=1 xid=0 dirty=1 inv=- | http.complete none-pending GET
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.nocontents | st=S ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : rep.lo rep.lo timer
- rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- rep.lo | st=X ser=0 exp=-2 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-2 filename="inv_s-2.tmp"
- timer | st=X ser=0 exp=-2 xid=0 dirty=0 inv=- | timer.fire none-pending
+ rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ rep.lo | st=X ser=0 exp=-2 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-2 filename="inv_s-2.tmp"
+ timer | st=X ser=0 exp=-2 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
 trace cap/L0 : rep.lo cap.nocontents upd.known
- rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- | http.complete GET Http_200
- upd.known | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ upd.known | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L0 : rep.lo move.nocopy upd.guess
- rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- move.nocopy | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- upd.guess | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ move.nocopy | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ upd.guess | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L0 : rep.exp cap.ok upd.new
- rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | http.complete GET Http_200
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,A,obj] | msg.send UpdateTaskInventory
+ rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete GET Http_200
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | msg.send UpdateTaskInventory
 trace cap/L0 : rep.exp upd.known remove
- rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- upd.known | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- remove | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ upd.known | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ remove | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
 trace cap/L0 : cap.ok req move.nocopy
- cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- move.nocopy | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
+ cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ move.nocopy | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
 trace cap/L0 : cap.ok cap.304 create.ok
- cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
+ cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
 trace cap/L0 : cap.ok remove req
- cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- req | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ req | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L0 : cap.stale rep.exp dirty
- cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- dirty | st=X ser=0 exp=0 xid=0 dirty=1 inv=- | -
+ cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ dirty | st=X ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
 trace cap/L0 : cap.stale timer rep.lo
- cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
- rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L0 : cap.stale create.ok rep.exp
- cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- rep.exp | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"
+ cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
+ rep.exp | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"
 trace cap/L0 : cap.304 cap.stale cap.ok
- cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
+ cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : cap.304 upd.guess cap.stale
- cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
+ cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : cap.err dirty cap.304
- cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- cap.304 | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | http.complete none-pending GET
+ cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ cap.304 | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : cap.err cap.err cap.err
- cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
+ cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : cap.err remove cap.nocontents
- cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- cap.nocontents | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | http.complete none-pending GET
+ cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ cap.nocontents | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : cap.nocontents rep.exp timer
- cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- timer | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ timer | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
 trace cap/L0 : cap.nocontents timer upd.known
- cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L0 : cap.nocontents create.ok upd.guess
- cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- upd.guess | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
+ upd.guess | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L0 : timer cap.stale upd.new
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
- cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L0 : timer upd.guess remove
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
 trace cap/L0 : upd.known dirty move.nocopy
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | msg.send MoveTaskInventory
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | msg.send MoveTaskInventory
 trace cap/L0 : upd.known cap.err create.ok
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
 trace cap/L0 : upd.known move.nocopy req
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L0 : upd.guess cap.ok dirty
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
 trace cap/L0 : upd.guess upd.known rep.lo
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L0 : upd.new req rep.exp
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- req | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- rep.exp | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ req | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ rep.exp | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"
 trace cap/L0 : upd.new cap.304 cap.ok
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- cap.304 | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | http.complete none-pending GET
- cap.ok | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | http.complete none-pending GET
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.304 | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.ok | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : upd.new upd.new cap.stale
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- upd.new | st=S ser=0 exp=2 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- cap.stale | st=S ser=0 exp=2 xid=0 dirty=0 inv=- | http.complete none-pending GET
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.new | st=S ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.stale | st=S ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : remove rep.lo cap.304
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- rep.lo | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete GET Http_304
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ rep.lo | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_304
 trace cap/L0 : remove cap.nocontents cap.err
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- cap.nocontents | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | http.complete none-pending GET
- cap.err | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | http.complete none-pending GET
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ cap.nocontents | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.err | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : remove move.nocopy cap.nocontents
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- move.nocopy | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- cap.nocontents | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | http.complete none-pending GET
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ move.nocopy | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ cap.nocontents | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : move.nocopy cap.ok timer
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
 trace cap/L0 : move.nocopy upd.known upd.known
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L0 : create.ok req upd.guess
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- req | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | -
- upd.guess | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
+ req | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | -
+ upd.guess | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L0 : create.ok cap.304 upd.new
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- cap.304 | st=W ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete GET Http_304; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- upd.new | st=W ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
+ cap.304 | st=W ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_304; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ upd.new | st=W ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L0 : create.ok upd.new remove
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- upd.new | st=X ser=0 exp=2 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- remove | st=X ser=0 exp=3 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
+ upd.new | st=X ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ remove | st=X ser=0 exp=3 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
 trace cap/L1 : req rep.lo move.nocopy
- req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
- move.nocopy | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
+ req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
+ move.nocopy | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
 trace cap/L1 : req cap.nocontents create.ok
- req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete GET Http_200
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
+ req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
 trace cap/L1 : req create.ok req
- req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
- req | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | -
+ req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
+ req | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | -
 trace cap/L1 : dirty cap.stale dirty
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- cap.stale | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | http.complete none-pending GET
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ cap.stale | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | http.complete none-pending GET
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
 trace cap/L1 : dirty upd.guess rep.lo
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | msg.send UpdateTaskInventory
- rep.lo | st=X ser=0 exp=-1 xid=0 dirty=1 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | msg.send UpdateTaskInventory
+ rep.lo | st=X ser=0 exp=-1 xid=0 dirty=1 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L1 : rep.lo dirty rep.exp
- rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- dirty | st=X ser=0 exp=-1 xid=0 dirty=1 inv=- | -
- rep.exp | st=X ser=0 exp=-1 xid=0 dirty=1 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
+ rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ dirty | st=X ser=0 exp=-1 xid=0 dirty=1 inv=- cache=[] | -
+ rep.exp | st=X ser=0 exp=-1 xid=0 dirty=1 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
 trace cap/L1 : rep.lo cap.err cap.ok
- rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.err | st=S ser=0 exp=-1 xid=0 dirty=0 inv=- | http.complete GET Http_500
- cap.ok | st=S ser=0 exp=-1 xid=0 dirty=0 inv=- | http.complete none-pending GET
+ rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ cap.err | st=S ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_500
+ cap.ok | st=S ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L1 : rep.lo remove cap.stale
- rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- remove | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- cap.stale | st=W ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] | http.complete GET Http_200; callback L1 ser=-1 inv=[B,A,obj]; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ remove | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ cap.stale | st=W ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete GET Http_200; callback L1 ser=-1 inv=[B,A,obj]; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
 trace cap/L1 : rep.exp rep.exp cap.304
- rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
- cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete GET Http_304
+ rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
+ cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_304
 trace cap/L1 : rep.exp timer cap.err
- rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- timer | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
- cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete GET Http_500
+ rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ timer | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_500
 trace cap/L1 : rep.exp create.ok cap.nocontents
- rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- | http.complete GET Http_200
+ rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
+ cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : cap.ok cap.stale timer
- cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
+ cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
 trace cap/L1 : cap.ok upd.guess upd.known
- cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L1 : cap.stale dirty upd.guess
- cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | msg.send UpdateTaskInventory
+ cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L1 : cap.stale cap.err upd.new
- cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L1 : cap.stale remove remove
- cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- remove | st=S ser=0 exp=2 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ remove | st=S ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
 trace cap/L1 : cap.304 rep.exp move.nocopy
- cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- move.nocopy | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
+ cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ move.nocopy | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
 trace cap/L1 : cap.304 timer create.ok
- cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
+ cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
 trace cap/L1 : cap.err req req
- cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | -
+ cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | -
 trace cap/L1 : cap.err cap.304 dirty
- cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- | -
+ cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
 trace cap/L1 : cap.err upd.new rep.lo
- cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- rep.lo | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ rep.lo | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L1 : cap.nocontents rep.lo rep.exp
- cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- rep.exp | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ rep.exp | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
 trace cap/L1 : cap.nocontents cap.nocontents cap.ok
- cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L1 : cap.nocontents move.nocopy cap.stale
- cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L1 : timer cap.ok cap.304
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
- cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L1 : timer upd.known cap.err
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L1 : upd.known req cap.nocontents
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete GET Http_200
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : upd.known cap.304 timer
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
 trace cap/L1 : upd.known upd.new upd.known
- upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- upd.known | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.known | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L1 : upd.guess rep.lo upd.guess
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- upd.guess | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ upd.guess | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L1 : upd.guess cap.nocontents upd.new
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L1 : upd.guess move.nocopy remove
- upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
 trace cap/L1 : upd.new cap.ok move.nocopy
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- cap.ok | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | http.complete none-pending GET
- move.nocopy | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.ok | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ move.nocopy | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
 trace cap/L1 : upd.new upd.known create.ok
- upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- upd.known | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- create.ok | st=X ser=0 exp=2 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.known | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ create.ok | st=X ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
 trace cap/L1 : remove dirty req
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- dirty | st=S ser=0 exp=1 xid=0 dirty=1 inv=- | -
- req | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ dirty | st=S ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | -
+ req | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L1 : remove cap.err dirty
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- cap.err | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | http.complete none-pending GET
- dirty | st=S ser=0 exp=1 xid=0 dirty=1 inv=- | -
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ cap.err | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ dirty | st=S ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | -
 trace cap/L1 : remove remove rep.lo
- remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- remove | st=S ser=0 exp=2 xid=0 dirty=0 inv=- | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- rep.lo | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ remove | st=S ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ rep.lo | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L1 : move.nocopy rep.exp rep.exp
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
 trace cap/L1 : move.nocopy timer cap.ok
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | timer.fire none-pending
- cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete none-pending GET
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L1 : move.nocopy create.ok cap.stale
- move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- | msg.send MoveTaskInventory
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- cap.stale | st=W ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | http.complete GET Http_200; callback L1 ser=0 inv=[B,A,obj]; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
+ cap.stale | st=W ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete GET Http_200; callback L1 ser=0 inv=[B,A,obj]; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
 trace cap/L1 : create.ok cap.stale cap.304
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- cap.stale | st=W ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | http.complete GET Http_200; callback L1 ser=0 inv=[B,A,obj]; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- cap.304 | st=W ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | http.complete none-pending GET
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
+ cap.stale | st=W ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete GET Http_200; callback L1 ser=0 inv=[B,A,obj]; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
+ cap.304 | st=W ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete none-pending GET
 trace cap/L1 : create.ok upd.guess cap.err
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- upd.guess | st=X ser=0 exp=1 xid=0 dirty=0 inv=- | msg.send UpdateTaskInventory
- cap.err | st=S ser=0 exp=1 xid=0 dirty=0 inv=- | http.complete GET Http_500
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
+ upd.guess | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.err | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_500

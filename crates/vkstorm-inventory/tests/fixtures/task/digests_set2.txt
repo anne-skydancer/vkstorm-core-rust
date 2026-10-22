@@ -2,5 +2,27 @@
 # generator: INTEGRATION_TEST_llinventory_task_oracle (indra/newview/tests/llinventory_task_oracle_test.cpp), VKS_TASK_DUMP
 # viewer: 472ecf270d (codex/rust-inventory); frozen copies of llviewerobject.cpp blob c9ac3bdc20301e3e43da73183f18595712912e79 and llviewerinventory.cpp blob a13210dce6ed2561e2b18768645bcfa37068612c
 # platform: windows-msvc
-# <name> <count> <sha256>
-cap_replies_random 2000 ca0679b64614ee98659b9bc4ec35c39be986f6d09c1cb5eb3ae9b49f295e5326
+# <name> <count> <sha256 of all units>, then <name> chunk <k> units <first>-<last> <sha256 of those units>
+# (blocks of 97 units; block k starts with the k-th sample of the sample file)
+cap_replies_random 2000 8ca6dac876707e7998277d19c91608621fc60efb327a736c0b28e245cfee3b76
+cap_replies_random chunk 0 units 0-96 3c66545ebf6f1bb1d46a0bd3504f1d3dcfb1187007482503d2ef95bdf8028b1b
+cap_replies_random chunk 1 units 97-193 1f849c3e0bedcc1ea31adbcecb0bbf9b630bac9cfd0bffd38a74ac27358ce41c
+cap_replies_random chunk 2 units 194-290 b5b9f33d3cdec60139f43dbf6d43cd573df4afc39a72dbb18bee7b0ee08ab65b
+cap_replies_random chunk 3 units 291-387 afc7adbd7fa447dd52d478896d25cbce3b9a5928edefa6e872afdf334ac06177
+cap_replies_random chunk 4 units 388-484 fa8cfe56ce953541bd9b1c9536a49673f9c180de7ed13206744d0d0048026b81
+cap_replies_random chunk 5 units 485-581 862d20b7b596dc595aa56aa0911a1201a379207bdd7e8db2c9f3f28b32c3571a
+cap_replies_random chunk 6 units 582-678 da0cc0df886266aa358ce46cdbda53afbd9671eb9f3c894f34132b3c945d639e
+cap_replies_random chunk 7 units 679-775 8e10996974e8f545705410b5dd49dbfead74ad3ba952d72f44b5291f063a3dd0
+cap_replies_random chunk 8 units 776-872 503e5cae8872670984d3c6c228fdc3c53fa0579a5ea4fc113780e1ac8655250e
+cap_replies_random chunk 9 units 873-969 ec1598cd28de4508d755afd8f8c8bf10bdf6c4f71ab2b2c6d2e18eab42b9d235
+cap_replies_random chunk 10 units 970-1066 ce489a1bb29707759c3e7f10bb303a2e2ddce7302239cd4aadc0a5e99f2a0173
+cap_replies_random chunk 11 units 1067-1163 b42ece795f0881efbb9c6863298e3a8cb91bb2a1e0e46e160058325436a2ee8b
+cap_replies_random chunk 12 units 1164-1260 9e5d037601e3cc7bc79d98174c6bca9c3406deb7544000b2065865788c1dbc10
+cap_replies_random chunk 13 units 1261-1357 305943d1cf3752567538a471941157dd43c70f1c2468e59b0e0136d41cbd0366
+cap_replies_random chunk 14 units 1358-1454 b495cc259a66edd70ea6f432a0c6be9dd31d6f67c9c6f2f295856b444d9a2469
+cap_replies_random chunk 15 units 1455-1551 0ed3c2e666017b0f8530b6914f585041eb7cb7b49a8d54419d3b58d9ef5439ca
+cap_replies_random chunk 16 units 1552-1648 d8b2139452ca51c5e53b885e713b5de92e60f2b5dfef9a4056e5ecfd41d2007d
+cap_replies_random chunk 17 units 1649-1745 7f5e0b446afb388eda0150ea745cc4df4527a4f1d2e764ac3cbff5f8b04e320d
+cap_replies_random chunk 18 units 1746-1842 25b73ce07a580105b034b05e9030863d6bb35db0da457ce4cd4711965cac5224
+cap_replies_random chunk 19 units 1843-1939 4ea232fdd55537b24efe2c17ee9f6c9eebdb60df5df2b0c3860361f76bb6af77
+cap_replies_random chunk 20 units 1940-1999 256bad8d34bd2e69fe2f84c32f0ee1437748d2d627a094e6a20c857fe21c05e9

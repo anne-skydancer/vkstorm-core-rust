@@ -9,22 +9,27 @@ scrub raw="" rawlen=0 received="" scrubbed="" len=0
  outcome returned planted=0 remaining=0 st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] | callback L1 ser=0 inv=[obj]
  inventory 1 entries root obj
   [0] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
+ helpers root=obj contents=[] count{8:1} byasset{} bytype{}
   packets 0
 scrub raw="a" rawlen=1 received="a" scrubbed="a" len=1
  outcome threw std::out_of_range planted=1 remaining=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/a remote=a path=4 delete=1 priority=1 big=0
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 0
 scrub raw="ab" rawlen=2 received="ab" scrubbed="ab" len=2
  outcome threw std::out_of_range planted=1 remaining=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/ab remote=ab path=4 delete=1 priority=1 big=0
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 0
 scrub raw="abc" rawlen=3 received="abc" scrubbed="abc" len=3
  outcome threw std::out_of_range planted=1 remaining=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/abc remote=abc path=4 delete=1 priority=1 big=0
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 0
 scrub raw="abcd" rawlen=4 received="abcd" scrubbed="abcd" len=4
  outcome returned planted=1 remaining=1 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/abcd remote=abcd path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -40,6 +45,7 @@ scrub raw="abcd" rawlen=4 received="abcd" scrubbed="abcd" len=4
 scrub raw=".tmp" rawlen=4 received=".tmp" scrubbed=".tmp" len=4
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/.tmp remote=.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -55,6 +61,7 @@ scrub raw=".tmp" rawlen=4 received=".tmp" scrubbed=".tmp" len=4
 scrub raw="x.tm" rawlen=4 received="x.tm" scrubbed="x.tm" len=4
  outcome returned planted=1 remaining=1 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/x.tm remote=x.tm path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -70,6 +77,7 @@ scrub raw="x.tm" rawlen=4 received="x.tm" scrubbed="x.tm" len=4
 scrub raw="a.tmp" rawlen=5 received="a.tmp" scrubbed="a.tmp" len=5
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/a.tmp remote=a.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -85,18 +93,22 @@ scrub raw="a.tmp" rawlen=5 received="a.tmp" scrubbed="a.tmp" len=5
 scrub raw="." rawlen=1 received="." scrubbed="." len=1
  outcome threw std::out_of_range planted=0 remaining=0 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/. remote=. path=4 delete=1 priority=1 big=0
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 0
 scrub raw=".." rawlen=2 received=".." scrubbed=".." len=2
  outcome threw std::out_of_range planted=0 remaining=0 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/.. remote=.. path=4 delete=1 priority=1 big=0
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 0
 scrub raw="..." rawlen=3 received="..." scrubbed="..." len=3
  outcome threw std::out_of_range planted=0 remaining=0 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/... remote=... path=4 delete=1 priority=1 big=0
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 0
 scrub raw="../x" rawlen=4 received="../x" scrubbed=".._x" len=4
  outcome returned planted=0 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/.._x remote=.._x path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -112,6 +124,7 @@ scrub raw="../x" rawlen=4 received="../x" scrubbed=".._x" len=4
 scrub raw="..\\x" rawlen=4 received="..\\x" scrubbed=".._x" len=4
  outcome returned planted=0 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/.._x remote=.._x path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -127,6 +140,7 @@ scrub raw="..\\x" rawlen=4 received="..\\x" scrubbed=".._x" len=4
 scrub raw="a/.." rawlen=4 received="a/.." scrubbed="a_.." len=4
  outcome returned planted=0 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/a_.. remote=a_.. path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -142,6 +156,7 @@ scrub raw="a/.." rawlen=4 received="a/.." scrubbed="a_.." len=4
 scrub raw="../../etc/passwd" rawlen=16 received="../../etc/passwd" scrubbed=".._.._etc_passwd" len=16
  outcome returned planted=0 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/.._.._etc_passwd remote=.._.._etc_passwd path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -157,6 +172,7 @@ scrub raw="../../etc/passwd" rawlen=16 received="../../etc/passwd" scrubbed=".._
 scrub raw="inventory_task.tmp" rawlen=18 received="inventory_task.tmp" scrubbed="inventory_task.tmp" len=18
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/inventory_task.tmp remote=inventory_task.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -172,6 +188,7 @@ scrub raw="inventory_task.tmp" rawlen=18 received="inventory_task.tmp" scrubbed=
 scrub raw="inv\\x.tmp" rawlen=9 received="inv\\x.tmp" scrubbed="inv_x.tmp" len=9
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/inv_x.tmp remote=inv_x.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -187,6 +204,7 @@ scrub raw="inv\\x.tmp" rawlen=9 received="inv\\x.tmp" scrubbed="inv_x.tmp" len=9
 scrub raw="inv/x.tmp" rawlen=9 received="inv/x.tmp" scrubbed="inv_x.tmp" len=9
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/inv_x.tmp remote=inv_x.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -202,6 +220,7 @@ scrub raw="inv/x.tmp" rawlen=9 received="inv/x.tmp" scrubbed="inv_x.tmp" len=9
 scrub raw="inv:x.tmp" rawlen=9 received="inv:x.tmp" scrubbed="inv_x.tmp" len=9
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/inv_x.tmp remote=inv_x.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -217,6 +236,7 @@ scrub raw="inv:x.tmp" rawlen=9 received="inv:x.tmp" scrubbed="inv_x.tmp" len=9
 scrub raw="inv*x.tmp" rawlen=9 received="inv*x.tmp" scrubbed="inv_x.tmp" len=9
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/inv_x.tmp remote=inv_x.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -232,6 +252,7 @@ scrub raw="inv*x.tmp" rawlen=9 received="inv*x.tmp" scrubbed="inv_x.tmp" len=9
 scrub raw="inv?x.tmp" rawlen=9 received="inv?x.tmp" scrubbed="inv_x.tmp" len=9
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/inv_x.tmp remote=inv_x.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -247,6 +268,7 @@ scrub raw="inv?x.tmp" rawlen=9 received="inv?x.tmp" scrubbed="inv_x.tmp" len=9
 scrub raw="inv\"x.tmp" rawlen=9 received="inv\"x.tmp" scrubbed="inv_x.tmp" len=9
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/inv_x.tmp remote=inv_x.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -262,6 +284,7 @@ scrub raw="inv\"x.tmp" rawlen=9 received="inv\"x.tmp" scrubbed="inv_x.tmp" len=9
 scrub raw="inv<x.tmp" rawlen=9 received="inv<x.tmp" scrubbed="inv_x.tmp" len=9
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/inv_x.tmp remote=inv_x.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -277,6 +300,7 @@ scrub raw="inv<x.tmp" rawlen=9 received="inv<x.tmp" scrubbed="inv_x.tmp" len=9
 scrub raw="inv>x.tmp" rawlen=9 received="inv>x.tmp" scrubbed="inv_x.tmp" len=9
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/inv_x.tmp remote=inv_x.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -292,6 +316,7 @@ scrub raw="inv>x.tmp" rawlen=9 received="inv>x.tmp" scrubbed="inv_x.tmp" len=9
 scrub raw="inv|x.tmp" rawlen=9 received="inv|x.tmp" scrubbed="inv_x.tmp" len=9
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/inv_x.tmp remote=inv_x.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -307,6 +332,7 @@ scrub raw="inv|x.tmp" rawlen=9 received="inv|x.tmp" scrubbed="inv_x.tmp" len=9
 scrub raw="all\\/:*?\"<>|.tmp" rawlen=16 received="all\\/:*?\"<>|.tmp" scrubbed="all_________.tmp" len=16
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/all_________.tmp remote=all_________.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -322,6 +348,7 @@ scrub raw="all\\/:*?\"<>|.tmp" rawlen=16 received="all\\/:*?\"<>|.tmp" scrubbed=
 scrub raw="\\/:*?\"<>|" rawlen=9 received="\\/:*?\"<>|" scrubbed="_________" len=9
  outcome returned planted=1 remaining=1 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/_________ remote=_________ path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -337,14 +364,17 @@ scrub raw="\\/:*?\"<>|" rawlen=9 received="\\/:*?\"<>|" scrubbed="_________" len
 scrub raw="|" rawlen=1 received="|" scrubbed="_" len=1
  outcome threw std::out_of_range planted=1 remaining=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/_ remote=_ path=4 delete=1 priority=1 big=0
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 0
 scrub raw="::" rawlen=2 received="::" scrubbed="__" len=2
  outcome threw std::out_of_range planted=1 remaining=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/__ remote=__ path=4 delete=1 priority=1 big=0
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 0
 scrub raw="C:\\x.tmp" rawlen=8 received="C:\\x.tmp" scrubbed="C__x.tmp" len=8
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/C__x.tmp remote=C__x.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -360,6 +390,7 @@ scrub raw="C:\\x.tmp" rawlen=8 received="C:\\x.tmp" scrubbed="C__x.tmp" len=8
 scrub raw="tab\x09name.tmp" rawlen=12 received="tab\x09name.tmp" scrubbed="tab\x09name.tmp" len=12
  outcome returned planted=0 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/tab\x09name.tmp remote=tab\x09name.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -375,6 +406,7 @@ scrub raw="tab\x09name.tmp" rawlen=12 received="tab\x09name.tmp" scrubbed="tab\x
 scrub raw="ctl\x01.tmp" rawlen=8 received="ctl\x01.tmp" scrubbed="ctl\x01.tmp" len=8
  outcome returned planted=0 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/ctl\x01.tmp remote=ctl\x01.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -390,6 +422,7 @@ scrub raw="ctl\x01.tmp" rawlen=8 received="ctl\x01.tmp" scrubbed="ctl\x01.tmp" l
 scrub raw="ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" rawlen=254 received="ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" scrubbed="ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" len=254
  outcome returned planted=0 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff remote=ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -405,6 +438,7 @@ scrub raw="fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 scrub raw="fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" rawlen=255 received="ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" scrubbed="ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" len=254
  outcome returned planted=0 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff remote=ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
@@ -420,6 +454,7 @@ scrub raw="fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 scrub raw="ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" rawlen=300 received="ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" scrubbed="ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff" len=254
  outcome returned planted=0 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff remote=ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
+ helpers root=none contents=[] count{} byasset{} bytype{}
   packets 1
   packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
     wire <zero-coded with the random xfer id: see body>
