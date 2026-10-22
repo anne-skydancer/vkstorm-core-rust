@@ -1,0 +1,6 @@
+# vkstorm-inventory task fixtures: SHA-256 of the canonical text of the large sweeps (the text each sample file excerpts)
+# generator: INTEGRATION_TEST_llinventory_task_oracle (indra/newview/tests/llinventory_task_oracle_test.cpp), VKS_TASK_DUMP
+# viewer: 472ecf270d (codex/rust-inventory); frozen copies of llviewerobject.cpp blob c9ac3bdc20301e3e43da73183f18595712912e79 and llviewerinventory.cpp blob a13210dce6ed2561e2b18768645bcfa37068612c
+# platform: windows-msvc
+# <name> <count> <sha256>
+task_files_random 3000 e9bd0488c714ae8a49eabe1be550e2b7ae57207351d30237d65e62403a3d3b05
