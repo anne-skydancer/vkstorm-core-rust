@@ -199,7 +199,7 @@ fn main() {
             period_no += 1;
             let due = started + Duration::from_secs_f64(rendered as f64 / RATE as f64);
             let mut wake = due;
-            if a.late_ms > 0 && period_no % 7 == 0 {
+            if a.late_ms > 0 && period_no.is_multiple_of(7) {
                 wake += Duration::from_millis(a.late_ms);
             }
             let now = Instant::now();
