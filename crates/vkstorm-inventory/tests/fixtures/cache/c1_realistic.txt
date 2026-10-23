@@ -1,6 +1,6 @@
 # vkstorm inventory model oracle (recorder R2): C1 realistic synthetic set (100k items, 8k folders)
 # generator: INTEGRATION_TEST_llinventorymodel_parity with VKS_INVMODEL_DUMP (indra/newview/tests/llinventorymodel_parity_test.cpp)
-# viewer commit: 104d04c9cb
+# viewer commit: 43bff6b979
 # platform: windows-msvc
 # seed: 0x5eed100000 (xorshift64*, realistic_world(seed, 8000, 100000, 20000, 10000))
 # format: tests/fixtures/inventory/cache/README.md; lines starting with '#' are not compared

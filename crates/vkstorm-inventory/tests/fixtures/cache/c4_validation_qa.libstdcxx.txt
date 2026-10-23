@@ -1,6 +1,6 @@
 # vkstorm inventory model oracle (recorder R2): C4 validation, QAModeFakeSystemFolderIssues (std::default_random_engine of this standard library)
 # generator: INTEGRATION_TEST_llinventorymodel_parity with VKS_INVMODEL_DUMP (indra/newview/tests/llinventorymodel_parity_test.cpp)
-# viewer commit: 104d04c9cb
+# viewer commit: 43bff6b979
 # platform: linux-gcc15
 # seed: default-constructed engine
 # format: tests/fixtures/inventory/cache/README.md; lines starting with '#' are not compared
