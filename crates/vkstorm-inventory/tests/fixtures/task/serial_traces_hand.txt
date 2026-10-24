@@ -1,6 +1,6 @@
 # vkstorm-inventory task fixtures: set 3, hand-written serial and request-state traces
 # generator: INTEGRATION_TEST_llinventory_task_oracle (indra/newview/tests/llinventory_task_oracle_test.cpp), VKS_TASK_DUMP
-# viewer: 472ecf270d (codex/rust-inventory); frozen copies of llviewerobject.cpp blob c9ac3bdc20301e3e43da73183f18595712912e79 and llviewerinventory.cpp blob a13210dce6ed2561e2b18768645bcfa37068612c
+# viewer: 6f23ef84f0 (vkstorm-rust); frozen copies of llviewerobject.cpp blob 0ade67da75e4367e1fcae9e53e8e6388ddb612bf and llviewerinventory.cpp blob 41e2a9b23982f076e14a5de056d443438f8980b3
 # platform: windows-msvc
 # trace <udp|cap>/<listeners> [label] : <events>
 #  <event> | st=<S stopped|W wait|P pending|X xfer> ser=<mInventorySerialNum> exp=<mExpectedInventorySerialNum>
@@ -110,7 +110,7 @@ trace udp/L1 older_serial_file_ignored : req rep=1 rep.none rep=2 xfer.ok req xf
  rep.none | st=S ser=1 exp=1 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=1 filename=""; callback L1 ser=1 inv=[obj]
  rep=2 | st=X ser=2 exp=2 xid=1002 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=2 filename="inv_s2.tmp"; xfer.request id=1002 local=<cache>/inv_s2.tmp remote=inv_s2.tmp path=4 delete=1 priority=1 big=0
  xfer.ok | st=X ser=2 exp=2 xid=1002 dirty=0 inv=[obj] cache=[inv_s1.tmp] | xfer.complete id=1001 code=0
- req | st=S ser=2 exp=2 xid=0 dirty=0 inv=[obj] cache=[inv_s1.tmp] | callback L1 ser=2 inv=[obj]
+ req | st=X ser=2 exp=2 xid=1002 dirty=0 inv=[obj] cache=[inv_s1.tmp] | callback L1 ser=2 inv=[obj]
  xfer.ok | st=S ser=2 exp=2 xid=0 dirty=0 inv=[B,A,obj] cache=[inv_s1.tmp] | xfer.complete id=1002 code=0; callback L1 ser=2 inv=[B,A,obj]
 trace udp/L1 stuck_older_serial_file_then_error : req rep=1 rep.none rep=2 xfer.ok xfer.err req timer
  req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send RequestTaskInventory
@@ -119,8 +119,8 @@ trace udp/L1 stuck_older_serial_file_then_error : req rep=1 rep.none rep=2 xfer.
  rep=2 | st=X ser=2 exp=2 xid=1002 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=2 filename="inv_s2.tmp"; xfer.request id=1002 local=<cache>/inv_s2.tmp remote=inv_s2.tmp path=4 delete=1 priority=1 big=0
  xfer.ok | st=X ser=2 exp=2 xid=1002 dirty=0 inv=[obj] cache=[inv_s1.tmp] | xfer.complete id=1001 code=0
  xfer.err | st=X ser=2 exp=2 xid=1002 dirty=0 inv=[obj] cache=[inv_s1.tmp] | xfer.complete id=1002 code=-1
- req | st=S ser=2 exp=2 xid=0 dirty=0 inv=[obj] cache=[inv_s1.tmp] | callback L1 ser=2 inv=[obj]
- timer | st=S ser=2 exp=2 xid=0 dirty=0 inv=[obj] cache=[inv_s1.tmp] | timer.fire none-pending
+ req | st=X ser=2 exp=2 xid=1002 dirty=0 inv=[obj] cache=[inv_s1.tmp] | callback L1 ser=2 inv=[obj]
+ timer | st=X ser=2 exp=2 xid=1002 dirty=0 inv=[obj] cache=[inv_s1.tmp] | timer.fire none-pending
 trace udp/L1 newer_reply_aborts_older_xfer : req rep=1 rep=2 xfer.ok.newest xfer.ok
  req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send RequestTaskInventory
  rep=1 | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
@@ -133,7 +133,7 @@ trace udp/L1 stuck_older_serial_file_2 : req rep=2 xfer.ok rep=1 xfer.ok req
  xfer.ok | st=S ser=2 exp=2 xid=0 dirty=0 inv=[B,A,obj] cache=[] | xfer.complete id=1001 code=0; callback L1 ser=2 inv=[B,A,obj]
  rep=1 | st=W ser=1 exp=2 xid=0 dirty=0 inv=[B,A,obj] cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
  xfer.ok | st=W ser=1 exp=2 xid=0 dirty=0 inv=[B,A,obj] cache=[] | xfer.complete none-live
- req | st=S ser=1 exp=2 xid=0 dirty=0 inv=[B,A,obj] cache=[] | callback L1 ser=1 inv=[B,A,obj]
+ req | st=W ser=1 exp=2 xid=0 dirty=0 inv=[B,A,obj] cache=[] | callback L1 ser=1 inv=[B,A,obj]
 trace udp/L1 stuck_missing_file : req rep.exp xfer.nofile req
  req | st=P ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send RequestTaskInventory
  rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
@@ -148,14 +148,14 @@ trace udp/L1 stuck_object_gone_during_xfer : req rep.exp die xfer.ok revive req
  req | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[inv_s0.tmp] | -
 trace cap/L1 stuck_cap_no_contents : req cap.nocontents req dirty req
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | -
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  dirty | st=X ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | -
 trace cap/L1 stuck_cap_no_contents_reply_does_not_unstick : req cap.nocontents rep.exp rep.lo rep.hi timer req
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
  rep.hi | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
  timer | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending

@@ -1,6 +1,6 @@
 # vkstorm-inventory task fixtures: set 1, scrubbed filenames through processTaskInv and the real LLXferManager
 # generator: INTEGRATION_TEST_llinventory_task_oracle (indra/newview/tests/llinventory_task_oracle_test.cpp), VKS_TASK_DUMP
-# viewer: 472ecf270d (codex/rust-inventory); frozen copies of llviewerobject.cpp blob c9ac3bdc20301e3e43da73183f18595712912e79 and llviewerinventory.cpp blob a13210dce6ed2561e2b18768645bcfa37068612c
+# viewer: 6f23ef84f0 (vkstorm-rust); frozen copies of llviewerobject.cpp blob 0ade67da75e4367e1fcae9e53e8e6388ddb612bf and llviewerinventory.cpp blob 41e2a9b23982f076e14a5de056d443438f8980b3
 # platform: windows-msvc
 # scrub raw=<Filename packed> received=<Filename read back> scrubbed=<LLDir::getScrubbedFileName> len=<n>
 #  outcome <returned|threw ...> planted=<sentinel cache file of the scrubbed name> remaining=<still there> <state> | <effects>
@@ -12,20 +12,53 @@ scrub raw="" rawlen=0 received="" scrubbed="" len=0
  helpers root=obj contents=[] count{8:1} byasset{} bytype{} byid{obj:object/null} inasset{} state{listeners=1 dirty=0 serial=0 pending=0}
   packets 0
 scrub raw="a" rawlen=1 received="a" scrubbed="a" len=1
- outcome threw std::out_of_range planted=1 remaining=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/a remote=a path=4 delete=1 priority=1 big=0
+ outcome returned planted=1 remaining=1 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/a remote=a path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
- helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=0}
-  packets 0
+ helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=1}
+  packets 1
+  packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
+    wire <zero-coded with the random xfer id: see body>
+    body 400000000000ffff009c000000000000000002610004010000000000000000000000000000000000ffff
+    XferID count=1
+      [0] ID = <xfer id real#1>
+      [0] Filename = 6100 "a\x00"
+      [0] FilePath = 04
+      [0] DeleteOnCompletion = 01
+      [0] UseBigPackets = 00
+      [0] VFileID = 00000000000000000000000000000000
+      [0] VFileType = ffff
 scrub raw="ab" rawlen=2 received="ab" scrubbed="ab" len=2
- outcome threw std::out_of_range planted=1 remaining=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/ab remote=ab path=4 delete=1 priority=1 big=0
+ outcome returned planted=1 remaining=1 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/ab remote=ab path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
- helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=0}
-  packets 0
+ helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=1}
+  packets 1
+  packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
+    wire <zero-coded with the random xfer id: see body>
+    body 400000000000ffff009c00000000000000000361620004010000000000000000000000000000000000ffff
+    XferID count=1
+      [0] ID = <xfer id real#1>
+      [0] Filename = 616200 "ab\x00"
+      [0] FilePath = 04
+      [0] DeleteOnCompletion = 01
+      [0] UseBigPackets = 00
+      [0] VFileID = 00000000000000000000000000000000
+      [0] VFileType = ffff
 scrub raw="abc" rawlen=3 received="abc" scrubbed="abc" len=3
- outcome threw std::out_of_range planted=1 remaining=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/abc remote=abc path=4 delete=1 priority=1 big=0
+ outcome returned planted=1 remaining=1 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/abc remote=abc path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
- helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=0}
-  packets 0
+ helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=1}
+  packets 1
+  packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
+    wire <zero-coded with the random xfer id: see body>
+    body 400000000000ffff009c0000000000000000046162630004010000000000000000000000000000000000ffff
+    XferID count=1
+      [0] ID = <xfer id real#1>
+      [0] Filename = 61626300 "abc\x00"
+      [0] FilePath = 04
+      [0] DeleteOnCompletion = 01
+      [0] UseBigPackets = 00
+      [0] VFileID = 00000000000000000000000000000000
+      [0] VFileType = ffff
 scrub raw="abcd" rawlen=4 received="abcd" scrubbed="abcd" len=4
  outcome returned planted=1 remaining=1 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/abcd remote=abcd path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
@@ -91,20 +124,53 @@ scrub raw="a.tmp" rawlen=5 received="a.tmp" scrubbed="a.tmp" len=5
       [0] VFileID = 00000000000000000000000000000000
       [0] VFileType = ffff
 scrub raw="." rawlen=1 received="." scrubbed="." len=1
- outcome threw std::out_of_range planted=0 remaining=0 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/. remote=. path=4 delete=1 priority=1 big=0
+ outcome returned planted=0 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/. remote=. path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
- helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=0}
-  packets 0
+ helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=1}
+  packets 1
+  packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
+    wire <zero-coded with the random xfer id: see body>
+    body 400000000000ffff009c0000000000000000022e0004010000000000000000000000000000000000ffff
+    XferID count=1
+      [0] ID = <xfer id real#1>
+      [0] Filename = 2e00 ".\x00"
+      [0] FilePath = 04
+      [0] DeleteOnCompletion = 01
+      [0] UseBigPackets = 00
+      [0] VFileID = 00000000000000000000000000000000
+      [0] VFileType = ffff
 scrub raw=".." rawlen=2 received=".." scrubbed=".." len=2
- outcome threw std::out_of_range planted=0 remaining=0 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/.. remote=.. path=4 delete=1 priority=1 big=0
+ outcome returned planted=0 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/.. remote=.. path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
- helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=0}
-  packets 0
+ helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=1}
+  packets 1
+  packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
+    wire <zero-coded with the random xfer id: see body>
+    body 400000000000ffff009c0000000000000000032e2e0004010000000000000000000000000000000000ffff
+    XferID count=1
+      [0] ID = <xfer id real#1>
+      [0] Filename = 2e2e00 "..\x00"
+      [0] FilePath = 04
+      [0] DeleteOnCompletion = 01
+      [0] UseBigPackets = 00
+      [0] VFileID = 00000000000000000000000000000000
+      [0] VFileType = ffff
 scrub raw="..." rawlen=3 received="..." scrubbed="..." len=3
- outcome threw std::out_of_range planted=0 remaining=0 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/... remote=... path=4 delete=1 priority=1 big=0
+ outcome returned planted=0 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/... remote=... path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
- helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=0}
-  packets 0
+ helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=1}
+  packets 1
+  packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
+    wire <zero-coded with the random xfer id: see body>
+    body 400000000000ffff009c0000000000000000042e2e2e0004010000000000000000000000000000000000ffff
+    XferID count=1
+      [0] ID = <xfer id real#1>
+      [0] Filename = 2e2e2e00 "...\x00"
+      [0] FilePath = 04
+      [0] DeleteOnCompletion = 01
+      [0] UseBigPackets = 00
+      [0] VFileID = 00000000000000000000000000000000
+      [0] VFileType = ffff
 scrub raw="../x" rawlen=4 received="../x" scrubbed=".._x" len=4
  outcome returned planted=0 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/.._x remote=.._x path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
@@ -362,15 +428,37 @@ scrub raw="\\/:*?\"<>|" rawlen=9 received="\\/:*?\"<>|" scrubbed="_________" len
       [0] VFileID = 00000000000000000000000000000000
       [0] VFileType = ffff
 scrub raw="|" rawlen=1 received="|" scrubbed="_" len=1
- outcome threw std::out_of_range planted=1 remaining=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/_ remote=_ path=4 delete=1 priority=1 big=0
+ outcome returned planted=1 remaining=1 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/_ remote=_ path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
- helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=0}
-  packets 0
+ helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=1}
+  packets 1
+  packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
+    wire <zero-coded with the random xfer id: see body>
+    body 400000000000ffff009c0000000000000000025f0004010000000000000000000000000000000000ffff
+    XferID count=1
+      [0] ID = <xfer id real#1>
+      [0] Filename = 5f00 "_\x00"
+      [0] FilePath = 04
+      [0] DeleteOnCompletion = 01
+      [0] UseBigPackets = 00
+      [0] VFileID = 00000000000000000000000000000000
+      [0] VFileType = ffff
 scrub raw="::" rawlen=2 received="::" scrubbed="__" len=2
- outcome threw std::out_of_range planted=1 remaining=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=- | xfer.request local=<cache>/__ remote=__ path=4 delete=1 priority=1 big=0
+ outcome returned planted=1 remaining=1 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/__ remote=__ path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null
- helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=0}
-  packets 0
+ helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=1}
+  packets 1
+  packet RequestXfer flags=c0 zerocoded=1 wirelen=-1
+    wire <zero-coded with the random xfer id: see body>
+    body 400000000000ffff009c0000000000000000035f5f0004010000000000000000000000000000000000ffff
+    XferID count=1
+      [0] ID = <xfer id real#1>
+      [0] Filename = 5f5f00 "__\x00"
+      [0] FilePath = 04
+      [0] DeleteOnCompletion = 01
+      [0] UseBigPackets = 00
+      [0] VFileID = 00000000000000000000000000000000
+      [0] VFileType = ffff
 scrub raw="C:\\x.tmp" rawlen=8 received="C:\\x.tmp" scrubbed="C__x.tmp" len=8
  outcome returned planted=1 remaining=0 st=X ser=0 exp=0 xid=real#1 dirty=0 inv=- | xfer.request local=<cache>/C__x.tmp remote=C__x.tmp path=4 delete=1 priority=1 big=0; xfer.requested id=real#1
  inventory null

@@ -4,8 +4,10 @@ Object contents ("task inventory"): task inventory files and capability
 replies parsed into records, the serial and request-state machine of
 `LLViewerObject`, the local-update permission guess, and the
 task-inventory messages the viewer sends. Recorded by R4a of the inventory
-rung (vkstorm-rust rung seven) from the C++ before any port commit. Never
-edited by hand: change the recorder and record again.
+rung (vkstorm-rust rung seven) from the C++ before any port commit, and
+recorded again at `6f23ef84f0` (vkstorm-rust) after the C++ fixes of PR #181
+(see "Resolved since the first recording" below). Never edited by hand:
+change the recorder and record again.
 
 The same bytes live in the viewer (`indra/newview/tests/fixtures/inventory/task/`)
 and in vkstorm-core-rust (`crates/vkstorm-inventory/tests/fixtures/task/`).
@@ -18,17 +20,17 @@ and bytes of 0x80 and above, and are compared byte for byte.
 (`indra/newview/tests/inventory/r4-task.cmake`) drives the task-inventory
 decision code through one boundary (below). Its implementation today is the
 frozen copies (`indra/newview/tests/llinventory_task_oracle.cpp`):
-`llviewerobject.cpp` lines 155-160, 2823-3231, 3375-3978, 6252-6269,
-7229-7235 and 8204-8285 (blob `c9ac3bdc20`), and the `LLViewerInventoryItem`
+`llviewerobject.cpp` lines 155-160, 2823-3263, 3407-4045, 6319-6336,
+7296-7302 and 8271-8352 (blob `0ade67da75`), and the `LLViewerInventoryItem`
 members they use from `llviewerinventory.cpp` lines 87-88, 104-233,
-335-408 and 547-601 (blob `a13210dce6`). The copies are verbatim; they reach
+335-408 and 550-604 (blob `41e2a9b239`), both at `6f23ef84f0`. The copies are verbatim; they reach
 fakes for the viewer singletons by ordinary name lookup in the namespace
 `vks_task_oracle` (`llinventory_task_oracle.h`, `llinventory_task_oracle_fakes.cpp`).
 The oracle's own `LLViewerObject` mirrors the live declarations, the
 constructor and destructor lines and `permYouOwner()`, which are kept as
 checked text in `llinventory_task_oracle_decls.h`: `llviewerobject.cpp`
 303-308 (initialisers), 370-375 and 404-414 (destructor, including
-`clearInventoryListeners()`), 7062-7084 (`permYouOwner`), and
+`clearInventoryListeners()`), 7129-7151 (`permYouOwner`), and
 `llviewerobject.h` 546-603, 729-730, 769-776, 915-919, 931-934 (declarations)
 and 972-997 (state members).
 
@@ -143,7 +145,7 @@ Real code is used wherever it links outside the viewer:
 - llmessage: `LLMessageSystem` built from `scripts/messages/message_template.msg`,
   its builder and reader, zero-coding, the circuit's UDP send path, and
   `LLXferManager`/`LLXfer_File` (`RequestXfer`, `AbortXfer`, the `.tmp` rule
-  and the `substr` throw);
+  and its length guard);
 - llfilesystem: `LLDir::getScrubbedFileName`, `getExpandedFilename`, `LLFile`;
 - llcommon: LLSD and its serializers; llcorehttp's `HttpStatus` and
   llmessage's `HttpCoroHandler::writeStatusCodes`/`getStatusFromLLSD`.
@@ -236,9 +238,9 @@ is neither category nor none) the call is not made and the line says
   `LLDir::getScrubbedFileName`, and `processTaskInv` with the real
   `LLXferManager`: every forbidden character (`\ / : * ? " < > |`), `..`
   forms, names of 0-4 characters, control characters, 254/255/300 bytes. The
-  outcome is `returned` or `threw std::out_of_range` (names of 1-3 bytes:
-  `remote_filename.substr(length()-4)` in `requestFile`, caught by the test;
-  in the viewer it is unhandled), the object state after it, whether a
+  outcome is `returned` or `threw <exception>` (the test catches it; since
+  bug 32's fix no name throws, and names of 1-3 bytes queue a RequestXfer
+  as the longer ones do), the object state after it, whether a
   sentinel cache file of the scrubbed name survived (the `.tmp` rule removes
   it), and the RequestXfer datagram with every field (`FilePath` = 4,
   `DeleteOnCompletion` = 1, `UseBigPackets` = 0, `VFileID` null,
@@ -347,8 +349,9 @@ For each file: `ops = 1 + below(4)`; then `ops` times, while lines remain:
 is protected, `op = 1`. A line is protected when its first
 whitespace-delimited token (at most 63 bytes) is one of `creation_date
 base_mask owner_mask group_mask everyone_mask next_owner_mask creator_mask
-creator_id owner_id last_owner_id group_id group_owned` (the readers scan
-these into uninitialised locals; see runtime edges). Then: 0 delete the line;
+creator_id owner_id last_owner_id group_id group_owned` (when the generator
+was made, the readers scanned these into uninitialised locals; see runtime
+edges). Then: 0 delete the line;
 1 insert a copy of it before it; 2 insert `TOKENS[below(13)]` before it; 3
 `j = below(line count)` and swap lines `at` and `j`; 4 if the line is not
 empty, `value = 0x20 + below(0x5f)`, then `pos = below(length)`, and the
@@ -394,18 +397,15 @@ when `i % 97 == 0`.
   under `launch::dispatch`). So the 304 branch is reached only when a server
   answers 304 unasked (`cap_304`, `cap_304_after_edit`).
 - Stuck pending: a failed xfer (`xfer.err`), a missing file
-  (`xfer.nofile`), an object gone during the transfer, and a capability reply
-  without `contents` (or a non-map or empty body) leave the state at X;
-  `requestInventory` is then dropped while `mInventory` is NULL. On the UDP
-  path a later ReplyTaskInventory starts a new transfer; on the capability
-  path a ReplyTaskInventory only sets `mExpectedInventorySerialNum` and calls
-  the no-op `fetchInventoryFromServer`, so nothing unsticks it
-  (`stuck_cap_no_contents_reply_does_not_unstick`). While `mInventory` is
-  not NULL, `requestInventory` serves the cached list and its
-  `doInventoryCallback` resets the state to S even with a transfer still
-  outstanding (`older_serial_file_ignored`). An object that leaves
-  `gObjectList` while a delayed refetch waits stays in W for good once it is
-  back (`object_gone_during_delay_udp`).
+  (`xfer.nofile`) and an object gone during the transfer leave the state at
+  X; `requestInventory` is then dropped while `mInventory` is NULL, and on
+  the UDP path a later ReplyTaskInventory starts a new transfer. While
+  `mInventory` is not NULL and a request is outstanding, `requestInventory`
+  serves the cached list and keeps the state and xfer id, so it no longer
+  releases a request stuck by a failed xfer
+  (`stuck_older_serial_file_then_error`). An
+  object that leaves `gObjectList` while a delayed refetch waits stays in W
+  for good once it is back (`object_gone_during_delay_udp`).
 - Signed S16 serials without wrap handling: `-32768` after `32767`; a reply
   of `32767` loads when `-32768` is expected (`wrap_old_reply_loaded`); the
   capability serial is `(S16)asInteger()` (65535 -> -1, 32768 -> -32768,
@@ -427,16 +427,61 @@ when `i % 97 == 0`.
   the cache).
 - Localisation applies on the capability path only (`{L10N:...}` in
   `cap_replies.txt`, none in `task_files.txt`).
-- The 1-3 character remote filename throws `std::out_of_range` after the
-  serials were updated and with the `LLFilenameAndTask` leaked.
 - AbortXfer is sent unreliably (`sendMessage`), the task messages reliably.
+
+## Resolved since the first recording
+
+Recorded again at `6f23ef84f0` (vkstorm-rust, PR #181). Each change below is
+the effect of the named fix; nothing else changed (the binary inputs,
+`messages.txt`, `create_item.txt` and `task_files_random_samples.txt` are
+identical apart from the `#` header).
+
+- Bug 32 (`LLXferManager::requestFile()` no longer throws on a 1-3 character
+  remote name; the old quirk: `std::out_of_range` after the serials were
+  updated, with the `LLFilenameAndTask` leaked). `scrub.txt`: the eight
+  cases with 1-3 character scrubbed names (`a`, `ab`, `abc`, `.`, `..`,
+  `...`, `_`, `__`) now return with the state at X, xfer id `real#1`, the
+  request pending, and one RequestXfer datagram.
+- Bug 5 (a capability reply without `contents`, or a non-map or empty body,
+  releases the request to S, as an HTTP error does; the old quirk: stuck at
+  X, and on the capability path nothing unstuck it). `cap_replies.txt`
+  `contents_missing`, `body_not_map`, `body_empty`; 114 of the 2000 random
+  bodies (all without `contents`; the other 86 such bodies have a stale
+  serial and take the delayed refetch first); `serial_traces_hand.txt`
+  `stuck_cap_no_contents` and `stuck_cap_no_contents_reply_does_not_unstick`
+  (a later request or ReplyTaskInventory now fetches again); 8, 312 and 8254
+  of the length 2, 3 and 4 sweep traces, each first differing at a
+  `cap.nocontents` event (X -> S).
+- Bug 6 (`requestInventory` on cached contents while a request is
+  outstanding keeps the state and xfer id; the old quirk: its
+  `doInventoryCallback` reset the state to S with a transfer still
+  outstanding). `serial_traces_hand.txt` `older_serial_file_ignored`,
+  `stuck_older_serial_file_2`, `stuck_older_serial_file_then_error`; 20 and
+  1058 of the length 3 and 4 sweep traces, each first differing at a `req`
+  or `create.ok` (createInventoryItem's own `requestInventory()`): the same
+  callback, serials and contents, but the state stays W (727 traces) or X
+  with its xfer id (351) instead of S/0.
+- Bug 29 (each legacy text line is parsed on its own: a blank line no longer
+  re-enters the permissions or sale block, and a keyword without a value no
+  longer takes the previous line's value). `task_files.txt`
+  `blank_line_after_permissions` and `blank_line_after_sale_info` (item A is
+  now read whole), `type_keyword_only` (type AT_NONE instead of AT_UNKNOWN),
+  `name_keyword_only` (name empty instead of `0`), `desc_keyword_only`
+  (description empty instead of `Notecard A`); 13 of the 3000 random files
+  (0009, 0123, 0460, 0592, 0852, 1714, 1950, 1955, 2313, 2490, 2555, 2677,
+  2796), each with a blank or whitespace-only line inserted after a block's
+  closing brace inside an item, none of them a kept sample.
+- Bug 33 and `146df7efa6` (no null-region dereference; see runtime edges)
+  and bugs 1, 4, 28, 38, 53 and the mask exception: no fixture change.
 
 ## Runtime edges (undefined or C-library-defined behaviour)
 
 - `creation_date` with a non-numeric value, and a permissions mask or id
-  line whose value fails to scan, read an uninitialised local (stack
-  garbage). No committed case does this; the random sweep never alters those
-  lines in place.
+  line whose value fails to scan, no longer read an uninitialised local
+  (bug 38: the targets start at 0 and a null id) and now count as absent
+  (bug 29: the field keeps its value), except a permission mask, which
+  becomes `PERM_NONE` (the mask exception). No committed case does this; the
+  random sweep never alters those lines in place.
 - `creation_date` above `INT_MAX` (`date_over_int_max`): `sscanf("%d")`
   overflow is undefined by the C standard; MSVC's runtime and glibc both give
   the low 32 bits (4000000000 -> -294967296).
@@ -444,8 +489,11 @@ when `i % 97 == 0`.
   to `LLViewerInventoryItem` without a check; with an `inv_object` of a
   non-category type matched by id, asset or type this reads past the object.
   The helpers line marks such lookups `not-called`; not exercised.
-- A NULL `mRegionp` is dereferenced by the UDP request, `removeInventory`,
-  `moveInventory`, `updateInventory` and `saveScript`. Not exercised.
+- A NULL `mRegionp`: since bug 33's fix and its follow-up `146df7efa6`, the
+  UDP request, `processTaskInv`, `removeInventory`, `moveInventory`,
+  `updateInventory`, `updateMaterialInventory` and `saveScript` return
+  without sending, and a pending request is set back to S. The oracle never
+  gives an object a null region: not exercised, no fixture change.
 
 ## Platform differences
 
