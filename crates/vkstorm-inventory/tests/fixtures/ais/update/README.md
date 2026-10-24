@@ -20,8 +20,15 @@ the version loop, AIS versions only raise a category's version), bug 15
 longer yields at once), bug 51 (`checkTimeout()` loops: after resuming it
 rechecks the shared budget and yields again if another update spent it) and
 bug 52 (`updateServer()` accounts count-only on the AIS path; the harness
-never reaches `updateServer()`). The fixtures are never edited by hand:
-change the recorder or `gen_cases.py` and regenerate.
+never reaches `updateServer()`). Re-recorded after `vkstorm-rust` took the
+inventory fixes of PR #181 (merged into this branch; llaisapi.cpp
+unchanged): of those, only bug 23 ("Don't list a new item that addItem()
+refused") reaches what R3a emulates: `updateItem()` now returns at once,
+with the mask as it came, when `addItem()` refuses a new item of no asset
+type (type <= -1). The stub does the same (`model` `refused_bad_type`) and
+s15h records it; no earlier case sends such an item, so every other
+recording is unchanged but for the headers' commit. The fixtures are never
+edited by hand: change the recorder or `gen_cases.py` and regenerate.
 
 This directory is identical, byte for byte, in the viewer
 (`indra/newview/tests/fixtures/inventory/ais/update`) and in the crate
@@ -241,7 +248,8 @@ Everything else is real or a stub of this harness:
     constructor, the `fetch` default argument, and in the model `getItem`,
     `getCategory`, `findCategoryUUIDForType(InRoot)`, `addChangedMask`,
     `addChangedMaskForLinks`, `collectLinksTo`, `updateItem` (its mesh skip,
-    its Lost And Found and default-folder moves and their accounting),
+    its refusal of a new item of no type, its Lost And Found and
+    default-folder moves and their accounting),
     `updateCategory`, `onObjectDeletedFromServer`, `deleteObject`,
     `notifyObservers`, `fetchDescendentsOf`, the constructor, the
     declarations whose default arguments the recordings use,
@@ -361,7 +369,9 @@ so that later queries of the same update (and later steps) see what the
 real model would show: `updateCategory` (copy into the existing category, or
 add a new one; changed id), `updateItem` (copy or add; changed id; mesh,
 GLTF and GLTF-binary types skipped, link types resolved first as the real
-`getType()` does; a new item with a null parent goes to its type's default
+`getType()` does; a new item of no type (<= -1) refused before anything
+else, as `addItem()` refuses it: not stored, no move, no accounting, no
+changed id; a new item with a null parent goes to its type's default
 folder, one with `CATEGORIZE_LOST_AND_FOUND_ID` or an unknown parent folder
 to Lost And Found, an existing item updated with a null parent keeps its old
 parent or goes to Lost And Found, each move accounted on the destination
@@ -433,6 +443,12 @@ applies unless a case sets a mismatch.
 | bug 51: the batch budget already spent when the update resumes | s10m | (fix) |
 | drift guard: splices, conditionals, re-spaced signatures, harness side effects, macros | check 3 | drift probes SC2a-d, SC3c-e, SC4, SC5 |
 
+### Added for the inventory fixes (PR #181)
+
+| what | cases | fix |
+|---|---|---|
+| a write creating items of no asset type (-1), one in a known folder and one with a null parent, next to a notecard: the parse still counts the typeless item in Objects (`accountForUpdate` +2 there) and fires a callback for each of the three created ids; the model refuses both typeless items before any parent handling (no default-folder lookup or move, no accounting of its own, not stored, no changed id) and adds the notecard (one changed id) | s15h | bug 23 |
+
 ### Limits, at limit-1, limit and limit+1
 
 | limit | cases |
@@ -444,9 +460,9 @@ applies unless a case sets a mismatch.
 | depth cut (version only at depth >= 0) | s02, s16d, s16e (levels at depth 1, 0, -1) |
 | `MAX_SIMULTANEOUS_COROUTINES` 2048 | s18f: pending 2047 (enqueued), 2048, 2049 (postponed); idle drains |
 
-Counts: 139 cases (9 in set 12), 388 steps (153 of them command-function
-calls), 11 hooks, 278 runs. Committed per tree: 2.74 MB of inputs, 6.50 MB of
-expected outputs, 9.28 MB in all (667 files).
+Counts: 140 cases (9 in set 12), 389 steps (153 of them command-function
+calls), 11 hooks, 280 runs. Committed per tree: 2.76 MB of inputs, 6.53 MB of
+expected outputs, 9.33 MB in all (671 files).
 
 ### The large case (s10a)
 
@@ -501,7 +517,9 @@ Ubuntu 24.04). The Linux dump is byte-identical to the Windows one in every
 fixtures with 0 differences in all three checks. Nothing recorded depends on
 floating point beyond the timers' `(U64)(F32)(seconds * 1e6)` (8000 and
 10000 ticks) and LLSD's real-to-integer conversion of s17b/s17c (7.0 and
-7.9 read as 7).
+7.9 read as 7). The PR #181 re-recording (s15h added, every other output
+unchanged but its header) was dumped and replayed on Windows only; s15h has
+not yet been replayed on Linux.
 
 ## Mock fidelity
 

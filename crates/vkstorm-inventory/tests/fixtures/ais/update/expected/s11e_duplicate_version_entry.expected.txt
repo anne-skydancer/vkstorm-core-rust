@@ -1,6 +1,6 @@
 # case s11e_duplicate_version_entry; review rendering of s11e_duplicate_version_entry.expected.llsd, one op per line
 # generator: INTEGRATION_TEST_llaisupdate_parity (indra/newview/tests/llaisupdate_parity_test.cpp), dump mode
-# viewer commit: 9c6850b585ff50b65696ada2082f69bc94d83646 (llaisapi.cpp blob 8d34822459c9c59ca7cd8ac8338cb76da6089c71)
+# viewer commit: 497ff6a6e84b2714ea72ac58b53438322c60ffba (llaisapi.cpp blob 8d34822459c9c59ca7cd8ac8338cb76da6089c71)
 # platform: windows
 case = 's11e_duplicate_version_entry'
 == never/final/categories (9)

@@ -150,6 +150,7 @@ FT_BODYPART, FT_TRASH, FT_LAF, FT_COF, FT_OUTFIT, FT_MY_OUTFITS = 13, 14, 16, 46
 AT_TEXTURE, AT_LANDMARK, AT_CLOTHING, AT_OBJECT, AT_NOTECARD = 0, 3, 5, 6, 7
 AT_LSL, AT_BODYPART, AT_ANIMATION, AT_GESTURE, AT_LINK, AT_LINK_FOLDER = 10, 13, 20, 21, 24, 25
 AT_MESH, AT_SETTINGS, AT_GLTF, AT_GLTF_BIN = 49, 56, 58, 59
+AT_NONE, IT_NONE = -1, -1
 IT_TEXTURE, IT_LANDMARK, IT_OBJECT, IT_NOTECARD, IT_CATEGORY, IT_LSL = 0, 3, 6, 7, 8, 10
 IT_WEARABLE, IT_ANIMATION, IT_GESTURE, IT_MESH, IT_SETTINGS, IT_GLTF, IT_GLTF_BIN = 18, 19, 20, 22, 25, 27, 28
 
@@ -1939,6 +1940,19 @@ def set15_null_parents():
     c.step("CREATEINVENTORY", result({"_created_items": [I(0x2711)],
                                       "_embedded": emb(items=[item(I(0x2711), U("00000000-0000-0000-0000-000000000010"),
                                                                    "Categorized", AT_OBJECT, IT_OBJECT)])}, http_ok(u)),
+           target=OBJECTS, url=u, body={"items": []})
+
+    c = Case("s15h_create_item_bad_type", 15, "CREATEINVENTORY creating two items of no asset type (-1), one in "
+             "Objects and one with a null parent, next to a notecard: the parse counts them all; the model refuses "
+             "the typeless ones before any parent handling (bug 23: not listed, no default-folder move, not "
+             "accounted, no changed id) and adds the notecard", skel())
+    c.step("CREATEINVENTORY", result({"_created_items": [I(0x2712), I(0x2713), I(0x2714)],
+                                      "_updated_category_versions": {OBJECTS: 4},
+                                      "_embedded": emb(items=[item(I(0x2712), OBJECTS, "No type", AT_NONE, IT_NONE),
+                                                              item(I(0x2713), NULL, "No type, no parent", AT_NONE,
+                                                                   IT_NONE),
+                                                              item(I(0x2714), OBJECTS, "Typed note", AT_NOTECARD,
+                                                                   IT_NOTECARD)])}, http_ok(u)),
            target=OBJECTS, url=u, body={"items": []})
 
 

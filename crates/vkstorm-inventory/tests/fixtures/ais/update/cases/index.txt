@@ -138,3 +138,4 @@ s15d_create_item_null_parent
 s15e_update_item_null_parent_old_null
 s15f_update_item_null_parent_old_known
 s15g_create_item_categorize_lost_and_found
+s15h_create_item_bad_type
