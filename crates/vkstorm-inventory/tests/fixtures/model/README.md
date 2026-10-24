@@ -69,8 +69,10 @@ set). The committed files are the Windows recording. Up to `040ec69cfe` every
 recording was repeated on Linux (WSL Ubuntu 26.04 with GCC 15.2 and with GCC
 14.3, CI's Linux configuration), with the same bytes in every file apart from
 the `# platform:` header line (see *Runtime edges* for the five values that
-differ by C runtime and how they are written). The `60184e5054` recording has
-not been repeated on Linux yet.
+differ by C runtime and how they are written). The `60184e5054` recording
+replays with 0 differences in CI (run 40078490702: windows-2022 MSVC and
+ubuntu-24.04 GCC 14, `INTEGRATION_TEST_llinventory_parity` in the focused
+test step); GCC 15 waits for CI's move to Ubuntu 26.04.
 
 ## Files
 
