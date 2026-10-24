@@ -566,3 +566,13 @@ what the C++ does with such a reply, not that AIS sends it.
    `LLInventoryCategory::fromLLSD` always returns true, and
    `LLInventoryItem::fromLLSD` returns false only when
    `LLSaleInfo::fromLLSD` does, which it never does.
+9. A refused item is still counted (since bug 23). When a write creates an
+   item of no asset type, `updateItem()` refuses it (bug 23, PR #181), but
+   the AIS parse has already counted it: `accountForUpdate` raises the
+   folder's expected descendant count for it and its completion callback
+   fires, while the model never holds it (s15h: Objects +2 for one kept
+   notecard and one refused item). The folder then expects more
+   descendants than it has, which is the kind of count mismatch that
+   makes the viewer refetch a folder (compare ais/fetch finding 6).
+   Recorded as it is; a candidate for a future fix, to be decided like the
+   approved inventory fixes, and the port reproduces it until then.
