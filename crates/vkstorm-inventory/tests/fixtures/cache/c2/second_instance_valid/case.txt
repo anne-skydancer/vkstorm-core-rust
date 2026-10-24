@@ -1,4 +1,4 @@
-note second instance: the cache is read through a temp copy; the library is not saved at logout
+note second instance: the cache is read through a temp copy (a sentinel plain <agent>.inv.llsd is left alone); the library is not saved at logout
 second_instance 1
 production_grid 1
 grid_id util.agni.lindenlab.com

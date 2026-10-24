@@ -1,18 +1,32 @@
 # vkstorm inventory model oracle (recorder R2): the public Linden Library cache (indra/llinventory/tests/fixtures/library)
 # generator: INTEGRATION_TEST_llinventorymodel_parity with VKS_INVMODEL_DUMP (indra/newview/tests/llinventorymodel_parity_test.cpp)
-# viewer commit: a6d6a04641
+# viewer commit: 43bff6b979
 # platform: windows-msvc
 # seed: none
 # format: tests/fixtures/inventory/cache/README.md; lines starting with '#' are not compared
 == library
 source ba2a564a-f0f1-4b82-9c61-b7520bfcd09f.inv.llsd.gz plain_size=3416877 plain_sha256=e13eec9f17cd2d9982aa7662035d61233059d1858be9765aa97afd30377c5b5b
 decode rv=1 obsolete=0 cats=490 items=5585 cats_to_update=[] records_sha256=d431fe1ea0c2713a659f1fad1bf44293be66ba9020727ea0c68b8ef6b6678cde
+records[0..999] sha256=ca65e32c2a37b7911ba1b0a854fcbdf78fba7a14e0af9dfba8cc0ef0fa6cc1a5
+records[1000..1999] sha256=c143e0ecca13016e975be87dd142e4f868680e5ca6cdfbb05e3de39ebbdcb065
+records[2000..2999] sha256=6eca06716b41f9dfd9547d5ecd548483140a1e37634fc238cc7364c06b0a29d4
+records[3000..3999] sha256=bfb6bb8b61deba7152a576aa65f5a3af1e25be0d23ad13f4a271d6c8b6dda7bf
+records[4000..4999] sha256=1bbe58f3838d2291c5b04019ed4112631edcdb18eb46b17c7837c91ca21ecf47
+records[5000..5999] sha256=c1f8c5639944f5850cba351cb3984795b5b35be1d92d7b10e3eb819404af5199
+records[6000..6074] sha256=954ba6eb07d189528daef56d14eb3a9fcc7e86bdfd597d5fbf60f50f0a1f1f8f
 item_types 0:353 1:72 3:38 5:1098 6:2602 7:57 10:7 13:804 20:24 21:97 56:415 57:18
 reencode identical=1 size=3416877
 library_root 1c7a7fd0-104e-a8b1-51c6-32ea9b08e38b
 loaded cats=517 cats_known_version=490 items=5585 links=0
 login_lines sha256=379dcfb1bbc8e8b2aa4a8c64c6c0a1dd58a24ee262cde3e4c3e8e217a7836c0a count=513
 model sha256=cbe32d0ee0ec491bf354e1dc8b25ac38bd4bcaffd2cf625a4988a7a182973440 lines=6601
+model[0..999] sha256=7d1c4cf6a5e85e94f711b29cba9fd8e07289ef8af241ce50f78b1c71ef0c6b57
+model[1000..1999] sha256=1f71dd12def6d70d420642d0433cd7ae716248971df28469ce955f73321c105d
+model[2000..2999] sha256=ede8a34d92f4528a7f7b2c1c48043f5c7d41765d11372d1608c11c4fba0b419c
+model[3000..3999] sha256=bf8570798d1d2e60bd467dca6a9e91db600826f14df0e334163f58df18dfbc96
+model[4000..4999] sha256=fbf18a4f3fad47ba80ba66ad39287e5875f1714283e58d7c5f09746270ebf159
+model[5000..5999] sha256=8163dfaaff6a6df07ef0485538d316e57ebbc41afbc47c41397d5841957f004f
+model[6000..6600] sha256=d8f9243bd972eaa48cd45188e01abe004d38a82f398790e18bc520502758f64c
 files after_library [ba2a564a-f0f1-4b82-9c61-b7520bfcd09f.inv.llsd.gz gz]
 files after_agent [ba2a564a-f0f1-4b82-9c61-b7520bfcd09f.inv.llsd.gz gz]
 files temp []
