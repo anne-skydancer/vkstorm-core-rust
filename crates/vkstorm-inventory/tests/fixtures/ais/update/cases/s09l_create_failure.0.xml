@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<llsd>
+<map><key>error_code</key><integer>400</integer><key>error_description</key><string>bad folder</string><key>http_result</key><map><key>success</key><boolean>false</boolean><key>type</key><integer>400</integer><key>status</key><integer>1</integer><key>message</key><string>Bad Request</string><key>url</key><string>https://inventory.grid.example/cap/00000000-0000-4000-8000-00000000cafe/category/c0000000-0000-4000-8000-000000000a20/children?depth=0</string><key>headers</key><map><key>content-type</key><string>application/llsd+xml</string></map><key>error_body</key><string>&lt;?xml version="1.0" ?&gt;
+&lt;llsd&gt;
+&lt;map&gt;&lt;key&gt;error_code&lt;/key&gt;&lt;integer&gt;400&lt;/integer&gt;&lt;key&gt;error_description&lt;/key&gt;&lt;string&gt;bad folder&lt;/string&gt;&lt;/map&gt;
+&lt;/llsd&gt;
+</string></map></map>
+</llsd>

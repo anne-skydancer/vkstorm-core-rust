@@ -1,0 +1,18 @@
+[package]
+name = "vkstorm-inventory"
+description = "The viewer's inventory data model rules for Vulkanstorm: asset, inventory and folder type tables, permissions, sale info, item and category records, their CRCs and their LLSD and legacy text forms, behaviour-identical to the C++ in indra/llinventory"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[features]
+default = []
+# OpenSim grid support: the OpenSim-only inventory paths, such as the export
+# permission column of mask_to_string. Absent from a Second Life-only build.
+# Mirrors the viewer's CMake OPENSIM option.
+opensim = []
+
+[dependencies]
+# Value for the LLSD forms, and text::uuid_set for LLUUID::set semantics.
+vkstorm-llsd = { path = "../vkstorm-llsd" }

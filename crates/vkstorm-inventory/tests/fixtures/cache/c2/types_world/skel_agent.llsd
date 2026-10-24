@@ -1,0 +1,583 @@
+
+[
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000001',
+        'name':'My Inventory',
+        'parent_id':'00000000-0000-0000-0000-000000000000',
+        'type_default':i8,
+        'version':i40
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000002',
+        'name':'Textures',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i0,
+        'version':i3
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000003',
+        'name':'Sounds',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i1,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000004',
+        'name':'Calling Cards',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i2,
+        'version':i2
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000005',
+        'name':'Landmarks',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i3,
+        'version':i5
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000006',
+        'name':'Clothing',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i5,
+        'version':i4
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000007',
+        'name':'Objects',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i6,
+        'version':i12
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000008',
+        'name':'Notecards',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i7,
+        'version':i2
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000009',
+        'name':'Scripts',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i10,
+        'version':i2
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000000a',
+        'name':'Body Parts',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i13,
+        'version':i6
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000000b',
+        'name':'Trash',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i14,
+        'version':i9
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000000c',
+        'name':'Photo Album',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i15,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000000d',
+        'name':'Lost And Found',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i16,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000000e',
+        'name':'Animations',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i20,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000000f',
+        'name':'Gestures',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i21,
+        'version':i2
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000010',
+        'name':'Favorites',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i23,
+        'version':i3
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000011',
+        'name':'Current Outfit',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i46,
+        'version':i30
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000012',
+        'name':'My Outfits',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i48,
+        'version':i4
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000013',
+        'name':'Received Items',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i50,
+        'version':i2
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000014',
+        'name':'Settings',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i56,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000015',
+        'name':'Materials',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i57,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000028',
+        'name':'Outfit A',
+        'parent_id':'f0000000-0000-4000-8000-000000000012',
+        'type_default':i47,
+        'version':i3
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000029',
+        'name':'Outfit B',
+        'parent_id':'f0000000-0000-4000-8000-000000000012',
+        'type_default':i47,
+        'version':i2
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000002a',
+        'name':'Furniture',
+        'parent_id':'f0000000-0000-4000-8000-000000000007',
+        'type_default':i-1,
+        'version':i7
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000002b',
+        'name':'Chairs',
+        'parent_id':'f0000000-0000-4000-8000-00000000002a',
+        'type_default':i-1,
+        'version':i2
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000002c',
+        'name':'Old stuff',
+        'parent_id':'f0000000-0000-4000-8000-00000000000b',
+        'type_default':i-1,
+        'version':i3
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000002d',
+        'name':'Older stuff',
+        'parent_id':'f0000000-0000-4000-8000-00000000002c',
+        'type_default':i-1,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000003c',
+        'name':'Every asset type',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i-1,
+        'version':i8
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000003d',
+        'name':'Every folder type',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i-1,
+        'version':i3
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000003e',
+        'name':'Record features',
+        'parent_id':'f0000000-0000-4000-8000-000000000001',
+        'type_default':i-1,
+        'version':i5
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000064',
+        'name':'type -1',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i-1,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000065',
+        'name':'type 0',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i0,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000066',
+        'name':'type 1',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i1,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000067',
+        'name':'type 2',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i2,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000068',
+        'name':'type 3',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i3,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000069',
+        'name':'type 4',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i4,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000006a',
+        'name':'type 5',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i5,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000006b',
+        'name':'type 6',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i6,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000006c',
+        'name':'type 7',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i7,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000006d',
+        'name':'type 10',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i10,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000006e',
+        'name':'type 13',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i13,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000006f',
+        'name':'type 14',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i14,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000070',
+        'name':'type 15',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i15,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000071',
+        'name':'type 16',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i16,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000072',
+        'name':'type 20',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i20,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000073',
+        'name':'type 21',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i21,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000074',
+        'name':'type 23',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i23,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000075',
+        'name':'type 26',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i26,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000076',
+        'name':'type 27',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i27,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000077',
+        'name':'type 28',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i28,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000078',
+        'name':'type 29',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i29,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000079',
+        'name':'type 30',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i30,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000007a',
+        'name':'type 31',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i31,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000007b',
+        'name':'type 32',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i32,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000007c',
+        'name':'type 33',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i33,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000007d',
+        'name':'type 34',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i34,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000007e',
+        'name':'type 35',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i35,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000007f',
+        'name':'type 36',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i36,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000080',
+        'name':'type 37',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i37,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000081',
+        'name':'type 38',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i38,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000082',
+        'name':'type 39',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i39,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000083',
+        'name':'type 40',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i40,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000084',
+        'name':'type 41',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i41,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000085',
+        'name':'type 42',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i42,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000086',
+        'name':'type 43',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i43,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000087',
+        'name':'type 44',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i44,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000088',
+        'name':'type 45',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i45,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000089',
+        'name':'type 46',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i46,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000008a',
+        'name':'type 47',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i47,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000008b',
+        'name':'type 48',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i48,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000008c',
+        'name':'type 49',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i49,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000008d',
+        'name':'type 50',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i50,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000008e',
+        'name':'type 51',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i51,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-00000000008f',
+        'name':'type 52',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i52,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000090',
+        'name':'type 53',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i53,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000091',
+        'name':'type 54',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i54,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000092',
+        'name':'type 55',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i55,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000093',
+        'name':'type 56',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i56,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000094',
+        'name':'type 57',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i57,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000095',
+        'name':'type 61',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i61,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000096',
+        'name':'type 99',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i99,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000097',
+        'name':'type 100',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i100,
+        'version':i1
+    },
+    {
+        'folder_id':'f0000000-0000-4000-8000-000000000098',
+        'name':'type 101',
+        'parent_id':'f0000000-0000-4000-8000-00000000003d',
+        'type_default':i101,
+        'version':i1
+    }]

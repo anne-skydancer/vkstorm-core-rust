@@ -1,0 +1,15 @@
+# vkstorm inventory oracle r4b: give/folder_sweep (digest)
+# what: set 7: random folder trees given and answered
+# generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
+# viewer: c465598e38
+# platform: windows-msvc-1944
+# seed: 0x523442464f4c0003
+# format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested
+lines=60312
+cases=1500
+sample_modulus=60
+chunk_cases=512
+sha256=c9c7aafe84744bfc8ee7cc27361a7d79bebfd975256db5e2e6fac150da6bc9cd
+chunk=0 first=folder_0000 last=folder_0511 cases=512 sha256=e2731a022fd8d62545d37573180cc15d96c7cbd653505403a2d7eb403e93fad3
+chunk=1 first=folder_0512 last=folder_1023 cases=512 sha256=6ff063a85f24b8d34ffa5fdb176b696412e540698fb841bbcea4ee1967d4b844
+chunk=2 first=folder_1024 last=folder_1499 cases=476 sha256=f44cbab2a6c13d4f76c505e2c57bf580e117efaaefccf65e6bd865a108519361

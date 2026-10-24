@@ -1,0 +1,461 @@
+# vkstorm inventory oracle r4b: give/will_accept_sweep (sample)
+# what: set 7: willObjectAcceptInventory, every combination
+# generator: INTEGRATION_TEST_llinventory_offer_oracle (VKS_R4B_DUMP)
+# viewer: c465598e38
+# platform: windows-msvc-1944
+# seed: none (fixed case list)
+# format: <case>\t<key>\t<value>; note.* lines are for review, neither compared nor digested
+obj_m0_a0_o0_v0_att0.item_own0_t0_u0_object_w1_f0_p0.dad_category.rlv0	in	pcode=47 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o0_v0_att0.item_own0_t0_u0_object_w1_f0_p0.dad_category.rlv0	result	3 ACCEPT_NO_LOCKED
+obj_m0_a0_o0_v0_att0.item_own0_t0_u0_object_w1_f0_p1.dad_item.rlv2	in	pcode=47 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o0_v0_att0.item_own0_t0_u0_object_w1_f0_p1.dad_item.rlv2	result	1 ACCEPT_NO
+obj_m0_a0_o0_v0_att0.item_own0_t0_u1_link_w0_f0_p0.dad_category.rlv0	in	pcode=47 t=24 o=other base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o0_v0_att0.item_own0_t0_u1_link_w0_f0_p0.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m0_a0_o0_v0_att0.item_own0_t1_u0_clothing_w1_f1_p1.dad_category.rlv3	in	pcode=47 t=5 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o0_v0_att0.item_own0_t1_u0_clothing_w1_f1_p1.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m0_a0_o0_v0_att0.item_own0_t1_u1_callingcard_w0_f0_p0.dad_item.rlv2	in	pcode=47 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m0_a0_o0_v0_att0.item_own0_t1_u1_callingcard_w0_f0_p0.dad_item.rlv2	result	1 ACCEPT_NO
+obj_m0_a0_o0_v0_att0.item_own1_t0_u0_notecard_w0_f1_p0.dad_category.rlv0	in	pcode=47 t=7 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o0_v0_att0.item_own1_t0_u0_notecard_w0_f1_p0.dad_category.rlv0	result	3 ACCEPT_NO_LOCKED
+obj_m0_a0_o0_v0_att0.item_own1_t0_u1_callingcard_w0_f1_p0.dad_category.rlv1	in	pcode=47 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m0_a0_o0_v0_att0.item_own1_t0_u1_callingcard_w0_f1_p0.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m0_a0_o0_v0_att0.item_own1_t0_u1_callingcard_w0_f1_p1.dad_category.rlv3	in	pcode=47 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m0_a0_o0_v0_att0.item_own1_t0_u1_callingcard_w0_f1_p1.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m0_a0_o0_v0_att1.item_own0_t0_u0_clothing_w0_f1_p0.dad_category.rlv4	in	pcode=47 t=5 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o0_v0_att1.item_own0_t0_u0_clothing_w0_f1_p0.dad_category.rlv4	result	3 ACCEPT_NO_LOCKED
+obj_m0_a0_o0_v0_att1.item_own0_t0_u0_link_w0_f0_p1.dad_category.rlv4	in	pcode=47 t=24 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o0_v0_att1.item_own0_t0_u0_link_w0_f0_p1.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m0_a0_o0_v0_att1.item_own0_t0_u1_callingcard_w0_f0_p1.dad_item.rlv1	in	pcode=47 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m0_a0_o0_v0_att1.item_own0_t0_u1_callingcard_w0_f0_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m0_a0_o0_v0_att1.item_own0_t1_u0_clothing_w1_f0_p1.dad_category.rlv1	in	pcode=47 t=5 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o0_v0_att1.item_own0_t1_u0_clothing_w1_f0_p1.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m0_a0_o0_v0_att1.item_own1_t0_u0_clothing_w1_f0_p0.dad_category.rlv0	in	pcode=47 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o0_v0_att1.item_own1_t0_u0_clothing_w1_f0_p0.dad_category.rlv0	result	3 ACCEPT_NO_LOCKED
+obj_m0_a0_o0_v0_att1.item_own1_t0_u0_link_w1_f0_p1.dad_item.rlv1	in	pcode=47 t=24 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o0_v0_att1.item_own1_t0_u0_link_w1_f0_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m0_a0_o0_v0_att1.item_own1_t0_u1_clothing_w0_f1_p0.dad_category.rlv0	in	pcode=47 t=5 o=agent base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o0_v0_att1.item_own1_t0_u1_clothing_w0_f1_p0.dad_category.rlv0	result	3 ACCEPT_NO_LOCKED
+obj_m0_a0_o0_v0_att1.item_own1_t0_u1_link_w0_f1_p0.dad_item.rlv3	in	pcode=47 t=24 o=agent base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o0_v0_att1.item_own1_t0_u1_link_w0_f1_p0.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m0_a0_o0_v0_att1.item_own1_t1_u0_clothing_w0_f0_p0.dad_category.rlv4	in	pcode=47 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o0_v0_att1.item_own1_t1_u0_clothing_w0_f0_p0.dad_category.rlv4	result	3 ACCEPT_NO_LOCKED
+obj_m0_a0_o0_v0_att1.item_own1_t1_u0_clothing_w0_f1_p0.dad_item.rlv1	in	pcode=47 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o0_v0_att1.item_own1_t1_u0_clothing_w0_f1_p0.dad_item.rlv1	result	3 ACCEPT_NO_LOCKED
+obj_m0_a0_o0_v0_att1.item_own1_t1_u0_clothing_w1_f1_p1.dad_item.rlv4	in	pcode=47 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o0_v0_att1.item_own1_t1_u0_clothing_w1_f1_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m0_a0_o0_v0_att1.item_own1_t1_u1_object_w0_f1_p1.dad_item.rlv3	in	pcode=47 t=6 o=agent base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m0_a0_o0_v0_att1.item_own1_t1_u1_object_w0_f1_p1.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m0_a0_o0_v1_att0.item_own0_t0_u0_clothing_w1_f1_p0.dad_category.rlv0	in	pcode=9 t=5 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o0_v1_att0.item_own0_t0_u0_clothing_w1_f1_p0.dad_category.rlv0	result	3 ACCEPT_NO_LOCKED
+obj_m0_a0_o0_v1_att0.item_own0_t0_u0_callingcard_w0_f0_p0.dad_category.rlv2	in	pcode=9 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m0_a0_o0_v1_att0.item_own0_t0_u0_callingcard_w0_f0_p0.dad_category.rlv2	result	1 ACCEPT_NO
+obj_m0_a0_o0_v1_att0.item_own0_t0_u1_clothing_w0_f0_p0.dad_category.rlv1	in	pcode=9 t=5 o=other base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o0_v1_att0.item_own0_t0_u1_clothing_w0_f0_p0.dad_category.rlv1	result	3 ACCEPT_NO_LOCKED
+obj_m0_a0_o0_v1_att0.item_own0_t1_u1_notecard_w1_f0_p0.dad_item.rlv4	in	pcode=9 t=7 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m0_a0_o0_v1_att0.item_own0_t1_u1_notecard_w1_f0_p0.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m0_a0_o0_v1_att0.item_own1_t0_u0_clothing_w0_f0_p1.dad_item.rlv3	in	pcode=9 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o0_v1_att0.item_own1_t0_u0_clothing_w0_f0_p1.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m0_a0_o0_v1_att0.item_own1_t0_u0_notecard_w1_f0_p0.dad_item.rlv4	in	pcode=9 t=7 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o0_v1_att0.item_own1_t0_u0_notecard_w1_f0_p0.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m0_a0_o0_v1_att0.item_own1_t1_u0_notecard_w0_f0_p0.dad_item.rlv4	in	pcode=9 t=7 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o0_v1_att0.item_own1_t1_u0_notecard_w0_f0_p0.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m0_a0_o0_v1_att0.item_own1_t1_u1_notecard_w0_f1_p0.dad_category.rlv2	in	pcode=9 t=7 o=agent base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m0_a0_o0_v1_att0.item_own1_t1_u1_notecard_w0_f1_p0.dad_category.rlv2	result	3 ACCEPT_NO_LOCKED
+obj_m0_a0_o0_v1_att1.item_own0_t0_u0_object_w0_f0_p1.dad_category.rlv0	in	pcode=9 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o0_v1_att1.item_own0_t0_u0_object_w0_f0_p1.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m0_a0_o0_v1_att1.item_own0_t0_u0_clothing_w0_f0_p0.dad_item.rlv3	in	pcode=9 t=5 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o0_v1_att1.item_own0_t0_u0_clothing_w0_f0_p0.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m0_a0_o0_v1_att1.item_own0_t0_u0_notecard_w1_f1_p1.dad_item.rlv0	in	pcode=9 t=7 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o0_v1_att1.item_own0_t0_u0_notecard_w1_f1_p1.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m0_a0_o0_v1_att1.item_own1_t1_u0_clothing_w0_f1_p1.dad_category.rlv1	in	pcode=9 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o0_v1_att1.item_own1_t1_u0_clothing_w0_f1_p1.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m0_a0_o0_v1_att1.item_own1_t1_u1_callingcard_w1_f1_p1.dad_item.rlv2	in	pcode=9 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m0_a0_o0_v1_att1.item_own1_t1_u1_callingcard_w1_f1_p1.dad_item.rlv2	result	1 ACCEPT_NO
+obj_m0_a0_o1_v0_att0.item_own0_t0_u1_object_w1_f1_p1.dad_item.rlv1	in	pcode=47 t=6 o=other base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o1_v0_att0.item_own0_t0_u1_object_w1_f1_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m0_a0_o1_v0_att0.item_own0_t0_u1_link_w0_f1_p1.dad_category.rlv3	in	pcode=47 t=24 o=other base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o1_v0_att0.item_own0_t0_u1_link_w0_f1_p1.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m0_a0_o1_v0_att0.item_own1_t0_u1_callingcard_w0_f1_p0.dad_category.rlv0	in	pcode=47 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m0_a0_o1_v0_att0.item_own1_t0_u1_callingcard_w0_f1_p0.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m0_a0_o1_v0_att0.item_own1_t0_u1_link_w1_f1_p1.dad_category.rlv3	in	pcode=47 t=24 o=agent base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o1_v0_att0.item_own1_t0_u1_link_w1_f1_p1.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m0_a0_o1_v0_att0.item_own1_t1_u0_clothing_w1_f0_p0.dad_item.rlv1	in	pcode=47 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o1_v0_att0.item_own1_t1_u0_clothing_w1_f0_p0.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m0_a0_o1_v0_att0.item_own1_t1_u1_callingcard_w0_f1_p0.dad_item.rlv1	in	pcode=47 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m0_a0_o1_v0_att0.item_own1_t1_u1_callingcard_w0_f1_p0.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m0_a0_o1_v0_att0.item_own1_t1_u1_callingcard_w1_f1_p1.dad_category.rlv0	in	pcode=47 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m0_a0_o1_v0_att0.item_own1_t1_u1_callingcard_w1_f1_p1.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m0_a0_o1_v0_att1.item_own0_t0_u0_object_w1_f1_p1.dad_item.rlv0	in	pcode=47 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o1_v0_att1.item_own0_t0_u0_object_w1_f1_p1.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m0_a0_o1_v0_att1.item_own0_t0_u1_clothing_w0_f1_p0.dad_item.rlv4	in	pcode=47 t=5 o=other base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o1_v0_att1.item_own0_t0_u1_clothing_w0_f1_p0.dad_item.rlv4	result	3 ACCEPT_NO_LOCKED
+obj_m0_a0_o1_v0_att1.item_own0_t0_u1_clothing_w1_f1_p1.dad_category.rlv3	in	pcode=47 t=5 o=other base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o1_v0_att1.item_own0_t0_u1_clothing_w1_f1_p1.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m0_a0_o1_v0_att1.item_own0_t1_u0_clothing_w1_f0_p1.dad_item.rlv4	in	pcode=47 t=5 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o1_v0_att1.item_own0_t1_u0_clothing_w1_f0_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m0_a0_o1_v0_att1.item_own1_t0_u0_clothing_w0_f0_p1.dad_category.rlv2	in	pcode=47 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o1_v0_att1.item_own1_t0_u0_clothing_w0_f0_p1.dad_category.rlv2	result	1 ACCEPT_NO
+obj_m0_a0_o1_v0_att1.item_own1_t1_u0_object_w0_f1_p1.dad_category.rlv0	in	pcode=47 t=6 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o1_v0_att1.item_own1_t1_u0_object_w0_f1_p1.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m0_a0_o1_v1_att0.item_own0_t0_u0_notecard_w0_f1_p0.dad_item.rlv0	in	pcode=9 t=7 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o1_v1_att0.item_own0_t0_u0_notecard_w0_f1_p0.dad_item.rlv0	result	3 ACCEPT_NO_LOCKED
+obj_m0_a0_o1_v1_att0.item_own0_t0_u1_object_w1_f0_p1.dad_item.rlv3	in	pcode=9 t=6 o=other base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o1_v1_att0.item_own0_t0_u1_object_w1_f0_p1.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m0_a0_o1_v1_att0.item_own0_t1_u0_notecard_w0_f0_p1.dad_item.rlv0	in	pcode=9 t=7 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o1_v1_att0.item_own0_t1_u0_notecard_w0_f0_p1.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m0_a0_o1_v1_att0.item_own1_t0_u1_clothing_w1_f0_p0.dad_category.rlv1	in	pcode=9 t=5 o=agent base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o1_v1_att0.item_own1_t0_u1_clothing_w1_f0_p0.dad_category.rlv1	result	3 ACCEPT_NO_LOCKED
+obj_m0_a0_o1_v1_att0.item_own1_t0_u1_notecard_w1_f0_p1.dad_item.rlv0	in	pcode=9 t=7 o=agent base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o1_v1_att0.item_own1_t0_u1_notecard_w1_f0_p1.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m0_a0_o1_v1_att0.item_own1_t1_u0_callingcard_w1_f1_p1.dad_category.rlv3	in	pcode=9 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m0_a0_o1_v1_att0.item_own1_t1_u0_callingcard_w1_f1_p1.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m0_a0_o1_v1_att1.item_own0_t0_u1_notecard_w0_f1_p1.dad_category.rlv3	in	pcode=9 t=7 o=other base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o1_v1_att1.item_own0_t0_u1_notecard_w0_f1_p1.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m0_a0_o1_v1_att1.item_own0_t1_u0_link_w0_f1_p1.dad_item.rlv1	in	pcode=9 t=24 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o1_v1_att1.item_own0_t1_u0_link_w0_f1_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m0_a0_o1_v1_att1.item_own1_t0_u0_object_w1_f1_p1.dad_category.rlv3	in	pcode=9 t=6 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o1_v1_att1.item_own1_t0_u0_object_w1_f1_p1.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m0_a0_o1_v1_att1.item_own1_t0_u0_clothing_w1_f1_p0.dad_item.rlv2	in	pcode=9 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o1_v1_att1.item_own1_t0_u0_clothing_w1_f1_p0.dad_item.rlv2	result	3 ACCEPT_NO_LOCKED
+obj_m0_a0_o1_v1_att1.item_own1_t0_u0_link_w1_f1_p0.dad_item.rlv4	in	pcode=9 t=24 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o1_v1_att1.item_own1_t0_u0_link_w1_f1_p0.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m0_a0_o1_v1_att1.item_own1_t0_u1_object_w0_f0_p0.dad_item.rlv4	in	pcode=9 t=6 o=agent base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m0_a0_o1_v1_att1.item_own1_t0_u1_object_w0_f0_p0.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m0_a0_o1_v1_att1.item_own1_t0_u1_clothing_w1_f1_p0.dad_category.rlv1	in	pcode=9 t=5 o=agent base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m0_a0_o1_v1_att1.item_own1_t0_u1_clothing_w1_f1_p0.dad_category.rlv1	result	3 ACCEPT_NO_LOCKED
+obj_m0_a0_o1_v1_att1.item_own1_t1_u0_callingcard_w0_f1_p0.dad_item.rlv0	in	pcode=9 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m0_a0_o1_v1_att1.item_own1_t1_u0_callingcard_w0_f1_p0.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m0_a0_o1_v1_att1.item_own1_t1_u1_object_w0_f0_p0.dad_item.rlv3	in	pcode=9 t=6 o=agent base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m0_a0_o1_v1_att1.item_own1_t1_u1_object_w0_f0_p0.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m0_a0_o1_v1_att1.item_own1_t1_u1_clothing_w0_f1_p0.dad_category.rlv4	in	pcode=9 t=5 o=agent base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m0_a0_o1_v1_att1.item_own1_t1_u1_clothing_w0_f1_p0.dad_category.rlv4	result	3 ACCEPT_NO_LOCKED
+obj_m0_a1_o0_v0_att0.item_own0_t0_u0_notecard_w0_f1_p1.dad_item.rlv0	in	pcode=47 t=7 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o0_v0_att0.item_own0_t0_u0_notecard_w0_f1_p1.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m0_a1_o0_v0_att0.item_own0_t1_u0_callingcard_w0_f0_p1.dad_category.rlv2	in	pcode=47 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m0_a1_o0_v0_att0.item_own0_t1_u0_callingcard_w0_f0_p1.dad_category.rlv2	result	1 ACCEPT_NO
+obj_m0_a1_o0_v0_att0.item_own0_t1_u0_callingcard_w1_f1_p1.dad_category.rlv2	in	pcode=47 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m0_a1_o0_v0_att0.item_own0_t1_u0_callingcard_w1_f1_p1.dad_category.rlv2	result	1 ACCEPT_NO
+obj_m0_a1_o0_v0_att0.item_own0_t1_u1_clothing_w1_f0_p1.dad_item.rlv4	in	pcode=47 t=5 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m0_a1_o0_v0_att0.item_own0_t1_u1_clothing_w1_f0_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o0_v0_att0.item_own1_t0_u1_link_w0_f1_p0.dad_item.rlv1	in	pcode=47 t=24 o=agent base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o0_v0_att0.item_own1_t0_u1_link_w0_f1_p0.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m0_a1_o0_v0_att1.item_own0_t0_u1_notecard_w1_f0_p1.dad_category.rlv3	in	pcode=47 t=7 o=other base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m0_a1_o0_v0_att1.item_own0_t0_u1_notecard_w1_f0_p1.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m0_a1_o0_v0_att1.item_own0_t1_u0_link_w0_f1_p1.dad_item.rlv4	in	pcode=47 t=24 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o0_v0_att1.item_own0_t1_u0_link_w0_f1_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o0_v0_att1.item_own0_t1_u0_link_w1_f1_p0.dad_item.rlv3	in	pcode=47 t=24 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o0_v0_att1.item_own0_t1_u0_link_w1_f1_p0.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m0_a1_o0_v0_att1.item_own0_t1_u1_object_w0_f1_p1.dad_item.rlv4	in	pcode=47 t=6 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m0_a1_o0_v0_att1.item_own0_t1_u1_object_w0_f1_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o0_v0_att1.item_own0_t1_u1_link_w1_f1_p1.dad_item.rlv4	in	pcode=47 t=24 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m0_a1_o0_v0_att1.item_own0_t1_u1_link_w1_f1_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o0_v0_att1.item_own1_t0_u0_link_w0_f1_p1.dad_item.rlv2	in	pcode=47 t=24 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o0_v0_att1.item_own1_t0_u0_link_w0_f1_p1.dad_item.rlv2	result	1 ACCEPT_NO
+obj_m0_a1_o0_v0_att1.item_own1_t0_u0_link_w1_f0_p0.dad_item.rlv2	in	pcode=47 t=24 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o0_v0_att1.item_own1_t0_u0_link_w1_f0_p0.dad_item.rlv2	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att0.item_own0_t0_u0_callingcard_w1_f1_p1.dad_category.rlv3	in	pcode=9 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m0_a1_o0_v1_att0.item_own0_t0_u0_callingcard_w1_f1_p1.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att0.item_own1_t0_u0_callingcard_w0_f0_p0.dad_item.rlv2	in	pcode=9 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m0_a1_o0_v1_att0.item_own1_t0_u0_callingcard_w0_f0_p0.dad_item.rlv2	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att0.item_own1_t0_u0_link_w0_f0_p1.dad_category.rlv4	in	pcode=9 t=24 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a1_o0_v1_att0.item_own1_t0_u0_link_w0_f0_p1.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att0.item_own1_t0_u1_link_w1_f0_p1.dad_item.rlv3	in	pcode=9 t=24 o=agent base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o0_v1_att0.item_own1_t0_u1_link_w1_f0_p1.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att0.item_own1_t1_u0_callingcard_w0_f0_p1.dad_category.rlv0	in	pcode=9 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m0_a1_o0_v1_att0.item_own1_t1_u0_callingcard_w0_f0_p1.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att0.item_own1_t1_u1_link_w1_f0_p0.dad_category.rlv3	in	pcode=9 t=24 o=agent base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m0_a1_o0_v1_att0.item_own1_t1_u1_link_w1_f0_p0.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att1.item_own0_t0_u1_object_w1_f0_p0.dad_category.rlv1	in	pcode=9 t=6 o=other base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m0_a1_o0_v1_att1.item_own0_t0_u1_object_w1_f0_p0.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att1.item_own0_t1_u0_notecard_w1_f0_p0.dad_item.rlv1	in	pcode=9 t=7 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o0_v1_att1.item_own0_t1_u0_notecard_w1_f0_p0.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att1.item_own0_t1_u1_object_w1_f0_p0.dad_item.rlv1	in	pcode=9 t=6 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m0_a1_o0_v1_att1.item_own0_t1_u1_object_w1_f0_p0.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att1.item_own0_t1_u1_notecard_w1_f0_p1.dad_item.rlv0	in	pcode=9 t=7 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m0_a1_o0_v1_att1.item_own0_t1_u1_notecard_w1_f0_p1.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att1.item_own1_t0_u1_object_w0_f1_p1.dad_item.rlv2	in	pcode=9 t=6 o=agent base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o0_v1_att1.item_own1_t0_u1_object_w0_f1_p1.dad_item.rlv2	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att1.item_own1_t0_u1_object_w1_f0_p0.dad_item.rlv3	in	pcode=9 t=6 o=agent base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o0_v1_att1.item_own1_t0_u1_object_w1_f0_p0.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att1.item_own1_t0_u1_object_w1_f0_p1.dad_category.rlv2	in	pcode=9 t=6 o=agent base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m0_a1_o0_v1_att1.item_own1_t0_u1_object_w1_f0_p1.dad_category.rlv2	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att1.item_own1_t1_u0_object_w0_f0_p1.dad_category.rlv2	in	pcode=9 t=6 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a1_o0_v1_att1.item_own1_t1_u0_object_w0_f0_p1.dad_category.rlv2	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att1.item_own1_t1_u0_clothing_w0_f0_p1.dad_category.rlv0	in	pcode=9 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a1_o0_v1_att1.item_own1_t1_u0_clothing_w0_f0_p1.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m0_a1_o0_v1_att1.item_own1_t1_u0_notecard_w0_f0_p1.dad_category.rlv1	in	pcode=9 t=7 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a1_o0_v1_att1.item_own1_t1_u0_notecard_w0_f0_p1.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m0_a1_o1_v0_att0.item_own0_t0_u1_clothing_w0_f1_p1.dad_category.rlv4	in	pcode=47 t=5 o=other base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m0_a1_o1_v0_att0.item_own0_t0_u1_clothing_w0_f1_p1.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o1_v0_att0.item_own0_t0_u1_notecard_w0_f1_p0.dad_item.rlv1	in	pcode=47 t=7 o=other base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o1_v0_att0.item_own0_t0_u1_notecard_w0_f1_p0.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m0_a1_o1_v0_att0.item_own0_t1_u0_object_w1_f1_p0.dad_item.rlv4	in	pcode=47 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o1_v0_att0.item_own0_t1_u0_object_w1_f1_p0.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o1_v0_att0.item_own0_t1_u1_object_w0_f1_p1.dad_item.rlv3	in	pcode=47 t=6 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m0_a1_o1_v0_att0.item_own0_t1_u1_object_w0_f1_p1.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m0_a1_o1_v0_att0.item_own0_t1_u1_clothing_w0_f1_p1.dad_category.rlv4	in	pcode=47 t=5 o=other base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m0_a1_o1_v0_att0.item_own0_t1_u1_clothing_w0_f1_p1.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o1_v0_att0.item_own0_t1_u1_notecard_w0_f0_p0.dad_category.rlv3	in	pcode=47 t=7 o=other base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m0_a1_o1_v0_att0.item_own0_t1_u1_notecard_w0_f0_p0.dad_category.rlv3	result	3 ACCEPT_NO_LOCKED
+obj_m0_a1_o1_v0_att0.item_own0_t1_u1_notecard_w1_f1_p0.dad_category.rlv4	in	pcode=47 t=7 o=other base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m0_a1_o1_v0_att0.item_own0_t1_u1_notecard_w1_f1_p0.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o1_v0_att0.item_own1_t0_u1_notecard_w0_f0_p0.dad_item.rlv0	in	pcode=47 t=7 o=agent base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o1_v0_att0.item_own1_t0_u1_notecard_w0_f0_p0.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m0_a1_o1_v0_att0.item_own1_t1_u1_link_w1_f1_p1.dad_item.rlv4	in	pcode=47 t=24 o=agent base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m0_a1_o1_v0_att0.item_own1_t1_u1_link_w1_f1_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o1_v0_att1.item_own0_t1_u1_clothing_w0_f0_p1.dad_item.rlv1	in	pcode=47 t=5 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m0_a1_o1_v0_att1.item_own0_t1_u1_clothing_w0_f0_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m0_a1_o1_v0_att1.item_own0_t1_u1_link_w0_f0_p1.dad_category.rlv3	in	pcode=47 t=24 o=other base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m0_a1_o1_v0_att1.item_own0_t1_u1_link_w0_f0_p1.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m0_a1_o1_v0_att1.item_own1_t0_u1_callingcard_w0_f0_p1.dad_item.rlv1	in	pcode=47 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m0_a1_o1_v0_att1.item_own1_t0_u1_callingcard_w0_f0_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m0_a1_o1_v1_att0.item_own0_t0_u0_object_w0_f0_p0.dad_category.rlv2	in	pcode=9 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a1_o1_v1_att0.item_own0_t0_u0_object_w0_f0_p0.dad_category.rlv2	result	3 ACCEPT_NO_LOCKED
+obj_m0_a1_o1_v1_att0.item_own0_t0_u0_object_w0_f1_p0.dad_category.rlv4	in	pcode=9 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m0_a1_o1_v1_att0.item_own0_t0_u0_object_w0_f1_p0.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o1_v1_att0.item_own0_t0_u0_clothing_w0_f1_p1.dad_item.rlv4	in	pcode=9 t=5 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o1_v1_att0.item_own0_t0_u0_clothing_w0_f1_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o1_v1_att0.item_own1_t0_u0_link_w1_f1_p0.dad_item.rlv0	in	pcode=9 t=24 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o1_v1_att0.item_own1_t0_u0_link_w1_f1_p0.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m0_a1_o1_v1_att0.item_own1_t1_u1_clothing_w0_f1_p1.dad_category.rlv4	in	pcode=9 t=5 o=agent base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m0_a1_o1_v1_att0.item_own1_t1_u1_clothing_w0_f1_p1.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o1_v1_att0.item_own1_t1_u1_notecard_w1_f1_p1.dad_category.rlv1	in	pcode=9 t=7 o=agent base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m0_a1_o1_v1_att0.item_own1_t1_u1_notecard_w1_f1_p1.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m0_a1_o1_v1_att0.item_own1_t1_u1_link_w0_f0_p1.dad_item.rlv1	in	pcode=9 t=24 o=agent base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m0_a1_o1_v1_att0.item_own1_t1_u1_link_w0_f0_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m0_a1_o1_v1_att1.item_own0_t0_u0_object_w0_f0_p0.dad_item.rlv4	in	pcode=9 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o1_v1_att1.item_own0_t0_u0_object_w0_f0_p0.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o1_v1_att1.item_own0_t0_u0_link_w1_f1_p0.dad_item.rlv0	in	pcode=9 t=24 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o1_v1_att1.item_own0_t0_u0_link_w1_f1_p0.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m0_a1_o1_v1_att1.item_own0_t0_u1_clothing_w1_f0_p1.dad_item.rlv0	in	pcode=9 t=5 o=other base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o1_v1_att1.item_own0_t0_u1_clothing_w1_f0_p1.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m0_a1_o1_v1_att1.item_own0_t1_u1_clothing_w1_f1_p0.dad_item.rlv0	in	pcode=9 t=5 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m0_a1_o1_v1_att1.item_own0_t1_u1_clothing_w1_f1_p0.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m0_a1_o1_v1_att1.item_own1_t0_u1_callingcard_w1_f1_p0.dad_category.rlv4	in	pcode=9 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m0_a1_o1_v1_att1.item_own1_t0_u1_callingcard_w1_f1_p0.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o1_v1_att1.item_own1_t1_u0_notecard_w1_f0_p0.dad_item.rlv3	in	pcode=9 t=7 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m0_a1_o1_v1_att1.item_own1_t1_u0_notecard_w1_f0_p0.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m0_a1_o1_v1_att1.item_own1_t1_u1_object_w0_f1_p1.dad_category.rlv4	in	pcode=9 t=6 o=agent base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m0_a1_o1_v1_att1.item_own1_t1_u1_object_w0_f1_p1.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m0_a1_o1_v1_att1.item_own1_t1_u1_object_w1_f1_p0.dad_category.rlv2	in	pcode=9 t=6 o=agent base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m0_a1_o1_v1_att1.item_own1_t1_u1_object_w1_f1_p0.dad_category.rlv2	result	3 ACCEPT_NO_LOCKED
+obj_m1_a0_o0_v0_att0.item_own0_t0_u1_clothing_w1_f1_p0.dad_item.rlv4	in	pcode=47 t=5 o=other base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o0_v0_att0.item_own0_t0_u1_clothing_w1_f1_p0.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a0_o0_v0_att0.item_own0_t0_u1_callingcard_w0_f0_p0.dad_item.rlv4	in	pcode=47 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m1_a0_o0_v0_att0.item_own0_t0_u1_callingcard_w0_f0_p0.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a0_o0_v0_att0.item_own0_t0_u1_callingcard_w1_f0_p1.dad_category.rlv0	in	pcode=47 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m1_a0_o0_v0_att0.item_own0_t0_u1_callingcard_w1_f0_p1.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m1_a0_o0_v0_att0.item_own0_t0_u1_notecard_w0_f0_p0.dad_item.rlv1	in	pcode=47 t=7 o=other base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o0_v0_att0.item_own0_t0_u1_notecard_w0_f0_p0.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m1_a0_o0_v0_att0.item_own0_t1_u0_notecard_w0_f0_p1.dad_item.rlv1	in	pcode=47 t=7 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o0_v0_att0.item_own0_t1_u0_notecard_w0_f0_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m1_a0_o0_v0_att0.item_own1_t0_u0_object_w0_f1_p0.dad_category.rlv4	in	pcode=47 t=6 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a0_o0_v0_att0.item_own1_t0_u0_object_w0_f1_p0.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m1_a0_o0_v0_att0.item_own1_t0_u0_clothing_w0_f0_p1.dad_category.rlv0	in	pcode=47 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a0_o0_v0_att0.item_own1_t0_u0_clothing_w0_f0_p1.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m1_a0_o0_v0_att0.item_own1_t1_u1_clothing_w1_f0_p1.dad_item.rlv4	in	pcode=47 t=5 o=agent base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m1_a0_o0_v0_att0.item_own1_t1_u1_clothing_w1_f0_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a0_o0_v0_att1.item_own0_t1_u0_link_w0_f1_p0.dad_category.rlv0	in	pcode=47 t=24 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a0_o0_v0_att1.item_own0_t1_u0_link_w0_f1_p0.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m1_a0_o0_v0_att1.item_own1_t0_u1_link_w1_f1_p0.dad_category.rlv3	in	pcode=47 t=24 o=agent base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m1_a0_o0_v0_att1.item_own1_t0_u1_link_w1_f1_p0.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m1_a0_o0_v0_att1.item_own1_t1_u1_callingcard_w0_f0_p0.dad_item.rlv3	in	pcode=47 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m1_a0_o0_v0_att1.item_own1_t1_u1_callingcard_w0_f0_p0.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m1_a0_o0_v1_att0.item_own0_t0_u1_clothing_w0_f1_p1.dad_item.rlv3	in	pcode=9 t=5 o=other base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o0_v1_att0.item_own0_t0_u1_clothing_w0_f1_p1.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m1_a0_o0_v1_att0.item_own0_t1_u1_link_w0_f0_p1.dad_item.rlv1	in	pcode=9 t=24 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m1_a0_o0_v1_att0.item_own0_t1_u1_link_w0_f0_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m1_a0_o0_v1_att1.item_own0_t0_u0_object_w1_f0_p0.dad_category.rlv3	in	pcode=9 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a0_o0_v1_att1.item_own0_t0_u0_object_w1_f0_p0.dad_category.rlv3	result	3 ACCEPT_NO_LOCKED
+obj_m1_a0_o0_v1_att1.item_own0_t1_u0_object_w0_f0_p0.dad_category.rlv3	in	pcode=9 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a0_o0_v1_att1.item_own0_t1_u0_object_w0_f0_p0.dad_category.rlv3	result	3 ACCEPT_NO_LOCKED
+obj_m1_a0_o0_v1_att1.item_own0_t1_u0_clothing_w0_f1_p1.dad_category.rlv2	in	pcode=9 t=5 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a0_o0_v1_att1.item_own0_t1_u0_clothing_w0_f1_p1.dad_category.rlv2	result	1 ACCEPT_NO
+obj_m1_a0_o0_v1_att1.item_own0_t1_u0_link_w1_f1_p0.dad_item.rlv1	in	pcode=9 t=24 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o0_v1_att1.item_own0_t1_u0_link_w1_f1_p0.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m1_a0_o0_v1_att1.item_own0_t1_u1_clothing_w1_f0_p0.dad_category.rlv3	in	pcode=9 t=5 o=other base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m1_a0_o0_v1_att1.item_own0_t1_u1_clothing_w1_f0_p0.dad_category.rlv3	result	3 ACCEPT_NO_LOCKED
+obj_m1_a0_o0_v1_att1.item_own0_t1_u1_clothing_w1_f1_p1.dad_category.rlv2	in	pcode=9 t=5 o=other base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m1_a0_o0_v1_att1.item_own0_t1_u1_clothing_w1_f1_p1.dad_category.rlv2	result	1 ACCEPT_NO
+obj_m1_a0_o0_v1_att1.item_own0_t1_u1_link_w0_f0_p0.dad_item.rlv3	in	pcode=9 t=24 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m1_a0_o0_v1_att1.item_own0_t1_u1_link_w0_f0_p0.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m1_a0_o0_v1_att1.item_own1_t0_u1_object_w1_f0_p0.dad_category.rlv4	in	pcode=9 t=6 o=agent base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m1_a0_o0_v1_att1.item_own1_t0_u1_object_w1_f0_p0.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m1_a0_o0_v1_att1.item_own1_t0_u1_link_w0_f1_p0.dad_item.rlv1	in	pcode=9 t=24 o=agent base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o0_v1_att1.item_own1_t0_u1_link_w0_f1_p0.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m1_a0_o0_v1_att1.item_own1_t1_u0_object_w0_f0_p1.dad_category.rlv1	in	pcode=9 t=6 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a0_o0_v1_att1.item_own1_t1_u0_object_w0_f0_p1.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m1_a0_o0_v1_att1.item_own1_t1_u0_object_w0_f1_p0.dad_item.rlv1	in	pcode=9 t=6 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o0_v1_att1.item_own1_t1_u0_object_w0_f1_p0.dad_item.rlv1	result	3 ACCEPT_NO_LOCKED
+obj_m1_a0_o0_v1_att1.item_own1_t1_u0_notecard_w1_f1_p1.dad_item.rlv0	in	pcode=9 t=7 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o0_v1_att1.item_own1_t1_u0_notecard_w1_f1_p1.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m1_a0_o1_v0_att0.item_own0_t0_u0_object_w0_f0_p0.dad_item.rlv1	in	pcode=47 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o1_v0_att0.item_own0_t0_u0_object_w0_f0_p0.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m1_a0_o1_v0_att0.item_own0_t0_u0_callingcard_w1_f0_p0.dad_item.rlv0	in	pcode=47 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m1_a0_o1_v0_att0.item_own0_t0_u0_callingcard_w1_f0_p0.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m1_a0_o1_v0_att0.item_own0_t0_u0_callingcard_w1_f0_p1.dad_item.rlv1	in	pcode=47 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m1_a0_o1_v0_att0.item_own0_t0_u0_callingcard_w1_f0_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m1_a0_o1_v0_att0.item_own0_t0_u1_callingcard_w1_f0_p1.dad_category.rlv1	in	pcode=47 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m1_a0_o1_v0_att0.item_own0_t0_u1_callingcard_w1_f0_p1.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m1_a0_o1_v0_att0.item_own0_t0_u1_notecard_w0_f1_p1.dad_item.rlv4	in	pcode=47 t=7 o=other base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o1_v0_att0.item_own0_t0_u1_notecard_w0_f1_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a0_o1_v0_att0.item_own0_t1_u0_object_w1_f1_p1.dad_item.rlv0	in	pcode=47 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o1_v0_att0.item_own0_t1_u0_object_w1_f1_p1.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m1_a0_o1_v0_att0.item_own0_t1_u1_notecard_w1_f1_p1.dad_item.rlv1	in	pcode=47 t=7 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m1_a0_o1_v0_att0.item_own0_t1_u1_notecard_w1_f1_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m1_a0_o1_v0_att0.item_own1_t0_u1_link_w0_f0_p1.dad_item.rlv3	in	pcode=47 t=24 o=agent base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o1_v0_att0.item_own1_t0_u1_link_w0_f0_p1.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m1_a0_o1_v0_att1.item_own0_t0_u1_callingcard_w0_f0_p0.dad_item.rlv2	in	pcode=47 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m1_a0_o1_v0_att1.item_own0_t0_u1_callingcard_w0_f0_p0.dad_item.rlv2	result	1 ACCEPT_NO
+obj_m1_a0_o1_v0_att1.item_own0_t0_u1_callingcard_w1_f0_p1.dad_category.rlv4	in	pcode=47 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m1_a0_o1_v0_att1.item_own0_t0_u1_callingcard_w1_f0_p1.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m1_a0_o1_v0_att1.item_own0_t0_u1_notecard_w0_f0_p1.dad_item.rlv4	in	pcode=47 t=7 o=other base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o1_v0_att1.item_own0_t0_u1_notecard_w0_f0_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a0_o1_v0_att1.item_own0_t1_u1_clothing_w0_f1_p1.dad_item.rlv4	in	pcode=47 t=5 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m1_a0_o1_v0_att1.item_own0_t1_u1_clothing_w0_f1_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a0_o1_v0_att1.item_own1_t0_u1_callingcard_w1_f1_p0.dad_category.rlv4	in	pcode=47 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m1_a0_o1_v0_att1.item_own1_t0_u1_callingcard_w1_f1_p0.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m1_a0_o1_v0_att1.item_own1_t1_u0_object_w1_f1_p0.dad_item.rlv3	in	pcode=47 t=6 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o1_v0_att1.item_own1_t1_u0_object_w1_f1_p0.dad_item.rlv3	result	3 ACCEPT_NO_LOCKED
+obj_m1_a0_o1_v0_att1.item_own1_t1_u1_clothing_w1_f0_p0.dad_category.rlv2	in	pcode=47 t=5 o=agent base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m1_a0_o1_v0_att1.item_own1_t1_u1_clothing_w1_f0_p0.dad_category.rlv2	result	3 ACCEPT_NO_LOCKED
+obj_m1_a0_o1_v1_att0.item_own0_t1_u1_callingcard_w0_f1_p0.dad_item.rlv3	in	pcode=9 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m1_a0_o1_v1_att0.item_own0_t1_u1_callingcard_w0_f1_p0.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m1_a0_o1_v1_att0.item_own0_t1_u1_link_w1_f0_p1.dad_category.rlv2	in	pcode=9 t=24 o=other base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m1_a0_o1_v1_att0.item_own0_t1_u1_link_w1_f0_p1.dad_category.rlv2	result	1 ACCEPT_NO
+obj_m1_a0_o1_v1_att0.item_own1_t0_u0_object_w1_f1_p0.dad_category.rlv1	in	pcode=9 t=6 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a0_o1_v1_att0.item_own1_t0_u0_object_w1_f1_p0.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m1_a0_o1_v1_att0.item_own1_t0_u0_callingcard_w0_f0_p0.dad_category.rlv2	in	pcode=9 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m1_a0_o1_v1_att0.item_own1_t0_u0_callingcard_w0_f0_p0.dad_category.rlv2	result	1 ACCEPT_NO
+obj_m1_a0_o1_v1_att0.item_own1_t1_u0_clothing_w0_f0_p0.dad_category.rlv1	in	pcode=9 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a0_o1_v1_att0.item_own1_t1_u0_clothing_w0_f0_p0.dad_category.rlv1	result	7 ACCEPT_YES_MULTI
+obj_m1_a0_o1_v1_att0.item_own1_t1_u0_clothing_w1_f0_p0.dad_item.rlv0	in	pcode=9 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o1_v1_att0.item_own1_t1_u0_clothing_w1_f0_p0.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m1_a0_o1_v1_att0.item_own1_t1_u1_callingcard_w1_f1_p0.dad_category.rlv1	in	pcode=9 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m1_a0_o1_v1_att0.item_own1_t1_u1_callingcard_w1_f1_p0.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m1_a0_o1_v1_att1.item_own0_t0_u0_clothing_w1_f0_p0.dad_category.rlv2	in	pcode=9 t=5 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a0_o1_v1_att1.item_own0_t0_u0_clothing_w1_f0_p0.dad_category.rlv2	result	3 ACCEPT_NO_LOCKED
+obj_m1_a0_o1_v1_att1.item_own1_t0_u0_object_w0_f0_p1.dad_item.rlv1	in	pcode=9 t=6 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o1_v1_att1.item_own1_t0_u0_object_w0_f0_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m1_a0_o1_v1_att1.item_own1_t0_u0_callingcard_w1_f1_p0.dad_category.rlv4	in	pcode=9 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m1_a0_o1_v1_att1.item_own1_t0_u0_callingcard_w1_f1_p0.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m1_a0_o1_v1_att1.item_own1_t0_u1_callingcard_w1_f1_p1.dad_item.rlv0	in	pcode=9 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m1_a0_o1_v1_att1.item_own1_t0_u1_callingcard_w1_f1_p1.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m1_a0_o1_v1_att1.item_own1_t1_u0_notecard_w1_f1_p1.dad_item.rlv0	in	pcode=9 t=7 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a0_o1_v1_att1.item_own1_t1_u0_notecard_w1_f1_p1.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m1_a1_o0_v0_att0.item_own0_t0_u0_object_w0_f0_p1.dad_category.rlv3	in	pcode=47 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o0_v0_att0.item_own0_t0_u0_object_w0_f0_p1.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m1_a1_o0_v0_att0.item_own0_t0_u1_object_w0_f1_p1.dad_item.rlv4	in	pcode=47 t=6 o=other base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o0_v0_att0.item_own0_t0_u1_object_w0_f1_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a1_o0_v0_att0.item_own0_t1_u1_object_w0_f0_p1.dad_item.rlv3	in	pcode=47 t=6 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m1_a1_o0_v0_att0.item_own0_t1_u1_object_w0_f0_p1.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m1_a1_o0_v0_att0.item_own1_t0_u0_link_w1_f1_p0.dad_category.rlv3	in	pcode=47 t=24 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o0_v0_att0.item_own1_t0_u0_link_w1_f1_p0.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m1_a1_o0_v0_att0.item_own1_t0_u1_object_w0_f0_p0.dad_category.rlv0	in	pcode=47 t=6 o=agent base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o0_v0_att0.item_own1_t0_u1_object_w0_f0_p0.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m1_a1_o0_v0_att0.item_own1_t0_u1_clothing_w0_f0_p1.dad_category.rlv1	in	pcode=47 t=5 o=agent base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o0_v0_att0.item_own1_t0_u1_clothing_w0_f0_p1.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m1_a1_o0_v0_att0.item_own1_t1_u1_clothing_w1_f1_p1.dad_item.rlv1	in	pcode=47 t=5 o=agent base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m1_a1_o0_v0_att0.item_own1_t1_u1_clothing_w1_f1_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m1_a1_o0_v0_att1.item_own0_t0_u0_object_w0_f0_p1.dad_item.rlv4	in	pcode=47 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o0_v0_att1.item_own0_t0_u0_object_w0_f0_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a1_o0_v0_att1.item_own0_t0_u0_callingcard_w0_f1_p0.dad_item.rlv4	in	pcode=47 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m1_a1_o0_v0_att1.item_own0_t0_u0_callingcard_w0_f1_p0.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a1_o0_v0_att1.item_own0_t1_u1_link_w1_f1_p1.dad_category.rlv2	in	pcode=47 t=24 o=other base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m1_a1_o0_v0_att1.item_own0_t1_u1_link_w1_f1_p1.dad_category.rlv2	result	1 ACCEPT_NO
+obj_m1_a1_o0_v0_att1.item_own1_t0_u0_clothing_w0_f1_p0.dad_item.rlv1	in	pcode=47 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o0_v0_att1.item_own1_t0_u0_clothing_w0_f1_p0.dad_item.rlv1	result	3 ACCEPT_NO_LOCKED
+obj_m1_a1_o0_v0_att1.item_own1_t0_u1_link_w0_f1_p1.dad_item.rlv0	in	pcode=47 t=24 o=agent base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o0_v0_att1.item_own1_t0_u1_link_w0_f1_p1.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m1_a1_o0_v1_att0.item_own0_t0_u1_object_w1_f1_p0.dad_category.rlv0	in	pcode=9 t=6 o=other base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o0_v1_att0.item_own0_t0_u1_object_w1_f1_p0.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m1_a1_o0_v1_att0.item_own0_t0_u1_callingcard_w1_f0_p0.dad_item.rlv0	in	pcode=9 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m1_a1_o0_v1_att0.item_own0_t0_u1_callingcard_w1_f0_p0.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m1_a1_o0_v1_att0.item_own0_t1_u0_object_w1_f1_p1.dad_category.rlv1	in	pcode=9 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o0_v1_att0.item_own0_t1_u0_object_w1_f1_p1.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m1_a1_o0_v1_att0.item_own0_t1_u0_callingcard_w0_f1_p0.dad_item.rlv0	in	pcode=9 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m1_a1_o0_v1_att0.item_own0_t1_u0_callingcard_w0_f1_p0.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m1_a1_o0_v1_att0.item_own0_t1_u1_clothing_w1_f0_p0.dad_item.rlv4	in	pcode=9 t=5 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m1_a1_o0_v1_att0.item_own0_t1_u1_clothing_w1_f0_p0.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a1_o0_v1_att0.item_own1_t0_u0_object_w1_f0_p1.dad_category.rlv2	in	pcode=9 t=6 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o0_v1_att0.item_own1_t0_u0_object_w1_f0_p1.dad_category.rlv2	result	1 ACCEPT_NO
+obj_m1_a1_o0_v1_att0.item_own1_t0_u1_clothing_w0_f0_p1.dad_item.rlv1	in	pcode=9 t=5 o=agent base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o0_v1_att0.item_own1_t0_u1_clothing_w0_f0_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m1_a1_o0_v1_att0.item_own1_t1_u0_notecard_w1_f1_p1.dad_item.rlv1	in	pcode=9 t=7 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o0_v1_att0.item_own1_t1_u0_notecard_w1_f1_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m1_a1_o0_v1_att1.item_own0_t0_u1_callingcard_w1_f1_p0.dad_item.rlv4	in	pcode=9 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m1_a1_o0_v1_att1.item_own0_t0_u1_callingcard_w1_f1_p0.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a1_o0_v1_att1.item_own0_t1_u0_object_w1_f1_p0.dad_category.rlv2	in	pcode=9 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o0_v1_att1.item_own0_t1_u0_object_w1_f1_p0.dad_category.rlv2	result	3 ACCEPT_NO_LOCKED
+obj_m1_a1_o0_v1_att1.item_own0_t1_u1_callingcard_w1_f1_p1.dad_category.rlv1	in	pcode=9 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m1_a1_o0_v1_att1.item_own0_t1_u1_callingcard_w1_f1_p1.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m1_a1_o0_v1_att1.item_own1_t0_u0_callingcard_w0_f0_p0.dad_item.rlv0	in	pcode=9 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=8
+obj_m1_a1_o0_v1_att1.item_own1_t0_u0_callingcard_w0_f0_p0.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m1_a1_o0_v1_att1.item_own1_t1_u0_clothing_w0_f0_p0.dad_item.rlv4	in	pcode=9 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o0_v1_att1.item_own1_t1_u0_clothing_w0_f0_p0.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a1_o0_v1_att1.item_own1_t1_u1_link_w1_f0_p0.dad_category.rlv1	in	pcode=9 t=24 o=agent base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m1_a1_o0_v1_att1.item_own1_t1_u1_link_w1_f0_p0.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m1_a1_o1_v0_att0.item_own0_t1_u0_object_w0_f0_p0.dad_category.rlv0	in	pcode=47 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o1_v0_att0.item_own0_t1_u0_object_w0_f0_p0.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m1_a1_o1_v0_att0.item_own0_t1_u0_notecard_w1_f1_p0.dad_category.rlv1	in	pcode=47 t=7 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o1_v0_att0.item_own0_t1_u0_notecard_w1_f1_p0.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m1_a1_o1_v0_att0.item_own1_t1_u1_object_w0_f1_p1.dad_item.rlv3	in	pcode=47 t=6 o=agent base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m1_a1_o1_v0_att0.item_own1_t1_u1_object_w0_f1_p1.dad_item.rlv3	result	1 ACCEPT_NO
+obj_m1_a1_o1_v0_att1.item_own0_t0_u0_callingcard_w0_f1_p1.dad_category.rlv1	in	pcode=47 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m1_a1_o1_v0_att1.item_own0_t0_u0_callingcard_w0_f1_p1.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m1_a1_o1_v0_att1.item_own0_t0_u1_object_w1_f1_p1.dad_category.rlv1	in	pcode=47 t=6 o=other base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o1_v0_att1.item_own0_t0_u1_object_w1_f1_p1.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m1_a1_o1_v0_att1.item_own0_t1_u0_callingcard_w1_f1_p0.dad_category.rlv4	in	pcode=47 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m1_a1_o1_v0_att1.item_own0_t1_u0_callingcard_w1_f1_p0.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m1_a1_o1_v0_att1.item_own0_t1_u0_notecard_w0_f1_p1.dad_category.rlv3	in	pcode=47 t=7 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o1_v0_att1.item_own0_t1_u0_notecard_w0_f1_p1.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m1_a1_o1_v0_att1.item_own0_t1_u1_link_w0_f0_p0.dad_item.rlv2	in	pcode=47 t=24 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m1_a1_o1_v0_att1.item_own0_t1_u1_link_w0_f0_p0.dad_item.rlv2	result	1 ACCEPT_NO
+obj_m1_a1_o1_v0_att1.item_own1_t0_u0_object_w0_f0_p0.dad_item.rlv4	in	pcode=47 t=6 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o1_v0_att1.item_own1_t0_u0_object_w0_f0_p0.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a1_o1_v0_att1.item_own1_t0_u0_clothing_w0_f1_p0.dad_item.rlv1	in	pcode=47 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o1_v0_att1.item_own1_t0_u0_clothing_w0_f1_p0.dad_item.rlv1	result	3 ACCEPT_NO_LOCKED
+obj_m1_a1_o1_v0_att1.item_own1_t1_u0_object_w1_f0_p1.dad_category.rlv4	in	pcode=47 t=6 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o1_v0_att1.item_own1_t1_u0_object_w1_f0_p1.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m1_a1_o1_v0_att1.item_own1_t1_u0_clothing_w1_f0_p1.dad_category.rlv0	in	pcode=47 t=5 o=agent base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o1_v0_att1.item_own1_t1_u0_clothing_w1_f0_p1.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m1_a1_o1_v0_att1.item_own1_t1_u0_callingcard_w0_f1_p1.dad_category.rlv1	in	pcode=47 t=2 o=agent base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m1_a1_o1_v0_att1.item_own1_t1_u0_callingcard_w0_f1_p1.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m1_a1_o1_v0_att1.item_own1_t1_u1_object_w1_f1_p1.dad_category.rlv3	in	pcode=47 t=6 o=agent base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m1_a1_o1_v0_att1.item_own1_t1_u1_object_w1_f1_p1.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m1_a1_o1_v0_att1.item_own1_t1_u1_notecard_w1_f1_p0.dad_category.rlv0	in	pcode=47 t=7 o=agent base=7fffffff own=0008e000 evr=00000000 dad=9
+obj_m1_a1_o1_v0_att1.item_own1_t1_u1_notecard_w1_f1_p0.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m1_a1_o1_v0_att1.item_own1_t1_u1_link_w0_f0_p1.dad_item.rlv1	in	pcode=47 t=24 o=agent base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m1_a1_o1_v0_att1.item_own1_t1_u1_link_w0_f0_p1.dad_item.rlv1	result	1 ACCEPT_NO
+obj_m1_a1_o1_v1_att0.item_own0_t0_u0_object_w0_f0_p1.dad_item.rlv2	in	pcode=9 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o1_v1_att0.item_own0_t0_u0_object_w0_f0_p1.dad_item.rlv2	result	1 ACCEPT_NO
+obj_m1_a1_o1_v1_att0.item_own0_t0_u0_link_w1_f0_p1.dad_category.rlv3	in	pcode=9 t=24 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o1_v1_att0.item_own0_t0_u0_link_w1_f0_p1.dad_category.rlv3	result	1 ACCEPT_NO
+obj_m1_a1_o1_v1_att0.item_own0_t0_u1_callingcard_w1_f0_p0.dad_category.rlv4	in	pcode=9 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m1_a1_o1_v1_att0.item_own0_t0_u1_callingcard_w1_f0_p0.dad_category.rlv4	result	1 ACCEPT_NO
+obj_m1_a1_o1_v1_att0.item_own0_t0_u1_notecard_w1_f0_p1.dad_item.rlv4	in	pcode=9 t=7 o=other base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o1_v1_att0.item_own0_t0_u1_notecard_w1_f0_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a1_o1_v1_att0.item_own0_t1_u1_notecard_w0_f0_p1.dad_item.rlv4	in	pcode=9 t=7 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m1_a1_o1_v1_att0.item_own0_t1_u1_notecard_w0_f0_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a1_o1_v1_att0.item_own1_t0_u1_link_w1_f1_p1.dad_category.rlv2	in	pcode=9 t=24 o=agent base=7fffffff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o1_v1_att0.item_own1_t0_u1_link_w1_f1_p1.dad_category.rlv2	result	1 ACCEPT_NO
+obj_m1_a1_o1_v1_att1.item_own0_t0_u0_object_w1_f1_p0.dad_item.rlv1	in	pcode=9 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o1_v1_att1.item_own0_t0_u0_object_w1_f1_p0.dad_item.rlv1	result	3 ACCEPT_NO_LOCKED
+obj_m1_a1_o1_v1_att1.item_own0_t0_u0_clothing_w0_f1_p0.dad_item.rlv2	in	pcode=9 t=5 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o1_v1_att1.item_own0_t0_u0_clothing_w0_f1_p0.dad_item.rlv2	result	3 ACCEPT_NO_LOCKED
+obj_m1_a1_o1_v1_att1.item_own0_t0_u0_callingcard_w0_f0_p1.dad_category.rlv1	in	pcode=9 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m1_a1_o1_v1_att1.item_own0_t0_u0_callingcard_w0_f0_p1.dad_category.rlv1	result	1 ACCEPT_NO
+obj_m1_a1_o1_v1_att1.item_own0_t0_u0_link_w1_f0_p0.dad_category.rlv0	in	pcode=9 t=24 o=other base=7fffdfff own=0008c000 evr=00000000 dad=9
+obj_m1_a1_o1_v1_att1.item_own0_t0_u0_link_w1_f0_p0.dad_category.rlv0	result	1 ACCEPT_NO
+obj_m1_a1_o1_v1_att1.item_own0_t0_u1_callingcard_w0_f0_p1.dad_category.rlv2	in	pcode=9 t=2 o=other base=7fffffff own=7fffffff evr=7fffbfff dad=9
+obj_m1_a1_o1_v1_att1.item_own0_t0_u1_callingcard_w0_f0_p1.dad_category.rlv2	result	1 ACCEPT_NO
+obj_m1_a1_o1_v1_att1.item_own0_t1_u0_object_w1_f1_p0.dad_item.rlv1	in	pcode=9 t=6 o=other base=7fffdfff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o1_v1_att1.item_own0_t1_u0_object_w1_f1_p0.dad_item.rlv1	result	3 ACCEPT_NO_LOCKED
+obj_m1_a1_o1_v1_att1.item_own0_t1_u1_clothing_w0_f0_p1.dad_item.rlv0	in	pcode=9 t=5 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m1_a1_o1_v1_att1.item_own0_t1_u1_clothing_w0_f0_p1.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m1_a1_o1_v1_att1.item_own0_t1_u1_notecard_w1_f1_p1.dad_item.rlv4	in	pcode=9 t=7 o=other base=7fffffff own=0008e000 evr=00000000 dad=8
+obj_m1_a1_o1_v1_att1.item_own0_t1_u1_notecard_w1_f1_p1.dad_item.rlv4	result	1 ACCEPT_NO
+obj_m1_a1_o1_v1_att1.item_own1_t0_u1_notecard_w0_f0_p0.dad_item.rlv0	in	pcode=9 t=7 o=agent base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o1_v1_att1.item_own1_t0_u1_notecard_w0_f0_p0.dad_item.rlv0	result	1 ACCEPT_NO
+obj_m1_a1_o1_v1_att1.item_own1_t0_u1_notecard_w1_f1_p1.dad_item.rlv1	in	pcode=9 t=7 o=agent base=7fffffff own=0008c000 evr=00000000 dad=8
+obj_m1_a1_o1_v1_att1.item_own1_t0_u1_notecard_w1_f1_p1.dad_item.rlv1	result	1 ACCEPT_NO

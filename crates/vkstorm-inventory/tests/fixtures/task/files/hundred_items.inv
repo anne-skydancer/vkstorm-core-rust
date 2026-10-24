@@ -1,0 +1,2907 @@
+	inv_object	0
+	{
+		obj_id	0b000000-0000-4000-8000-0000000000aa
+		parent_id	00000000-0000-0000-0000-000000000000
+		type	category
+		name	Contents|
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000100
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000100
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 000|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000101
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000101
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 001|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000102
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000102
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 002|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000103
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000103
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 003|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000104
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000104
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 004|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000105
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000105
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 005|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000106
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000106
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 006|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000107
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000107
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 007|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000108
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000108
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 008|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000109
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000109
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 009|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000010a
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000010a
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 010|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000010b
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000010b
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 011|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000010c
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000010c
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 012|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000010d
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000010d
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 013|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000010e
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000010e
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 014|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000010f
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000010f
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 015|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000110
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000110
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 016|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000111
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000111
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 017|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000112
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000112
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 018|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000113
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000113
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 019|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000114
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000114
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 020|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000115
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000115
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 021|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000116
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000116
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 022|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000117
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000117
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 023|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000118
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000118
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 024|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000119
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000119
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 025|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000011a
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000011a
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 026|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000011b
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000011b
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 027|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000011c
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000011c
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 028|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000011d
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000011d
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 029|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000011e
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000011e
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 030|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000011f
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000011f
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 031|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000120
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000120
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 032|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000121
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000121
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 033|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000122
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000122
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 034|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000123
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000123
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 035|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000124
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000124
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 036|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000125
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000125
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 037|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000126
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000126
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 038|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000127
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000127
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 039|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000128
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000128
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 040|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000129
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000129
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 041|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000012a
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000012a
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 042|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000012b
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000012b
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 043|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000012c
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000012c
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 044|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000012d
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000012d
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 045|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000012e
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000012e
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 046|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000012f
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000012f
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 047|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000130
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000130
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 048|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000131
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000131
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 049|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000132
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000132
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 050|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000133
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000133
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 051|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000134
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000134
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 052|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000135
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000135
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 053|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000136
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000136
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 054|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000137
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000137
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 055|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000138
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000138
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 056|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000139
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000139
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 057|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000013a
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000013a
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 058|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000013b
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000013b
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 059|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000013c
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000013c
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 060|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000013d
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000013d
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 061|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000013e
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000013e
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 062|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000013f
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000013f
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 063|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000140
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000140
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 064|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000141
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000141
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 065|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000142
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000142
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 066|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000143
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000143
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 067|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000144
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000144
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 068|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000145
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000145
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 069|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000146
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000146
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 070|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000147
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000147
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 071|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000148
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000148
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 072|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000149
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000149
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 073|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000014a
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000014a
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 074|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000014b
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000014b
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 075|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000014c
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000014c
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 076|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000014d
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000014d
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 077|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000014e
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000014e
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 078|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000014f
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000014f
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 079|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000150
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000150
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 080|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000151
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000151
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 081|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000152
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000152
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 082|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000153
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000153
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 083|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000154
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000154
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 084|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000155
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000155
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 085|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000156
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000156
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 086|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000157
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000157
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 087|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000158
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000158
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 088|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000159
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000159
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 089|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000015a
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000015a
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 090|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000015b
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000015b
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 091|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000015c
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000015c
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 092|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000015d
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000015d
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 093|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000015e
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000015e
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 094|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-00000000015f
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-00000000015f
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 095|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000160
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000160
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 096|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000161
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000161
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 097|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000162
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000162
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 098|
+		desc	copyable|
+		creation_date	1700000000
+	}
+	inv_item	0
+	{
+		item_id	1a000000-0000-4000-8000-000000000163
+		parent_id	0b000000-0000-4000-8000-0000000000aa
+	permissions 0
+	{
+		base_mask	7fffffff
+		owner_mask	7fffffff
+		group_mask	00000000
+		everyone_mask	00000000
+		next_owner_mask	00082000
+		creator_id	a0000000-0000-4000-8000-000000000006
+		owner_id	a0000000-0000-4000-8000-000000000001
+		last_owner_id	00000000-0000-0000-0000-000000000000
+		group_id	00000000-0000-0000-0000-000000000000
+	}
+		asset_id	a5000000-0000-4000-8000-000000000163
+		type	notecard
+		inv_type	notecard
+		flags	00000000
+	sale_info	0
+	{
+		sale_type	not
+		sale_price	10
+	}
+		name	Item 099|
+		desc	copyable|
+		creation_date	1700000000
+	}

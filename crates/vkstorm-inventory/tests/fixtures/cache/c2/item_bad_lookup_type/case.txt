@@ -1,0 +1,8 @@
+note an item saved with the bad-lookup type name (Q10)
+second_instance 0
+production_grid 1
+grid_id util.agni.lindenlab.com
+logout 0
+agent_root f0000000-0000-4000-8000-000000000001
+lib_root f1000000-0000-4000-8000-000000000001
+lib_owner 11b00000-0000-4000-8000-000000000001
