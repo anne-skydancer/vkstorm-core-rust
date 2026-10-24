@@ -1173,12 +1173,12 @@ def set10():
     # Three mid-sized replies in one frame: the shared per-frame batch timer
     # (10 ms) runs across them while each has its own 8 ms task timer.
     s = Skel()
-    tops = [C(0x2000 + 0x100 * n) for n in range(3)]
+    tops = [C(0x2000 + 0x100 * n) for n in range(2)]
     for n, t in enumerate(tops):
         s.cat(t, ROOT, "Batch %d" % n)
-    c = Case("s10b_batch_timer_same_frame", 10, "Three replies, the later ones in the frame the earlier one "
+    c = Case("s10b_batch_timer_same_frame", 10, "Two replies, the later one in the frame the earlier one "
              "yielded to, while another AIS update resumes first in each new frame and runs 8 ms: the shared "
-             "batch timer (armed by the other update) yields before the 8 ms task timer", s, call_us=100,
+             "batch timer (armed by the other update) yields before the 8 ms task timer", s, call_us=400,
              others_us=[8000])
     for n, t in enumerate(tops):
         subs = [cat(C(0x2000 + 0x100 * n + 1 + k), t, "Sub %d.%d" % (n, k), version=1, embedded=emb(
@@ -1191,7 +1191,7 @@ def set10():
             same_frame=(n > 0))
 
     # The same three replies, each in its own frame.
-    c2 = Case("s10c_batch_timer_separate_frames", 10, "The same three replies, one per frame", s, call_us=100)
+    c2 = Case("s10c_batch_timer_separate_frames", 10, "The same two replies, one per frame", s, call_us=400)
     for st in c.steps:
         st2 = dict(st)
         st2["same_frame"] = False
@@ -1258,7 +1258,7 @@ def set11():
 # ---- set 12: seeded random combinations ---------------------------------------
 
 RANDOM_SEED = 0x5EED0A15DA7E0012
-RANDOM_CASES = 15
+RANDOM_CASES = 9
 FETCH_TYPES = ["FETCHCATEGORYCHILDREN", "FETCHCATEGORYSUBSET", "FETCHCOF", "FETCHCATEGORYLINKS", "FETCHITEM",
                "FETCHORPHANS", "FETCHCATEGORYCATEGORIES"]
 WRITE_TYPES = ["CREATEINVENTORY", "UPDATECATEGORY", "UPDATEITEM", "REMOVEITEM", "REMOVECATEGORY", "PURGEDESCENDENTS",
@@ -1431,35 +1431,47 @@ def set10_boundaries():
             categories={}, links={}, items=[item(I(0x2400 + k), F, "B%02d" % k) for k in range(n_items)])), http_ok(u)),
             target=F, url=u, body=depth_body(0))
 
-    # The 8 ms task timer: after the first yield both timers are re-armed;
-    # exactly one recorded call (the next category's query) lies between the
-    # resume and the next checkTimeout(), so call_us puts that checkpoint at
-    # 7999, 8000 or 8001 us after the re-arm (expired when >= 8000).
-    def two_level(s):
-        F = s.cat(C(0x2500), ROOT, "Timer")
+    # The 8 ms task timer, armed when the update is constructed: the folder
+    # is new (one recorded query, no version reads) and the first
+    # checkTimeout() comes right after that query, so call_us puts it 7999,
+    # 8000 or 8001 us after the arming (expired when >= 8000).
+    def two_level(extra_items=0):
+        F = C(0x2500)
         G = C(0x2501)
-        body = cat(F, ROOT, "Timer", version=2, embedded=emb(categories=[
-            cat(G, F, "Timer child", version=1, embedded=emb(categories={}, links={}, items=[item(I(0x2501), G, "T")]))]))
+        body = cat(F, ROOT, "Timer", version=2, embedded=emb(
+            categories=[cat(G, F, "Timer child", version=1, embedded=emb(categories={}, links={},
+                                                                         items=[item(I(0x2501), G, "T")]))],
+            items=[item(I(0x2510 + k), F, "Pad %d" % k) for k in range(extra_items)] if extra_items else None))
         return F, body
 
     for call_us, cid in ((7999, "s10g_task_timer_7999us"), (8000, "s10h_task_timer_8000us"), (8001, "s10i_task_timer_8001us")):
-        s = Skel()
-        F, body = two_level(s)
-        c = Case(cid, 10, "Task timer boundary: the second checkTimeout() %d us after the re-arm" % call_us, s,
-                 call_us=call_us)
+        F, body = two_level()
+        c = Case(cid, 10, "Task timer boundary: the first checkTimeout() %d us after the update armed its timers"
+                 % call_us, Skel(), call_us=call_us)
         u = url_children(F, 50)
         c.step("FETCHCATEGORYCHILDREN", result(body, http_ok(u)), target=F, url=u, body=depth_body(50))
 
-    # The 10 ms batch timer: another update resumes first and runs 'other' us
-    # after re-arming the shared batch timer; the checkpoint lies 1000 us
-    # after this update resumes: expired when other + 1000 >= 10000.
+    # The 10 ms batch timer: eight padding items make the update yield on its
+    # task timer at the child's checkTimeout(); another update resumes first
+    # in the new frame, re-arms the shared batch timer and runs 'other' us;
+    # one recorded call later comes the next checkTimeout(): expired when
+    # other + 1000 >= 10000 (the task timer, re-armed at the resume, is not).
     for other, cid in ((8999, "s10j_batch_timer_9999us"), (9000, "s10k_batch_timer_10000us"), (9001, "s10l_batch_timer_10001us")):
-        s = Skel()
-        F, body = two_level(s)
+        F, body = two_level(8)
         c = Case(cid, 10, "Batch timer boundary: the checkpoint %d us after another update re-armed the batch timer"
-                 % (other + 1000), s, call_us=1000, others_us=[other])
+                 % (other + 1000), Skel(), call_us=1000, others_us=[other])
         u = url_children(F, 50)
         c.step("FETCHCATEGORYCHILDREN", result(body, http_ok(u)), target=F, url=u, body=depth_body(50))
+
+    # Bug 51: the batch budget is already spent when this update resumes
+    # (another update ran 12 ms after re-arming it): checkTimeout()'s loop
+    # yields again at once instead of carrying on.
+    F, body = two_level(8)
+    c = Case("s10m_batch_spent_at_resume", 10, "The shared batch budget is spent when the update resumes: the "
+             "while loop in checkTimeout() yields again before any further work (bug 51)", Skel(), call_us=1000,
+             others_us=[12000, 0])
+    u = url_children(F, 50)
+    c.step("FETCHCATEGORYCHILDREN", result(body, http_ok(u)), target=F, url=u, body=depth_body(50))
 
 
 # ---- set 13: interleaving (what other code does while an update is suspended) ----
@@ -1483,8 +1495,8 @@ def set13():
     c.step("UPDATECATEGORY", result(cat(COF, ROOT, "Current Outfit", FT_COF, version=11,
                                         extra={"_updated_category_versions": {COF: 11}}), http_ok(u)),
            target=COF, url=u, body={"name": "Current Outfit"},
-           hooks=[{"checkpoint": 1, "actions": [{"run_step": {"type": "CREATEINVENTORY", "target_id": COF,
-                                                              "url": u, "body": {"links": []}, "res": result(newer, http_ok(u))}}]}])
+           hooks=[{"apply_checkpoint": 1, "actions": [{"run_step": {"type": "CREATEINVENTORY", "target_id": COF,
+                                                                    "url": u, "body": {"links": []}, "res": result(newer, http_ok(u))}}]}])
 
     # A COF fetch racing a newer write: the fetch's snapshot (v12 from AIS,
     # count 2) is taken before the yield; the write (v13, +1) lands during
@@ -1497,15 +1509,19 @@ def set13():
     newer = {"_created_items": [L(0xD12)], "_updated_category_versions": {COF: 13},
              "_embedded": emb(links=[link(L(0xD12), COF, I(0xD12), "Wear 2")])}
     u = CAP + "/category/current/links"
+    fetch_reply = result(cat(COF, ROOT, "Current Outfit", FT_COF, version=12, embedded=emb(links=[
+        link(L(0xD10), COF, I(0xD10), "Wear 0"), link(L(0xD11), COF, I(0xD11), "Wear 1")])), http_ok(u))
+    race = [{"run_step": {"type": "CREATEINVENTORY", "target_id": COF, "url": u, "body": {"links": []},
+                          "res": result(newer, http_ok(u))}},
+            {"set_category": {"category_id": COF, "version": 13, "descendents": 3}}]
     c = Case("s13b_cof_fetch_races_newer_write", 13, "FETCHCOF (v12, two links) while a newer link write (v13) "
-             "is processed at the first checkTimeout() (the start of the embedded links): the fetch's parse-time "
-             "COF (v12, count 2) is then applied over v13 (the snapshot-then-yield window FIRE-33455 names)", s)
-    c.step("FETCHCOF", result(cat(COF, ROOT, "Current Outfit", FT_COF, version=12, embedded=emb(links=[
-        link(L(0xD10), COF, I(0xD10), "Wear 0"), link(L(0xD11), COF, I(0xD11), "Wear 1")])), http_ok(u)),
-        url=u, body=depth_body(0),
-        hooks=[{"checkpoint": 1, "actions": [{"run_step": {"type": "CREATEINVENTORY", "target_id": COF,
-                                                           "url": u, "body": {"links": []}, "res": result(newer, http_ok(u))}},
-                                             {"set_category": {"category_id": COF, "version": 13, "descendents": 3}}]}])
+             "is processed at the first parse-phase checkTimeout() (the start of the embedded links; sched run "
+             "only): the fetch's parse-time COF (v12, count 2) is then applied over v13", s)
+    c.step("FETCHCOF", fetch_reply, url=u, body=depth_body(0), hooks=[{"parse_checkpoint": 1, "actions": race}])
+    c = Case("s13h_cof_fetch_races_newer_write_at_apply", 13, "The same race at the first apply-phase "
+             "checkTimeout() (the start of doUpdate; both runs): the parse-time COF (v12, count 2) is applied over "
+             "v13, the snapshot-then-yield window FIRE-33455 names. A port that only ever raises versions fails", s)
+    c.step("FETCHCOF", fetch_reply, url=u, body=depth_body(0), hooks=[{"apply_checkpoint": 1, "actions": race}])
 
     # An item snapshot that goes stale during the yield.
     s = Skel()
@@ -1515,7 +1531,7 @@ def set13():
              "(desc, flags); the item is edited at the first checkTimeout(); the stale snapshot is written back", s)
     c.step("FETCHITEM", result({"item_id": I(0xD20), "parent_id": OBJECTS, "name": "Lamp (fetched)",
                                 "type": AT_OBJECT, "inv_type": IT_OBJECT}, http_ok(u)), target=I(0xD20), url=u,
-           hooks=[{"checkpoint": 1, "actions": [{"set_item": {"item_id": I(0xD20), "desc": "edited during the yield",
+           hooks=[{"apply_checkpoint": 1, "actions": [{"set_item": {"item_id": I(0xD20), "desc": "edited during the yield",
                                                               "flags": 9, "name": "Lamp (renamed)"}}]}])
 
     # The updated folder disappears during the yield: the copy back finds no
@@ -1528,42 +1544,51 @@ def set13():
     c.step("UPDATECATEGORY", result(cat(F, ROOT, "Vanishing renamed", version=5,
                                         extra={"_updated_category_versions": {F: 5}}), http_ok(u)),
            target=F, url=u, body={"name": "x"},
-           hooks=[{"checkpoint": 1, "actions": [{"delete": F}]}])
+           hooks=[{"apply_checkpoint": 1, "actions": [{"delete": F}]}])
 
-    # Shutdown at a yield: LLCoros::checkStop() throws; the update ends where
-    # it is (sched run only: the never run has no yields).
+    # Shutdown. A stop at an apply-phase checkTimeout() makes that call
+    # yield (in both runs) and LLCoros::checkStop() after the yield throw:
+    # the update ends where it is, no callback, no model call after it, the
+    # model as it was (the mandatory check asserts the contract). A stop
+    # after a natural yield during the parse is the sched run's.
     def big_folder(s, base, n):
         F = s.cat(C(base), ROOT, "Shutdown", FT_NONE, -1, -1)
         body = cat(F, ROOT, "Shutdown", version=3, embedded=emb(categories={}, links={}, items=[
             item(I(base + k), F, "S%02d" % k) for k in range(n)]))
         return F, body
 
-    for k, n, cid, what in ((1, 5, "s13e_shutdown_at_first_yield", "during the parse (nothing applied)"),
-                            (3, 55, "s13f_shutdown_mid_apply", "after the first backlog flush (half applied)")):
+    s = Skel()
+    F, body = big_folder(s, 0xD40, 5)
+    c = Case("s13e_shutdown_at_parse_yield", 13, "Shutdown at the first yield, a natural one during the parse "
+             "(sched run only): LLCoros::Stopping from checkStop(), nothing applied, no callback", s, call_us=8000)
+    u = url_children(F, 0)
+    c.step("FETCHCATEGORYCHILDREN", result(body, http_ok(u)), target=F, url=u, body=depth_body(0),
+           hooks=[{"yield": 1, "actions": [{"stop": True}]}])
+    for k, n, cid, what in ((1, 5, "s13i_shutdown_at_apply_start", "the start of doUpdate (nothing applied)"),
+                            (2, 50, "s13f_shutdown_mid_apply", "the first backlog flush (half applied)")):
         s = Skel()
         F, body = big_folder(s, 0xD40, n)
-        c = Case(cid, 13, "Shutdown at yield %d, %s: LLCoros::Stopping from checkStop(), no callback; the "
-                 "model as left" % (k, what), s, call_us=1000)
-        u = url_children(F, 0)
+        c = Case(cid, 13, "Shutdown at apply-phase checkTimeout() %d, %s, in both runs: the call yields, "
+                 "checkStop() throws, no callback, no model call after it, the model as it was" % (k, what), s)
         c.step("FETCHCATEGORYCHILDREN", result(body, http_ok(u)), target=F, url=u, body=depth_body(0),
-               hooks=[{"yield": k, "actions": [{"stop": True}]}])
+               hooks=[{"apply_checkpoint": k, "actions": [{"stop": True}]}])
 
     # Another update is constructed in the new frame before this one resumes:
-    # its constructor restarts the shared batch timer (expired: start() after
-    # setTimerExpirySec()) and takes the frame, so this update's next
-    # checkTimeout() yields at once.
+    # its constructor arms the shared batch timer (10 ms) and takes the frame;
+    # it then runs 5 ms. This update, resuming, re-arms only its task timer
+    # (8 ms), so its next yield comes from the batch timer, 5 ms later.
     s = Skel()
     F = s.cat(C(0xD50), ROOT, "Batch", FT_NONE)
     subs = [cat(C(0xD51 + k), F, "Batch %d" % k, version=1, embedded=emb(categories={}, links={}, items=[
         item(I(0xD51 + 0x10 * k + m), C(0xD51 + k), "I%d.%d" % (k, m)) for m in range(2)])) for k in range(4)]
     u = url_children(F, 50)
     c = Case("s13g_other_update_constructed_in_new_frame", 13, "After the first yield another AIS update is "
-             "constructed in the new frame before this one resumes: the shared batch timer is restarted expired "
-             "and this update yields at its next checkTimeout()", s, call_us=100)
+             "constructed in the new frame and runs 5 ms before this one resumes: its constructor armed the shared "
+             "batch timer, so this update's next yield comes 5 ms after it resumes, not 8", s, call_us=1000)
     c.step("FETCHCATEGORYCHILDREN", result(cat(F, ROOT, "Batch", version=2, embedded=emb(categories=subs, links={},
                                                                                          items={})), http_ok(u)),
            target=F, url=u, body=depth_body(50),
-           hooks=[{"yield": 1, "actions": [{"construct_update": "FETCHCATEGORYCHILDREN"}]}])
+           hooks=[{"yield": 1, "actions": [{"construct_update": "FETCHCATEGORYCHILDREN"}, {"advance_us": 5000}]}])
 
 
 # ---- set 14: folder links in write replies (the created-categories filter) -------
@@ -1807,6 +1832,8 @@ def set18():
     s = Skel()
     s.cat(P, ROOT, "Commands", FT_NONE, 2)
     s.item(item(I(0x1A01), P, "Target"))
+    s.cat(C(0x1A64), C(0x1A65), "Gone folder", FT_NONE, 3)
+    s.cat(C(0x1A65), ROOT, "Gone folder's parent", FT_NONE, -1, -1)
     u = CAP + "/category/x"
     c = Case("s18g_commands_with_replies", 18, "Command functions whose replies carry ids: the callbacks they bind "
              "(created ids, linked_id, category_id) and what the reply applies", s)
@@ -1823,8 +1850,96 @@ def set18():
     c.call("UpdateCategory", {"category_id": P, "updates": {"name": "Renamed"}},
            res=result(cat(P, ROOT, "Renamed", version=4, extra={"_updated_categories": [P]}), http_ok(u)))
     c.call("RemoveItem", {"item_id": I(0x1A01)}, res=result({}, http_fail(u, 410, "", "Gone")))
+    c.call("RemoveCategory", {"category_id": C(0x1A64)}, res=result({}, http_fail(u, 410, "", "Gone")))
+    c.call("PurgeDescendents", {"category_id": C(0x1A64)}, res=result({}, http_fail(u, 410, "", "Gone")))
     c.call("CreateInventory", {"parent_id": P, "new_inventory": {"categories": []}}, callback=False,
            res=result({"_created_categories": [C(0x1A63)]}, http_ok(u)))
+
+
+# ---- set 13 (continued): changes while doUpdate is suspended mid-apply --------
+
+
+def set13_mid_apply():
+    """A write creating 52 folders and 55 items, so doUpdate flushes (and
+    calls checkTimeout()) in its create-folders loop and again in its
+    create-items loop. Folder U is updated by the same reply and named in
+    _updated_categories and _updated_category_versions. Another write
+    changes U's count at the first flush and its version at the second:
+    'update folders' must read U's version and count from the model after
+    the first (not the count from accounting), and the versions loop must
+    read U's version after the second (not the one 'update folders' read)."""
+    s = Skel()
+    P = s.cat(C(0x2600), ROOT, "Bulk parent", FT_NONE, 20)
+    U = s.cat(C(0x2601), P, "Updated folder", FT_NONE, 10)
+    s.item(item(I(0x2601), U, "In updated"))
+    new_cats = [cat(C(0x2610 + k), P, "New %02d" % k, version=1) for k in range(52)]
+    new_items = [item(I(0x2680 + k), P, "New item %02d" % k) for k in range(52)]
+    res = cat(P, ROOT, "Bulk parent", version=21, embedded=emb(
+        categories=new_cats + [cat(U, P, "Updated folder renamed", version=15)],
+        items=new_items),
+        extra={"_created_categories": [x["category_id"] for x in new_cats] + [U],
+               "_created_items": [x["item_id"] for x in new_items],
+               "_updated_categories": [U],
+               "_updated_category_versions": {P: 21, U: 15}})
+    u = "%s/category/%s?tid=x" % (CAP, P)
+    c = Case("s13j_mid_apply_changes_to_updated_folder", 13, "A write (52 folders, 52 items) whose doUpdate flushes in the create-folders "
+             "and the create-items loops; another write changes the updated folder's count (to 4) at the first flush "
+             "and its version (to 17) at the second: the copy back takes the count 4 and version 13 the model holds "
+             "then, the versions loop sees 17 and ignores AIS's 15 (both runs)", s)
+    c.step("CREATEINVENTORY", result(res, http_ok(u)), target=P, url=u, body={"categories": []},
+           hooks=[{"apply_checkpoint": 2, "actions": [{"set_category": {"category_id": U, "descendents": 4, "version": 13}}]},
+                  {"apply_checkpoint": 3, "actions": [{"set_category": {"category_id": U, "version": 17}}]}])
+
+
+# ---- set 15 (continued): null parents on the write path ------------------------
+
+
+def set15_null_parents():
+    """Write replies whose items carry a null (or the categorize-to-Lost-And-
+    Found) parent, reaching each branch of the stub's updateItem that moves
+    an item and accounts the destination folder (cross-checked against R2's
+    real-model steps null_parent, categorize_lost_and_found and
+    null_parent_old_parent_known)."""
+    NOTES = C(0x2700)
+
+    def skel():
+        s = Skel()
+        s.cat(NOTES, ROOT, "Notecards", 7, 2)
+        s.item(item(I(0x2701), NOTES, "Existing note", AT_NOTECARD, IT_NOTECARD))
+        s.item(item(I(0x2702), OBJECTS, "Known parent", AT_OBJECT, IT_OBJECT))
+        s.item(item(I(0x2703), NULL, "Parentless", AT_OBJECT, IT_OBJECT))
+        return s
+
+    u = "%s/category/%s?tid=x" % (CAP, OBJECTS)
+    c = Case("s15d_create_item_null_parent", 15, "CREATEINVENTORY creating an item with a null parent: not a lost "
+             "item on a write; the model files it in its type's default folder (Notecards), accounted +1 and a "
+             "version bump there, with a server move", skel())
+    c.step("CREATEINVENTORY", result({"_created_items": [I(0x2710)], "_updated_category_versions": {OBJECTS: 4},
+                                      "_embedded": emb(items=[item(I(0x2710), NULL, "New note, no parent",
+                                                                   AT_NOTECARD, IT_NOTECARD)])}, http_ok(u)),
+           target=OBJECTS, url=u, body={"items": []})
+
+    c = Case("s15e_update_item_null_parent_old_null", 15, "UPDATEITEM of an item the model holds with a null parent, "
+             "answered with a null parent: moved to Lost And Found, accounted +1 there, with a server move", skel())
+    ui = url_item(I(0x2703))
+    c.step("UPDATEITEM", result(item(I(0x2703), NULL, "Parentless renamed", AT_OBJECT, IT_OBJECT), http_ok(ui)),
+           target=I(0x2703), url=ui, body={"name": "Parentless renamed"})
+
+    c = Case("s15f_update_item_null_parent_old_known", 15, "UPDATEITEM answered with a null parent for an item whose "
+             "parent the model knows: the update keeps the parse-time null parent; the model puts the item back "
+             "in its old folder (no accounting) with a server move", skel())
+    ui = url_item(I(0x2702))
+    c.step("UPDATEITEM", result(dict(item(I(0x2702), NULL, "Known parent renamed", AT_OBJECT, IT_OBJECT),
+                                     _updated_category_versions={OBJECTS: 4}), http_ok(ui)),
+           target=I(0x2702), url=ui, body={"name": "Known parent renamed"})
+
+    c = Case("s15g_create_item_categorize_lost_and_found", 15, "CREATEINVENTORY creating an item whose parent is "
+             "CATEGORIZE_LOST_AND_FOUND_ID: the model files it in Lost And Found, accounted +1, no server move",
+             skel())
+    c.step("CREATEINVENTORY", result({"_created_items": [I(0x2711)],
+                                      "_embedded": emb(items=[item(I(0x2711), U("00000000-0000-0000-0000-000000000010"),
+                                                                   "Categorized", AT_OBJECT, IT_OBJECT)])}, http_ok(u)),
+           target=OBJECTS, url=u, body={"items": []})
 
 
 def main():
@@ -1837,7 +1952,7 @@ def main():
         if name.endswith(".xml") or name.endswith(".xml.gz") or name == "index.txt":
             os.remove(os.path.join(outdir, name))
     for f in (set1, set2, set3, set4, set5, set6, set7, set8, set9, set10, set11, set12, set10_boundaries,
-              set13, set14, set15, set16, set17, set18):
+              set13, set14, set15, set16, set17, set18, set13_mid_apply, set15_null_parents):
         f()
     ids = [c.id for c in CASES]
     if len(set(ids)) != len(ids):

@@ -6,7 +6,7 @@
   <key>set</key>
   <integer>10</integer>
   <key>title</key>
-  <string>The same three replies, one per frame</string>
+  <string>The same two replies, one per frame</string>
   <key>agent_id</key>
   <uuid>0a000000-0000-4000-8000-000000000001</uuid>
   <key>session_id</key>
@@ -16,7 +16,7 @@
   <key>sched</key>
   <map>
    <key>call_us</key>
-   <integer>100</integer>
+   <integer>400</integer>
    <key>frame_us</key>
    <integer>16667</integer>
    <key>others_us</key>
@@ -44,7 +44,7 @@
      <key>version</key>
      <integer>50</integer>
      <key>descendents</key>
-     <integer>11</integer>
+     <integer>10</integer>
     </map>
     <map>
      <key>category_id</key>
@@ -206,22 +206,6 @@
      <key>descendents</key>
      <integer>0</integer>
     </map>
-    <map>
-     <key>category_id</key>
-     <uuid>c0000000-0000-4000-8000-000000002200</uuid>
-     <key>parent_id</key>
-     <uuid>c0000000-0000-4000-8000-000000000001</uuid>
-     <key>name</key>
-     <string>Batch 2</string>
-     <key>type_default</key>
-     <integer>-1</integer>
-     <key>owner_id</key>
-     <uuid>0a000000-0000-4000-8000-000000000001</uuid>
-     <key>version</key>
-     <integer>-1</integer>
-     <key>descendents</key>
-     <integer>0</integer>
-    </map>
    </array>
    <key>items</key>
    <array />
@@ -263,27 +247,6 @@
     </map>
     <key>response</key>
     <string>s10c_batch_timer_separate_frames.1.xml</string>
-    <key>same_frame</key>
-    <boolean>false</boolean>
-    <key>disconnected</key>
-    <boolean>false</boolean>
-    <key>callback</key>
-    <boolean>true</boolean>
-   </map>
-   <map>
-    <key>type</key>
-    <string>FETCHCATEGORYCHILDREN</string>
-    <key>target_id</key>
-    <uuid>c0000000-0000-4000-8000-000000002200</uuid>
-    <key>url</key>
-    <string>https://inventory.grid.example/cap/00000000-0000-4000-8000-00000000cafe/category/c0000000-0000-4000-8000-000000002200/children?depth=50</string>
-    <key>body</key>
-    <map>
-     <key>depth</key>
-     <integer>50</integer>
-    </map>
-    <key>response</key>
-    <string>s10c_batch_timer_separate_frames.2.xml</string>
     <key>same_frame</key>
     <boolean>false</boolean>
     <key>disconnected</key>

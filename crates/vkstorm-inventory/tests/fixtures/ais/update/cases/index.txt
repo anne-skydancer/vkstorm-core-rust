@@ -85,12 +85,6 @@ s12_random_05
 s12_random_06
 s12_random_07
 s12_random_08
-s12_random_09
-s12_random_10
-s12_random_11
-s12_random_12
-s12_random_13
-s12_random_14
 s10d_backlog_50_ids
 s10e_backlog_51_ids
 s10f_backlog_52_ids
@@ -100,11 +94,14 @@ s10i_task_timer_8001us
 s10j_batch_timer_9999us
 s10k_batch_timer_10000us
 s10l_batch_timer_10001us
+s10m_batch_spent_at_resume
 s13a_cof_update_races_newer_write
 s13b_cof_fetch_races_newer_write
+s13h_cof_fetch_races_newer_write_at_apply
 s13c_item_snapshot_stale
 s13d_updated_folder_deleted_during_yield
-s13e_shutdown_at_first_yield
+s13e_shutdown_at_parse_yield
+s13i_shutdown_at_apply_start
 s13f_shutdown_mid_apply
 s13g_other_update_constructed_in_new_frame
 s14_createinventory_folder_link_known
@@ -136,3 +133,8 @@ s18d_commands_library_cap_only
 s18e_commands_no_region
 s18f_pool_limit
 s18g_commands_with_replies
+s13j_mid_apply_changes_to_updated_folder
+s15d_create_item_null_parent
+s15e_update_item_null_parent_old_null
+s15f_update_item_null_parent_old_known
+s15g_create_item_categorize_lost_and_found

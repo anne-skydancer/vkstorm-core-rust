@@ -9,13 +9,19 @@ notifications and the completion callback ids. The port moves the parse to
 Rust (`vkstorm-inventory` `ais/update.rs`) producing an ordered op list that
 C++ applies; that path must reproduce these recordings.
 
-Recorded from the viewer C++ at `codex/rust-inventory` a6d6a04641 (llaisapi.cpp
-blob b3ca253a86300c1f9d14713a9b3ff2522e79a3c7), i.e. *after* the two fixes the
-user approved: LL #5358 (per-task 8 ms timer plus a per-frame 10 ms batch
-timer shared by all updates) and FIRE-33455 (count-only descendent accounting
-in `doUpdate`, the null check in the version loop, AIS versions only raise a
-category's version). The fixtures are never edited by hand: change the
-recorder or `gen_cases.py` and regenerate.
+Recorded from the viewer C++ at `codex/rust-inventory` a6d6a04641 merged with
+`codex/inventory-upstream-fixes-rust` 85991ba914 (llaisapi.cpp blob
+8d34822459c9c59ca7cd8ac8338cb76da6089c71 at recording; the headers name the
+exact commit), i.e. *after* the fixes the user approved: LL #5358 (per-task
+8 ms timer plus a per-frame 10 ms batch timer shared by all updates),
+FIRE-33455 (count-only descendent accounting in `doUpdate`, the null check in
+the version loop, AIS versions only raise a category's version), bug 15
+(both timers are started before their expiry is set, so a new update no
+longer yields at once), bug 51 (`checkTimeout()` loops: after resuming it
+rechecks the shared budget and yields again if another update spent it) and
+bug 52 (`updateServer()` accounts count-only on the AIS path; the harness
+never reaches `updateServer()`). The fixtures are never edited by hand:
+change the recorder or `gen_cases.py` and regenerate.
 
 This directory is identical, byte for byte, in the viewer
 (`indra/newview/tests/fixtures/inventory/ais/update`) and in the crate
@@ -32,7 +38,7 @@ This directory is identical, byte for byte, in the viewer
 | `cases/<id>.<n>.h<h>.<a>.xml` | the result of a step that hook h of step n runs (action a) |
 | `cases/s10a_large_recursive.0.xml.gz` | the large result, gzipped (gzip mtime 0). The compressed bytes depend on the zlib that wrote them (Python 3.14 on Windows and on Linux differ); the content does not: 26,734,355 bytes, SHA-256 06e0e63e59f5d0f8e688cf33fb9d47120a39d06d9953e9219bf69d66f20af7ee. `gen_cases.py` reproduces every other file byte for byte. |
 | `expected/<id>.expected.llsd` | binary LLSD: `{case, never: {ops, final}, sched: {ops, final}}` |
-| `expected/<id>.expected.txt` | review rendering of the same: a header, then one line per op / category / item in compact notation (binary as b16) |
+| `expected/<id>.expected.txt` | review rendering of the same: a header, then one line per op / category / item in compact notation (binary as b16); the sched run's final skeleton is shown only where it differs from the never run's |
 | `expected/s10a_large_recursive.digest.llsd` / `.txt` | the large case as digests and samples (below) |
 | `expected/manifest.txt` | header, then `<case> <file> <sha256 of the binary file>` |
 
@@ -81,17 +87,31 @@ A step is one of:
 `gDisconnected`; `callback` false runs without a completion callback.
 
 **Hooks** script what other main-thread code does while the update is
-suspended: `{checkpoint: k | yield: k, actions: [...]}` runs at the step's
-k-th `checkTimeout()` (both runs: every `checkTimeout()` asks the task timer
-first, so the harness counts them whether or not they yield) or after its
-k-th yield, once the frame has moved on (sched run only). Actions:
-`set_category` / `set_item` (change fields of a model object),
+suspended. The harness tells the parse from the apply phase exactly: the one
+call of `AISUpdate::doUpdate()` passes an extra argument whose conversion
+marks the start of `doUpdate()` (see "The harness"). Every `checkTimeout()`
+tests the task timer first, so the harness counts the calls, whether or not
+they yield; the test the `while` loop (bug 51) repeats after a yield is a
+recheck, not a new checkpoint. A hook is one of:
+
+* `{apply_checkpoint: k, actions}`: the k-th `checkTimeout()` in `doUpdate()`
+  (1 = its start, then one per backlog flush in the create loops, the last at
+  its end). **Fires in both runs**; used by the mandatory check.
+* `{parse_checkpoint: k, actions}`: the k-th `checkTimeout()` before
+  `doUpdate()` (one per `parseEmbedded()`). **Sched run only**.
+* `{yield: k, actions}`: after the step's k-th yield, once the frame has moved
+  on. **Sched run only**.
+
+Actions: `set_category` / `set_item` (change fields of a model object),
 `delete` (an id and its descendents), `run_step` (another AIS reply,
 processed in full through the coroutine; nested hooks do not fire),
 `construct_update` (another `AISUpdate` is constructed now: its constructor's
-batch-timer logic runs), `stop` (the next `LLCoros::checkStop()` throws
-`LLCoros::Stopping`, as at viewer shutdown; the update ends where it is,
-recorded as `abort`, no callback, the model as left).
+batch-timer logic runs), `advance_us` (the other code ran that long; sched
+clock), `stop` (shutdown: at a checkpoint that `checkTimeout()` yields, in
+either run, and the `LLCoros::checkStop()` after the yield throws
+`LLCoros::Stopping`; after a yield the next `checkStop()` throws). The
+update ends where it is, recorded as `abort` with `ops_after_stop` and
+`model_unchanged`.
 
 ## How the corpus is made
 
@@ -106,7 +126,7 @@ recorded as `abort`, no callback, the model as left).
    12 draw from xorshift64* (Vigna; state `s` non-zero, `x ^= x>>12; x ^=
    (x<<25) mod 2^64; x ^= x>>27; s = x; return (x * 0x2545F4914F6CDD1D) mod
    2^64`; `below(n)` = `(next() >> 32) % n`), seeds `0x5EED0A15DA7E0010`
-   (s10a) and `0x5EED0A15DA7E0012` (set 12, one stream for the 15 cases in
+   (s10a) and `0x5EED0A15DA7E0012` (set 12, one stream for the 9 cases in
    order), recorded in the case files.
 2. The viewer test `INTEGRATION_TEST_llaisupdate_parity`
    (`indra/newview/tests/llaisupdate_parity_test.cpp`,
@@ -130,25 +150,37 @@ index order, and reports three separately named tut tests:
 1. **`never: op lists and query streams`** (mandatory). Every case's `never`
    run, compared as binary LLSD: the op list, which holds the query stream
    (every `q.*` event, in order, with what it returned) between the model
-   calls, and the final skeleton; also the fixture tree (missing or
-   unexpected files) and the write tids. A difference reads `case <id>: never
-   op <index> (<op>)/<field path>: expected <value> actual <value>`.
-2. **`sched: yield points`**. The `sched` runs, compared the same way. The
-   op lists equal the `never` ones plus the yields, the hooks keyed by
-   yield, the batch-timer schedule and the scripted shutdowns. **Relaxation
-   for the W3 port:** a port that parses in Rust (no `checkTimeout()`
-   inside the parse) moves the yield points; it may then replace this check
-   with a documented one (the same model calls, queries, callbacks and final
-   skeletons as `never`, the yields where its applier puts them, the
-   shutdown cases still aborting at a yield with the model consistent),
-   without touching check 1, which stays byte-exact.
+   calls, and the final skeleton; the apply-phase hooks (interleaving inside
+   `doUpdate()`, scripted shutdowns); the fixture tree (missing or
+   unexpected files); the write tids (a failure names the case, the run and
+   the op). It also asserts **the shutdown contract** in both runs: after a
+   stop the update aborts, no callback fires, no model call follows, and the
+   model is as it was at the stop (`ops_after_stop` 0, `model_unchanged`
+   true). A difference reads `case <id>: never op <index> (<op>)/<field path>:
+   expected <value> actual <value>`.
+2. **`sched: yield points`** (relaxable). The `sched` runs, compared the same
+   way: the `never` op lists plus the yields, the parse-phase and
+   yield-keyed hooks, the batch-timer schedule.
+3. **`drift guard: frozen copies and emulated functions`**:
+   `tests/check_r3a_copies.py` (see "The harness").
+
+**The split, as decided for the W3 port.** The port keeps the C++ applier,
+`doUpdate()`, with its `checkTimeout()` call sites; the parse may move to
+Rust and need not yield at the same points. So hooks used by the mandatory
+check fire only at apply-phase checkpoints in `doUpdate()`; hooks at
+parse-phase checkpoints (`parseEmbedded()` and the like) belong to the
+relaxable `sched` check only. A port that parses in Rust may replace check 2
+with a documented one (the same model calls, queries, callbacks and final
+skeletons as `never`, the yields where its applier puts them) without
+touching check 1, which stays byte-exact.
 3. **`drift guard: frozen copies and emulated functions`**:
    `tests/check_r3a_copies.py` (see "The harness").
 
 ### The two runs
 
-* `never`: the timers never report expiry. The op list has no yields: the
-  canonical order of the model calls.
+* `never`: the timers never report expiry. The op list has no yields but the
+  one a `stop` hook forces at its checkpoint: the canonical order of the
+  model calls.
 * `sched`: the timers keep `LLTimer`'s exact arithmetic over the injected
   clock. The clock moves `call_us` (case file; default 100 us) at every
   recorded event except step and hook markers, and `frame_us` (16667) at
@@ -194,11 +226,14 @@ Everything else is real or a stub of this harness:
 * **The drift guard** (`tests/check_r3a_copies.py`, run by check 3 on every
   build of the test; the target is rebuilt when the live sources, the guard
   or the fixtures change):
-  * each copy is compared with the live text with comments and `#if 0`
-    blocks removed, whitespace collapsed outside string and character
-    literals and literals compared verbatim; its signature must occur
-    exactly once; the recorder's added lines (`// VKS-HARNESS`) must have
-    one of the recording forms the script lists; a `//` comment holding
+  * each copy is compared with the live text with backslash splices joined
+    first, comments and `#if 0` blocks removed, whitespace collapsed outside
+    string and character literals and literals compared verbatim; its
+    signature, compared without whitespace, must occur exactly once, and
+    the live region must lie outside every preprocessor conditional; the
+    recorder's added lines (`// VKS-HARNESS`) must have one of the recording
+    forms the script lists and no side effect (no assignment but to the op
+    being recorded, no `++`/`--`, only listed calls); a `//` comment holding
     code punctuation inside a copy is flagged;
   * the live code the stub emulates instead of copying is fingerprinted
     (`tests/check_r3a_fingerprints.txt`): the `fetch()` gate, `getVersion`,
@@ -211,14 +246,17 @@ Everything else is real or a stub of this harness:
     `notifyObservers`, `fetchDescendentsOf`, the constructor, the
     declarations whose default arguments the recordings use,
     `LLCategoryUpdate` and `getChangedIDs`. A change fails until the stub is
-    reviewed against it and the table updated;
+    reviewed against it and the table updated; the region's enclosing
+    conditionals are part of the fingerprint;
   * an identifier fence: every live line of `llviewerinventory.cpp/.h`
     touching the members the copies depend on (`mIsComplete`,
     `mTransactionID`, `mIsRunning`, `mIsFaulted`, `mOwnerID`, `mVersion`,
     `mDescendentCount`, `mFetching`, `mDescendentsRequested`) must lie in a
     checked copy, a fingerprinted region, or the reviewed allowlist
     `tests/check_r3a_fence.txt` (declarations, accessors and functions the
-    harness never reaches).
+    harness never reaches); and no `#define` / `#undef` in those files or
+    `llinventorymodel.cpp/.h` may name a fenced member or a copied,
+    fingerprinted or recorded function.
 * **Name localisation.** The real `LLLocalizedInventoryItemsDictionary` fills
   its map from `LLTrans` strings the test does not load; the copy's map is
   empty, so names pass through unchanged.
@@ -270,7 +308,7 @@ Every event, in order, is a map with `op`:
 | `yield` | `frame`, `clock_us` (relative to the run), `others_us`, `extra_us` | `llcoro::suspendUntilNextFrame()` |
 | `hook` / `hook_end` | `at`, `index` | a scripted hook runs (its nested ops between) |
 | `checkStop` | `throws` | a scripted shutdown |
-| `abort` | `what` | the update ended by `LLCoros::Stop` (no callback) |
+| `abort` | `what`, `ops_after_stop`, `model_unchanged` | the update ended by `LLCoros::Stop`: the ops recorded after the throw (must be 0) and whether the model still equals its state at the throw (must be true) |
 | `callback` | `id` | the completion callback |
 | `exception` | `what` | a C++ exception escaped a step (none does; check 1 fails on one) |
 
@@ -369,7 +407,7 @@ applies unless a case sets a mismatch.
 | 9 | 4xx map with `item_id`, 410 remove item / category, 403 depth 0 and 50, non-map body, empty body | s09a-s09o (also 499, 500, 4xx non-map, disconnected, create failure, error bodies that parse as objects, transport failure) |
 | 10 | 20,000 items, 2,000 folders, recursive | s10a (digests and samples), s10b-s10c (the batch timer), s10d-s10l (limits) |
 | 11 | duplicate keys in XML maps | s11a-s11e (`version`, an item id, `_embedded`, meta keys, a `_updated_category_versions` entry) |
-| 12 | (added) random combinations | s12_random_00-14 |
+| 12 | (added) random combinations | s12_random_00-08 |
 
 ### Added after the V0 audit
 
@@ -383,20 +421,32 @@ applies unless a case sets a mismatch.
 | 18 | the 16 command functions (and `isAvailable`, `getCapNames`) with both, one or no capability and with no region; replies carrying ids; the pool limit | s18a-s18g | U1, U2 |
 | - | drift guard: fingerprints and fence | check 3 | X1, X3 |
 
+### Added after the V1 re-audit
+
+| what | cases | finding |
+|---|---|---|
+| the shutdown contract in the mandatory check: a stop at the start of `doUpdate()` and at its first backlog flush, in both runs (no callback, no model call after the stop, the model unchanged); a stop at a natural parse-phase yield (sched) | s13i, s13f, s13e | N12, N13, N13b |
+| apply-phase interleaving: hooks at the create-folders flush and the create-items flush change a folder that the same reply updates and names in `_updated_categories` and `_updated_category_versions` (the copy back must re-read the count after the first, the versions loop must re-read the version after the second) | s13j | N1, N2 |
+| the COF fetch race at an apply-phase checkpoint (mandatory; s13b keeps the parse-phase one) | s13h | V15 (mandatory) |
+| write-path null parents: a created item with a null parent (default folder, accounted), an updated item with a null parent whose old parent is null (Lost And Found, accounted) or known (kept, not accounted), a created item with `CATEGORIZE_LOST_AND_FOUND_ID` (Lost And Found, accounted, no server move); the stub's results agree with R2's real-model steps `null_parent`, `categorize_lost_and_found`, `null_parent_old_parent_known` (codex/rust-inventory-r2 3c0b7bddda) | s15d-s15g | N16, N17, S1, S2, S3, S6 |
+| 410 replies to RemoveCategory and PurgeDescendents through the command functions | s18g | N6, N8b |
+| bug 51: the batch budget already spent when the update resumes | s10m | (fix) |
+| drift guard: splices, conditionals, re-spaced signatures, harness side effects, macros | check 3 | drift probes SC2a-d, SC3c-e, SC4, SC5 |
+
 ### Limits, at limit-1, limit and limit+1
 
 | limit | cases |
 |---|---|
 | `MAX_UPDATE_BACKLOG` 50 (flush when the changed-id set holds more than 50) | s10d (50 ids), s10e (51), s10f (52) |
-| task timer 8 ms (expired when now >= expiry) | s10g (checkpoint at 7999 us), s10h (8000), s10i (8001) |
-| batch timer 10 ms | s10j (9999 us), s10k (10000), s10l (10001) |
+| task timer 8 ms, armed at construction (expired when now >= expiry) | s10g (first checkpoint at 7999 us), s10h (8000), s10i (8001) |
+| batch timer 10 ms, re-armed by another update | s10j (9999 us), s10k (10000), s10l (10001); s10m (already spent: the loop yields again) |
 | `MAX_FOLDER_DEPTH_REQUEST` 50 (non-recursive depth clamped) | s18a: depth 49, 50, 51 |
 | depth cut (version only at depth >= 0) | s02, s16d, s16e (levels at depth 1, 0, -1) |
 | `MAX_SIMULTANEOUS_COROUTINES` 2048 | s18f: pending 2047 (enqueued), 2048, 2049 (postponed); idle drains |
 
-Counts: 137 cases (15 in set 12), 390 steps (151 of them command-function
-calls), 7 hooks, 274 runs. Committed per tree: 2.67 MB of inputs, 7.02 MB of
-expected outputs, 9.72 MB in all (662 files).
+Counts: 139 cases (9 in set 12), 388 steps (153 of them command-function
+calls), 11 hooks, 278 runs. Committed per tree: 2.74 MB of inputs, 6.50 MB of
+expected outputs, 9.28 MB in all (667 files).
 
 ### The large case (s10a)
 
@@ -466,22 +516,21 @@ what the C++ does with such a reply, not that AIS sends it.
 
 ## Findings (recorded as they are, not fixed)
 
-1. `AISUpdate`'s constructor calls `setTimerExpirySec()` and then `start()`,
-   which resets `mExpirationTicks` to 0, on both the task timer and (on a new
-   frame) the batch timer. Every update therefore yields one frame at its
-   first `checkTimeout()` (the first `_embedded` or the start of `doUpdate`),
-   however small the reply; after a yield both timers are re-armed together
-   (8 ms and 10 ms), so the batch timer can cause a yield only when another
-   update resumed (s10b, s10j-l) or was constructed (s13g) first in the
-   frame. Same in Firestorm upstream.
+1. (Fixed by bug 15, recorded on the fixed code.) The constructor used to
+   call `setTimerExpirySec()` and then `start()`, which cleared the expiry,
+   so every update yielded at its first `checkTimeout()`. Now a reply
+   yields only once its 8 ms (or the frame's shared 10 ms) are spent; the
+   batch timer causes a yield when another update resumed (s10b, s10j-m) or
+   was constructed (s13g) first in the frame.
 2. A fetch that answers a lower version than the model's is applied (version
    goes down) when the model's descendent count is unknown (s05b): the
    FIRE-33455 "versions only raise" rule covers `_updated_category_versions`
    only.
 3. The snapshot-then-yield window remains for fetches: a COF fetch whose
    reply was parsed before a newer write landed applies its parse-time COF
-   (version and count) over the newer one (s13b: v13 back to v12, count 3
-   back to 2). Writes are safe: the copy back reads the model at apply time
+   (version and count) over the newer one (s13h at the start of
+   `doUpdate()`, s13b during the parse: v13 back to v12, count 3 back to
+   2). Writes are safe: the copy back reads the model at apply time
    and the version rule only raises (s13a).
 4. A stale parse-time item snapshot is written back over changes made while
    the update was suspended (s13c).

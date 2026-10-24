@@ -46,7 +46,7 @@
      <key>version</key>
      <integer>50</integer>
      <key>descendents</key>
-     <integer>9</integer>
+     <integer>8</integer>
     </map>
     <map>
      <key>category_id</key>
@@ -173,22 +173,6 @@
      <uuid>0a000000-0000-4000-8000-000000000001</uuid>
      <key>version</key>
      <integer>5</integer>
-     <key>descendents</key>
-     <integer>0</integer>
-    </map>
-    <map>
-     <key>category_id</key>
-     <uuid>c0000000-0000-4000-8000-000000002500</uuid>
-     <key>parent_id</key>
-     <uuid>c0000000-0000-4000-8000-000000000001</uuid>
-     <key>name</key>
-     <string>Timer</string>
-     <key>type_default</key>
-     <integer>-1</integer>
-     <key>owner_id</key>
-     <uuid>0a000000-0000-4000-8000-000000000001</uuid>
-     <key>version</key>
-     <integer>-1</integer>
      <key>descendents</key>
      <integer>0</integer>
     </map>

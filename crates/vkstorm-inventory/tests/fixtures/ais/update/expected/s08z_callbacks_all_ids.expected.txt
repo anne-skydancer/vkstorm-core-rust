@@ -1,6 +1,6 @@
 # case s08z_callbacks_all_ids; review rendering of s08z_callbacks_all_ids.expected.llsd, one op per line
 # generator: INTEGRATION_TEST_llaisupdate_parity (indra/newview/tests/llaisupdate_parity_test.cpp), dump mode
-# viewer commit: d2fb99af07705f5ee3e7223261a6d0205be7d494 (llaisapi.cpp blob b3ca253a86300c1f9d14713a9b3ff2522e79a3c7)
+# viewer commit: 9c6850b585ff50b65696ada2082f69bc94d83646 (llaisapi.cpp blob 8d34822459c9c59ca7cd8ac8338cb76da6089c71)
 # platform: windows
 case = 's08z_callbacks_all_ids'
 == never/final/categories (9)
@@ -71,87 +71,60 @@ case = 's08z_callbacks_all_ids'
 [52] {'index':i15,'op':'step','type':'FETCHCATEGORYLINKS'}
 [53] {'changed':i0,'op':'notifyObservers'}
 [54] {'id':uc0000000-0000-4000-8000-0000000009f1,'op':'callback'}
-== sched/final/categories (9)
-[0] {'category_id':uc0000000-0000-4000-8000-000000000001,'descendents':i8,'favorite':0,'fetching':i0,'name':'My Inventory','owner_id':u0a000000-0000-4000-8000-000000000001,'parent_id':u00000000-0000-0000-0000-000000000000,'thumbnail_id':u00000000-0000-0000-0000-000000000000,'type':i8,'type_default':i8,'version':i50}
-[1] {'category_id':uc0000000-0000-4000-8000-000000000005,'descendents':i0,'favorite':0,'fetching':i0,'name':'Clothing','owner_id':u0a000000-0000-4000-8000-000000000001,'parent_id':uc0000000-0000-4000-8000-000000000001,'thumbnail_id':u00000000-0000-0000-0000-000000000000,'type':i8,'type_default':i5,'version':i7}
-[2] {'category_id':uc0000000-0000-4000-8000-000000000006,'descendents':i0,'favorite':0,'fetching':i0,'name':'Objects','owner_id':u0a000000-0000-4000-8000-000000000001,'parent_id':uc0000000-0000-4000-8000-000000000001,'thumbnail_id':u00000000-0000-0000-0000-000000000000,'type':i8,'type_default':i6,'version':i3}
-[3] {'category_id':uc0000000-0000-4000-8000-00000000000d,'descendents':i0,'favorite':0,'fetching':i0,'name':'Body Parts','owner_id':u0a000000-0000-4000-8000-000000000001,'parent_id':uc0000000-0000-4000-8000-000000000001,'thumbnail_id':u00000000-0000-0000-0000-000000000000,'type':i8,'type_default':i13,'version':i4}
-[4] {'category_id':uc0000000-0000-4000-8000-00000000000e,'descendents':i0,'favorite':0,'fetching':i0,'name':'Trash','owner_id':u0a000000-0000-4000-8000-000000000001,'parent_id':uc0000000-0000-4000-8000-000000000001,'thumbnail_id':u00000000-0000-0000-0000-000000000000,'type':i8,'type_default':i14,'version':i9}
-[5] {'category_id':uc0000000-0000-4000-8000-000000000010,'descendents':i0,'favorite':0,'fetching':i0,'name':'Lost And Found','owner_id':u0a000000-0000-4000-8000-000000000001,'parent_id':uc0000000-0000-4000-8000-000000000001,'thumbnail_id':u00000000-0000-0000-0000-000000000000,'type':i8,'type_default':i16,'version':i2}
-[6] {'category_id':uc0000000-0000-4000-8000-00000000002e,'descendents':i0,'favorite':0,'fetching':i0,'name':'Current Outfit','owner_id':u0a000000-0000-4000-8000-000000000001,'parent_id':uc0000000-0000-4000-8000-000000000001,'thumbnail_id':u00000000-0000-0000-0000-000000000000,'type':i8,'type_default':i46,'version':i10}
-[7] {'category_id':uc0000000-0000-4000-8000-000000000030,'descendents':i0,'favorite':0,'fetching':i0,'name':'My Outfits','owner_id':u0a000000-0000-4000-8000-000000000001,'parent_id':uc0000000-0000-4000-8000-000000000001,'thumbnail_id':u00000000-0000-0000-0000-000000000000,'type':i8,'type_default':i48,'version':i6}
-[8] {'category_id':uc0000000-0000-4000-8000-000000000031,'descendents':i0,'favorite':0,'fetching':i0,'name':'Textures','owner_id':u0a000000-0000-4000-8000-000000000001,'parent_id':uc0000000-0000-4000-8000-000000000001,'thumbnail_id':u00000000-0000-0000-0000-000000000000,'type':i8,'type_default':i0,'version':i5}
-== sched/final/changed_ids (0)
-== sched/final/items (0)
-== sched/ops (71)
+sched/final = '(same as never/final)'
+== sched/ops (55)
 [0] {'index':i0,'op':'step','type':'COPYINVENTORY'}
-[1] {'clock_us':i0,'frame':i0,'op':'yield','others_us':i0}
-[2] {'changed':i0,'op':'notifyObservers'}
-[3] {'id':uc0000000-0000-4000-8000-0000000009f3,'op':'callback'}
-[4] {'id':uc0000000-0000-4000-8000-0000000009f2,'op':'callback'}
-[5] {'id':ua0000000-0000-4000-8000-0000000009f4,'op':'callback'}
-[6] {'id':ua0000000-0000-4000-8000-0000000009f3,'op':'callback'}
-[7] {'index':i1,'op':'step','type':'SLAMFOLDER'}
-[8] {'clock_us':i33834,'frame':i2,'op':'yield','others_us':i0}
-[9] {'changed':i0,'op':'notifyObservers'}
-[10] {'id':u00000000-0000-0000-0000-000000000000,'op':'callback'}
-[11] {'index':i2,'op':'step','type':'REMOVECATEGORY'}
-[12] {'clock_us':i67368,'frame':i4,'op':'yield','others_us':i0}
+[1] {'changed':i0,'op':'notifyObservers'}
+[2] {'id':uc0000000-0000-4000-8000-0000000009f3,'op':'callback'}
+[3] {'id':uc0000000-0000-4000-8000-0000000009f2,'op':'callback'}
+[4] {'id':ua0000000-0000-4000-8000-0000000009f4,'op':'callback'}
+[5] {'id':ua0000000-0000-4000-8000-0000000009f3,'op':'callback'}
+[6] {'index':i1,'op':'step','type':'SLAMFOLDER'}
+[7] {'changed':i0,'op':'notifyObservers'}
+[8] {'id':u00000000-0000-0000-0000-000000000000,'op':'callback'}
+[9] {'index':i2,'op':'step','type':'REMOVECATEGORY'}
+[10] {'changed':i0,'op':'notifyObservers'}
+[11] {'id':u00000000-0000-0000-0000-000000000000,'op':'callback'}
+[12] {'index':i3,'op':'step','type':'REMOVEITEM'}
 [13] {'changed':i0,'op':'notifyObservers'}
 [14] {'id':u00000000-0000-0000-0000-000000000000,'op':'callback'}
-[15] {'index':i3,'op':'step','type':'REMOVEITEM'}
-[16] {'clock_us':i100902,'frame':i6,'op':'yield','others_us':i0}
-[17] {'changed':i0,'op':'notifyObservers'}
-[18] {'id':u00000000-0000-0000-0000-000000000000,'op':'callback'}
-[19] {'index':i4,'op':'step','type':'PURGEDESCENDENTS'}
-[20] {'clock_us':i134436,'frame':i8,'op':'yield','others_us':i0}
-[21] {'changed':i0,'op':'notifyObservers'}
-[22] {'id':u00000000-0000-0000-0000-000000000000,'op':'callback'}
-[23] {'index':i5,'op':'step','type':'UPDATECATEGORY'}
-[24] {'clock_us':i167970,'frame':i10,'op':'yield','others_us':i0}
-[25] {'changed':i0,'op':'notifyObservers'}
-[26] {'id':uc0000000-0000-4000-8000-0000000009f5,'op':'callback'}
-[27] {'id':uc0000000-0000-4000-8000-0000000009f4,'op':'callback'}
-[28] {'index':i6,'op':'step','type':'UPDATEITEM'}
-[29] {'clock_us':i201604,'frame':i12,'op':'yield','others_us':i0}
-[30] {'changed':i0,'op':'notifyObservers'}
-[31] {'id':u00000000-0000-0000-0000-000000000000,'op':'callback'}
-[32] {'index':i7,'op':'step','type':'COPYLIBRARYCATEGORY'}
-[33] {'clock_us':i235138,'frame':i14,'op':'yield','others_us':i0}
-[34] {'changed':i0,'op':'notifyObservers'}
-[35] {'id':uc0000000-0000-4000-8000-0000000009f1,'op':'callback'}
-[36] {'index':i8,'op':'step','type':'CREATEINVENTORY'}
-[37] {'clock_us':i268672,'frame':i16,'op':'yield','others_us':i0}
+[15] {'index':i4,'op':'step','type':'PURGEDESCENDENTS'}
+[16] {'changed':i0,'op':'notifyObservers'}
+[17] {'id':u00000000-0000-0000-0000-000000000000,'op':'callback'}
+[18] {'index':i5,'op':'step','type':'UPDATECATEGORY'}
+[19] {'changed':i0,'op':'notifyObservers'}
+[20] {'id':uc0000000-0000-4000-8000-0000000009f5,'op':'callback'}
+[21] {'id':uc0000000-0000-4000-8000-0000000009f4,'op':'callback'}
+[22] {'index':i6,'op':'step','type':'UPDATEITEM'}
+[23] {'changed':i0,'op':'notifyObservers'}
+[24] {'id':u00000000-0000-0000-0000-000000000000,'op':'callback'}
+[25] {'index':i7,'op':'step','type':'COPYLIBRARYCATEGORY'}
+[26] {'changed':i0,'op':'notifyObservers'}
+[27] {'id':uc0000000-0000-4000-8000-0000000009f1,'op':'callback'}
+[28] {'index':i8,'op':'step','type':'CREATEINVENTORY'}
+[29] {'changed':i0,'op':'notifyObservers'}
+[30] {'id':uc0000000-0000-4000-8000-0000000009f3,'op':'callback'}
+[31] {'id':uc0000000-0000-4000-8000-0000000009f2,'op':'callback'}
+[32] {'id':ua0000000-0000-4000-8000-0000000009f4,'op':'callback'}
+[33] {'id':ua0000000-0000-4000-8000-0000000009f3,'op':'callback'}
+[34] {'index':i9,'op':'step','type':'FETCHITEM'}
+[35] {'changed':i0,'op':'notifyObservers'}
+[36] {'id':ua0000000-0000-4000-8000-0000000009f2,'op':'callback'}
+[37] {'index':i10,'op':'step','type':'FETCHCATEGORYCHILDREN'}
 [38] {'changed':i0,'op':'notifyObservers'}
-[39] {'id':uc0000000-0000-4000-8000-0000000009f3,'op':'callback'}
-[40] {'id':uc0000000-0000-4000-8000-0000000009f2,'op':'callback'}
-[41] {'id':ua0000000-0000-4000-8000-0000000009f4,'op':'callback'}
-[42] {'id':ua0000000-0000-4000-8000-0000000009f3,'op':'callback'}
-[43] {'index':i9,'op':'step','type':'FETCHITEM'}
-[44] {'clock_us':i302506,'frame':i18,'op':'yield','others_us':i0}
-[45] {'changed':i0,'op':'notifyObservers'}
-[46] {'id':ua0000000-0000-4000-8000-0000000009f2,'op':'callback'}
-[47] {'index':i10,'op':'step','type':'FETCHCATEGORYCHILDREN'}
-[48] {'clock_us':i336040,'frame':i20,'op':'yield','others_us':i0}
-[49] {'changed':i0,'op':'notifyObservers'}
-[50] {'id':uc0000000-0000-4000-8000-0000000009f1,'op':'callback'}
-[51] {'index':i11,'op':'step','type':'FETCHCATEGORYCATEGORIES'}
-[52] {'clock_us':i369574,'frame':i22,'op':'yield','others_us':i0}
+[39] {'id':uc0000000-0000-4000-8000-0000000009f1,'op':'callback'}
+[40] {'index':i11,'op':'step','type':'FETCHCATEGORYCATEGORIES'}
+[41] {'changed':i0,'op':'notifyObservers'}
+[42] {'id':uc0000000-0000-4000-8000-0000000009f1,'op':'callback'}
+[43] {'index':i12,'op':'step','type':'FETCHCATEGORYSUBSET'}
+[44] {'changed':i0,'op':'notifyObservers'}
+[45] {'id':uc0000000-0000-4000-8000-0000000009f1,'op':'callback'}
+[46] {'index':i13,'op':'step','type':'FETCHCOF'}
+[47] {'changed':i0,'op':'notifyObservers'}
+[48] {'id':uc0000000-0000-4000-8000-0000000009f1,'op':'callback'}
+[49] {'index':i14,'op':'step','type':'FETCHORPHANS'}
+[50] {'changed':i0,'op':'notifyObservers'}
+[51] {'id':u00000000-0000-0000-0000-000000000000,'op':'callback'}
+[52] {'index':i15,'op':'step','type':'FETCHCATEGORYLINKS'}
 [53] {'changed':i0,'op':'notifyObservers'}
 [54] {'id':uc0000000-0000-4000-8000-0000000009f1,'op':'callback'}
-[55] {'index':i12,'op':'step','type':'FETCHCATEGORYSUBSET'}
-[56] {'clock_us':i403108,'frame':i24,'op':'yield','others_us':i0}
-[57] {'changed':i0,'op':'notifyObservers'}
-[58] {'id':uc0000000-0000-4000-8000-0000000009f1,'op':'callback'}
-[59] {'index':i13,'op':'step','type':'FETCHCOF'}
-[60] {'clock_us':i436642,'frame':i26,'op':'yield','others_us':i0}
-[61] {'changed':i0,'op':'notifyObservers'}
-[62] {'id':uc0000000-0000-4000-8000-0000000009f1,'op':'callback'}
-[63] {'index':i14,'op':'step','type':'FETCHORPHANS'}
-[64] {'clock_us':i470176,'frame':i28,'op':'yield','others_us':i0}
-[65] {'changed':i0,'op':'notifyObservers'}
-[66] {'id':u00000000-0000-0000-0000-000000000000,'op':'callback'}
-[67] {'index':i15,'op':'step','type':'FETCHCATEGORYLINKS'}
-[68] {'clock_us':i503710,'frame':i30,'op':'yield','others_us':i0}
-[69] {'changed':i0,'op':'notifyObservers'}
-[70] {'id':uc0000000-0000-4000-8000-0000000009f1,'op':'callback'}

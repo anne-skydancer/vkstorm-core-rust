@@ -6,7 +6,7 @@
   <key>set</key>
   <integer>13</integer>
   <key>title</key>
-  <string>After the first yield another AIS update is constructed in the new frame before this one resumes: the shared batch timer is restarted expired and this update yields at its next checkTimeout()</string>
+  <string>After the first yield another AIS update is constructed in the new frame and runs 5 ms before this one resumes: its constructor armed the shared batch timer, so this update's next yield comes 5 ms after it resumes, not 8</string>
   <key>agent_id</key>
   <uuid>0a000000-0000-4000-8000-000000000001</uuid>
   <key>session_id</key>
@@ -16,7 +16,7 @@
   <key>sched</key>
   <map>
    <key>call_us</key>
-   <integer>100</integer>
+   <integer>1000</integer>
    <key>frame_us</key>
    <integer>16667</integer>
    <key>others_us</key>
@@ -226,6 +226,10 @@
        <map>
         <key>construct_update</key>
         <string>FETCHCATEGORYCHILDREN</string>
+       </map>
+       <map>
+        <key>advance_us</key>
+        <integer>5000</integer>
        </map>
       </array>
      </map>
