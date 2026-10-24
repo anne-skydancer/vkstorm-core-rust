@@ -16,5 +16,10 @@ crate. Each recorder of the rung owns its own fixture directories:
 | R3 fetch and AIS | `ais/` |
 | R4 task inventory, offers, giving, messages | `task/`, `offer/`, `give/`, `msgs/` |
 
-Fixtures are recorded from the unmodified C++, on Windows and Linux, and are
-never edited by hand.
+Fixtures are recorded from the viewer's C++ as it is on the recording
+commit, never edited by hand, and replayed on Windows and Linux. That C++
+includes the inventory fixes approved from the oracles' findings (the F1
+and AIS fixes of #174, and the legacy-text, model and task-inventory fixes
+of #181); each recorder's README names the commit it recorded and the
+fixes that changed its records. Behaviour still recorded as it is, defects
+included, is listed in each README's findings.
