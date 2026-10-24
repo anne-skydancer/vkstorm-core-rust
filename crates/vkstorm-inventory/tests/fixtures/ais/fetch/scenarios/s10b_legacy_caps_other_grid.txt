@@ -1,8 +1,8 @@
 # vkstorm inventory fetch wire oracle (recorder R3b): s10b_legacy_caps_other_grid
-# another grid with FSUseAis3Api off: legacy capabilities, UDP item fetch
+# OpenSim profile, FSUseAis3Api off: legacy capabilities, UDP item fetch
 # generator: INTEGRATION_TEST_llinvfetch_parity with VKS_INVFETCH_DUMP (indra/newview/tests/llinvfetch_parity_test.cpp)
 #            under indra/newview/tests/vksinventory_mock_server.py
-# viewer commit: a007d4026c
+# viewer commit: 25db061b68
 # platform: windows-msvc
 # seed: none (patterned ids, no random input; tid and viewer-generated ids normalised)
 # format: README.md
@@ -11,7 +11,7 @@ count requests=3 caps=fid2:2,fld2:1 methods=POST:3 status503=0
 wire@1 POST /cap/fid2 status=200 head=POST /cap/fid2 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nContent-Type: application/llsd+xml\r\nAccept: application/llsd+xml\r\nContent-Length: 333\r\n\r\n body=<llsd><map><key>folders</key><array><map><key>fetch_folders</key><boolean>1</boolean><key>fetch_items</key><boolean>1</boolean><key>folder_id</key><uuid>c0000000-0000-4000-8000-000000000001</uuid><key>owner_id</key><uuid>a9e00000-0000-4000-8000-000000000001</uuid><key>sort_order</key><integer>1</integer></map></array></map></llsd>\n resp=8338:a97d628c30cce1db rtype=application/llsd+xml
 wire@1 POST /cap/fld2 status=200 head=POST /cap/fld2 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nContent-Type: application/llsd+xml\r\nAccept: application/llsd+xml\r\nContent-Length: 333\r\n\r\n body=<llsd><map><key>folders</key><array><map><key>fetch_folders</key><boolean>1</boolean><key>fetch_items</key><boolean>1</boolean><key>folder_id</key><uuid>d0000000-0000-4000-8000-000000000001</uuid><key>owner_id</key><uuid>ba2a564a-f0f1-4b82-9c61-b7520bfcd09f</uuid><key>sort_order</key><integer>1</integer></map></array></map></llsd>\n resp=3618:b4f0680ac62702ac rtype=application/llsd+xml
 wire@2 POST /cap/fid2 status=200 head=POST /cap/fid2 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nContent-Type: application/llsd+xml\r\nAccept: application/llsd+xml\r\nContent-Length: 337\r\n\r\n body=<llsd><map><key>folders</key><array><map><key>fetch_folders</key><boolean>0</boolean><key>fetch_items</key><boolean>1</boolean><key>folder_id</key><string>00000000-0000-0000-0000-000000000000</string><key>owner_id</key><uuid>a9e00000-0000-4000-8000-000000000001</uuid><key>sort_order</key><integer>1</integer></map></array></map></llsd>\n resp=1664:ac7240a7635a586b rtype=application/llsd+xml
-tids uses=0 distinct=0
+tids requests=0 distinct=0 fresh=yes
 jrn step begin s10b_legacy_caps_other_grid
 jrn startup callbacks ready=1 usable=1
 jrn world folders=46 items=69 links=9 pool=2 batch=20

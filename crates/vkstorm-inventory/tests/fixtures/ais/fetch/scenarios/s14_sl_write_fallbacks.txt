@@ -1,8 +1,8 @@
 # vkstorm inventory fetch wire oracle (recorder R3b): s14_sl_write_fallbacks
-# Second Life write fallbacks without AIS: UDP messages, CreateInventoryCategory
+# pre-D2: Second Life write fallbacks without AIS: UDP messages, CreateInventoryCategory
 # generator: INTEGRATION_TEST_llinvfetch_parity with VKS_INVFETCH_DUMP (indra/newview/tests/llinvfetch_parity_test.cpp)
 #            under indra/newview/tests/vksinventory_mock_server.py
-# viewer commit: a007d4026c
+# viewer commit: 25db061b68
 # platform: windows-msvc
 # seed: none (patterned ids, no random input; tid and viewer-generated ids normalised)
 # format: README.md
@@ -15,7 +15,7 @@ wire 4 GET /cap/inv/category/c0000000-0000-4000-8000-000000000001/children?depth
 wire 5 GET /cap/inv/category/c0000001-0000-4000-8000-000000000037/children?depth=0 status=200 head=GET /cap/inv/category/c0000001-0000-4000-8000-000000000037/children?depth=0 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=1280:ca58f8fb13bc02ea rtype=application/llsd+xml
 wire 6 GET /cap/inv/category/c0000001-0000-4000-8000-000000000037/children?depth=50&children=c0100000-0000-4000-8000-000000000012,c0100000-0000-4000-8000-000000000013 status=200 head=GET /cap/inv/category/c0000001-0000-4000-8000-000000000037/children?depth=50&children=c0100000-0000-4000-8000-000000000012,c0100000-0000-4000-8000-000000000013 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=4002:6a9a742938f6db99 rtype=application/llsd+xml
 wire 7 POST /cap/cic status=200 head=POST /cap/cic HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\nContent-Length: 246\r\n\r\n body=<llsd><map><key>folder_id</key><uuid>{gen1}</uuid><key>name</key><string>Fallback folder</string><key>parent_id</key><uuid>c0100000-0000-4000-8000-000000000001</uuid><key>type</key><integer>-1</integer></map></llsd>\n resp=271:d588ef4c0ffb0ddb rtype=application/llsd+xml
-tids uses=0 distinct=0
+tids requests=0 distinct=0 fresh=yes
 jrn step begin s14_sl_write_fallbacks
 jrn sch act=00 st=0000 fc=0 ffc=0 fq=[] iq=[] exp=[] force=[]
 jrn world folders=51 items=77 links=9 pool=2 batch=20

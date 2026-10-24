@@ -2,7 +2,7 @@
 # warm login, two folders changed on the server: only they are requested
 # generator: INTEGRATION_TEST_llinvfetch_parity with VKS_INVFETCH_DUMP (indra/newview/tests/llinvfetch_parity_test.cpp)
 #            under indra/newview/tests/vksinventory_mock_server.py
-# viewer commit: a007d4026c
+# viewer commit: 25db061b68
 # platform: windows-msvc
 # seed: none (patterned ids, no random input; tid and viewer-generated ids normalised)
 # format: README.md
@@ -12,7 +12,7 @@ wire 1 GET /cap/inv/category/current/links status=200 head=GET /cap/inv/category
 wire 2 GET /cap/inv/category/c0000001-0000-4000-8000-000000000012/children?depth=50 status=200 head=GET /cap/inv/category/c0000001-0000-4000-8000-000000000012/children?depth=50 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=1767:c52394ed9ca34c85 rtype=application/llsd+xml
 wire 3 GET /cap/inv/category/c0100000-0000-4000-8000-000000000001/children?depth=50 status=200 head=GET /cap/inv/category/c0100000-0000-4000-8000-000000000001/children?depth=50 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=15274:e65dba5150a34cb2 rtype=application/llsd+xml
 wire 4 GET /cap/inv/category/c0100000-0000-4000-8000-00000000000a/children?depth=50 status=200 head=GET /cap/inv/category/c0100000-0000-4000-8000-00000000000a/children?depth=50 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=3053:0806373ab6d8a6c9 rtype=application/llsd+xml
-tids uses=0 distinct=0
+tids requests=0 distinct=0 fresh=yes
 jrn step begin s02b_login_warm_partial
 jrn sch act=00 st=0000 fc=0 ffc=0 fq=[] iq=[] exp=[] force=[]
 jrn world folders=66 items=107 links=9 pool=2 batch=20

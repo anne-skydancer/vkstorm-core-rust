@@ -2,7 +2,7 @@
 # warm login from s01's cache: no folder requested
 # generator: INTEGRATION_TEST_llinvfetch_parity with VKS_INVFETCH_DUMP (indra/newview/tests/llinvfetch_parity_test.cpp)
 #            under indra/newview/tests/vksinventory_mock_server.py
-# viewer commit: a007d4026c
+# viewer commit: 25db061b68
 # platform: windows-msvc
 # seed: none (patterned ids, no random input; tid and viewer-generated ids normalised)
 # format: README.md
@@ -10,7 +10,7 @@
 count requests=2 caps=inv:2 methods=GET:2 status503=0
 wire 1 GET /cap/inv/category/current/links status=200 head=GET /cap/inv/category/current/links HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=8494:c00f09b5ea740dd2 rtype=application/llsd+xml
 wire 2 GET /cap/inv/category/c0000001-0000-4000-8000-000000000012/children?depth=50 status=200 head=GET /cap/inv/category/c0000001-0000-4000-8000-000000000012/children?depth=50 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=1767:c52394ed9ca34c85 rtype=application/llsd+xml
-tids uses=0 distinct=0
+tids requests=0 distinct=0 fresh=yes
 jrn step begin s02a_login_warm_full
 jrn sch act=00 st=0000 fc=0 ffc=0 fq=[] iq=[] exp=[] force=[]
 jrn world folders=66 items=105 links=9 pool=2 batch=20
