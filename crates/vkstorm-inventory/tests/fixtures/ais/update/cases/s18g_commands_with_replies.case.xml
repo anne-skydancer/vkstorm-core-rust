@@ -44,7 +44,7 @@
      <key>version</key>
      <integer>50</integer>
      <key>descendents</key>
-     <integer>9</integer>
+     <integer>10</integer>
     </map>
     <map>
      <key>category_id</key>
@@ -189,6 +189,38 @@
      <integer>2</integer>
      <key>descendents</key>
      <integer>1</integer>
+    </map>
+    <map>
+     <key>category_id</key>
+     <uuid>c0000000-0000-4000-8000-000000001a64</uuid>
+     <key>parent_id</key>
+     <uuid>c0000000-0000-4000-8000-000000001a65</uuid>
+     <key>name</key>
+     <string>Gone folder</string>
+     <key>type_default</key>
+     <integer>-1</integer>
+     <key>owner_id</key>
+     <uuid>0a000000-0000-4000-8000-000000000001</uuid>
+     <key>version</key>
+     <integer>3</integer>
+     <key>descendents</key>
+     <integer>0</integer>
+    </map>
+    <map>
+     <key>category_id</key>
+     <uuid>c0000000-0000-4000-8000-000000001a65</uuid>
+     <key>parent_id</key>
+     <uuid>c0000000-0000-4000-8000-000000000001</uuid>
+     <key>name</key>
+     <string>Gone folder's parent</string>
+     <key>type_default</key>
+     <integer>-1</integer>
+     <key>owner_id</key>
+     <uuid>0a000000-0000-4000-8000-000000000001</uuid>
+     <key>version</key>
+     <integer>-1</integer>
+     <key>descendents</key>
+     <integer>-1</integer>
     </map>
    </array>
    <key>items</key>
@@ -419,6 +451,66 @@
    </map>
    <map>
     <key>call</key>
+    <string>RemoveCategory</string>
+    <key>args</key>
+    <map>
+     <key>category_id</key>
+     <uuid>c0000000-0000-4000-8000-000000001a64</uuid>
+    </map>
+    <key>caps</key>
+    <map>
+     <key>inv</key>
+     <string>https://inventory.grid.example/cap/00000000-0000-4000-8000-00000000cafe</string>
+     <key>lib</key>
+     <string>https://library.grid.example/cap/00000000-0000-4000-8000-00000000beef</string>
+    </map>
+    <key>pending</key>
+    <integer>0</integer>
+    <key>idle</key>
+    <boolean>false</boolean>
+    <key>idle_pending</key>
+    <integer>0</integer>
+    <key>no_region</key>
+    <boolean>false</boolean>
+    <key>callback</key>
+    <boolean>true</boolean>
+    <key>same_frame</key>
+    <boolean>false</boolean>
+    <key>response</key>
+    <string>s18g_commands_with_replies.5.xml</string>
+   </map>
+   <map>
+    <key>call</key>
+    <string>PurgeDescendents</string>
+    <key>args</key>
+    <map>
+     <key>category_id</key>
+     <uuid>c0000000-0000-4000-8000-000000001a64</uuid>
+    </map>
+    <key>caps</key>
+    <map>
+     <key>inv</key>
+     <string>https://inventory.grid.example/cap/00000000-0000-4000-8000-00000000cafe</string>
+     <key>lib</key>
+     <string>https://library.grid.example/cap/00000000-0000-4000-8000-00000000beef</string>
+    </map>
+    <key>pending</key>
+    <integer>0</integer>
+    <key>idle</key>
+    <boolean>false</boolean>
+    <key>idle_pending</key>
+    <integer>0</integer>
+    <key>no_region</key>
+    <boolean>false</boolean>
+    <key>callback</key>
+    <boolean>true</boolean>
+    <key>same_frame</key>
+    <boolean>false</boolean>
+    <key>response</key>
+    <string>s18g_commands_with_replies.6.xml</string>
+   </map>
+   <map>
+    <key>call</key>
     <string>CreateInventory</string>
     <key>args</key>
     <map>
@@ -450,7 +542,7 @@
     <key>same_frame</key>
     <boolean>false</boolean>
     <key>response</key>
-    <string>s18g_commands_with_replies.5.xml</string>
+    <string>s18g_commands_with_replies.7.xml</string>
    </map>
   </array>
  </map>

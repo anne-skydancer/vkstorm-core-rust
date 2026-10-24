@@ -6,7 +6,7 @@
   <key>set</key>
   <integer>13</integer>
   <key>title</key>
-  <string>Shutdown at yield 3, after the first backlog flush (half applied): LLCoros::Stopping from checkStop(), no callback; the model as left</string>
+  <string>Shutdown at apply-phase checkTimeout() 2, the first backlog flush (half applied), in both runs: the call yields, checkStop() throws, no callback, no model call after it, the model as it was</string>
   <key>agent_id</key>
   <uuid>0a000000-0000-4000-8000-000000000001</uuid>
   <key>session_id</key>
@@ -16,7 +16,7 @@
   <key>sched</key>
   <map>
    <key>call_us</key>
-   <integer>1000</integer>
+   <integer>100</integer>
    <key>frame_us</key>
    <integer>16667</integer>
    <key>others_us</key>
@@ -219,8 +219,8 @@
     <key>hooks</key>
     <array>
      <map>
-      <key>yield</key>
-      <integer>3</integer>
+      <key>apply_checkpoint</key>
+      <integer>2</integer>
       <key>actions</key>
       <array>
        <map>

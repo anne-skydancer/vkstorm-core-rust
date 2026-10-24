@@ -328,7 +328,7 @@
     <key>hooks</key>
     <array>
      <map>
-      <key>checkpoint</key>
+      <key>apply_checkpoint</key>
       <integer>1</integer>
       <key>actions</key>
       <array>

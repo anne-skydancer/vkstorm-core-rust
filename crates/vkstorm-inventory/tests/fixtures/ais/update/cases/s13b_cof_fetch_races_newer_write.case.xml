@@ -6,7 +6,7 @@
   <key>set</key>
   <integer>13</integer>
   <key>title</key>
-  <string>FETCHCOF (v12, two links) while a newer link write (v13) is processed at the first checkTimeout() (the start of the embedded links): the fetch's parse-time COF (v12, count 2) is then applied over v13 (the snapshot-then-yield window FIRE-33455 names)</string>
+  <string>FETCHCOF (v12, two links) while a newer link write (v13) is processed at the first parse-phase checkTimeout() (the start of the embedded links; sched run only): the fetch's parse-time COF (v12, count 2) is then applied over v13</string>
   <key>agent_id</key>
   <uuid>0a000000-0000-4000-8000-000000000001</uuid>
   <key>session_id</key>
@@ -360,7 +360,7 @@
     <key>hooks</key>
     <array>
      <map>
-      <key>checkpoint</key>
+      <key>parse_checkpoint</key>
       <integer>1</integer>
       <key>actions</key>
       <array>
