@@ -6,11 +6,21 @@ safety, mutation sequences with every notification batch and outgoing
 message, and model validation.
 
 Filled by recorder R2 of the inventory rung (vkstorm-rust rung seven). The
-fixtures are recorded from the viewer C++ (`codex/rust-inventory` at
+fixtures were first recorded from the viewer C++ (`codex/rust-inventory` at
 a6d6a04641, which includes the approved fixes LL #5358, FIRE-33455, the cache
 save check and the `gunzip_file` fix), before any port commit, on Windows and
 Linux, and are never edited by hand. To change them, change the recorder and
 record them again.
+
+Re-recorded on Windows at 8d18dd15dd (`codex/rust-inventory-r2` with
+`vkstorm-rust` merged), after the inventory bug fixes of PR #181 and bug 52.
+They changed `c2_load.txt` (bugs 20, 21, 27 and the gunzip follow-up
+dabe25973f), `c3_mutations.txt` (bugs 23 and 52), `c4_validation.txt`
+(bug 21) and `msgs/set8_handlers.txt` (bug 24); every other Windows record
+changed only in its header. The Linux-only records
+(`c4_validation_qa.libstdcxx.txt`, `c5_write_safety.linux.txt`) were not
+re-recorded: none of these fixes touches `validate()`'s QA draws or the
+cache save.
 
 ## How they are made
 
@@ -182,7 +192,10 @@ three except:
 - `c5_write_safety.linux.txt` exists only for Linux (see C5).
 - The header lines (`# platform:`) differ by design.
 
-## Behaviour recorded as it is (not fixed)
+## Behaviour recorded as it is
+
+Entries naming a bug describe the C++ after that fix (PR #181, bug 52);
+the others are recorded unfixed.
 
 - `deleteObject` notifies once mid-delete even when told not to (survey 2
   Q4): C3 `delete_object/item_no_notify_q4`, `deleted_from_server/ais_style_flags`.
@@ -192,33 +205,46 @@ three except:
 - The incomplete-root reload (Q8): C2 `incomplete_root_reload` (the root,
   saved with its version but without its items, reloads with its count set
   from the cached children, so it reads as complete).
-- The clear-cache marker and the library (Q9): C2 `marker_clear_cache` (the
-  library is loaded from its cache before the agent call deletes both files;
-  the logout save writes the library back).
+- The clear-cache marker and the library (Q9, fixed as bug 27): the marker
+  is named after the agent and is looked for on every `loadSkeleton()` call,
+  so the library's call, the first of the login, removes the agent and
+  library cache files before anything is read: C2 `marker_clear_cache` (the
+  library loads with no cache; the logout save writes an empty library).
+  A marker named after the library owner, which the viewer never writes, is
+  left alone and both caches load (`marker_library_owner`).
 - Unknown asset types invalidate their folder at every login (Q10): C1
   `types`, C2 `item_unknown_type`, `item_bad_lookup_type`, `types_world`.
-- A corrupt or truncated `.gz`: `gunzip_file` now returns false, nothing is
-  loaded, and the `.gz` is **kept** (not obsolete, because the plain file was
-  never opened): C2 `gz_truncated`, `gz_corrupt_crc`, `gz_corrupt_data`. A
-  stale plain file is then used if present (`plain_and_corrupt_gz`, Q7). A
-  0-byte `.gz` inflates to an empty file, which is obsolete and deleted.
+- A corrupt or truncated `.gz` (bug 20): `gunzip_file` returns false,
+  nothing is loaded, every folder is unknown, and the cache is obsolete, so
+  the `.gz` is removed: C2 `gz_truncated`, `gz_corrupt_crc`,
+  `gz_corrupt_data`. A stale plain file under the same name is neither
+  loaded nor kept (`plain_and_corrupt_gz`, Q7; its removal is the follow-up
+  dabe25973f). A 0-byte `.gz` inflates to an empty file, which is obsolete
+  and deleted.
   Concatenated members, plain bytes under the `.gz` name and trailing
   garbage after a member all load the whole cache.
 - A non-array `categories` (or a non-map root) makes every folder unknown and
   drops every item, without deleting the file.
 - Lost folders at login are reparented with one `MoveInventoryFolder` each;
   a typed folder goes to the root, where a second Trash makes validation
-  fatal and the inventory unusable (C2 `skeleton_parent_absent`); a second
-  FT_ROOT_INVENTORY folder named "My Inventory" (any case) replaces the root
-  id and also ends unusable (`skeleton_second_root`, `skeleton_three_roots`).
-- `updateItem` of a new item with type AT_NONE puts it in its parent's child
-  vector although `addItem` refused it (C3 `update_item_new/type_none`).
+  fatal and the inventory unusable (C2 `skeleton_parent_absent`). A second
+  FT_ROOT_INVENTORY folder named "My Inventory" (any case) no longer replaces
+  the login's root (bug 21: the root-name hack runs only when the login root
+  is not a root inventory folder); validation reports a non-fatal duplicate
+  root and the inventory stays usable (`skeleton_second_root`,
+  `skeleton_three_roots`; C4 `two_roots_named_my_inventory`,
+  `three_roots_named_my_inventory`, `three_roots_different_parents`).
+- `updateItem` of a new item with type AT_NONE, which `addItem` refuses, is
+  no longer listed in its parent's child vector nor reported (bug 23; C3
+  `update_item_new/type_none` returns mask 0x0).
 - Changing a link's target leaves its backlink stale (Q13): C3
   `update_item_existing/link_retarget_stale_backlink`.
-- In a multi-block UDP `BulkUpdateInventory`, every item carries block 0's
-  callback id, so only the first item's callback fires and the others stay
-  registered (msgs `items_multi_block_callback_block0`, `null_item_block`:
-  the callback fires for the item after a null block).
+- In a multi-block UDP `BulkUpdateInventory` or `UpdateCreateInventoryItem`,
+  each item block fires its own callback (bug 24; msgs `bulk_update_udp`
+  `items_multi_block_callback_block0`, where all three fire, and
+  `null_item_block`, where the null block's callback stays registered and
+  the next item fires its own; `update_create_inventory_item`
+  `two_blocks_block0_fires`, where both fire and both items are re-fetched).
 - The GenericMessage form of `BulkUpdateInventory` (msgs
   `bulk_update_generic`): a GenericMessage parameter holds at most 254 bytes
   of text, so it carries folder records but never an item record; over UDP,
@@ -228,9 +254,9 @@ three except:
   notation (raw or b16 binary) and XML. What simulators actually send cannot
   be observed without a login; the recorded carriers are the ones the
   viewer's parser accepts.
-- `moveObject()` accepts a move that makes a folder cycle, after which
-  `isObjectDescendentOf()` never returns; the random sweep skips such moves
-  (they hang the C++).
+- `moveObject()` refuses a move of a folder into its own descendant, and
+  `isObjectDescendentOf()` stops on a loop (bug 19). The random sweep still
+  skips such moves, so no record shows the refusal.
 
 ## Not covered
 

@@ -1,6 +1,6 @@
 # vkstorm inventory model oracle (recorder R2): C1 cache files
 # generator: INTEGRATION_TEST_llinventorymodel_parity with VKS_INVMODEL_DUMP (indra/newview/tests/llinventorymodel_parity_test.cpp)
-# viewer commit: 43bff6b979
+# viewer commit: 8d18dd15dd
 # platform: windows-msvc
 # seed: random worlds 0x1001 0x2002 0x3003 (xorshift64*)
 # format: tests/fixtures/inventory/cache/README.md; lines starting with '#' are not compared
