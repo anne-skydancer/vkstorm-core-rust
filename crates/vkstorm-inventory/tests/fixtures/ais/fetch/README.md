@@ -459,7 +459,10 @@ set). Five record-and-replay runs gave the same compared content; only the
 by design, and two further independent runs replay the committed tree with
 zero differences. The previous recording (`40a241bd80`, 24 scenarios) also
 replayed with zero differences on Linux (WSL Ubuntu 26.04, GCC 15) and GCC 14
-(as on CI's Ubuntu 24.04); this recording has not been replayed on Linux yet.
+(as on CI's Ubuntu 24.04). This recording replays with zero differences in CI
+(run 40089987875: windows-2022 MSVC and ubuntu-24.04 GCC 14,
+`INTEGRATION_TEST_llinvfetch_parity` in the focused test step); GCC 15 waits
+for CI's move to Ubuntu 26.04.
 The request heads (rung four's Rust transport) and bodies (rung two's LLSD
 XML) were the same on both platforms.
 
