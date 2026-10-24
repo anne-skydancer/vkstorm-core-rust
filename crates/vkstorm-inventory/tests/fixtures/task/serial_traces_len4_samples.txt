@@ -14,7 +14,7 @@
 #  cap.nocontents 200 without contents; timer fires the oldest pending timer; upd.known updateInventory(A edited, key 0);
 #  upd.guess (C, absent); upd.new (D, is_new); upd.asset (E with A's asset, key 1); remove A; move.nocopy B; move.copy A;
 #  create.ok|fail createInventoryItem then the POST answered success true|false; die/revive the object in gObjectList;
-#  select (selection manager holds owner=other group=othergroup); notowner (permYouOwner false); listen/unlisten;
+#  select (selection manager holds owner=other group=othergroup); notowner (permYouOwner false); listen/unlisten; clearlisteners;
 #  set.serial=<n>/set.expected=<n> set the fields directly.
 # Standard file/contents: Contents (obj), A copyable notecard (assetA), B no-copy object (assetB).
 # 298114 traces in the order of serial_traces_len1_2.txt; every 97th (0, 97, ...) is kept here; the SHA-256 of all of them, concatenated, and of each block of 97 starting at a sample, is in digests_set3.txt
