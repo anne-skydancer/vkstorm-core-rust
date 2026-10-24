@@ -2,7 +2,7 @@
 # the large inventory on a 20-coroutine pool (digests)
 # generator: INTEGRATION_TEST_llinvfetch_parity with VKS_INVFETCH_DUMP (indra/newview/tests/llinvfetch_parity_test.cpp)
 #            under indra/newview/tests/vksinventory_mock_server.py
-# viewer commit: a007d4026c
+# viewer commit: 25db061b68
 # platform: windows-msvc
 # seed: none (patterned ids, no random input; tid and viewer-generated ids normalised)
 # format: README.md
@@ -28,7 +28,7 @@ wire* 1x GET /cap/inv/category/c0000001-0000-4000-8000-000000000037/children?dep
 wire* 1x GET /cap/inv/category/c0000001-0000-4000-8000-000000000037/children?depth=50&children=c0100000-0000-4000-8000-000000000003,c0100000-0000-4000-8000-000000000004 status=200 head=GET /cap/inv/category/c0000001-0000-4000-8000-000000000037/children?depth=50&children=c0100000-0000-4000-8000-000000000003,c0100000-0000-4000-8000-000000000004 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=4001:b7d2e76b7dc8d31a rtype=application/llsd+xml
 wire* 1x GET /cap/inv/category/c0100000-0000-4000-8000-0000000012bd/children?depth=50 status=200 head=GET /cap/inv/category/c0100000-0000-4000-8000-0000000012bd/children?depth=50 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=173208:65f41ea2b2f918b6 rtype=application/llsd+xml
 wire* 1x GET /cap/lib/category/d0000000-0000-4000-8000-000000000001/children?depth=50 status=200 head=GET /cap/lib/category/d0000000-0000-4000-8000-000000000001/children?depth=50 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=30610:cb8861f36637724b rtype=application/llsd+xml
-tids uses=0 distinct=0
+tids requests=0 distinct=0 fresh=yes
 pub folder_active=0 everything=1 bulk_complete=1 inv_started=1 inv_completed=1 inv_in_progress=0 lib_started=1 lib_completed=1 lib_in_progress=0
 mdl-digest lines=69993 sha256=07cee9c2f797a62ae9147ce2f73b808821972d148b152f96321cb7823fdeaede chunk=500
 mdl-chunk 0 lines=1-500 sha256=4939ae74d112a5ce0b37bc4e59748b21beb7448bfa18fc63b084452e445c35e0
@@ -213,4 +213,4 @@ mdl-line 69992 backlink a0000000-0000-4000-8000-000000000005 b0000000-0000-4000-
 mdl-line 69993 backlink a0000000-0000-4000-8000-000000000006 b0000000-0000-4000-8000-000000000003
 bound viewer_in_flight<=19 yes
 bound ais_pool<=20 yes
-# measured viewer_max_in_flight=15 max_dispatch_per_frame=15 ais_pool_max=15 mock_max_overlap=5 frames=929 scheduler_states=43
+# measured viewer_max_in_flight=15 max_dispatch_per_frame=15 ais_pool_max=15 mock_max_overlap=11 frames=219 scheduler_states=43

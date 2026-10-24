@@ -2,7 +2,7 @@
 # the first four requests fail: version 0 for the session, the 60 s back-off
 # generator: INTEGRATION_TEST_llinvfetch_parity with VKS_INVFETCH_DUMP (indra/newview/tests/llinvfetch_parity_test.cpp)
 #            under indra/newview/tests/vksinventory_mock_server.py
-# viewer commit: a007d4026c
+# viewer commit: 25db061b68
 # platform: windows-msvc
 # seed: none (patterned ids, no random input; tid and viewer-generated ids normalised)
 # format: README.md
@@ -18,7 +18,7 @@ wire 7 GET /cap/inv/category/c0000000-0000-4000-8000-000000000001/children?depth
 wire 8 GET /cap/inv/category/c0000001-0000-4000-8000-000000000037/children?depth=0 status=200 head=GET /cap/inv/category/c0000001-0000-4000-8000-000000000037/children?depth=0 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=1280:098c571b1f16059c rtype=application/llsd+xml
 wire 9 GET /cap/inv/category/c0000001-0000-4000-8000-000000000037/children?depth=50&children=c0100000-0000-4000-8000-000000000021,c0100000-0000-4000-8000-000000000022 status=200 head=GET /cap/inv/category/c0000001-0000-4000-8000-000000000037/children?depth=50&children=c0100000-0000-4000-8000-000000000021,c0100000-0000-4000-8000-000000000022 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=4002:a9c392428931d778 rtype=application/llsd+xml
 wire 10 GET /cap/inv/category/c0000000-0000-4000-8000-000000000001/children?depth=0 status=200 head=GET /cap/inv/category/c0000000-0000-4000-8000-000000000001/children?depth=0 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=13561:e97f2cf53698f335 rtype=application/llsd+xml
-tids uses=0 distinct=0
+tids requests=0 distinct=0 fresh=yes
 jrn step begin s06_outage
 jrn sch act=00 st=0000 fc=0 ffc=0 fq=[] iq=[] exp=[] force=[]
 jrn world folders=66 items=104 links=9 pool=2 batch=20

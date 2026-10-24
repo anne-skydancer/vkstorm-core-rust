@@ -21,7 +21,8 @@ hand: change the test or the mock and regenerate.
 ## The code under test
 
 `INTEGRATION_TEST_llinvfetch_parity` (`indra/newview/tests/inventory/r3-fetch.cmake`)
-compiles the real `llaisapi.cpp`, `llinventorymodelbackgroundfetch.cpp`,
+compiles the real `llaisapi.cpp` (through `tests/llinvfetch_parity_ais.cpp`),
+`llinventorymodelbackgroundfetch.cpp` (through `tests/llinvfetch_parity_bgf.cpp`),
 `llinventorymodel.cpp`, `llviewerinventory.cpp` and `llinventoryobserver.cpp`
 with recorder R2's stubbed viewer environment
 (`tests/llinventorymodel_parity_{stubs,harness,generic}.*`, used read-only, with
@@ -29,6 +30,16 @@ with recorder R2's stubbed viewer environment
 stubs), on the real coroutines (`LLCoros`), coprocedure pool
 (`LLCoprocedureManager`, pool "AIS"), `HttpCoroutineAdapter` and llcorehttp
 (the Rust transport of rung four). Nothing in the production code is changed.
+
+The two wrappers compile their source unchanged: each includes every header
+the source includes, then renames one class for the source's own text only.
+`llinvfetch_parity_ais.cpp` renames `LLCoros`, so the one call,
+`LLCoros::checkStop()` in `AISUpdate::checkTimeout()`, goes to a test
+function that calls the real one and, when a scenario arms it, throws
+`LLCoros::Stopping` at the n-th call (as recorder R3a scripts it).
+`llinvfetch_parity_bgf.cpp` renames `LLTimer`, so the three
+`LLTimer::getTotalSeconds()` calls of `bulkFetchViaAis` (the 1 s / 6 ms
+dispatch budget) read a scripted clock (see "Seams").
 
 What cannot be linked is copied verbatim into the test
 (`tests/llinvfetch_parity_support.cpp`, checked by `tests/check_r3b_copies.py`,
@@ -82,38 +93,44 @@ allowlist.
 * **The fake clock.** `LLFrameTimer`'s frame time (the category fetch timers:
   `fetch()`'s 10 s, `setFetching`'s 180 s / 30 s / 60 s, the 360 s of a -1
   version) moves only when a scenario says so (`clock_advance`), from 1000 s
-  at the start of each scenario. `LLTimer`'s total time (the background
-  fetch's 1 s / 6 ms frame budget) is frozen: the test sets the
-  clock-to-microsecond factor of llcommon's `TimerInfo` to 2^-20, so a real
-  second moves it by about 10 us (QueryPerformanceCounter) or 1 us
-  (gettimeofday). The budget therefore never ends a dispatch loop early, and
-  the 1 s / 6 ms choice by startup state is not observable (see "Not
-  covered"). `LLTimer`'s expiry timers (the AIS update's 8 ms task and 10 ms
-  batch timers) read the raw clock and stay real-time.
+  at the start of each scenario. The background fetch's frame budget
+  (1 s / 6 ms) reads the scripted clock of `llinvfetch_parity_bgf.cpp`: each
+  read returns the clock and then advances it by a step. The step is 0
+  (frozen) in every scenario but `s19_frame_budget`, so the budget never ends
+  a dispatch loop early elsewhere; s19 scripts the step and records the 6 ms
+  budget after login and the 1 s budget during it. Elsewhere in llcommon,
+  `LLTimer`'s total time is also frozen (the test sets the
+  clock-to-microsecond factor of `TimerInfo` to 2^-20). `LLTimer`'s expiry
+  timers (the AIS update's 8 ms task and 10 ms batch timers) read the raw
+  clock and stay real-time.
 * **Settling.** After an action the test runs frames until nothing is in
   flight: the AIS pool empty, the background fetch's request count zero,
   every request the mock received answered, every legacy item handler done
   (counted through the window's busy count), and nothing changing for 8
   frames and 150 ms (a foreground item request has no counter the test can
   read: the quiet time covers its trip to the mock).
-* **Pools and modes.** Sequence scenarios (`s..`) run with `PoolSizeAIS` 2:
-  a 2-coroutine AIS pool and a scheduler limit of `PoolSizeAIS - 1` = 1, so
-  at most one fetch is in flight and the request log is a total order.
-  Concurrency scenarios (`c..`) recreate the pool with 20 coroutines (limit
-  19). The pool is created once per size by
+* **Pools and modes.** Sequence scenarios (`s..`, `d2..`, `o..`) run with
+  `PoolSizeAIS` 2: a 2-coroutine AIS pool and a scheduler limit of
+  `PoolSizeAIS - 1` = 1, so at most one fetch is in flight and the request
+  log is a total order. Concurrency scenarios (`c..`, `oc..`) recreate the
+  pool with 20 coroutines (limit 19). The pool is created once per size by
   `LLCoprocedureManager::setPropertyMethods`, as the viewer does.
-* **Settings** are pinned per scenario: `BatchSizeAIS3` 20, `FSUseAis3Api`
-  true (s10b: false), `UseHTTPInventory` true, `DebugAvatarAppearanceMessage`
-  false, `InventorySortOrder` 7. Grid: Second Life (R2's default) except
-  s10b.
+* **Settings** are pinned per scenario: `BatchSizeAIS3` 20 (s15 also 0 and
+  41), `PoolSizeAIS` as above (c07 also 0, 1, 51 and 52), `FSUseAis3Api`
+  true (s10b, d2d and o15b false),
+  `UseHTTPInventory` true, `DebugAvatarAppearanceMessage` false,
+  `InventorySortOrder` 7. Grid: Second Life (R2's default) except the OpenSim
+  profile (another grid: `production_grid` and `system_grid` false): s10b,
+  `o..` and `oc..`.
 
 ### Recording modes
 
 | mode | used by | request log | journal | model |
 |---|---|---|---|---|
-| SEQ | s01-s09, s14-s17 | `wire <n>` in arrival order | every line, in order, with a scheduler snapshot (`sch`) after every change | full dump |
-| PHASED | s10a, s10b, s12, s13, c04, c11 | `wire@<phase>` sorted within each phase (phases end at `step` lines) | sorted within each phase; `sch@step` snapshots only | child lists sorted |
-| CONC | c01, c02, c03, c10 | `wire* <k>x` multiset | only `msg`, `notify`, `callback` lines, as a multiset | category lines without fetch state and timer; child lists sorted; no lock maps |
+| SEQ | s01-s09, s14-s24, d2a-d2d, o14, o15a | `wire <n>` in arrival order | every line, in order, with a scheduler snapshot (`sch`) after every change | full dump |
+| PHASED | s10a, s10b, s12, s13, c11, o10a, o12, o13, o15b, oc11 | `wire@<phase>` sorted within each phase (phases end at `step` lines) | sorted within each phase; `sch@step` snapshots only | child lists sorted |
+| LOCKSTEP | c04, c05, c06, c07 | `wire@<round>` sorted within each round | every line, in order, with `sch` snapshots | full dump |
+| CONC | c01, c02, c03, c08, c10, oc10 | `wire* <k>x` multiset | only `msg`, `notify`, `callback` lines, as a multiset | category lines without fetch state and timer; child lists sorted; no lock maps |
 | large | s03, c03 | as its mode | digest | digest |
 
 PHASED exists because the legacy capability scheduler keeps several POSTs in
@@ -122,6 +139,18 @@ and the order their replies are processed in depend on timing. Each phase is
 built to hold as few requests as possible. A step in PHASED mode first waits
 until no request has arrived for 300 ms (no frames run meanwhile), so a request
 issued before the step is counted in its phase.
+
+LOCKSTEP records the AIS scheduler at production concurrency (the
+20-coroutine pool) deterministically. The mock holds every reply from
+`begin()` on (mock mode `hold=1`), the login walk included. Each round
+(`round()`/`drain()`) waits until every request already caused has reached the
+mock, starts its phase, runs one dispatch frame, waits again until every
+active AIS coroutine's request has arrived and nothing more arrives for
+100 ms, then releases the replies one at a time, sorted by method, target and
+body, each processed with the idle callbacks held. A coroutine that a release
+frees takes the next queued request at once; which request it takes is fixed
+(a FIFO queue, sorted releases), its arrival time is not, so the next round
+waits for it before its phase starts.
 
 ## Files
 
@@ -138,8 +167,9 @@ issued before the step is counted in its phase.
 |---|---|
 | `count requests=<n> caps=<cap>:<n>,... methods=<m>:<n>,... status503=<n>` | how many requests reached the server, by capability and method; 503s count each retry llcorehttp sent |
 | `wire <n> <METHOD> <target> status=<s> head=<head> body=<body> resp=<len>:<sha16> rtype=<content type>` | one request: the exact request head (CR LF spelled `\r\n`) and body, the status the mock answered, the response's length and the first 16 hex digits of the SHA-256 of its normalised body |
-| `wire@<p> ...`, `wire* <k>x ...` | the same in PHASED (phase p) and CONC (k identical requests) |
-| `tids uses=<n> distinct=<n>` | `tid=` query values seen (each appears in the target and the head) and how many distinct ones: every AIS write must carry a fresh one |
+| `wire@<p> ...`, `wire* <k>x ...` | the same in PHASED or LOCKSTEP (phase or round p) and CONC (k identical requests) |
+| `tids requests=<n> distinct=<n> fresh=<yes\|NO>` | the requests carrying a `tid=` query value (it appears in the target and the head), how many distinct values, and `yes` when every one is fresh: every AIS write must carry its own |
+| `jrn round <label> <n> dispatched=<k> sch=<state>` | LOCKSTEP: round n of a drain, the fetches its dispatch frame started, the scheduler state after it |
 | `jrn step <name> requests=<n>` | a scenario step, with the requests received so far |
 | `jrn sch <state>`, `jrn sch@step <state>` | the background fetch's private state after it changed: `act=<bg active><folder active> st=<inventory started><library started><marketplace started><all fetched> fc=<mFetchCount> ffc=<mFetchFolderCount> fq=[<id>:<EFetchType>,...] iq=[...] exp=[<expected folder ids>] force=[<forced set>]` |
 | `jrn batch* mask=<hex> changed=[...] added=[...]` | the union of consecutive observer notifications (R2's recorder) |
@@ -277,20 +307,34 @@ Request counts are those of the committed recording.
 | 4 forbidden | `s04_forbidden` | 13 | a subset batch refused (403) -> its folders one by one at depth 50 -> 403 -> depth 0 (f3: served; f4: 403 and `InventoryLimitReachedAISAlert`, the first in the process) -> version 0, the children as subset batches |
 | 5 transient_5xx | `s05_transient_5xx` | 18 | 503, 503, 200 (one logical request, two retries); 503 + `Retry-After: 1` six times (five retries, then the scheduler's depth-0 fallback); a PATCH answered 503 once is sent again |
 | 6 outage | `s06_outage` | 10 | the first four requests fail (404, not retried): root and library root set to version 0; a forced fetch of the root inside the 60 s back-off sends nothing, after it one request (the root recovers); `start()` of a known folder nothing; the library root stays at version 0, its own items never fetched |
-| 7 forced | `s07_forced` | 11 | two forced fetches during a normal one: one more request after it; forced G, H, G: two; normal schedule of a known folder: none; forced item twice, then again |
+| 7 forced | `s07_forced` | 16 | two forced fetches during a normal one in flight: one more request after it; forced G, H, G: two; normal schedule of a known folder: none; forced item twice, then again; the forced set's dedupes |
 | 8 items | `s08_items` | 17 | incomplete item, `fetchFromServer`, a link (`linked_id`), a library item (`/cap/lib/item`), an unknown id (404), the item observer (per-item fetches, an unknown id), a forced complete item |
-| 9 writes | `s09_writes` | 24 | create category / outfit (`?tid=`), links, slam (PUT `/links`), PATCH item (LLSD and object), PATCH category (three senders), DELETE item (also immediate, and 410), DELETE category (and 410), protected folder refused, purge (`/children`), library copy with `?tid=...,depth=0` and with subfolders, `Destination` header |
+| 9 writes | `s09_writes` | 26 | every AIS write, each `tid`-bearing one twice (8 `tid`s, all fresh): create category / outfit (`?tid=`), links, slam (PUT `/links`), PATCH item (LLSD and object), PATCH category (three senders), DELETE item (also immediate, and 410), DELETE category (and 410), protected folder refused, purge (`/children`), library copy with `?tid=...,depth=0` and with subfolders, `Destination` header |
 | 10 legacy_caps | `s10a_legacy_caps_sl`, `s10b_legacy_caps_other_grid`, `c10_legacy`, `c11_legacy_limits` | 19, 3, 17, 43 | the legacy scheduler on Second Life without AIS: root and library only, the COF observer, the lost-and-found entry (string folder id, `fetch_folders` false), 403 split (library halves to `FetchInventoryDescendents2`, an empty `folders` POST), 200-with-error re-issued until it succeeds, `bad_folders`, forced fetches; another grid with `FSUseAis3Api` off, UDP `FetchInventory`; up to 16 handlers |
 | 11 udp | not covered | - | the adaptive UDP loop is `#ifdef OPENSIM`; this build has `OPENSIM` off |
 | 12 region_change | `s12_region_change` | 7 | no region and capabilities not received: nothing sent; legacy only: the AIS-typed queue goes out as legacy POSTs; back to AIS with those replies in flight: nobody pumps them (see findings); caps without inventory caps: the queue drained silently; AIS back: nothing resumes until a UI fetch |
 | fallbacks | `s13_sl_fetch_fallbacks` | 12 | Second Life without AIS: UDP `FetchInventoryDescendents` without caps, the legacy scheduler with `FetchInventoryDescendents2`, the COF observer blocked by the 180 s mark then served, the COF over UDP, `fetchFromServer` (foreground, with `agent_id`), the item observer (`cap_name` in the body), nothing without caps |
 | write fallbacks | `s14_sl_write_fallbacks` | 7 | Second Life without AIS: `CreateInventoryCategory` (generated folder id), no capability (callback null), UDP `UpdateInventoryItem`, `UpdateInventoryFolder` (three senders), `LinkInventoryItem`, `RemoveInventoryFolder`; remove item, remove a folder with contents, purge: nothing sent |
-| boundaries | `s15_batch_boundaries` | 15 | `BatchSizeAIS3` 20: 19 children -> one batch, 20 -> one full batch (re-queued, nothing left), 21 -> 20 + 1 |
+| boundaries | `s15_batch_boundaries` | 39 | `BatchSizeAIS3` 20: 19 children -> one batch, 20 -> one full batch (re-queued, nothing left), 21 -> 20 + 1; the same with `BatchSizeAIS3` 0 and 41 |
 | | `s16_depth_boundaries` | 8 | depth 50: chains 48 / 49 / 50 levels below a root child (subset path, children at 49): only the 50 needs a follow-up; 49 / 50 / 51 below the library root (direct path): only the 51 |
-| | `c04_ais_limit` | 63 | 18, 19, 20 folders queued in one frame, replies held: 18, 19, 19 dispatched, nothing in the next frame |
+| | `c04_ais_limit` (LOCKSTEP) | 108 | 18, 19, 20 folders queued in one frame, replies held: 18, 19, 19 dispatched, nothing in the next frame; 25 items queued with 19 in flight, one reply processed frees one slot; a folder-and-links fetch on top of 19 items: the fetch is not declared complete before the items are back |
 | | `c11_legacy_limits` | 43 | batch 10: 9, 10, 11 folders -> 1, 1, 2 POSTs; threshold 12: one POST per frame while the count is <= 12 (1 ... 13), none at 13; 16: four POSTs per frame 0 -> 4 -> 8 -> 12 -> 16, none at 16 |
 | re-entrancy, disconnect | `s17_no_library_cap_disconnected` | 6 | no `LibraryAPIv3`: every library command calls back null synchronously inside the scheduler's loop, through the whole fallback chain, without a request; `gDisconnected`: nothing sent, an AIS write calls back without a request; reconnected: the queued fetch goes out |
 | concurrency | `c01_login_cold`, `c02_saturate` | 6, 27 | the cold walk on a 20-coroutine pool; a failed batch (20 folders) re-queued one by one: 19 in flight |
+| | `c05_lockstep_login` (LOCKSTEP) | 6 | the cold walk's dispatch rounds, replies held and released in order |
+| | `c06_lockstep_priority` (LOCKSTEP) | 49 | queue priority at 19 in flight: schedule at the front, start at the back, items after folders |
+| | `c07_pool_clamp` (LOCKSTEP) | 247 | `PoolSizeAIS` 0, 1, 51, 52 read by the scheduler each frame (the pool keeps its 20 coroutines): the limit clamp |
+| | `c08_postponed` (CONC) | 6149 | 2,047, 2,048 and 2,049 AIS commands pending: `AISAPI`'s postponed queue |
+| fetch errors | `s18_fetch_errors` | 14 | normal and forced fetches answered 404 and 403: one request each; the second depth-0 403 notification |
+| frame budget | `s19_frame_budget` | 10 | the dispatch budget with the scripted clock: 6 ms after login, 1 s during it |
+| callbacks | `s20_callback_ids` | 20 | the completion callback id of every fetch command |
+| priority | `s21_priority` | 13 | the root before earlier entries at login; schedule at the front, start at the back, items after folders |
+| no library | `s22_no_library` | 24 | a login without a library |
+| root only | `s23_root_only_start` | 1 | a recursive start of the root alone: not everything is fetched |
+| shutdown | `s24_shutdown_abort` | 7 | `LLCoros::checkStop()` throws at an update's first yield (the scripted `checkStop`) |
+| D2 targets | `d2a_sl_wait_login`, `d2b_sl_wait_midwalk`, `d2c_sl_region_change_wait`, `d2d_sl_fsuseais3api_off` | 5, 9, 9, 9 | Second Life after D2 (see "Rule PRE_D2_SL_FALLBACKS"): no capabilities at login, capabilities gone mid-walk, a region change without AIS and then with it: nothing sent meanwhile, the queue kept, then s01's walk; `FSUseAis3Api` off on Second Life: AIS all the same |
+| OpenSim profile | `o10a_legacy_caps`, `o12_region_change`, `o13_fetch_fallbacks`, `o14_write_fallbacks`, `oc10_legacy`, `oc11_legacy_limits` | 19, 7, 12, 7, 17, 43 | the steps of s10a, s12, s13, s14, c10 and c11 on another grid: the legacy paths this build keeps for OpenSim |
+| | `o15a_library_owner_ais`, `o15b_library_owner_legacy` | 6, 3 | a library owner other than `ALEXANDRIA_LINDEN_ID`, over AIS and over the legacy capabilities |
 
 ### Survey 3 section 10 risks
 
@@ -299,8 +343,9 @@ Request counts are those of the committed recording.
 | batching, depth 50, subset vs per-folder | s01, s15, s16 |
 | dedupe (fetching state, forced set, known version) | s07, s10a, s06 |
 | the "known version -> no request" rule | s02a, s02b |
-| concurrency (19, the pool's 20, writes sharing the pool) | c02, c04 |
-| the frame budget | not observable (frozen clock; see "Not covered") |
+| concurrency (19, the pool's 20, writes sharing the pool) | c02, c04, c05, c06, c07 |
+| the frame budget | s19 (scripted clock) |
+| the postponed queue (2,048 commands) | c08 |
 | the legacy unbounded re-queue | s10a (200-with-error: 4 POSTs for three errors) |
 | retries | s05 |
 | version accounting on writes | s09 (model and `_updated_category_versions`), s14 |
@@ -312,7 +357,7 @@ Request counts are those of the committed recording.
 | re-entrancy (no synchronous `emplace_front`) | s17 |
 | completion counts, `FETCH_FAILED` 60 s | s06, s04 |
 | path switching per frame | s12 |
-| shutdown (`checkStop` mid-apply) | not covered (see below) |
+| shutdown (`checkStop` mid-apply) | s24 (scripted `checkStop`) |
 
 ## Findings (recorded as they are, not fixed)
 
@@ -357,6 +402,43 @@ Request counts are those of the committed recording.
 10. **A changed folder is refetched whole**: s02b's changed folder is requested
     at depth 50, its unchanged cached subtree included.
 
+## Rule PRE_D2_SL_FALLBACKS
+
+The port's step D2 removes the Second Life legacy capability and UDP
+fallbacks: on Second Life, without AIS, the viewer waits instead (the queue
+kept, nothing sent). Until then the C++ still has them, and six scenarios
+record them as the pre-D2 reference. Each has a replacement:
+
+| pre-D2 scenario | replaced by |
+|---|---|
+| `s10a_legacy_caps_sl` | d2b, d2c (no `InventoryAPIv3`: wait); o10a (the legacy paths, OpenSim profile) |
+| `s12_region_change` | d2b, d2c; o12 |
+| `s13_sl_fetch_fallbacks` | d2a, d2c; o13 |
+| `s14_sl_write_fallbacks` | o14 (Second Life writes without AIS: none after D2) |
+| `c10_legacy` | oc10 |
+| `c11_legacy_limits` | oc11 |
+
+The CMake option `VKS_INVFETCH_PRE_D2_GATES` (default ON) runs them. The D2
+port turns it OFF: the six are then skipped by name, each skip reported
+with its replacement, and their fixtures stay in the tree (the fixture tree
+check still expects them, from `manifest.txt`). A dump refuses to run with the
+option OFF, so a recording always holds every scenario. The `d2..` scenarios
+record, on today's C++, the cases where it already behaves as D2 requires
+(no capabilities at all, capabilities lost, a region change, `FSUseAis3Api`
+off on Second Life); the `o..` scenarios record the legacy paths D2 keeps for
+other grids.
+
+## Seams
+
+A port of the scheduler must keep two seams these scenarios depend on:
+
+* **The frame budget's clock.** `bulkFetchViaAis` reads the clock at three
+  points (`LLTimer::getTotalSeconds()`); s19 scripts it. The Rust scheduler
+  takes an injected clock read at the same three points.
+* **The shutdown check.** `AISUpdate::checkTimeout()` calls
+  `LLCoros::checkStop()` after its yield to the next frame; s24 makes it throw
+  at the first yield. The port keeps a stop check at the same point.
+
 ## Runtime edges and determinism
 
 * **Process order.** `InventoryLimitReachedAISAlert` is chosen by a
@@ -371,22 +453,20 @@ Request counts are those of the committed recording.
 
 ## Platforms
 
-Recorded on Windows (MSVC 17, RelWithDebInfo, the Release feature set); Linux
-(WSL Ubuntu 26.04, GCC 15) and GCC 14 (as on CI's Ubuntu 24.04) replay the
-committed tree with zero differences. The request heads (rung four's Rust
-transport) and bodies (rung two's LLSD XML) are the same on both platforms.
+Recorded on Windows (MSVC 19.44.35229, RelWithDebInfo, the Release feature
+set). Five record-and-replay runs gave the same compared content; only the
+`# measured` lines (c02, c03, c08, c10, oc10) and their manifest digests vary,
+by design, and two further independent runs replay the committed tree with
+zero differences. The previous recording (`40a241bd80`, 24 scenarios) also
+replayed with zero differences on Linux (WSL Ubuntu 26.04, GCC 15) and GCC 14
+(as on CI's Ubuntu 24.04); this recording has not been replayed on Linux yet.
+The request heads (rung four's Rust transport) and bodies (rung two's LLSD
+XML) were the same on both platforms.
 
 ## Not covered
 
 * The UDP background loop (survey 8.2 scenario 11): `#ifdef OPENSIM`, not in
   this build.
-* The frame budget's effect (1 s before `STATE_WEARABLES_WAIT` ends, 6 ms
-  after): with the clock frozen it never ends a dispatch loop; making it end
-  one deterministically would need a clock that moves per call, which
-  llcommon's timer does not offer without a production change. A Rust
-  scheduler should take an injected clock and test the budget itself.
-* `LLCoros::checkStop()` aborting an update half-applied at shutdown.
-* `AISAPI`'s postponed queue (more than 2,048 commands pending).
 * The real servers' reply shapes (see "Mock fidelity").
 
 ## Regeneration

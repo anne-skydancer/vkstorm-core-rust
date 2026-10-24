@@ -1,8 +1,8 @@
 # vkstorm inventory fetch wire oracle (recorder R3b): s10a_legacy_caps_sl
-# Second Life without InventoryAPIv3: the legacy capabilities, 403 split, 200-with-error, bad_folders
+# pre-D2: Second Life without InventoryAPIv3: the legacy capabilities, 403 split, 200-with-error, bad_folders
 # generator: INTEGRATION_TEST_llinvfetch_parity with VKS_INVFETCH_DUMP (indra/newview/tests/llinvfetch_parity_test.cpp)
 #            under indra/newview/tests/vksinventory_mock_server.py
-# viewer commit: a007d4026c
+# viewer commit: 25db061b68
 # platform: windows-msvc
 # seed: none (patterned ids, no random input; tid and viewer-generated ids normalised)
 # format: README.md
@@ -27,7 +27,7 @@ wire@5 POST /cap/fid2 status=200 head=POST /cap/fid2 HTTP/1.1\r\nHost: 127.0.0.1
 wire@5 POST /cap/fid2 status=200 head=POST /cap/fid2 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nContent-Type: application/llsd+xml\r\nAccept: application/llsd+xml\r\nContent-Length: 333\r\n\r\n body=<llsd><map><key>folders</key><array><map><key>fetch_folders</key><boolean>1</boolean><key>fetch_items</key><boolean>1</boolean><key>folder_id</key><uuid>e0000000-0000-4000-8000-000000000001</uuid><key>owner_id</key><uuid>a9e00000-0000-4000-8000-000000000001</uuid><key>sort_order</key><integer>1</integer></map></array></map></llsd>\n resp=184:e52200baf1f55833 rtype=application/llsd+xml
 wire@6 POST /cap/fid2 status=200 head=POST /cap/fid2 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nContent-Type: application/llsd+xml\r\nAccept: application/llsd+xml\r\nContent-Length: 333\r\n\r\n body=<llsd><map><key>folders</key><array><map><key>fetch_folders</key><boolean>1</boolean><key>fetch_items</key><boolean>1</boolean><key>folder_id</key><uuid>c0500000-0000-4000-8000-000000000001</uuid><key>owner_id</key><uuid>a9e00000-0000-4000-8000-000000000001</uuid><key>sort_order</key><integer>1</integer></map></array></map></llsd>\n resp=234:08ce016d72c9e997 rtype=application/llsd+xml
 wire@7 POST /cap/fid2 status=200 head=POST /cap/fid2 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nContent-Type: application/llsd+xml\r\nAccept: application/llsd+xml\r\nContent-Length: 333\r\n\r\n body=<llsd><map><key>folders</key><array><map><key>fetch_folders</key><boolean>1</boolean><key>fetch_items</key><boolean>1</boolean><key>folder_id</key><uuid>c0100000-0000-4000-8000-00000000000b</uuid><key>owner_id</key><uuid>a9e00000-0000-4000-8000-000000000001</uuid><key>sort_order</key><integer>1</integer></map></array></map></llsd>\n resp=4605:2bf550604830e300 rtype=application/llsd+xml
-tids uses=0 distinct=0
+tids requests=0 distinct=0 fresh=yes
 jrn step begin s10a_legacy_caps_sl
 jrn startup callbacks ready=1 usable=1
 jrn world folders=55 items=79 links=9 pool=2 batch=20

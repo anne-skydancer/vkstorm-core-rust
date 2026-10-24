@@ -1,8 +1,8 @@
 # vkstorm inventory fetch wire oracle (recorder R3b): s13_sl_fetch_fallbacks
-# Second Life fetch fallbacks without AIS: UDP folder fetch, legacy caps, COF, items
+# pre-D2: Second Life fetch fallbacks without AIS: UDP folder fetch, legacy caps, COF, items
 # generator: INTEGRATION_TEST_llinvfetch_parity with VKS_INVFETCH_DUMP (indra/newview/tests/llinvfetch_parity_test.cpp)
 #            under indra/newview/tests/vksinventory_mock_server.py
-# viewer commit: a007d4026c
+# viewer commit: 25db061b68
 # platform: windows-msvc
 # seed: none (patterned ids, no random input; tid and viewer-generated ids normalised)
 # format: README.md
@@ -20,7 +20,7 @@ wire@7 POST /cap/fi2 status=200 head=POST /cap/fi2 HTTP/1.1\r\nHost: 127.0.0.1:{
 wire@8 POST /cap/fl2 status=200 head=POST /cap/fl2 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nContent-Type: application/llsd+xml\r\nAccept: application/llsd+xml\r\nContent-Length: 270\r\n\r\n body=<llsd><map><key>agent_id</key><uuid>a9e00000-0000-4000-8000-000000000001</uuid><key>items</key><array><map><key>item_id</key><uuid>d1000000-0000-4000-8000-000000000002</uuid><key>owner_id</key><uuid>ba2a564a-f0f1-4b82-9c61-b7520bfcd09f</uuid></map></array></map></llsd>\n resp=1380:5465a7fc9e04b72e rtype=application/llsd+xml
 wire@9 POST /cap/fi2 status=200 head=POST /cap/fi2 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nContent-Type: application/llsd+xml\r\nAccept: application/llsd+xml\r\nContent-Length: 321\r\n\r\n body=<llsd><map><key>agent_id</key><uuid>a9e00000-0000-4000-8000-000000000001</uuid><key>cap_name</key><string>FetchInventory2</string><key>items</key><array><map><key>item_id</key><uuid>a0000000-0000-4000-8000-000000000009</uuid><key>owner_id</key><uuid>a9e00000-0000-4000-8000-000000000001</uuid></map></array></map></llsd>\n resp=1370:63e5f680eaadb1ce rtype=application/llsd+xml
 wire@9 POST /cap/fl2 status=200 head=POST /cap/fl2 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nContent-Type: application/llsd+xml\r\nAccept: application/llsd+xml\r\nContent-Length: 315\r\n\r\n body=<llsd><map><key>agent_id</key><uuid>a9e00000-0000-4000-8000-000000000001</uuid><key>cap_name</key><string>FetchLib2</string><key>items</key><array><map><key>item_id</key><uuid>d1000000-0000-4000-8000-000000000003</uuid><key>owner_id</key><uuid>ba2a564a-f0f1-4b82-9c61-b7520bfcd09f</uuid></map></array></map></llsd>\n resp=1382:67d28e0ae4a1245f rtype=application/llsd+xml
-tids uses=0 distinct=0
+tids requests=0 distinct=0 fresh=yes
 jrn step begin s13_sl_fetch_fallbacks
 jrn startup callbacks ready=1 usable=1
 jrn world folders=51 items=77 links=9 pool=2 batch=20

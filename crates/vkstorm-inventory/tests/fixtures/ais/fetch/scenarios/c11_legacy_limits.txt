@@ -1,8 +1,8 @@
 # vkstorm inventory fetch wire oracle (recorder R3b): c11_legacy_limits
-# legacy batch 9/10/11, the in-flight threshold 12, 16 handlers
+# pre-D2: legacy batch 9/10/11, the in-flight threshold 12, 16 handlers
 # generator: INTEGRATION_TEST_llinvfetch_parity with VKS_INVFETCH_DUMP (indra/newview/tests/llinvfetch_parity_test.cpp)
 #            under indra/newview/tests/vksinventory_mock_server.py
-# viewer commit: a007d4026c
+# viewer commit: 25db061b68
 # platform: windows-msvc
 # seed: none (patterned ids, no random input; tid and viewer-generated ids normalised)
 # format: README.md
@@ -51,7 +51,7 @@ wire@8 POST /cap/fld2 status=200 head=POST /cap/fld2 HTTP/1.1\r\nHost: 127.0.0.1
 wire@8 POST /cap/fld2 status=200 head=POST /cap/fld2 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nContent-Type: application/llsd+xml\r\nAccept: application/llsd+xml\r\nContent-Length: 608\r\n\r\n body=<llsd><map><key>folders</key><array><map><key>fetch_folders</key><boolean>1</boolean><key>fetch_items</key><boolean>1</boolean><key>folder_id</key><uuid>d0000000-0000-4000-8000-000000000007</uuid><key>owner_id</key><uuid>ba2a564a-f0f1-4b82-9c61-b7520bfcd09f</uuid><key>sort_order</key><integer>1</integer></map><map><key>fetch_folders</key><boolean>1</boolean><key>fetch_items</key><boolean>1</boolean><key>folder_id</key><uuid>d0000000-0000-4000-8000-000000000006</uuid><key>owner_id</key><uuid>ba2a564a-f0f1-4b82-9c61-b7520bfcd09f</uuid><key>sort_order</key><integer>1</integer></map></array></map></llsd>\n resp=5734:2413544d3f7333ba rtype=application/llsd+xml
 wire@8 POST /cap/fld2 status=200 head=POST /cap/fld2 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nContent-Type: application/llsd+xml\r\nAccept: application/llsd+xml\r\nContent-Length: 608\r\n\r\n body=<llsd><map><key>folders</key><array><map><key>fetch_folders</key><boolean>1</boolean><key>fetch_items</key><boolean>1</boolean><key>folder_id</key><uuid>d0000000-0000-4000-8000-00000000000a</uuid><key>owner_id</key><uuid>ba2a564a-f0f1-4b82-9c61-b7520bfcd09f</uuid><key>sort_order</key><integer>1</integer></map><map><key>fetch_folders</key><boolean>1</boolean><key>fetch_items</key><boolean>1</boolean><key>folder_id</key><uuid>d0000000-0000-4000-8000-000000000009</uuid><key>owner_id</key><uuid>ba2a564a-f0f1-4b82-9c61-b7520bfcd09f</uuid><key>sort_order</key><integer>1</integer></map></array></map></llsd>\n resp=5734:40b544cbdfca6bae rtype=application/llsd+xml
 wire@8 POST /cap/fld2 status=200 head=POST /cap/fld2 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nContent-Type: application/llsd+xml\r\nAccept: application/llsd+xml\r\nContent-Length: 608\r\n\r\n body=<llsd><map><key>folders</key><array><map><key>fetch_folders</key><boolean>1</boolean><key>fetch_items</key><boolean>1</boolean><key>folder_id</key><uuid>d0000000-0000-4000-8000-00000000000d</uuid><key>owner_id</key><uuid>ba2a564a-f0f1-4b82-9c61-b7520bfcd09f</uuid><key>sort_order</key><integer>1</integer></map><map><key>fetch_folders</key><boolean>1</boolean><key>fetch_items</key><boolean>1</boolean><key>folder_id</key><uuid>d0000000-0000-4000-8000-00000000000c</uuid><key>owner_id</key><uuid>ba2a564a-f0f1-4b82-9c61-b7520bfcd09f</uuid><key>sort_order</key><integer>1</integer></map></array></map></llsd>\n resp=5733:53090a83462e7e8d rtype=application/llsd+xml
-tids uses=0 distinct=0
+tids requests=0 distinct=0 fresh=yes
 jrn step begin c11_legacy_limits
 jrn startup callbacks ready=1 usable=1
 jrn world folders=301 items=530 links=9 pool=20 batch=20

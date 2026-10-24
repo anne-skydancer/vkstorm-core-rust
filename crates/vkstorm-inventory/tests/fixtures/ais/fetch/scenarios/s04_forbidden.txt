@@ -1,8 +1,8 @@
 # vkstorm inventory fetch wire oracle (recorder R3b): s04_forbidden
-# 403 on depth 50 and on depth 0: the fallback chain, version 0, the notification
+# 403 on depth 50 and on depth 0: the fallback chain, version 0, the first notification
 # generator: INTEGRATION_TEST_llinvfetch_parity with VKS_INVFETCH_DUMP (indra/newview/tests/llinvfetch_parity_test.cpp)
 #            under indra/newview/tests/vksinventory_mock_server.py
-# viewer commit: a007d4026c
+# viewer commit: 25db061b68
 # platform: windows-msvc
 # seed: none (patterned ids, no random input; tid and viewer-generated ids normalised)
 # format: README.md
@@ -21,7 +21,7 @@ wire 10 GET /cap/inv/category/f4000000-0000-4000-8000-000000000001/children?dept
 wire 11 GET /cap/inv/category/f4000000-0000-4000-8000-000000000001/children?depth=50&children=c0100000-0000-4000-8000-000000000011,c0100000-0000-4000-8000-000000000012,c0100000-0000-4000-8000-000000000013 status=200 head=GET /cap/inv/category/f4000000-0000-4000-8000-000000000001/children?depth=50&children=c0100000-0000-4000-8000-000000000011,c0100000-0000-4000-8000-000000000012,c0100000-0000-4000-8000-000000000013 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=5780:ace6680dfbc3317a rtype=application/llsd+xml
 wire 12 GET /cap/inv/category/c0000001-0000-4000-8000-000000000037/children?depth=0 status=200 head=GET /cap/inv/category/c0000001-0000-4000-8000-000000000037/children?depth=0 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=1279:34a4493e9f0cf6cc rtype=application/llsd+xml
 wire 13 GET /cap/inv/category/c0000001-0000-4000-8000-000000000037/children?depth=50&children=c0100000-0000-4000-8000-00000000000d,c0100000-0000-4000-8000-00000000000e status=200 head=GET /cap/inv/category/c0000001-0000-4000-8000-000000000037/children?depth=50&children=c0100000-0000-4000-8000-00000000000d,c0100000-0000-4000-8000-00000000000e HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=4001:ee087afe158331af rtype=application/llsd+xml
-tids uses=0 distinct=0
+tids requests=0 distinct=0 fresh=yes
 jrn step begin s04_forbidden
 jrn sch act=00 st=0000 fc=0 ffc=0 fq=[] iq=[] exp=[] force=[]
 jrn world folders=53 items=75 links=9 pool=2 batch=20

@@ -2,7 +2,7 @@
 # incomplete items, a link, a library item, an unknown id, the item observer
 # generator: INTEGRATION_TEST_llinvfetch_parity with VKS_INVFETCH_DUMP (indra/newview/tests/llinvfetch_parity_test.cpp)
 #            under indra/newview/tests/vksinventory_mock_server.py
-# viewer commit: a007d4026c
+# viewer commit: 25db061b68
 # platform: windows-msvc
 # seed: none (patterned ids, no random input; tid and viewer-generated ids normalised)
 # format: README.md
@@ -25,7 +25,7 @@ wire 14 GET /cap/inv/item/a0000000-0000-4000-8000-00000000001e status=200 head=G
 wire 15 GET /cap/inv/item/a0000000-0000-4000-8000-00000000001d status=200 head=GET /cap/inv/item/a0000000-0000-4000-8000-00000000001d HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=1267:6487304fbdc906f8 rtype=application/llsd+xml
 wire 16 GET /cap/inv/item/a0e00000-0000-4000-8000-000000000002 status=404 head=GET /cap/inv/item/a0e00000-0000-4000-8000-000000000002 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=152:368cbfbc4f1f9dbb rtype=application/llsd+xml
 wire 17 GET /cap/inv/item/a0000000-0000-4000-8000-000000000009 status=200 head=GET /cap/inv/item/a0000000-0000-4000-8000-000000000009 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=1260:5aec25d250f4f693 rtype=application/llsd+xml
-tids uses=0 distinct=0
+tids requests=0 distinct=0 fresh=yes
 jrn step begin s08_items
 jrn sch act=00 st=0000 fc=0 ffc=0 fq=[] iq=[] exp=[] force=[]
 jrn world folders=51 items=77 links=9 pool=2 batch=20
