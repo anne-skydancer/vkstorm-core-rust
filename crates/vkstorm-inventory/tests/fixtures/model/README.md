@@ -11,10 +11,11 @@ specification. Every corpus but C10 comes from the dump mode of
 (`indra/llinventory/tests/llinventory_tool.cpp`), and C10 is the public Linden
 Library cache. The values come from the frozen copies in
 `indra/llinventory/tests/llinventory_oracle.{h,cpp}`. Those copies were made at
-viewer commit `040ec69cfe`. That commit is `codex/rust-inventory` at `472ecf270d` with the approved inventory
-bug fixes merged (branch `codex/inventory-bugfix-model-rust`: `913990ebe3` bug 1, `b67c371a89` bug 4,
-`d680ea60a7` bug 38, `8d3e1742df` bug 28; see *Port rules*), so a later regeneration still records the
-fixed C++ as it was before the port.
+viewer commit `60184e5054`. That commit is `codex/rust-inventory` at `472ecf270d` with the approved inventory
+bug fixes merged from branch `codex/inventory-bugfix-model-rust`: `913990ebe3` bug 1, `b67c371a89` bug 4,
+`d680ea60a7` bug 38 and `8d3e1742df` bug 28 (merged at `040ec69cfe`), then `2ab121e340` bug 29,
+`4887f7368f` bug 53 and `e09f935ce8` bug 29's mask exception (merged at `60184e5054`); see *Port rules*.
+A later regeneration therefore still records the fixed C++ as it was before the port.
 
 The same bytes are kept in the viewer (`indra/llinventory/tests/fixtures/`)
 and in vkstorm-core-rust (`crates/vkstorm-inventory/tests/fixtures/model/`).
@@ -60,16 +61,16 @@ That check does the following:
   change to any of them rebuilds the test and re-runs the check.
 - A port step that replaces a copied source on purpose narrows the run to the
   sources it did not replace (`--only indra/newview --allow-partial`). It
-  checks the frozen copies once against `--at 040ec69cfe`. A partial run
+  checks the frozen copies once against `--at 60184e5054`. A partial run
   without `--allow-partial` is refused.
 
 Recorded on Windows (MSVC 19.44.35229, RelWithDebInfo, the Release feature
-set) and on Linux (WSL Ubuntu 26.04 with GCC 15.2 and with GCC 14.3, CI's Linux
-configuration). The committed files are the Windows recording. The Linux
-recording has the same bytes in every file apart from the `# platform:` header
-line (see *Runtime edges* for the five values that differ by C runtime and how
-they are written). The fixed C++ was recorded the same way: Windows, then
-GCC 15 and GCC 14 with identical bodies.
+set). The committed files are the Windows recording. Up to `040ec69cfe` every
+recording was repeated on Linux (WSL Ubuntu 26.04 with GCC 15.2 and with GCC
+14.3, CI's Linux configuration), with the same bytes in every file apart from
+the `# platform:` header line (see *Runtime edges* for the five values that
+differ by C runtime and how they are written). The `60184e5054` recording has
+not been repeated on Linux yet.
 
 ## Files
 
@@ -520,12 +521,15 @@ Each is stated here, and none is chosen silently.
    - `U32 mask` in `LLPermissions::importLegacyStream`, when the block's first mask or `group_owned` line does not parse;
    - `char uuid_str[256]`, when an id keyword is the block's first value-less line.
 
-   The fix initialises them to 0, 0 and the empty string, and the recorded
-   values are now plain expected values: `c6.date.abc`, `c6.kw.date` and
-   `c6.kw.date.first` give date 0. `c6.perm.mask.first_fails` gives masks
-   `00000000` in both readers (no_widening `111111`).
-   `c6.perm.group_owned.first_fails` gives group_owned 0, and
-   `c6.perm.id.first_empty` gives creator null.
+   The fix initialises them to 0, 0 and the empty string. Since bug 29
+   (`2ab121e340`) the readers no longer reach these locals on a failed line:
+   a value that does not parse counts as absent and the field keeps its
+   value, and since `e09f935ce8` a mask that does not parse is `PERM_NONE`.
+   The recorded values are plain expected values: `c6.date.abc`,
+   `c6.kw.date` and `c6.kw.date.first` keep date 1234567890 (the value before
+   the line). `c6.perm.mask.first_fails` gives masks `00000000` in both
+   readers (no_widening `111111`). `c6.perm.group_owned.first_fails` keeps
+   group_owned 0, and `c6.perm.id.first_empty` keeps creator null.
 
    Before the fix the values were undefined, and they changed between builds
    of the same compiler. For example, Windows `c6.date.abc` gave 0 in one
@@ -578,21 +582,25 @@ Each is stated here, and none is chosen silently.
    fixed C++ does (bug 1, `913990ebe3`): the whole block, with the stream
    good. The earlier "prefix, then a failed and bad stream" rule is withdrawn,
    and so is the crash.
-3. **The legacy readers' failed conversions** give the values of bug 38
-   (`d680ea60a7`): a creation date that does not parse is 0. A first mask or
-   `group_owned` that does not parse is 0. An id keyword without a value is
-   the null UUID. These are plain expected values, not `UB`. The
-   `fix()` invariants and the no-widening checks stay; the port must keep them
-   true for every corrupt input.
-4. **The no-widening rule, as the C++ has it.** A corrupt *mask* line never
-   widens a permission: no_widening is `111111` for
-   `c6.perm.mask.first_fails`, `c6.perm.mask.stale` and
-   `c6.perm.group_owned.first_fails`. A corrupt `group_owned` line *after*
-   other masks is different (`c6.perm.group_owned.junk`). It reuses the last
-   parsed mask (`00082000`), which is not 0, so it sets group ownership:
-   no_widening `111110`. This is deterministic C++ behaviour (bug 38 does not
-   change it), and the port reproduces it unless the user decides otherwise
-   (see the report).
+3. **The legacy readers' malformed lines** follow bug 29 (`2ab121e340`):
+   each line is parsed on its own. A blank line, a keyword without a value
+   and a value that does not parse count as absent, so the field keeps its
+   value (the creation date, `group_owned`, `sale_price`, the ids, and the
+   sale block's `perm_mask` with `has_perm_mask`). The `permissions` and
+   `sale_info` headers and `metadata` keep their handling. The exception
+   (`e09f935ce8`): a permission mask line that does not parse, or has no
+   value, sets that mask to `PERM_NONE`, and `creator_mask`'s `fixFairUse()`
+   runs only after a parsed mask. These are plain expected values, not `UB`.
+   The `fix()` invariants and the no-widening checks stay; the port must keep
+   them true for every corrupt input.
+4. **The no-widening rule.** Corrupt input never widens a permission:
+   no_widening is `111111` for `c6.perm.mask.first_fails`,
+   `c6.perm.mask.stale`, `c6.perm.group_owned.first_fails` and
+   `c6.perm.group_owned.junk`. The last one changed with bug 53
+   (`4887f7368f`, fixed by bug 29's rule): a `group_owned` line after other
+   masks whose value does not parse used to reuse the last parsed mask
+   (`00082000`) and set group ownership (no_widening `111110`). It is now
+   absent, and the item stays not group owned.
 5. **`LLCategory`** (bug 4, `b67c371a89`) stays inside its tables for unknown
    top bytes. The corpora record top bytes 0..6 only, whose outputs are
    unchanged.
@@ -608,9 +616,8 @@ Each is stated here, and none is chosen silently.
   favorite or runtime. An object reused across blocks (`llinventorymodel.cpp:5523`)
   keeps the previous item's last owner (`c9.udp.multi`, `unpack.reused`).
 - All of survey 1 §1.7 and §4.3 is visible in these files. Examples are the
-  orphan `|` line after metadata, `permissions 0` with a space, a blank line
-  after a block swallowing the rest of the item (`c6.blank.14`,
-  `c6.eof.after_perm`), `is_owner_group` never read (`c7.perm.derived_group`),
+  orphan `|` line after metadata, `permissions 0` with a space,
+  `is_owner_group` never read (`c7.perm.derived_group`),
   `item_id` versus `category_id` in the category dialects, and the favorite
   branch of `LLInventoryCategory::importLLSD` returning false (`c8.favorite.*`
   `importllsd` ret).

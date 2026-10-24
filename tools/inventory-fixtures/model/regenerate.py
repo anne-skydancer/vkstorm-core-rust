@@ -12,8 +12,8 @@ llinventory_oracle.cpp, so the fixtures do not change when the live C++ is
 ported. The hand-written README.md, the .gitattributes and the Library cache
 in library/ are kept as they are in the viewer and copied to the crate
 unchanged. --source names the recorded C++ in the file headers (default:
-040ec69cfe, the commit the frozen copies were made from: 472ecf270d with the
-approved inventory bug fixes merged).
+60184e5054, the commit the frozen copies were made from: 472ecf270d with the
+approved inventory bug fixes merged, bugs 29 and 53 included).
 
 Nothing is replaced until the new recording is verified: the tool dumps twice,
 each run into its own new directory, each must end with the status of a
@@ -56,7 +56,7 @@ def dump(tool, dest, source, library):
 
 def main():
     args = sys.argv[1:]
-    source = "040ec69cfe"
+    source = "60184e5054"
     if "--source" in args:
         i = args.index("--source")
         source = args[i + 1]

@@ -1,6 +1,6 @@
 # vkstorm-inventory model fixture: C8 LLSD input of the category readers
 # generator: llinventory_tool dump (indra/llinventory/tests/llinventory_tool.cpp); values from the frozen copies in llinventory_oracle.cpp
-# viewer source: 040ec69cfe
+# viewer source: 60184e5054
 # platform: windows x86_64, MSVC 1944 (194435229), 64-bit time_t
 # seed: none
 # format: tab-separated "<case>\t<field>\t<value>..." (README.md)
