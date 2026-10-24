@@ -1,6 +1,6 @@
 # vkstorm-inventory task fixtures: set 4, task-inventory messages sent by the viewer (UDP datagrams captured on loopback)
 # generator: INTEGRATION_TEST_llinventory_task_oracle (indra/newview/tests/llinventory_task_oracle_test.cpp), VKS_TASK_DUMP
-# viewer: 472ecf270d (codex/rust-inventory); frozen copies of llviewerobject.cpp blob c9ac3bdc20301e3e43da73183f18595712912e79 and llviewerinventory.cpp blob a13210dce6ed2561e2b18768645bcfa37068612c
+# viewer: 6f23ef84f0 (vkstorm-rust); frozen copies of llviewerobject.cpp blob 0ade67da75e4367e1fcae9e53e8e6388ddb612bf and llviewerinventory.cpp blob 41e2a9b23982f076e14a5de056d443438f8980b3
 # platform: windows-msvc
 # case <label> <udp|cap>
 #  before <state>; after <state> | <side effects in order (msg.send = LLMessageSystem::sendReliable)>

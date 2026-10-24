@@ -1,6 +1,6 @@
 # vkstorm-inventory task fixtures: set 2, random sweep of capability reply bodies (samples)
 # generator: INTEGRATION_TEST_llinventory_task_oracle (indra/newview/tests/llinventory_task_oracle_test.cpp), VKS_TASK_DUMP
-# viewer: 472ecf270d (codex/rust-inventory); frozen copies of llviewerobject.cpp blob c9ac3bdc20301e3e43da73183f18595712912e79 and llviewerinventory.cpp blob a13210dce6ed2561e2b18768645bcfa37068612c
+# viewer: 6f23ef84f0 (vkstorm-rust); frozen copies of llviewerobject.cpp blob 0ade67da75e4367e1fcae9e53e8e6388ddb612bf and llviewerinventory.cpp blob 41e2a9b23982f076e14a5de056d443438f8980b3
 # platform: windows-msvc
 # seed: 0x52344152 xorshift64*
 # 2000 bodies; every 97th is kept here with its input; all are in digests_set2.txt
@@ -98,9 +98,9 @@ case random_0873 input=replies_random/random_0873.llsd expected_before=0
 case random_0970 input=replies_random/random_0970.llsd expected_before=0
   body {'inventory_serial':'14943'}
  request st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- reply st=X ser=14943 exp=14943 xid=0 dirty=0 inv=- | http.complete GET Http_200
+ reply st=S ser=14943 exp=14943 xid=0 dirty=0 inv=- | http.complete GET Http_200
  inventory null
- helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=14943 pending=1}
+ helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=14943 pending=0}
 case random_1067 input=replies_random/random_1067.llsd expected_before=0
   body {'contents':['junk','junk',{'created_at':i367441625,'desc':'','flags':b16"9BC4667D",'inv_type':'material','item_id':u1a000000-0000-4000-8000-00000000de3f,'name':'New Folder','parent_id':u0b000000-0000-4000-8000-0000000000aa,'permissions':{'base_mask':i1380791528,'creator_id':ua0000000-0000-4000-8000-000000000006,'everyone_mask':i524288,'group_id':ua0000000-0000-4000-8000-000000000005,'group_mask':i268959744,'is_owner_group':0,'last_owner_id':u00000000-0000-0000-0000-000000000000,'next_owner_mask':i302851072,'owner_id':ua0000000-0000-4000-8000-000000000004,'owner_mask':i302579744},'shadow_id':u99115e51-04f4-123c-1fa6-98aff10313d2,'type':'lsltext'}],'inventory_serial':i-6381}
  request st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -155,9 +155,9 @@ case random_1552 input=replies_random/random_1552.llsd expected_before=21060
 case random_1649 input=replies_random/random_1649.llsd expected_before=0
   body !
  request st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- reply st=X ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete GET Http_200
+ reply st=S ser=0 exp=0 xid=0 dirty=0 inv=- | http.complete GET Http_200
  inventory null
- helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=1}
+ helpers root=none contents=[] count{} byasset{} bytype{} byid{} inasset{} state{listeners=1 dirty=0 serial=0 pending=0}
 case random_1746 input=replies_random/random_1746.llsd expected_before=0
   body {'contents':['junk',{'created_at':i457457652,'desc':'','flags':b16"ACBC91A7",'inv_type':'texture','item_id':u1a000000-0000-4000-8000-000000009989,'name':'a b','parent_id':u0b000000-0000-4000-8000-0000000000aa,'sale_info':{'sale_price':i668,'sale_type':'not'},'shadow_id':u99115e51-04f4-123c-1fa6-98aff103e4b9,'type':'texture'},{'created_at':i-867993965,'desc':'','flags':b16"C068610E",'inv_type':'object','item_id':u1a000000-0000-4000-8000-00000000b368,'name':'New Folder','parent_id':u0b000000-0000-4000-8000-0000000000aa,'permissions':{'base_mask':i148807441,'creator_id':ua0000000-0000-4000-8000-000000000006,'everyone_mask':i8390656,'group_id':u00000000-0000-0000-0000-000000000000,'group_mask':i133120,'is_owner_group':0,'last_owner_id':u00000000-0000-0000-0000-000000000000,'next_owner_mask':i144447233,'owner_id':ua0000000-0000-4000-8000-000000000004,'owner_mask':i14326272},'sale_info':{'sale_price':i446,'sale_type':'orig'},'shadow_id':u99115e51-04f4-123c-1fa6-98aff1036f8f,'type':'link'}]}
  request st=X ser=0 exp=0 xid=0 dirty=0 inv=- | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa

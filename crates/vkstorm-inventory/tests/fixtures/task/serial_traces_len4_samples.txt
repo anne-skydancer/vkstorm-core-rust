@@ -1,6 +1,6 @@
 # vkstorm-inventory task fixtures: set 3, every event sequence of length 4 (sample)
 # generator: INTEGRATION_TEST_llinventory_task_oracle (indra/newview/tests/llinventory_task_oracle_test.cpp), VKS_TASK_DUMP
-# viewer: 472ecf270d (codex/rust-inventory); frozen copies of llviewerobject.cpp blob c9ac3bdc20301e3e43da73183f18595712912e79 and llviewerinventory.cpp blob a13210dce6ed2561e2b18768645bcfa37068612c
+# viewer: 6f23ef84f0 (vkstorm-rust); frozen copies of llviewerobject.cpp blob 0ade67da75e4367e1fcae9e53e8e6388ddb612bf and llviewerinventory.cpp blob 41e2a9b23982f076e14a5de056d443438f8980b3
 # platform: windows-msvc
 # trace <udp|cap>/<listeners> [label] : <events>
 #  <event> | st=<S stopped|W wait|P pending|X xfer> ser=<mInventorySerialNum> exp=<mExpectedInventorySerialNum>
@@ -1127,7 +1127,7 @@ trace udp/L0 : rep.exp rep.none rep.cur req
  rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
  rep.cur | st=X ser=0 exp=0 xid=1002 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1002 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- req | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | -
+ req | st=X ser=0 exp=0 xid=1002 dirty=0 inv=[obj] cache=[] | -
 trace udp/L0 : rep.exp rep.none xfer.err upd.guess
  rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
@@ -1382,7 +1382,7 @@ trace udp/L0 : rep.hi rep.none rep.hi req
  rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
  rep.none | st=S ser=1 exp=1 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=1 filename=""
  rep.hi | st=X ser=2 exp=2 xid=1002 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=2 filename="inv_s2.tmp"; xfer.request id=1002 local=<cache>/inv_s2.tmp remote=inv_s2.tmp path=4 delete=1 priority=1 big=0
- req | st=S ser=2 exp=2 xid=0 dirty=0 inv=[obj] cache=[] | -
+ req | st=X ser=2 exp=2 xid=1002 dirty=0 inv=[obj] cache=[] | -
 trace udp/L0 : rep.hi rep.none timer upd.guess
  rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
  rep.none | st=S ser=1 exp=1 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=1 filename=""
@@ -1571,7 +1571,7 @@ trace udp/L0 : rep.none dirty upd.guess rep.lo
 trace udp/L0 : rep.none rep.lo req remove
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
  rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- req | st=S ser=-1 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | -
+ req | st=W ser=-1 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | -
  remove | st=S ser=-1 exp=1 xid=0 dirty=0 inv=[obj] cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
 trace udp/L0 : rep.none rep.lo rep.none xfer.nofile
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
@@ -1586,8 +1586,8 @@ trace udp/L0 : rep.none rep.lo upd.guess rep.exp
 trace udp/L0 : rep.none rep.cur req create.ok
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
  rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- req | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | -
- create.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | create.callback success=0 message="Capability not available"
+ req | st=X ser=0 exp=0 xid=1001 dirty=0 inv=[obj] cache=[] | -
+ create.ok | st=X ser=0 exp=0 xid=1001 dirty=0 inv=[obj] cache=[] | create.callback success=0 message="Capability not available"
 trace udp/L0 : rep.none rep.cur rep.none upd.known
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
  rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
@@ -1722,7 +1722,7 @@ trace udp/L0 : rep.none upd.guess rep.lo req
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
  upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,obj] cache=[] | msg.send UpdateTaskInventory
  rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=[C,obj] cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- req | st=S ser=-1 exp=0 xid=0 dirty=0 inv=[C,obj] cache=[] | -
+ req | st=W ser=-1 exp=0 xid=0 dirty=0 inv=[C,obj] cache=[] | -
 trace udp/L0 : rep.none upd.guess xfer.ok upd.guess
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""
  upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,obj] cache=[] | msg.send UpdateTaskInventory
@@ -5876,7 +5876,7 @@ trace udp/L1 : rep.none dirty upd.known move.nocopy
 trace udp/L1 : rep.none rep.lo req timer
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
  rep.lo | st=W ser=-1 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- req | st=S ser=-1 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | callback L1 ser=-1 inv=[obj]
+ req | st=W ser=-1 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | callback L1 ser=-1 inv=[obj]
  timer | st=P ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire 1; msg.send RequestTaskInventory
 trace udp/L1 : rep.none rep.lo rep.none rep.hi
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
@@ -5891,7 +5891,7 @@ trace udp/L1 : rep.none rep.lo upd.guess req
 trace udp/L1 : rep.none rep.cur req upd.guess
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
  rep.cur | st=X ser=0 exp=0 xid=1001 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- req | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | callback L1 ser=0 inv=[obj]
+ req | st=X ser=0 exp=0 xid=1001 dirty=0 inv=[obj] cache=[] | callback L1 ser=0 inv=[obj]
  upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,obj] cache=[] | msg.send UpdateTaskInventory; callback L1 ser=0 inv=[obj]; callback L1 ser=0 inv=[C,obj]
 trace udp/L1 : rep.none rep.cur rep.none xfer.ok
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
@@ -5906,7 +5906,7 @@ trace udp/L1 : rep.none rep.cur upd.guess rep.lo
 trace udp/L1 : rep.none rep.exp req remove
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
  rep.exp | st=X ser=0 exp=0 xid=1001 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; xfer.request id=1001 local=<cache>/inv_s0.tmp remote=inv_s0.tmp path=4 delete=1 priority=1 big=0
- req | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | callback L1 ser=0 inv=[obj]
+ req | st=X ser=0 exp=0 xid=1001 dirty=0 inv=[obj] cache=[] | callback L1 ser=0 inv=[obj]
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=[obj] cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory; callback L1 ser=0 inv=[obj]
 trace udp/L1 : rep.none rep.exp rep.none xfer.nofile
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
@@ -5921,8 +5921,8 @@ trace udp/L1 : rep.none rep.exp upd.guess rep.exp
 trace udp/L1 : rep.none rep.hi req create.ok
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
  rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
- req | st=S ser=1 exp=1 xid=0 dirty=0 inv=[obj] cache=[] | callback L1 ser=1 inv=[obj]
- create.ok | st=S ser=1 exp=1 xid=0 dirty=0 inv=[obj] cache=[] | create.callback success=0 message="Capability not available"
+ req | st=X ser=1 exp=1 xid=1001 dirty=0 inv=[obj] cache=[] | callback L1 ser=1 inv=[obj]
+ create.ok | st=X ser=1 exp=1 xid=1001 dirty=0 inv=[obj] cache=[] | create.callback success=0 message="Capability not available"
 trace udp/L1 : rep.none rep.hi rep.none upd.known
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
  rep.hi | st=X ser=1 exp=1 xid=1001 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; xfer.request id=1001 local=<cache>/inv_s1.tmp remote=inv_s1.tmp path=4 delete=1 priority=1 big=0
@@ -6057,7 +6057,7 @@ trace udp/L1 : rep.none remove rep.lo req
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=[obj] cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory; callback L1 ser=0 inv=[obj]
  rep.lo | st=W ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 5
- req | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | callback L1 ser=0 inv=[obj]
+ req | st=W ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | callback L1 ser=0 inv=[obj]
 trace udp/L1 : rep.none remove xfer.ok upd.guess
  rep.none | st=S ser=0 exp=0 xid=0 dirty=0 inv=[obj] cache=[] | in ReplyTaskInventory serial=0 filename=""; callback L1 ser=0 inv=[obj]
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=[obj] cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory; callback L1 ser=0 inv=[obj]
@@ -8712,7 +8712,7 @@ trace cap/L0 : req cap.304 req cap.nocontents
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_304
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : req cap.304 cap.304 timer
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_304
@@ -8740,14 +8740,14 @@ trace cap/L0 : req cap.err move.nocopy remove
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
 trace cap/L0 : req cap.nocontents cap.ok move.nocopy
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- cap.ok | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
- move.nocopy | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
 trace cap/L0 : req cap.nocontents upd.known create.ok
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- upd.known | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
 trace cap/L0 : req timer dirty req
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  timer | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
@@ -8792,7 +8792,7 @@ trace cap/L0 : req upd.new dirty cap.nocontents
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.new | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  dirty | st=X ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | -
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=1 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=1 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : req upd.new cap.err timer
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.new | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
@@ -8836,8 +8836,8 @@ trace cap/L0 : req create.ok rep.lo req
 trace cap/L0 : req create.ok cap.nocontents dirty
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- dirty | st=X ser=1 exp=1 xid=0 dirty=1 inv=- cache=[] | -
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ dirty | st=S ser=1 exp=1 xid=0 dirty=1 inv=- cache=[] | -
 trace cap/L0 : req create.ok move.nocopy rep.lo
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
@@ -8872,12 +8872,12 @@ trace cap/L0 : dirty rep.lo rep.lo cap.nocontents
  dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=1 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  rep.lo | st=X ser=0 exp=-2 xid=0 dirty=1 inv=- cache=[] | in ReplyTaskInventory serial=-2 filename="inv_s-2.tmp"
- cap.nocontents | st=X ser=-2 exp=-2 xid=0 dirty=1 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=-2 exp=-2 xid=0 dirty=1 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : dirty rep.lo cap.nocontents timer
  dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=1 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=1 inv=- cache=[] | http.complete GET Http_200
- timer | st=X ser=-1 exp=-1 xid=0 dirty=1 inv=- cache=[] | timer.fire none-pending
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=1 inv=- cache=[] | http.complete GET Http_200
+ timer | st=S ser=-1 exp=-1 xid=0 dirty=1 inv=- cache=[] | timer.fire none-pending
 trace cap/L0 : dirty rep.lo move.nocopy upd.known
  dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=1 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -8952,7 +8952,7 @@ trace cap/L0 : dirty cap.nocontents rep.exp cap.nocontents
  dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
  cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | http.complete none-pending GET
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : dirty cap.nocontents timer timer
  dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
  cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | http.complete none-pending GET
@@ -9061,8 +9061,8 @@ trace cap/L0 : rep.lo req rep.lo remove
 trace cap/L0 : rep.lo req cap.nocontents move.nocopy
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  req | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | -
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- move.nocopy | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ move.nocopy | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
 trace cap/L0 : rep.lo req move.nocopy create.ok
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  req | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | -
@@ -9072,7 +9072,7 @@ trace cap/L0 : rep.lo dirty cap.stale req
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  dirty | st=X ser=0 exp=-1 xid=0 dirty=1 inv=- cache=[] | -
  cap.stale | st=W ser=-2 exp=-2 xid=0 dirty=1 inv=[B,A,obj] cache=[] | http.complete GET Http_200; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- req | st=S ser=-2 exp=-2 xid=0 dirty=1 inv=[B,A,obj] cache=[] | -
+ req | st=W ser=-2 exp=-2 xid=0 dirty=1 inv=[B,A,obj] cache=[] | -
 trace cap/L0 : rep.lo dirty upd.guess dirty
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  dirty | st=X ser=0 exp=-1 xid=0 dirty=1 inv=- cache=[] | -
@@ -9160,19 +9160,19 @@ trace cap/L0 : rep.lo cap.err upd.new dirty
  dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
 trace cap/L0 : rep.lo cap.nocontents rep.lo rep.lo
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- rep.lo | st=X ser=-1 exp=-2 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-2 filename="inv_s-2.tmp"
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ rep.lo | st=X ser=-1 exp=-2 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-2 filename="inv_s-2.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  rep.lo | st=X ser=-1 exp=-3 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-3 filename="inv_s-3.tmp"
 trace cap/L0 : rep.lo cap.nocontents cap.nocontents rep.exp
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
- rep.exp | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ rep.exp | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L0 : rep.lo cap.nocontents move.nocopy cap.ok
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- move.nocopy | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
- cap.ok | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ move.nocopy | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ cap.ok | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : rep.lo timer cap.ok cap.stale
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  timer | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
@@ -9206,8 +9206,8 @@ trace cap/L0 : rep.lo upd.guess rep.lo upd.known
 trace cap/L0 : rep.lo upd.guess cap.nocontents upd.guess
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.guess | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- upd.guess | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ upd.guess | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L0 : rep.lo upd.guess move.nocopy upd.new
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.guess | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
@@ -9311,8 +9311,8 @@ trace cap/L0 : rep.exp rep.exp dirty create.ok
 trace cap/L0 : rep.exp rep.exp cap.nocontents req
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | -
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L0 : rep.exp rep.exp move.nocopy dirty
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
@@ -9331,8 +9331,8 @@ trace cap/L0 : rep.exp cap.ok upd.known rep.exp
 trace cap/L0 : rep.exp cap.stale req cap.ok
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  cap.stale | st=W ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete GET Http_200; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- req | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | -
- cap.ok | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete none-pending GET
+ req | st=W ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | -
+ cap.ok | st=W ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete none-pending GET
 trace cap/L0 : rep.exp cap.stale cap.304 cap.stale
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  cap.stale | st=W ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete GET Http_200; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
@@ -9370,19 +9370,19 @@ trace cap/L0 : rep.exp cap.err upd.known upd.guess
  upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L0 : rep.exp cap.nocontents req upd.new
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | -
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.new | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L0 : rep.exp cap.nocontents cap.304 remove
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- cap.304 | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
- remove | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
 trace cap/L0 : rep.exp cap.nocontents upd.new move.nocopy
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- upd.new | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
- move.nocopy | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ move.nocopy | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
 trace cap/L0 : rep.exp timer rep.lo create.ok
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  timer | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
@@ -9432,7 +9432,7 @@ trace cap/L0 : rep.exp upd.new timer cap.nocontents
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.new | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  timer | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : rep.exp upd.new create.ok timer
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.new | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
@@ -9512,7 +9512,7 @@ trace cap/L0 : cap.ok rep.lo upd.known cap.nocontents
  cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.known | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : cap.ok rep.exp req timer
  cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -9681,8 +9681,8 @@ trace cap/L0 : cap.ok create.ok rep.lo timer
 trace cap/L0 : cap.ok create.ok cap.nocontents upd.known
  cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- upd.known | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ upd.known | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L0 : cap.ok create.ok move.nocopy upd.guess
  cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
@@ -9912,7 +9912,7 @@ trace cap/L0 : cap.304 req create.ok cap.nocontents
  cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : cap.304 dirty cap.stale timer
  cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
@@ -9992,7 +9992,7 @@ trace cap/L0 : cap.304 cap.err req cap.nocontents
  cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : cap.304 cap.err cap.304 timer
  cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
@@ -10116,8 +10116,8 @@ trace cap/L0 : cap.err req rep.lo req
 trace cap/L0 : cap.err req cap.nocontents dirty
  cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- dirty | st=X ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
 trace cap/L0 : cap.err req move.nocopy rep.lo
  cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -10152,12 +10152,12 @@ trace cap/L0 : cap.err rep.exp rep.lo cap.nocontents
  cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : cap.err rep.exp cap.nocontents timer
  cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- timer | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
 trace cap/L0 : cap.err rep.exp move.nocopy upd.known
  cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -10232,7 +10232,7 @@ trace cap/L0 : cap.err timer rep.exp cap.nocontents
  cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : cap.err timer timer timer
  cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
@@ -10352,7 +10352,7 @@ trace cap/L0 : cap.nocontents rep.lo cap.stale req
  cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  cap.stale | st=W ser=-2 exp=-2 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete GET Http_200; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- req | st=S ser=-2 exp=-2 xid=0 dirty=0 inv=[B,A,obj] cache=[] | -
+ req | st=W ser=-2 exp=-2 xid=0 dirty=0 inv=[B,A,obj] cache=[] | -
 trace cap/L0 : cap.nocontents rep.lo upd.guess dirty
  cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -10776,8 +10776,8 @@ trace cap/L0 : upd.known rep.lo rep.lo cap.ok
 trace cap/L0 : upd.known rep.lo cap.nocontents cap.stale
  upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- cap.stale | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.stale | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : upd.known rep.lo move.nocopy cap.304
  upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -10792,7 +10792,7 @@ trace cap/L0 : upd.known rep.exp upd.known cap.nocontents
  upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.known | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : upd.known cap.ok req timer
  upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
@@ -10952,7 +10952,7 @@ trace cap/L0 : upd.known create.ok upd.new cap.nocontents
  upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  upd.new | st=X ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
- cap.nocontents | st=X ser=2 exp=2 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=2 exp=2 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : upd.guess req rep.lo timer
  upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -10961,8 +10961,8 @@ trace cap/L0 : upd.guess req rep.lo timer
 trace cap/L0 : upd.guess req cap.nocontents upd.known
  upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- upd.known | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L0 : upd.guess req move.nocopy upd.guess
  upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -11192,7 +11192,7 @@ trace cap/L0 : upd.new dirty create.ok cap.nocontents
  upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  dirty | st=S ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | -
  create.ok | st=X ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- cap.nocontents | st=X ser=2 exp=2 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=2 exp=2 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : upd.new rep.lo cap.stale timer
  upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  rep.lo | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -11272,7 +11272,7 @@ trace cap/L0 : upd.new cap.nocontents req cap.nocontents
  upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  cap.nocontents | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  req | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : upd.new cap.nocontents cap.304 timer
  upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  cap.nocontents | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
@@ -11432,7 +11432,7 @@ trace cap/L0 : remove cap.ok rep.lo cap.nocontents
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
  cap.ok | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  rep.lo | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : remove cap.ok cap.nocontents timer
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
  cap.ok | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
@@ -11512,7 +11512,7 @@ trace cap/L0 : remove upd.known rep.exp cap.nocontents
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
  upd.known | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  rep.exp | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : remove upd.known timer timer
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
  upd.known | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
@@ -11581,8 +11581,8 @@ trace cap/L0 : remove create.ok rep.lo cap.stale
 trace cap/L0 : remove create.ok cap.nocontents cap.304
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
  create.ok | st=X ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- cap.nocontents | st=X ser=2 exp=2 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- cap.304 | st=X ser=2 exp=2 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.nocontents | st=S ser=2 exp=2 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.304 | st=S ser=2 exp=2 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : remove create.ok move.nocopy cap.err
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
  create.ok | st=X ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
@@ -11621,8 +11621,8 @@ trace cap/L0 : move.nocopy rep.lo rep.lo remove
 trace cap/L0 : move.nocopy rep.lo cap.nocontents move.nocopy
  move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- move.nocopy | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ move.nocopy | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
 trace cap/L0 : move.nocopy rep.lo move.nocopy create.ok
  move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -11632,7 +11632,7 @@ trace cap/L0 : move.nocopy rep.exp cap.stale req
  move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  cap.stale | st=W ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete GET Http_200; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- req | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | -
+ req | st=W ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | -
 trace cap/L0 : move.nocopy rep.exp upd.guess dirty
  move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -11867,12 +11867,12 @@ trace cap/L0 : create.ok cap.stale dirty create.ok
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  cap.stale | st=W ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete GET Http_200; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
  dirty | st=W ser=0 exp=0 xid=0 dirty=1 inv=[B,A,obj] cache=[] | -
- create.ok | st=S ser=0 exp=1 xid=0 dirty=1 inv=[B,A,obj] cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
+ create.ok | st=W ser=0 exp=1 xid=0 dirty=1 inv=[B,A,obj] cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
 trace cap/L0 : create.ok cap.stale cap.nocontents req
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  cap.stale | st=W ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete GET Http_200; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
  cap.nocontents | st=W ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete none-pending GET
- req | st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | -
+ req | st=W ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | -
 trace cap/L0 : create.ok cap.stale move.nocopy dirty
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  cap.stale | st=W ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete GET Http_200; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
@@ -11905,19 +11905,19 @@ trace cap/L0 : create.ok cap.err upd.new cap.304
  cap.304 | st=S ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : create.ok cap.nocontents rep.lo cap.err
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- rep.lo | st=X ser=1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
- cap.err | st=X ser=1 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ rep.lo | st=X ser=1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
+ cap.err | st=S ser=1 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_500
 trace cap/L0 : create.ok cap.nocontents cap.nocontents cap.nocontents
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L0 : create.ok cap.nocontents move.nocopy timer
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- move.nocopy | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
- timer | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ move.nocopy | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ timer | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
 trace cap/L0 : create.ok timer cap.ok upd.known
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  timer | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
@@ -11992,7 +11992,7 @@ trace cap/L0 : create.ok move.nocopy timer cap.nocontents
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  move.nocopy | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
  timer | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L0 : create.ok move.nocopy create.ok timer
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  move.nocopy | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
@@ -12056,8 +12056,8 @@ trace cap/L1 : req rep.exp rep.lo cap.ok
 trace cap/L1 : req rep.exp cap.nocontents cap.stale
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- cap.stale | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L1 : req rep.exp move.nocopy cap.304
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
@@ -12076,7 +12076,7 @@ trace cap/L1 : req cap.ok upd.known cap.nocontents
 trace cap/L1 : req cap.stale req timer
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  cap.stale | st=W ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | http.complete GET Http_200; callback L1 ser=-1 inv=[B,A,obj]; coro.launch LLViewerObject::fetchInventoryDelayedCoro(); timer.start 1
- req | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | callback L1 ser=-1 inv=[B,A,obj]
+ req | st=W ser=-1 exp=-1 xid=0 dirty=0 inv=[B,A,obj] cache=[] | callback L1 ser=-1 inv=[B,A,obj]
  timer | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | timer.fire 1; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L1 : req cap.stale cap.304 upd.known
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -12115,19 +12115,19 @@ trace cap/L1 : req cap.err upd.guess req
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L1 : req cap.nocontents dirty dirty
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- dirty | st=X ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
- dirty | st=X ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
 trace cap/L1 : req cap.nocontents cap.err rep.lo
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- cap.err | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
- rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L1 : req cap.nocontents remove rep.exp
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- remove | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
- rep.exp | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
+ rep.exp | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L1 : req timer rep.exp cap.ok
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  timer | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
@@ -12152,7 +12152,7 @@ trace cap/L1 : req upd.known upd.guess cap.nocontents
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.known | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  upd.guess | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : req upd.guess dirty timer
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.guess | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
@@ -12201,8 +12201,8 @@ trace cap/L1 : req move.nocopy rep.lo dirty
 trace cap/L1 : req move.nocopy cap.nocontents rep.lo
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  move.nocopy | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L1 : req move.nocopy move.nocopy rep.exp
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  move.nocopy | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
@@ -12232,7 +12232,7 @@ trace cap/L1 : dirty req upd.new cap.nocontents
  dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.new | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : dirty dirty rep.lo timer
  dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
  dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
@@ -12426,8 +12426,8 @@ trace cap/L1 : dirty create.ok rep.lo move.nocopy
 trace cap/L1 : dirty create.ok cap.nocontents create.ok
  dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- create.ok | st=X ser=1 exp=2 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ create.ok | st=X ser=1 exp=2 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
 trace cap/L1 : dirty create.ok create.ok req
  dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
@@ -12472,7 +12472,7 @@ trace cap/L1 : rep.lo rep.lo create.ok cap.nocontents
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  rep.lo | st=X ser=0 exp=-2 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-2 filename="inv_s-2.tmp"
  create.ok | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : rep.lo rep.exp cap.stale timer
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  rep.exp | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
@@ -12540,19 +12540,19 @@ trace cap/L1 : rep.lo cap.err move.nocopy cap.stale
  cap.stale | st=S ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L1 : rep.lo cap.nocontents cap.ok cap.304
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- cap.ok | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
- cap.304 | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.ok | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.304 | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L1 : rep.lo cap.nocontents upd.known cap.err
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- upd.known | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
- cap.err | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ upd.known | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.err | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L1 : rep.lo timer req cap.nocontents
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  timer | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
  req | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | -
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : rep.lo timer cap.304 timer
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  timer | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
@@ -12571,8 +12571,8 @@ trace cap/L1 : rep.lo upd.known rep.lo upd.guess
 trace cap/L1 : rep.lo upd.known cap.nocontents upd.new
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.known | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- upd.new | st=X ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ upd.new | st=S ser=-1 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L1 : rep.lo upd.known move.nocopy remove
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.known | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
@@ -12632,7 +12632,7 @@ trace cap/L1 : rep.lo create.ok dirty cap.nocontents
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  create.ok | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
  dirty | st=X ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : rep.lo create.ok cap.err timer
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  create.ok | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
@@ -12676,8 +12676,8 @@ trace cap/L1 : rep.exp rep.lo rep.lo req
 trace cap/L1 : rep.exp rep.lo cap.nocontents dirty
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- dirty | st=X ser=-1 exp=-1 xid=0 dirty=1 inv=- cache=[] | -
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ dirty | st=S ser=-1 exp=-1 xid=0 dirty=1 inv=- cache=[] | -
 trace cap/L1 : rep.exp rep.lo move.nocopy rep.lo
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"
@@ -12750,18 +12750,18 @@ trace cap/L1 : rep.exp cap.err upd.new create.ok
  create.ok | st=X ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
 trace cap/L1 : rep.exp cap.nocontents rep.exp req
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | -
 trace cap/L1 : rep.exp cap.nocontents timer dirty
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- timer | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
- dirty | st=X ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
 trace cap/L1 : rep.exp cap.nocontents create.ok rep.lo
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  rep.lo | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
 trace cap/L1 : rep.exp timer cap.stale rep.exp
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -12792,7 +12792,7 @@ trace cap/L1 : rep.exp upd.guess rep.exp cap.nocontents
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.guess | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : rep.exp upd.guess timer timer
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.guess | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
@@ -12861,8 +12861,8 @@ trace cap/L1 : cap.ok req rep.lo cap.stale
 trace cap/L1 : cap.ok req cap.nocontents cap.304
  cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- cap.304 | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
 trace cap/L1 : cap.ok req move.nocopy cap.err
  cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -12901,8 +12901,8 @@ trace cap/L1 : cap.ok rep.exp rep.lo remove
 trace cap/L1 : cap.ok rep.exp cap.nocontents move.nocopy
  cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- move.nocopy | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
 trace cap/L1 : cap.ok rep.exp move.nocopy create.ok
  cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -13272,7 +13272,7 @@ trace cap/L1 : cap.stale create.ok timer cap.nocontents
  cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  timer | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : cap.stale create.ok create.ok timer
  cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
@@ -13481,8 +13481,8 @@ trace cap/L1 : cap.304 create.ok rep.lo dirty
 trace cap/L1 : cap.304 create.ok cap.nocontents rep.lo
  cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- rep.lo | st=X ser=1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ rep.lo | st=X ser=1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L1 : cap.304 create.ok move.nocopy rep.exp
  cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
@@ -13521,8 +13521,8 @@ trace cap/L1 : cap.err rep.lo rep.lo timer
 trace cap/L1 : cap.err rep.lo cap.nocontents upd.known
  cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- upd.known | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ upd.known | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L1 : cap.err rep.lo move.nocopy upd.guess
  cap.err | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -13706,8 +13706,8 @@ trace cap/L1 : cap.nocontents req rep.lo move.nocopy
 trace cap/L1 : cap.nocontents req cap.nocontents create.ok
  cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
 trace cap/L1 : cap.nocontents req create.ok req
  cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -13752,7 +13752,7 @@ trace cap/L1 : cap.nocontents rep.exp create.ok cap.nocontents
  cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; create.callback success=1 message=""
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : cap.nocontents cap.ok cap.stale timer
  cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
@@ -13832,7 +13832,7 @@ trace cap/L1 : cap.nocontents upd.known req cap.nocontents
  cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : cap.nocontents upd.known cap.304 timer
  cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
@@ -13912,7 +13912,7 @@ trace cap/L1 : timer req dirty cap.nocontents
  timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  dirty | st=X ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : timer req cap.err timer
  timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -13956,8 +13956,8 @@ trace cap/L1 : timer rep.exp rep.lo req
 trace cap/L1 : timer rep.exp cap.nocontents dirty
  timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- dirty | st=X ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ dirty | st=S ser=0 exp=0 xid=0 dirty=1 inv=- cache=[] | -
 trace cap/L1 : timer rep.exp move.nocopy rep.lo
  timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
  rep.exp | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -13992,7 +13992,7 @@ trace cap/L1 : timer cap.304 rep.lo cap.nocontents
  timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
  cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  rep.lo | st=X ser=0 exp=-1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=-1 filename="inv_s-1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=-1 exp=-1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : timer cap.304 cap.nocontents timer
  timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
  cap.304 | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
@@ -14072,7 +14072,7 @@ trace cap/L1 : timer upd.new rep.exp cap.nocontents
  timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
  upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  rep.exp | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : timer upd.new timer timer
  timer | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
  upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
@@ -14326,8 +14326,8 @@ trace cap/L1 : upd.known create.ok rep.lo upd.known
 trace cap/L1 : upd.known create.ok cap.nocontents upd.guess
  upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- upd.guess | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ upd.guess | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L1 : upd.known create.ok move.nocopy upd.new
  upd.known | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
@@ -14552,7 +14552,7 @@ trace cap/L1 : upd.new req timer cap.nocontents
  upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  req | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  timer | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : upd.new req create.ok timer
  upd.new | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  req | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -14761,8 +14761,8 @@ trace cap/L1 : remove req rep.lo dirty
 trace cap/L1 : remove req cap.nocontents rep.lo
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
  req | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- rep.lo | st=X ser=1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ rep.lo | st=X ser=1 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
 trace cap/L1 : remove req move.nocopy rep.exp
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
  req | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -14792,7 +14792,7 @@ trace cap/L1 : remove rep.lo upd.new cap.nocontents
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
  rep.lo | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
  upd.new | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : remove rep.exp rep.lo timer
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
  rep.exp | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -14801,8 +14801,8 @@ trace cap/L1 : remove rep.exp rep.lo timer
 trace cap/L1 : remove rep.exp cap.nocontents upd.known
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
  rep.exp | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- upd.known | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ upd.known | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L1 : remove rep.exp move.nocopy upd.guess
  remove | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
  rep.exp | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=1 filename="inv_s1.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
@@ -15032,7 +15032,7 @@ trace cap/L1 : move.nocopy cap.ok create.ok cap.nocontents
  move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
  cap.ok | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : move.nocopy cap.stale cap.stale timer
  move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
  cap.stale | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
@@ -15112,7 +15112,7 @@ trace cap/L1 : move.nocopy upd.guess req cap.nocontents
  move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
  upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
  req | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : move.nocopy upd.guess cap.304 timer
  move.nocopy | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send MoveTaskInventory
  upd.guess | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
@@ -15192,7 +15192,7 @@ trace cap/L1 : create.ok dirty dirty cap.nocontents
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  dirty | st=X ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | -
  dirty | st=X ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | -
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=1 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=1 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : create.ok dirty cap.err timer
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  dirty | st=X ser=0 exp=1 xid=0 dirty=1 inv=- cache=[] | -
@@ -15272,7 +15272,7 @@ trace cap/L1 : create.ok cap.err rep.lo cap.nocontents
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  cap.err | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_500
  rep.lo | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=0 filename="inv_s0.tmp"; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa
- cap.nocontents | st=X ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=0 exp=0 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : create.ok cap.err cap.nocontents timer
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  cap.err | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_500
@@ -15285,14 +15285,14 @@ trace cap/L1 : create.ok cap.err move.nocopy upd.known
  upd.known | st=S ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L1 : create.ok cap.nocontents cap.ok upd.guess
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- cap.ok | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
- upd.guess | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.ok | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete none-pending GET
+ upd.guess | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L1 : create.ok cap.nocontents upd.known upd.new
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
- cap.nocontents | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
- upd.known | st=X ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
- upd.new | st=X ser=1 exp=2 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ cap.nocontents | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ upd.known | st=S ser=1 exp=1 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
+ upd.new | st=S ser=1 exp=2 xid=0 dirty=0 inv=- cache=[] | msg.send UpdateTaskInventory
 trace cap/L1 : create.ok timer req remove
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  timer | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | timer.fire none-pending
@@ -15352,7 +15352,7 @@ trace cap/L1 : create.ok remove rep.exp cap.nocontents
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  remove | st=X ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory
  rep.exp | st=X ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | in ReplyTaskInventory serial=2 filename="inv_s2.tmp"
- cap.nocontents | st=X ser=2 exp=2 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
+ cap.nocontents | st=S ser=2 exp=2 xid=0 dirty=0 inv=- cache=[] | http.complete GET Http_200
 trace cap/L1 : create.ok remove timer timer
  create.ok | st=X ser=0 exp=1 xid=0 dirty=0 inv=- cache=[] | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii; http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 message=""
  remove | st=X ser=0 exp=2 xid=0 dirty=0 inv=- cache=[] | floater.hide item_properties {id=A,object=obj}; floater.hide properties A; msg.send RemoveTaskInventory

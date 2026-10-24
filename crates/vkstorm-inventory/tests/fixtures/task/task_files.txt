@@ -1,6 +1,6 @@
 # vkstorm-inventory task fixtures: set 1, task inventory files -> records (loadTaskInvFile)
 # generator: INTEGRATION_TEST_llinventory_task_oracle (indra/newview/tests/llinventory_task_oracle_test.cpp), VKS_TASK_DUMP
-# viewer: 472ecf270d (codex/rust-inventory); frozen copies of llviewerobject.cpp blob c9ac3bdc20301e3e43da73183f18595712912e79 and llviewerinventory.cpp blob a13210dce6ed2561e2b18768645bcfa37068612c
+# viewer: 6f23ef84f0 (vkstorm-rust); frozen copies of llviewerobject.cpp blob 0ade67da75e4367e1fcae9e53e8e6388ddb612bf and llviewerinventory.cpp blob 41e2a9b23982f076e14a5de056d443438f8980b3
 # platform: windows-msvc
 # case <label> input=<file> bytes=<n> sha256=<input>
 #  direct returned=<loadTaskInvFile> removed=<cache file gone> st=<S|W|P|X> ser exp xid dirty inv=[front..back] | <side effects>
@@ -78,13 +78,14 @@ case blank_line_after_permissions input=files/blank_line_after_permissions.inv b
  direct returned=1 removed=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A] | callback L1 ser=0 inv=[B,A]
  inventory 2 entries root A
   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
-  [1] item uuid=A parent=obj type=-1 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=null desc="copyable" invtype=255 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=7fffffff every=7fffbfff next=7fffffff creator=null ownerid=null lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=19d3b329
- helpers root=A contents=[B,A] count{6:1,-1:1} byasset{assetB:B,null:none} bytype{assetB/6:B,null/-1:A} byid{B:item/same,A:item/same} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
+  [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+ helpers root=A contents=[B,A] count{6:1,7:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A} byid{B:item/same,A:item/same} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case blank_line_after_sale_info input=files/blank_line_after_sale_info.inv bytes=1327 sha256=220534c035788ed58c3341d0841893613b3b6e1cb4edbda4812d5feb6f6ea814
- direct returned=1 removed=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=[B] | callback L1 ser=0 inv=[B]
- inventory 1 entries root B
+ direct returned=1 removed=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A] | callback L1 ser=0 inv=[B,A]
+ inventory 2 entries root A
   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
- helpers root=B contents=[B] count{6:1} byasset{assetB:B} bytype{assetB/6:B} byid{B:item/same} inasset{B:1} state{listeners=1 dirty=0 serial=0 pending=0}
+  [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+ helpers root=A contents=[B,A] count{6:1,7:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A} byid{B:item/same,A:item/same} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case crlf input=files/crlf.inv bytes=2230 sha256=a95c7aa2a0c3226697e8b034e79a5bf02b9cdb74a89fb0e2cc27de4c94993237
  direct returned=1 removed=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=[C,B,A,obj] | callback L1 ser=0 inv=[C,B,A,obj]
  inventory 4 entries root obj
@@ -478,21 +479,21 @@ case type_keyword_only input=files/type_keyword_only.inv bytes=1465 sha256=2fc69
  direct returned=1 removed=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | callback L1 ser=0 inv=[B,A,obj]
  inventory 3 entries root obj
   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
-  [1] item uuid=A parent=obj type=255 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=255 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f790
+  [1] item uuid=A parent=obj type=-1 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=255 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f690
   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
- helpers root=obj contents=[B,A] count{6:1,255:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/255:A} byid{B:item/same,A:item/same,obj:object/null} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
+ helpers root=obj contents=[B,A] count{6:1,-1:1,8:1} byasset{assetB:B,assetA:none} bytype{assetB/6:B,assetA/-1:A} byid{B:item/same,A:item/same,obj:object/null} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case name_keyword_only input=files/name_keyword_only.inv bytes=1462 sha256=f97905078c62a60f20b6f23e7c8f3a2b6fc7389e587410495f478cd55ce9c45b
  direct returned=1 removed=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | callback L1 ser=0 inv=[B,A,obj]
  inventory 3 entries root obj
   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
-  [1] item uuid=A parent=obj type=7 name="0" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+  [1] item uuid=A parent=obj type=7 name="" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="copyable" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A} byid{B:item/same,A:item/same,obj:object/null} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case desc_keyword_only input=files/desc_keyword_only.inv bytes=1464 sha256=757f163af84f763fadc3f79da47d789b8a1e0d23ad6bf2f295f1ce3edc5f2f09
  direct returned=1 removed=1 st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | callback L1 ser=0 inv=[B,A,obj]
  inventory 3 entries root obj
   [0] item uuid=B parent=obj type=6 name="Object B" thumb=null fav=0 runtime="" created=1700000000 asset=assetB desc="no copy" invtype=6 flags=00000000 sale=0/10 base=7fff7fff owner=7fff7fff group=00000000 every=00000000 next=00080000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2d92f59e
-  [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="Notecard A" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
+  [1] item uuid=A parent=obj type=7 name="Notecard A" thumb=null fav=0 runtime="" created=1700000000 asset=assetA desc="" invtype=7 flags=00000000 sale=0/10 base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=creator ownerid=agent lastowner=null groupid=null groupowned=0 complete=1 txn=null running=0 faulted=0 crc=2b93f5a0
   [2] object uuid=obj parent=null type=8 name="Contents" thumb=null fav=0 runtime="" created=0
  helpers root=obj contents=[B,A] count{6:1,7:1,8:1} byasset{assetB:B,assetA:A} bytype{assetB/6:B,assetA/7:A} byid{B:item/same,A:item/same,obj:object/null} inasset{B:1,A:1} state{listeners=1 dirty=0 serial=0 pending=0}
 case invtype_missing input=files/invtype_missing.inv bytes=1454 sha256=8847aa973f017e7dc9010b3281a8a9d8613dc36db80fbbce9effa020c6af7860
