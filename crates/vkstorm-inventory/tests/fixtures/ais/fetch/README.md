@@ -332,7 +332,7 @@ Request counts are those of the committed recording.
 | no library | `s22_no_library` | 24 | a login without a library |
 | root only | `s23_root_only_start` | 1 | a recursive start of the root alone: not everything is fetched |
 | shutdown | `s24_shutdown_abort` | 7 | `LLCoros::checkStop()` throws at an update's first yield (the scripted `checkStop`) |
-| D2 targets | `d2a_sl_wait_login`, `d2b_sl_wait_midwalk`, `d2c_sl_region_change_wait`, `d2d_sl_fsuseais3api_off` | 5, 9, 9, 9 | Second Life after D2 (see "Rule PRE_D2_SL_FALLBACKS"): no capabilities at login, capabilities gone mid-walk, a region change without AIS and then with it: nothing sent meanwhile, the queue kept, then s01's walk; `FSUseAis3Api` off on Second Life: AIS all the same |
+| waiting on Second Life | `d2a_sl_wait_login`, `d2b_sl_wait_midwalk`, `d2c_sl_region_change_wait`, `d2d_sl_fsuseais3api_off` | 5, 9, 9, 9 | the cases where Second Life waits rather than falls back (see "Rule PRE_D2_SL_FALLBACKS"): no capabilities at login, capabilities gone mid-walk, a region change without AIS and then with it: nothing sent meanwhile, the queue kept, then s01's walk; `FSUseAis3Api` off on Second Life: AIS all the same |
 | OpenSim profile | `o10a_legacy_caps`, `o12_region_change`, `o13_fetch_fallbacks`, `o14_write_fallbacks`, `oc10_legacy`, `oc11_legacy_limits` | 19, 7, 12, 7, 17, 43 | the steps of s10a, s12, s13, s14, c10 and c11 on another grid: the legacy paths this build keeps for OpenSim |
 | | `o15a_library_owner_ais`, `o15b_library_owner_legacy` | 6, 3 | a library owner other than `ALEXANDRIA_LINDEN_ID`, over AIS and over the legacy capabilities |
 
@@ -404,29 +404,41 @@ Request counts are those of the committed recording.
 
 ## Rule PRE_D2_SL_FALLBACKS
 
-The port's step D2 removes the Second Life legacy capability and UDP
-fallbacks: on Second Life, without AIS, the viewer waits instead (the queue
-kept, nothing sent). Until then the C++ still has them, and six scenarios
-record them as the pre-D2 reference. Each has a replacement:
+**Decision (2026-10-25): the Second Life fallbacks are kept.** A step D2
+was planned to remove the Second Life legacy capability and UDP fallbacks,
+so that on Second Life without AIS the viewer would wait instead. It is
+dropped: Firestorm keeps these fallbacks, the port reproduces upstream
+behaviour first, and no existing feature is cut. An audit of the callers
+also showed that "the UDP inventory messages" are not a fallback set: on
+Second Life with AIS available, every item and folder move
+(`MoveInventoryItem`, `MoveInventoryFolder`, including the orphan move at
+login), every new item (`CreateInventoryItem`, not implemented in AIS3),
+every item copy (`CopyInventoryItem`), `ChangeInventoryItemFlags` and all
+inbound inventory messages (`BulkUpdateInventory`,
+`UpdateCreateInventoryItem`, ...) use UDP unconditionally. Only the paths
+gated on `!AISAPI::isAvailable()` are fallbacks, and those stay too.
 
-| pre-D2 scenario | replaced by |
-|---|---|
-| `s10a_legacy_caps_sl` | d2b, d2c (no `InventoryAPIv3`: wait); o10a (the legacy paths, OpenSim profile) |
-| `s12_region_change` | d2b, d2c; o12 |
-| `s13_sl_fetch_fallbacks` | d2a, d2c; o13 |
-| `s14_sl_write_fallbacks` | o14 (Second Life writes without AIS: none after D2) |
-| `c10_legacy` | oc10 |
-| `c11_legacy_limits` | oc11 |
+So these six scenarios are permanent; the Rust port must reproduce them on
+the Second Life profile, as the `o..` scenarios record the same paths on the
+OpenSim profile:
 
-The CMake option `VKS_INVFETCH_PRE_D2_GATES` (default ON) runs them. The D2
-port turns it OFF: the six are then skipped by name, each skip reported
-with its replacement, and their fixtures stay in the tree (the fixture tree
-check still expects them, from `manifest.txt`). A dump refuses to run with the
-option OFF, so a recording always holds every scenario. The `d2..` scenarios
-record, on today's C++, the cases where it already behaves as D2 requires
-(no capabilities at all, capabilities lost, a region change, `FSUseAis3Api`
-off on Second Life); the `o..` scenarios record the legacy paths D2 keeps for
-other grids.
+| scenario | Second Life without `InventoryAPIv3` | OpenSim counterpart |
+|---|---|---|
+| `s10a_legacy_caps_sl` | the legacy capabilities | o10a |
+| `s12_region_change` | capabilities lost, delayed, legacy-only and back | o12 |
+| `s13_sl_fetch_fallbacks` | UDP folder fetch, legacy caps, COF, items | o13 |
+| `s14_sl_write_fallbacks` | UDP writes, `CreateInventoryCategory` | o14 |
+| `c10_legacy` | the legacy scheduler, up to 16 handlers | oc10 |
+| `c11_legacy_limits` | batch 9/10/11, threshold 12, 16 handlers | oc11 |
+
+The CMake option `VKS_INVFETCH_PRE_D2_GATES` (default ON) runs them and
+stays ON; turning it OFF skips the six by name (each skip reported, their
+fixtures kept in the tree) and is no longer part of any plan. A dump refuses
+to run with the option OFF, so a recording always holds every scenario. The
+`d2..` scenarios record the cases where Second Life waits rather than falls
+back on today's C++ (no capabilities at all, capabilities lost, a region
+change, `FSUseAis3Api` off on Second Life); they stay as they are. The rule
+keeps its name because the test and the option refer to it.
 
 ## Seams
 
