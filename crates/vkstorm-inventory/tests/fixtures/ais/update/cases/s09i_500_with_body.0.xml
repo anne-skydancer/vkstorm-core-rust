@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<llsd>
+<map><key>http_result</key><map><key>success</key><boolean>false</boolean><key>type</key><integer>500</integer><key>status</key><integer>1</integer><key>message</key><string>Internal Server Error</string><key>url</key><string>https://inventory.grid.example/cap/00000000-0000-4000-8000-00000000cafe/category/c0000000-0000-4000-8000-000000000a20/children?depth=0</string><key>headers</key><map><key>content-type</key><string>application/llsd+xml</string></map><key>error_body</key><string>&lt;?xml version="1.0" ?&gt;
+&lt;llsd&gt;
+&lt;map&gt;&lt;key&gt;category_id&lt;/key&gt;&lt;uuid&gt;c0000000-0000-4000-8000-000000000a20&lt;/uuid&gt;&lt;key&gt;parent_id&lt;/key&gt;&lt;uuid&gt;c0000000-0000-4000-8000-000000000001&lt;/uuid&gt;&lt;key&gt;name&lt;/key&gt;&lt;string&gt;x&lt;/string&gt;&lt;key&gt;type_default&lt;/key&gt;&lt;integer&gt;-1&lt;/integer&gt;&lt;key&gt;agent_id&lt;/key&gt;&lt;uuid&gt;0a000000-0000-4000-8000-000000000001&lt;/uuid&gt;&lt;key&gt;version&lt;/key&gt;&lt;integer&gt;3&lt;/integer&gt;&lt;/map&gt;
+&lt;/llsd&gt;
+</string></map></map>
+</llsd>

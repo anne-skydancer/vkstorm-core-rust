@@ -1,0 +1,60 @@
+# vkstorm-inventory task fixtures: set 4, CreateTaskInventoryItem capability (POST body and outcome)
+# generator: INTEGRATION_TEST_llinventory_task_oracle (indra/newview/tests/llinventory_task_oracle_test.cpp), VKS_TASK_DUMP
+# viewer: 6f23ef84f0 (vkstorm-rust); frozen copies of llviewerobject.cpp blob 0ade67da75e4367e1fcae9e53e8e6388ddb612bf and llviewerinventory.cpp blob 41e2a9b23982f076e14a5de056d443438f8980b3
+# platform: windows-msvc
+# case <label>: the POST url, body (binary LLSD in create/<label>.llsd, notation here), then the reply and effects
+case script
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  permissions base=7fffffff owner=7fffffff group=00000000 every=00000000 next=00082000 creator=agent ownerid=agent lastowner=null groupid=null groupowned=0
+  call | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii
+  post https://sim.example/cap/ctii
+  body {'asset_type':i10,'description':'','inventory_type':i10,'name':'New Script','object_id':u0b000000-0000-4000-8000-0000000000aa,'permissions':{'base':i2147483647,'everyone':i0,'group':i0,'next_owner':i532480,'owner':i2147483647},'sub_type':i0}
+  body_xml <llsd><map><key>asset_type</key><integer>10</integer><key>description</key><string /><key>inventory_type</key><integer>10</integer><key>name</key><string>New Script</string><key>object_id</key><uuid>0b000000-0000-4000-8000-0000000000aa</uuid><key>permissions</key><map><key>base</key><integer>2147483647</integer><key>everyone</key><integer>0</integer><key>group</key><integer>0</integer><key>next_owner</key><integer>532480</integer><key>owner</key><integer>2147483647</integer></map><key>sub_type</key><integer>0</integer></map></llsd>
+  body_file create/script.llsd
+  after st=X ser=0 exp=1 xid=0 dirty=0 inv=- | http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 result={'success':1} http_type=200
+case lua_script_params
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  permissions base=ffffffff owner=7fffffff group=00080000 every=00008000 next=80080000 creator=agent ownerid=agent lastowner=null groupid=null groupowned=0
+  call | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii
+  post https://sim.example/cap/ctii
+  body {'asset_type':i10,'description':'d|e','inventory_type':i10,'name':'Lua \xc3\xa9','object_id':u0b000000-0000-4000-8000-0000000000aa,'params':{'language':'lua','template':u7e000000-0000-4000-8000-000000000001},'permissions':{'base':i-1,'everyone':i32768,'group':i524288,'next_owner':i-2146959360,'owner':i2147483647},'sub_type':i1}
+  body_xml <llsd><map><key>asset_type</key><integer>10</integer><key>description</key><string>d|e</string><key>inventory_type</key><integer>10</integer><key>name</key><string>Lua é</string><key>object_id</key><uuid>0b000000-0000-4000-8000-0000000000aa</uuid><key>params</key><map><key>language</key><string>lua</string><key>template</key><uuid>7e000000-0000-4000-8000-000000000001</uuid></map><key>permissions</key><map><key>base</key><integer>-1</integer><key>everyone</key><integer>32768</integer><key>group</key><integer>524288</integer><key>next_owner</key><integer>-2146959360</integer><key>owner</key><integer>2147483647</integer></map><key>sub_type</key><integer>1</integer></map></llsd>
+  body_file create/lua_script_params.llsd
+  after st=X ser=0 exp=1 xid=0 dirty=0 inv=- | http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 result={'success':1} http_type=200
+case notecard
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  permissions base=7fffffff owner=7fffffff group=00000000 every=00000000 next=7fffffff creator=agent ownerid=agent lastowner=null groupid=null groupowned=0
+  call | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii
+  post https://sim.example/cap/ctii
+  body {'asset_type':i7,'description':'desc','inventory_type':i7,'name':'New Note','object_id':u0b000000-0000-4000-8000-0000000000aa,'params':{},'permissions':{'base':i2147483647,'everyone':i0,'group':i0,'next_owner':i2147483647,'owner':i2147483647},'sub_type':i0}
+  body_xml <llsd><map><key>asset_type</key><integer>7</integer><key>description</key><string>desc</string><key>inventory_type</key><integer>7</integer><key>name</key><string>New Note</string><key>object_id</key><uuid>0b000000-0000-4000-8000-0000000000aa</uuid><key>params</key><map /><key>permissions</key><map><key>base</key><integer>2147483647</integer><key>everyone</key><integer>0</integer><key>group</key><integer>0</integer><key>next_owner</key><integer>2147483647</integer><key>owner</key><integer>2147483647</integer></map><key>sub_type</key><integer>0</integer></map></llsd>
+  body_file create/notecard.llsd
+  after st=X ser=0 exp=1 xid=0 dirty=0 inv=- | http.complete POST Http_200; coro.launch LLViewerObject::fetchInventoryFromCapCoro(); http.get TaskInventoryRequest https://sim.example/cap/rti?task_id=0b000000-0000-4000-8000-0000000000aa; create.callback success=1 result={'success':1} http_type=200
+case server_says_no
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  permissions base=7fffffff owner=7fffffff group=00000000 every=00000000 next=7fffffff creator=agent ownerid=agent lastowner=null groupid=null groupowned=0
+  call | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii
+  post https://sim.example/cap/ctii
+  body {'asset_type':i7,'description':'','inventory_type':i7,'name':'N','object_id':u0b000000-0000-4000-8000-0000000000aa,'permissions':{'base':i2147483647,'everyone':i0,'group':i0,'next_owner':i2147483647,'owner':i2147483647},'sub_type':i0}
+  body_xml <llsd><map><key>asset_type</key><integer>7</integer><key>description</key><string /><key>inventory_type</key><integer>7</integer><key>name</key><string>N</string><key>object_id</key><uuid>0b000000-0000-4000-8000-0000000000aa</uuid><key>permissions</key><map><key>base</key><integer>2147483647</integer><key>everyone</key><integer>0</integer><key>group</key><integer>0</integer><key>next_owner</key><integer>2147483647</integer><key>owner</key><integer>2147483647</integer></map><key>sub_type</key><integer>0</integer></map></llsd>
+  body_file create/server_says_no.llsd
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | http.complete POST Http_200; create.callback success=0 result={'success':0} http_type=200
+case http_error
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  permissions base=7fffffff owner=7fffffff group=00000000 every=00000000 next=7fffffff creator=agent ownerid=agent lastowner=null groupid=null groupowned=0
+  call | coro.launch LLViewerObject::createInventoryItemCoro; http.post CreateTaskInventoryItem https://sim.example/cap/ctii
+  post https://sim.example/cap/ctii
+  body {'asset_type':i7,'description':'','inventory_type':i7,'name':'N','object_id':u0b000000-0000-4000-8000-0000000000aa,'permissions':{'base':i2147483647,'everyone':i0,'group':i0,'next_owner':i2147483647,'owner':i2147483647},'sub_type':i0}
+  body_xml <llsd><map><key>asset_type</key><integer>7</integer><key>description</key><string /><key>inventory_type</key><integer>7</integer><key>name</key><string>N</string><key>object_id</key><uuid>0b000000-0000-4000-8000-0000000000aa</uuid><key>permissions</key><map><key>base</key><integer>2147483647</integer><key>everyone</key><integer>0</integer><key>group</key><integer>0</integer><key>next_owner</key><integer>2147483647</integer><key>owner</key><integer>2147483647</integer></map><key>sub_type</key><integer>0</integer></map></llsd>
+  body_file create/http_error.llsd
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | http.complete POST Http_500; create.callback success=0 result={} http_type=500
+case no_cap
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  permissions base=7fffffff owner=7fffffff group=00000000 every=00000000 next=7fffffff creator=agent ownerid=agent lastowner=null groupid=null groupowned=0
+  call | create.callback success=0 result={'message':'Capability not available'} http_type=0
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | -
+case no_region
+  before st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj]
+  permissions base=7fffffff owner=7fffffff group=00000000 every=00000000 next=7fffffff creator=agent ownerid=agent lastowner=null groupid=null groupowned=0
+  call | create.callback success=0 result={'message':'No region'} http_type=0
+  after st=S ser=0 exp=0 xid=0 dirty=0 inv=[B,A,obj] | -

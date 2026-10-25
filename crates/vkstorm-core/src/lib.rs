@@ -2,8 +2,9 @@
 //!
 //! This crate is the bottom of the dependency graph: no I/O, no rendering, no UI.
 //! It will hold LLSD and its three codecs, UUIDs, the region/global/agent
-//! coordinate frames as distinct types, asset and inventory enums, permissions
-//! and the binary packers used by the message and asset codecs.
+//! coordinate frames as distinct types and the binary packers used by the
+//! message and asset codecs. Asset and inventory types and permissions live in
+//! `vkstorm-inventory`.
 //!
 //! The `opensim` feature enables OpenSim grid support. Without it the build is
 //! Second Life only: no OpenSim grid profile exists and none of the legacy

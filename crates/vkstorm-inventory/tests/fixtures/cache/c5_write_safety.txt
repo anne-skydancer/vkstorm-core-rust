@@ -1,0 +1,42 @@
+# vkstorm inventory model oracle (recorder R2): C5 cache write safety
+# generator: INTEGRATION_TEST_llinventorymodel_parity with VKS_INVMODEL_DUMP (indra/newview/tests/llinventorymodel_parity_test.cpp)
+# viewer commit: 8d18dd15dd
+# platform: windows-msvc
+# seed: none
+# format: tests/fixtures/inventory/cache/README.md; lines starting with '#' are not compared
+== save_ok
+old size=21847 sha256=c374beef9079d7337ec57d87f663b2eccab955785b4562ea372cf95c24fd2be4
+files before_save [11b00000-0000-4000-8000-000000000001.inv.llsd.gz gz; a9e00000-0000-4000-8000-000000000001.inv.llsd.gz gz]
+step save
+old_gz_byte_identical=0
+after size=22420 sha256=d42980471ef6ff1020b7fdd917ab76598babcd019c75ca596df5004b93372c9d
+gz_t_present=0
+files after_save [11b00000-0000-4000-8000-000000000001.inv.llsd.gz gz; a9e00000-0000-4000-8000-000000000001.inv.llsd.gz gz]
+files temp []
+== stale_gz_t_file
+old size=21847 sha256=c374beef9079d7337ec57d87f663b2eccab955785b4562ea372cf95c24fd2be4
+files before_save [11b00000-0000-4000-8000-000000000001.inv.llsd.gz gz; a9e00000-0000-4000-8000-000000000001.inv.llsd.gz gz; a9e00000-0000-4000-8000-000000000001.inv.llsd.gz.t 43]
+step save
+old_gz_byte_identical=0
+after size=22420 sha256=d42980471ef6ff1020b7fdd917ab76598babcd019c75ca596df5004b93372c9d
+gz_t_present=0
+files after_save [11b00000-0000-4000-8000-000000000001.inv.llsd.gz gz; a9e00000-0000-4000-8000-000000000001.inv.llsd.gz gz]
+files temp []
+== gz_t_is_directory
+old size=21847 sha256=c374beef9079d7337ec57d87f663b2eccab955785b4562ea372cf95c24fd2be4
+files before_save [11b00000-0000-4000-8000-000000000001.inv.llsd.gz gz; a9e00000-0000-4000-8000-000000000001.inv.llsd.gz gz]
+step save
+old_gz_byte_identical=1
+after size=21847 sha256=c374beef9079d7337ec57d87f663b2eccab955785b4562ea372cf95c24fd2be4
+gz_t_present=directory
+files after_save [11b00000-0000-4000-8000-000000000001.inv.llsd.gz gz; a9e00000-0000-4000-8000-000000000001.inv.llsd.gz gz]
+files temp [<uuid>.tmp 22420]
+== temp_dir_missing
+old size=21847 sha256=c374beef9079d7337ec57d87f663b2eccab955785b4562ea372cf95c24fd2be4
+files before_save [11b00000-0000-4000-8000-000000000001.inv.llsd.gz gz; a9e00000-0000-4000-8000-000000000001.inv.llsd.gz gz]
+step save
+old_gz_byte_identical=1
+after size=21847 sha256=c374beef9079d7337ec57d87f663b2eccab955785b4562ea372cf95c24fd2be4
+gz_t_present=0
+files after_save [11b00000-0000-4000-8000-000000000001.inv.llsd.gz gz; a9e00000-0000-4000-8000-000000000001.inv.llsd.gz gz]
+files temp []
