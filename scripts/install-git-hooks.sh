@@ -26,6 +26,12 @@ fi
 for name in pre-merge-commit pre-commit; do
     # Ours (any version) is replaced; anything else is kept and chained.
     if [ -f "$hooks/$name" ] && ! grep -q -e "vks-base-merge-check" -e "check_no_base_merges" "$hooks/$name"; then
+        # Never replace a hook saved earlier: both would be someone's checks.
+        if [ -e "$hooks/$name.local" ]; then
+            echo "install-git-hooks: $hooks/$name is not ours and $hooks/$name.local already exists;" >&2
+            echo "  combine or move them aside, then run this again." >&2
+            exit 1
+        fi
         mv "$hooks/$name" "$hooks/$name.local"
     fi
     cp "$root/scripts/git-hooks/$name" "$hooks/$name"

@@ -207,7 +207,9 @@ def installer_repo(tmp):
     """A repository carrying this checkout's scripts/, as the installer expects."""
     import shutil
     r = Repo(tmp)
-    r.git("config", "--unset", "core.hooksPath")
+    # Always a hooks directory inside the temporary repository: unsetting the
+    # value would expose a global core.hooksPath to the installer.
+    r.git("config", "core.hooksPath", os.path.join(tmp, ".git", "hooks").replace(os.sep, "/"))
     shutil.copytree(SCRIPTS, os.path.join(tmp, "scripts"),
                     ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
     os.makedirs(os.path.join(tmp, "sub", "dir"))
@@ -248,6 +250,41 @@ def installer_scenarios():
         r.git("config", "core.hooksPath", "scripts/git-hooks")
         code, out = install(r)
         expect("installer: core.hooksPath = scripts/git-hooks uses the tracked hooks", code, 0, out)
+    with tempfile.TemporaryDirectory() as tmp:
+        # A saved merge hook that delegates to pre-commit, as Git's sample does,
+        # must not loop when a conflicted merge is concluded (MERGE_HEAD exists).
+        r = installer_repo(tmp)
+        r.commit("trunk", "root")
+        hooks = os.path.join(tmp, ".git", "hooks")
+        os.makedirs(hooks, exist_ok=True)
+        with open(os.path.join(hooks, "pre-merge-commit"), "w") as fh:
+            # Like Git's sample it execs pre-commit; a depth counter turns a loop
+            # into a failure instead of an endless chain of shells.
+            fh.write('#!/bin/sh\n'
+                     'depth=$(( ${VKS_TEST_HOOK_DEPTH:-0} + 1 ))\n'
+                     'if [ "$depth" -gt 5 ]; then echo "hook recursion" >&2; exit 3; fi\n'
+                     'VKS_TEST_HOOK_DEPTH=$depth exec "$(dirname "$0")/pre-commit" "$@"\n')
+        code, out = install(r)
+        with open(os.path.join(tmp, ".git", "MERGE_HEAD"), "w") as fh:
+            fh.write(r.git("rev-parse", "HEAD") + "\n")
+        proc = subprocess.run(["sh", os.path.join(hooks, "pre-commit")], cwd=tmp,
+                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+        code, out = proc.returncode, out + proc.stdout
+        expect("hooks: a saved merge hook delegating to pre-commit does not loop", code, 0, out)
+    with tempfile.TemporaryDirectory() as tmp:
+        # Another tool replaced our hook after a first install: the saved hook stays.
+        r = installer_repo(tmp)
+        hooks = os.path.join(tmp, ".git", "hooks")
+        os.makedirs(hooks, exist_ok=True)
+        with open(os.path.join(hooks, "pre-merge-commit"), "w") as fh:
+            fh.write("#!/bin/sh\n# hook A\nexit 0\n")
+        install(r)
+        with open(os.path.join(hooks, "pre-merge-commit"), "w") as fh:
+            fh.write("#!/bin/sh\n# hook B\nexit 0\n")
+        code, out = install(r)
+        saved = open(os.path.join(hooks, "pre-merge-commit.local")).read()
+        ok = code != 0 and "hook A" in saved
+        expect("installer: an earlier saved hook is never overwritten", 0 if ok else 1, 0, out)
 
 
 def main():
