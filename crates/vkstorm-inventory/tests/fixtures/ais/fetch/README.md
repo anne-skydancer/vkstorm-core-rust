@@ -417,6 +417,8 @@ every item copy (`CopyInventoryItem`), `ChangeInventoryItemFlags` and all
 inbound inventory messages (`BulkUpdateInventory`,
 `UpdateCreateInventoryItem`, ...) use UDP unconditionally. Only the paths
 gated on `!AISAPI::isAvailable()` are fallbacks, and those stay too.
+Creation and copy with AIS available are recorded by R2, case
+`create_and_copy_with_ais` in `../../msgs/set8_handlers.txt`.
 
 So these six scenarios are permanent; the Rust port must reproduce them on
 the Second Life profile, as the `o..` scenarios record the same paths on the
