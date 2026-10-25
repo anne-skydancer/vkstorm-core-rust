@@ -1,0 +1,28 @@
+name: Check PR
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  no-base-merges:
+    # Base lines only (BASE_LINES in scripts/check_no_base_merges.py): a PR
+    # between feature branches has no base line to protect.
+    if: github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # The default PR merge checkout carries the checker from the base, so it
+      # also runs for branches created before it existed; full history gives
+      # every base line and the PR head.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Checker regression tests
+        run: python3 scripts/tests/test_check_no_base_merges.py
+      - name: No merges of a base line into the PR branch
+        run: python3 scripts/check_no_base_merges.py "origin/${{ github.base_ref }}" "${{ github.event.pull_request.head.sha }}"
