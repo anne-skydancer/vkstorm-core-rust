@@ -1,6 +1,6 @@
 # vkstorm inventory model oracle (recorder R2): C3 mutation sequences
 # generator: INTEGRATION_TEST_llinventorymodel_parity with VKS_INVMODEL_DUMP (indra/newview/tests/llinventorymodel_parity_test.cpp)
-# viewer commit: 8d18dd15dd
+# viewer commit: 30c5cbb947
 # platform: windows-msvc
 # seed: none
 # format: tests/fixtures/inventory/cache/README.md; lines starting with '#' are not compared
@@ -3024,7 +3024,7 @@ step update_server_item
   msg UpdateInventoryItem 000000000000ffff010aa9e000000000400080000000000000015e5500000000400080000000000000010000000000000000000000000000000001a000000000004000800000000000000cf000000000004000800000000000002b00000000c4000000000040008000000000000001a9e0000000004000800000000000000100000000000000000000000000000000ffffff7fffffff7f0000000000000000ffffff7f0000000000000000000000000000000000060600000000000a000000064368616972000000f153655fb8d5ac
   ais UpdateItem a0000000-0000-4000-8000-00000000000c {'created_at':i1700000000,'desc':'','flags':b16"00000000",'inv_type':'object','item_id':ua0000000-0000-4000-8000-00000000000c,'name':'Chair','parent_id':uf0000000-0000-4000-8000-00000000002b,'permissions':{'base_mask':i2147483647,'creator_id':uc4000000-0000-4000-8000-000000000001,'everyone_mask':i0,'group_id':u00000000-0000-0000-0000-000000000000,'group_mask':i0,'is_owner_group':0,'last_owner_id':ua9e00000-0000-4000-8000-000000000001,'next_owner_mask':i2147483647,'owner_id':ua9e00000-0000-4000-8000-000000000001,'owner_mask':i2147483647},'sale_info':{'sale_price':i10,'sale_type':'not'},'type':'object'}
 model root=f0000000-0000-4000-8000-000000000001 library_root=f1000000-0000-4000-8000-000000000001 library_owner=11b00000-0000-4000-8000-000000000001 usable=1 cats=31 items=33 cat_trees=32 item_trees=31
-cat f0000000-0000-4000-8000-00000000002b parent=f0000000-0000-4000-8000-00000000002a pref=-1 atype=8 name="Chairs" owner=a9e00000-0000-4000-8000-000000000001 version=3 count=2 thumb=00000000-0000-0000-0000-000000000000 fav=0 fetching=0 timer{started=1 expired=1 to_expire=0.000}
+cat f0000000-0000-4000-8000-00000000002b parent=f0000000-0000-4000-8000-00000000002a pref=-1 atype=8 name="Chairs" owner=a9e00000-0000-4000-8000-000000000001 version=4 count=2 thumb=00000000-0000-0000-0000-000000000000 fav=0 fetching=0 timer{started=1 expired=1 to_expire=0.000}
 locks cat_entries=32 item_entries=31
 pending mask=0x3 changed=[a0000000-0000-4000-8000-00000000000d] added=[] backlog_mask=0x0 backlog_changed=[] backlog_added=[]
 step update_parent_on_server
@@ -3099,7 +3099,7 @@ pending mask=0x0 changed=[] added=[] backlog_mask=0x0 backlog_changed=[] backlog
 step change_type
   ais UpdateCategory f0000000-0000-4000-8000-00000000002b {'item_id':uf0000000-0000-4000-8000-00000000002b,'name':'Chairs','parent_id':uf0000000-0000-4000-8000-00000000002a,'type':i47}
 model root=f0000000-0000-4000-8000-000000000001 library_root=f1000000-0000-4000-8000-000000000001 library_owner=11b00000-0000-4000-8000-000000000001 usable=1 cats=31 items=32 cat_trees=32 item_trees=31
-cat f0000000-0000-4000-8000-00000000002b parent=f0000000-0000-4000-8000-00000000002a pref=47 atype=8 name="Chairs" owner=a9e00000-0000-4000-8000-000000000001 version=3 count=2 thumb=00000000-0000-0000-0000-000000000000 fav=0 fetching=0 timer{started=1 expired=1 to_expire=0.000}
+cat f0000000-0000-4000-8000-00000000002b parent=f0000000-0000-4000-8000-00000000002a pref=47 atype=8 name="Chairs" owner=a9e00000-0000-4000-8000-000000000001 version=4 count=2 thumb=00000000-0000-0000-0000-000000000000 fav=0 fetching=0 timer{started=1 expired=1 to_expire=0.000}
 locks cat_entries=32 item_entries=31
 pending mask=0x1 changed=[f0000000-0000-4000-8000-00000000002b] added=[] backlog_mask=0x0 backlog_changed=[] backlog_added=[]
 == observers

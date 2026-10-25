@@ -22,6 +22,13 @@ changed only in its header. The Linux-only records
 re-recorded: none of these fixes touches `validate()`'s QA draws or the
 cache save.
 
+`c3_mutations.txt` was recorded again on Windows at 30c5cbb947
+(`vkstorm-rust`), after PR #191 reverted bug 52 to Firestorm's behaviour:
+`updateServer()` bumps the parent folder's version again before an AIS
+update, so the folder is refetched at the next login if that update fails.
+Only the `Chairs` folder's version changed (3 to 4, in case `server_helpers`,
+steps `update_server_item` and `change_type`); every other record is unchanged.
+
 ## How they are made
 
 `INTEGRATION_TEST_llinventorymodel_parity` (`indra/newview/tests/inventory/r2.cmake`)
@@ -194,8 +201,8 @@ three except:
 
 ## Behaviour recorded as it is
 
-Entries naming a bug describe the C++ after that fix (PR #181, bug 52);
-the others are recorded unfixed.
+Entries naming a bug describe the C++ after that fix (PR #181; bug 52 was
+reverted by PR #191); the others are recorded unfixed.
 
 - `deleteObject` notifies once mid-delete even when told not to (survey 2
   Q4): C3 `delete_object/item_no_notify_q4`, `deleted_from_server/ais_style_flags`.
