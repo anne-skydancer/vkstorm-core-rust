@@ -8,7 +8,9 @@ The Rust crates shared by both Vulkanstorm tracks:
 - [vkstorm-aleph](https://github.com/anne-skydancer/vkstorm-aleph), the
   future-proofing track: a ground-up Rust and Vulkan viewer.
 
-Both consume these crates as git dependencies pinned by commit. This
+vkstorm-aleph consumes these crates as git dependencies pinned by commit; the
+vulkanstorm viewer links them through `vkstorm-ffi`, built here and shipped as an
+autobuild package (see below). This
 repository holds protocol, codec, asset, audio and inventory logic only: no
 rendering, no UI. The design study that these crates implement lives in
 vkstorm-aleph under `docs/upstream-study/`.
@@ -27,6 +29,7 @@ vkstorm-aleph under `docs/upstream-study/`.
 
 | `vkstorm-http` | The viewer's HTTP layer behind `LLCore::HttpRequest`: the service thread with its request and reply queues, policy classes with connection limits and request-rate throttling, the retry queue with its backoff, and the libcurl multi-handle transport (libcurl bound by hand, the viewer's own build with OpenSSL and nghttp2); request-for-request identical to the C++ on the recorded scenarios. |
 | `vkstorm-assets` | The asset pipeline's data side behind `LLTextureCache`, `LLTextureFetch`, `LLDiskCache`/`LLFileSystem`, `LLVolume::unpackVolumeFaces`, `LLMeshSkinInfo`, `LLModel::Decomposition`, `LLMeshHeader` and `LLAssetStorage`: the texture cache files (byte-compatible with the C++ cache), the texture fetch state machine (cache, range, decode and write-back decisions, retries, the HTTP resource semaphore) driven by the host's threads, the JPEG 2000 byte budget per discard level, the asset disk cache's naming and purge, mesh asset unpacking into the viewer's face buffers with the skin and physics blocks, mesh fetch planning, and the asset request bookkeeping. Carries the `opensim` feature (the legacy UDP texture and asset paths). |
+| `vkstorm-ffi` | The C ABI the C++ viewer calls (`include/vkstorm_ffi.h`), over the crates above. One Cargo feature per rung of the port; built as a static library and shipped to the viewer as the `vkstorm-ffi` autobuild package. See its README. |
 
 Planned, in port order: `vkstorm-audio`, `vkstorm-inventory`,
 `vkstorm-world`, `vkstorm-avatar`, `vkstorm-comms`, `vkstorm-rlv`,
@@ -39,6 +42,16 @@ the build is Second Life only: there is no OpenSim grid profile and none of
 the legacy UDP protocol paths exist. With it, the grid profile is chosen at
 login and fixed for the whole session. Second Life and OpenSim are never
 mixed in one session, and nothing is negotiated per region on Second Life.
+
+## The viewer's package: vkstorm-ffi
+
+Viewer builds need no Rust toolchain. The workflow
+`.github/workflows/package-ffi.yaml` builds the `vkstorm-ffi` static library with
+the toolchain pinned in `rust-toolchain.toml` and packages it with autobuild
+(`autobuild.xml`, `packaging/build_package.py`), once per rung set, for windows64
+and linux64. A tag `ffi-v*` publishes the archives and their hashes as a release;
+each viewer line pins its archive by URL and hash in its own `autobuild.xml`:
+`vkstorm-rust` takes `full`, `vkstorm-release` the rungs promoted to it.
 
 ## Tools
 

@@ -1,0 +1,5 @@
+# The toolchain that builds the vkstorm-ffi packages the viewer links (and
+# every crate here). rustup installs it on first use.
+[toolchain]
+channel = "1.99.1"
+profile = "minimal"

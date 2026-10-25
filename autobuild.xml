@@ -1,0 +1,74 @@
+<?xml version="1.0" ?>
+<llsd>
+<map>
+    <key>version</key><string>1.3</string>
+    <key>type</key><string>autobuild</string>
+    <key>package_description</key>
+    <map>
+        <key>canonical_repo</key><string>https://github.com/anne-skydancer/vkstorm-core-rust</string>
+        <key>name</key><string>vkstorm-ffi</string>
+        <key>description</key><string>The Rust port's C ABI (vkstorm-ffi) over the vkstorm-core-rust crates, as a static library for the Vulkanstorm viewer; the rungs built in are named in VERSION.txt</string>
+        <key>license</key><string>LGPL-2.1-only</string>
+        <key>license_file</key><string>LICENSES/vkstorm-core-rust.txt</string>
+        <key>copyright</key><string>Copyright (C) 2026, Vulkanstorm Viewer Project</string>
+        <key>version_file</key><string>VERSION.txt</string>
+        <key>platforms</key>
+        <map>
+            <key>linux64</key>
+            <map>
+                <key>name</key><string>linux64</string>
+                <key>build_directory</key><string>stage</string>
+                <key>manifest</key>
+                <array>
+                    <string>lib/release/libvkstorm_ffi.a</string>
+                    <string>lib/release/vkstorm_ffi.native-libs.txt</string>
+                    <string>include/vkstorm_ffi.h</string>
+                    <string>LICENSES/*.txt</string>
+                    <string>VERSION.txt</string>
+                </array>
+                <key>configurations</key>
+                <map>
+                    <key>release</key>
+                    <map>
+                        <key>name</key><string>release</string>
+                        <key>default</key><string>True</string>
+                        <key>build</key>
+                        <map>
+                            <key>command</key><string>python</string>
+                            <key>options</key>
+                            <array><string>../packaging/build_package.py</string></array>
+                        </map>
+                    </map>
+                </map>
+            </map>
+            <key>windows64</key>
+            <map>
+                <key>name</key><string>windows64</string>
+                <key>build_directory</key><string>stage</string>
+                <key>manifest</key>
+                <array>
+                    <string>lib/release/vkstorm_ffi.lib</string>
+                    <string>lib/release/vkstorm_ffi.native-libs.txt</string>
+                    <string>include/vkstorm_ffi.h</string>
+                    <string>LICENSES/*.txt</string>
+                    <string>VERSION.txt</string>
+                </array>
+                <key>configurations</key>
+                <map>
+                    <key>release</key>
+                    <map>
+                        <key>name</key><string>release</string>
+                        <key>default</key><string>True</string>
+                        <key>build</key>
+                        <map>
+                            <key>command</key><string>python</string>
+                            <key>options</key>
+                            <array><string>../packaging/build_package.py</string></array>
+                        </map>
+                    </map>
+                </map>
+            </map>
+        </map>
+    </map>
+</map>
+</llsd>

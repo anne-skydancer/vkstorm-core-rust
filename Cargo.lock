@@ -594,6 +594,21 @@ name = "vkstorm-core"
 version = "0.1.0"
 
 [[package]]
+name = "vkstorm-ffi"
+version = "0.1.0"
+dependencies = [
+ "vkstorm-assets",
+ "vkstorm-audio",
+ "vkstorm-http",
+ "vkstorm-image",
+ "vkstorm-j2c",
+ "vkstorm-llsd",
+ "vkstorm-messages",
+ "vkstorm-volume",
+ "vkstorm-vorbis",
+]
+
+[[package]]
 name = "vkstorm-http"
 version = "0.1.0"
 
