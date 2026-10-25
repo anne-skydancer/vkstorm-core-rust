@@ -1,0 +1,77 @@
+name: vkstorm-ffi package
+
+# Builds the vkstorm-ffi autobuild package (the static library the viewer
+# links) for each rung set on Windows and Linux. Every push and pull request
+# builds it; a tag ffi-v* also publishes the archives as a GitHub release,
+# whose URLs and hashes the viewer lines pin in autobuild.xml.
+on:
+  push:
+    branches: [main]
+    tags: ['ffi-v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  AUTOBUILD_BUILD_ID: ${{ github.run_id }}
+
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-24.04]
+        # full: vkstorm-rust (every rung). j2c: vkstorm-release's first rung.
+        rungs: ['full', 'j2c']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+      - name: Install autobuild
+        run: python -m pip install --disable-pip-version-check autobuild==3.9.3
+      # rustup is on the runner images; rust-toolchain.toml selects the pinned toolchain.
+      - name: Rust toolchain
+        shell: bash
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Build
+        shell: bash
+        env:
+          VKS_FFI_FEATURES: ${{ matrix.rungs }}
+        run: autobuild build -A 64 -c release
+      - name: Package
+        shell: bash
+        run: autobuild package -A 64 -c release --archive-format tzst
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: vkstorm-ffi-${{ matrix.rungs }}-${{ matrix.os }}
+          path: '*.tar.zst'
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/ffi-v')
+    needs: package
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          path: archives
+          merge-multiple: true
+      - name: Publish the archives and their hashes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          cd archives
+          sha256sum *.tar.zst | tee SHA256SUMS
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "vkstorm-ffi $TAG" \
+            --notes "vkstorm-ffi autobuild packages built from ${GITHUB_SHA}. Rung sets: full (vkstorm-rust), j2c (vkstorm-release). Pin by URL and hash (SHA256SUMS) in the viewer's autobuild.xml." \
+            *.tar.zst SHA256SUMS

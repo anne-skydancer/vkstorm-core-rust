@@ -1,0 +1,44 @@
+[package]
+name = "vkstorm-ffi"
+description = "C ABI over the vkstorm-core-rust crates for the C++ viewer, built as a static library and shipped as an autobuild package"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[lib]
+crate-type = ["staticlib"]
+# No tests here: the libcurl symbols of the http and audio rungs resolve only in
+# the viewer's final link. The viewer's oracles test this ABI end to end.
+test = false
+doctest = false
+
+[dependencies]
+vkstorm-j2c = { path = "../vkstorm-j2c", optional = true }
+vkstorm-llsd = { path = "../vkstorm-llsd", optional = true }
+vkstorm-volume = { path = "../vkstorm-volume", optional = true }
+vkstorm-image = { path = "../vkstorm-image", optional = true }
+vkstorm-messages = { path = "../vkstorm-messages", optional = true }
+vkstorm-http = { path = "../vkstorm-http", optional = true }
+vkstorm-assets = { path = "../vkstorm-assets", optional = true }
+# The viewer links its prebuilt libcurl; the music player calls it by symbol.
+vkstorm-audio = { path = "../vkstorm-audio", optional = true, features = ["curl-symbols"] }
+vkstorm-vorbis = { path = "../vkstorm-vorbis", optional = true }
+
+[features]
+default = []
+# One feature per rung of the port (see src/lib.rs).
+j2c = ["dep:vkstorm-j2c"]
+llsd = ["dep:vkstorm-llsd"]
+volume = ["dep:vkstorm-volume"]
+image = ["dep:vkstorm-image"]
+messages = ["dep:vkstorm-messages"]
+http = ["dep:vkstorm-http"]
+assets = ["dep:vkstorm-assets"]
+audio = ["dep:vkstorm-audio", "dep:vkstorm-vorbis"]
+# Every rung: the build the vkstorm-rust line links.
+full = ["j2c", "llsd", "volume", "image", "messages", "http", "assets", "audio"]
+# OpenSim grid support (the viewer's CMake OPENSIM option): the legacy UDP
+# paths of the crates that carry them.
+opensim = ["vkstorm-assets?/opensim"]

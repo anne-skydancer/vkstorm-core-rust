@@ -14,3 +14,13 @@ repository = "https://github.com/anne-skydancer/vkstorm-core-rust"
 [workspace.dependencies]
 hayro-jpeg2000 = "0.4"
 j2k = "0.12"
+
+# The static library shipped to the viewer (packaging/build_package.py): the
+# viewer's Release configuration links with LTO, so the library does too.
+# Panics are caught at the C boundary, so line tables are enough for traces.
+[profile.ffi-package]
+inherits = "release"
+lto = "fat"
+codegen-units = 1
+opt-level = 3
+debug = "line-tables-only"
