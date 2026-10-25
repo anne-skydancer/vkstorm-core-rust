@@ -1,0 +1,4 @@
+# vkstorm-core-rust development conventions
+
+- `main` is this repository's base line: the Rust crates shared by the vulkanstorm viewer's `vkstorm-rust` line (pinned by commit in `indra/rust/Cargo.toml`) and by vkstorm-aleph. Feature work goes on `codex/` branches and reaches `main` through a PR.
+- Merges flow one way: a feature or PR branch is merged into `main` through its PR. Never merge `main` into a feature or PR branch, including GitHub's "Update branch", and never instruct an agent to. To bring `main` changes into a feature branch, cherry-pick them, or land the branch and follow up. `scripts/check_no_base_merges.py` enforces this in CI (Check PR) and, after `scripts/install-git-hooks.sh`, locally.

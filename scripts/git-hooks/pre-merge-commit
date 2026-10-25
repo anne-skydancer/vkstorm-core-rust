@@ -1,0 +1,32 @@
+#!/bin/sh
+# vks-base-merge-check: refuse to merge a base line (BASE_LINES in
+# check_no_base_merges.py) into a feature branch.
+# Installed by scripts/install-git-hooks.sh. A merge that stops on conflicts
+# is concluded by "git commit", so the pre-commit hook runs this hook too
+# while a merge is in progress. The installer copies the check next to this
+# hook, so it applies on every branch, including branches that do not contain
+# scripts/ yet; when the hooks directory is the repository's own
+# scripts/git-hooks, the tracked copy beside it is used.
+hooks=$(cd "$(dirname "$0")" && pwd)
+check="$hooks/check_no_base_merges.py"
+if [ ! -f "$check" ]; then
+    check="$(git rev-parse --show-toplevel)/scripts/check_no_base_merges.py"
+fi
+if [ ! -f "$check" ]; then
+    echo "pre-merge-commit: check_no_base_merges.py missing; run scripts/install-git-hooks.sh" >&2
+    exit 1
+fi
+ran=
+for py in python3 python; do
+    if command -v "$py" >/dev/null 2>&1 && "$py" -c "import sys; sys.exit(sys.version_info < (3, 6))" >/dev/null 2>&1; then
+        "$py" "$check" --pending || exit 1
+        ran=1
+        break
+    fi
+done
+[ -n "$ran" ] || echo "pre-merge-commit: no Python 3.6+ found; base-merge check skipped" >&2
+# A pre-merge-commit hook that was there before the installer keeps running.
+if [ -x "$hooks/pre-merge-commit.local" ]; then
+    exec "$hooks/pre-merge-commit.local" "$@"
+fi
+exit 0

@@ -19,3 +19,5 @@ crates/*/tests/fixtures/*.bin binary
 *.m4a binary
 *.mp4 binary
 *.wav binary
+# One-way merge guard: hooks and scripts run as is on every platform
+scripts/** text eol=lf
