@@ -9,7 +9,9 @@ The fixtures were first recorded from the viewer C++ (`codex/rust-inventory`
 at a6d6a04641), before any port commit, on Windows and Linux, and re-recorded
 on Windows at 8d18dd15dd after the inventory bug fixes of PR #181 (bug 24
 changed `update_create_inventory_item` and `bulk_update_udp`; see
-`../cache/README.md`). They are never edited by hand. To change them, change the recorder and record them again.
+`../cache/README.md`). Recorded again on Windows at 19d4b1c78d
+(`vkstorm-rust`) to add the case `create_and_copy_with_ais`; every other
+case is unchanged. They are never edited by hand. To change them, change the recorder and record them again.
 
 ## Files
 
@@ -40,6 +42,7 @@ model lines that changed.
 | `remove_messages` | RemoveInventoryItem (known, known, unknown), foreign agent, RemoveInventoryFolder with children, RemoveInventoryObjects (folders, then items) |
 | `save_asset_and_move` | SaveAssetIntoInventory known, unknown, with RLVa, foreign agent; MoveInventoryItem with a new name, three blocks with an unknown item, only an unknown item, foreign agent |
 | `udp_fetch_replies` | InventoryDescendents (folder blocks reset their versions, items already present are skipped, the parent's version and count set from the message), for an unknown parent, FetchInventoryReply (no accounting) |
+| `create_and_copy_with_ais` | with AIS available: `create_inventory_item` sends UDP `CreateInventoryItem` (no AIS call; its AIS branch is compiled only with `USE_AIS_FOR_NC`) with the server form of the name and a registered callback id, and the `UpdateCreateInventoryItem` reply with that id adds the item under its localised name and fires the callback once; `copy_inventory_item` sends UDP `CopyInventoryItem` (it has no AIS path), and the `BulkUpdateInventory` reply with that id adds the copy and fires the callback once. Both paths are always UDP on Second Life (rule `PRE_D2_SL_FALLBACKS` in `../ais/fetch/README.md`) |
 
 The GenericMessage and LargeGenericMessage handlers of
 `llviewergenericmessage.cpp` are frozen copies in
