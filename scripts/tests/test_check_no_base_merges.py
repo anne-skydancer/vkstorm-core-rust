@@ -134,6 +134,17 @@ def non_base_branch_merged(r):
     expect("CI: a published branch outside BASE_LINES is not a base line", code, 0, out)
 
 
+def local_base_ahead_of_origin(r):
+    # Local main has moved past origin/main (pulled from elsewhere); merging the
+    # local tip into a feature branch is still a base merge.
+    r.branch("codex/a", "main")
+    r.commit("codex/a")
+    r.commit("main", "local main ahead of origin")
+    r.git("checkout", "-q", "codex/a")
+    code, out = r.check("--pending", env_extra={"GIT_REFLOG_ACTION": "merge main"})
+    expect("hook: a local base line ahead of origin is refused", code, 1, out)
+
+
 def update_branch_style(r):
     # GitHub's "Update branch": the base tip merged into the PR branch.
     r.branch("codex/a", "main")
@@ -189,11 +200,62 @@ def hook_pull_fetch_head(r):
     expect("hook: FETCH_HEAD entries marked not-for-merge are ignored", code, 0, out)
 
 
+SCRIPTS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def installer_repo(tmp):
+    """A repository carrying this checkout's scripts/, as the installer expects."""
+    import shutil
+    r = Repo(tmp)
+    r.git("config", "--unset", "core.hooksPath")
+    shutil.copytree(SCRIPTS, os.path.join(tmp, "scripts"),
+                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    os.makedirs(os.path.join(tmp, "sub", "dir"))
+    return r
+
+
+def install(r, cwd=None):
+    proc = subprocess.run(["sh", os.path.join(r.root, "scripts", "install-git-hooks.sh")],
+                          cwd=cwd or r.root, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                          universal_newlines=True)
+    return proc.returncode, proc.stdout
+
+
+def installer_scenarios():
+    with tempfile.TemporaryDirectory() as tmp:
+        r = installer_repo(tmp)
+        r.git("config", "core.hooksPath", ".githooks")
+        code, out = install(r, cwd=os.path.join(tmp, "sub", "dir"))
+        ok = code == 0 and os.path.isfile(os.path.join(tmp, ".githooks", "pre-merge-commit")) \
+            and not os.path.exists(os.path.join(tmp, "sub", "dir", ".githooks"))
+        expect("installer: relative core.hooksPath from a subdirectory", 0 if ok else 1, 0, out)
+    with tempfile.TemporaryDirectory() as tmp:
+        r = installer_repo(tmp)
+        hooks = os.path.join(tmp, ".git", "hooks")
+        os.makedirs(hooks, exist_ok=True)
+        for name in ("pre-merge-commit", "pre-commit"):
+            with open(os.path.join(hooks, name), "w") as fh:
+                fh.write("#!/bin/sh\n# someone else's %s\nexit 0\n" % name)
+        code, out = install(r)
+        kept = all(os.path.isfile(os.path.join(hooks, n + ".local")) for n in ("pre-merge-commit", "pre-commit"))
+        expect("installer: existing foreign hooks are kept as .local", 0 if code == 0 and kept else 1, 0, out)
+        code, out = install(r)  # reinstall: ours is replaced, the .local copies stay
+        local = os.path.join(hooks, "pre-merge-commit.local")
+        still_foreign = os.path.isfile(local) and "someone else's" in open(local).read()
+        expect("installer: reinstall replaces only its own hooks", 0 if code == 0 and still_foreign else 1, 0, out)
+    with tempfile.TemporaryDirectory() as tmp:
+        r = installer_repo(tmp)
+        r.git("config", "core.hooksPath", "scripts/git-hooks")
+        code, out = install(r)
+        expect("installer: core.hooksPath = scripts/git-hooks uses the tracked hooks", code, 0, out)
+
+
 def main():
     for fn in (base_merged_into_feature, stacked_feature_then_landed, stacked_feature_landed_first,
-               non_base_branch_merged, update_branch_style, clean_feature, hook_refuses_and_override,
+               non_base_branch_merged, local_base_ahead_of_origin, update_branch_style, clean_feature, hook_refuses_and_override,
                hook_pull_fetch_head):
         scenario(fn)
+    installer_scenarios()
     if FAILURES:
         print("\n".join(FAILURES))
         return 1
