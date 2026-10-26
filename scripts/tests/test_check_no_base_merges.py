@@ -264,6 +264,9 @@ def installer_scenarios():
                      'depth=$(( ${VKS_TEST_HOOK_DEPTH:-0} + 1 ))\n'
                      'if [ "$depth" -gt 5 ]; then echo "hook recursion" >&2; exit 3; fi\n'
                      'VKS_TEST_HOOK_DEPTH=$depth exec "$(dirname "$0")/pre-commit" "$@"\n')
+        # Executable, as a real hook is: otherwise the -x test skips it on POSIX
+        # and the scenario passes without exercising the chain.
+        os.chmod(os.path.join(hooks, "pre-merge-commit"), 0o755)
         code, out = install(r)
         with open(os.path.join(tmp, ".git", "MERGE_HEAD"), "w") as fh:
             fh.write(r.git("rev-parse", "HEAD") + "\n")
