@@ -25,8 +25,13 @@ for py in python3 python; do
     fi
 done
 [ -n "$ran" ] || echo "pre-merge-commit: no Python 3.6+ found; base-merge check skipped" >&2
-# A pre-merge-commit hook that was there before the installer keeps running.
-if [ -x "$hooks/pre-merge-commit.local" ]; then
+# A pre-merge-commit hook that was there before the installer keeps running
+# when git runs this hook for a merge it is about to commit (MERGE_HEAD is not
+# written yet). A conflicted merge concluded with "git commit" runs pre-commit
+# only, which calls this check with MERGE_HEAD present; the saved merge hook is
+# not run from there, as git would not run it either, and a saved hook that
+# delegates to pre-commit (as Git's sample does) would otherwise loop.
+if [ -x "$hooks/pre-merge-commit.local" ] && ! git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then
     exec "$hooks/pre-merge-commit.local" "$@"
 fi
 exit 0
