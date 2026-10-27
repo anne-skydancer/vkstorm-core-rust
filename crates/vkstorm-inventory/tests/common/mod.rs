@@ -454,3 +454,301 @@ pub fn assert_replay(fixture: &str, expected: &[String], actual: &[String]) {
         c.report
     );
 }
+
+// ---------------------------------------------------------------------------
+// Records (the recorder's perm_cols, sale_cols, stream_cols, idname)
+// ---------------------------------------------------------------------------
+
+use vkstorm_inventory::legacy::reader::Stream;
+use vkstorm_inventory::perms::Permissions;
+use vkstorm_inventory::sale::SaleInfo;
+
+/// `idname`: `null`, `A`, `B`, `C`, `G`, `H`, else the UUID.
+pub fn idname(id: &[u8; 16]) -> String {
+    let named = [(NUL, "null"), (id_a(), "A"), (id_b(), "B"), (id_c(), "C"), (id_g(), "G"), (id_h(), "H")];
+    named
+        .iter()
+        .find(|(x, _)| x == id)
+        .map_or_else(|| uuid(id), |(_, n)| (*n).to_owned())
+}
+
+/// `perm_cols`: the permissions record.
+pub fn perm_cols(p: &Permissions) -> Vec<String> {
+    vec![
+        uuid(&p.creator),
+        uuid(&p.owner),
+        uuid(&p.last_owner),
+        uuid(&p.group),
+        x8(p.base),
+        x8(p.owner_mask),
+        x8(p.group_mask),
+        x8(p.everyone),
+        x8(p.next),
+        bl(p.group_owned),
+    ]
+}
+
+/// `ret` followed by `perm_cols`.
+pub fn ret_perm_cols(ret: bool, p: &Permissions) -> Vec<String> {
+    let mut v = perm_cols(p);
+    v.insert(0, bl(ret));
+    v
+}
+
+/// `sale_cols`: the sale record.
+pub fn sale_cols(s: &SaleInfo) -> Vec<String> {
+    vec![d(s.sale_type.0), d(s.price)]
+}
+
+/// `stream_cols`: `state pos rest` of a stream over `src`.
+pub fn stream_cols(s: &Stream<'_>, src: &[u8]) -> Vec<String> {
+    let pos = s.pos();
+    let rest = if pos <= src.len() { esc(&src[pos..]) } else { "?".to_owned() };
+    vec![s.state_letters(), d(pos as i64), rest]
+}
+
+/// The text after the first line of a legacy block (after `permissions 0`
+/// or `sale_info\t0`), as the recorder hands it to the readers.
+pub fn after_first_line(text: &[u8]) -> &[u8] {
+    match text.iter().position(|&b| b == b'\n') {
+        Some(n) => &text[n + 1..],
+        None => text,
+    }
+}
+
+/// `sampled(i)` of the C3 and C4 streams: `i < 200 || i % 1000 == 0`.
+pub fn sampled(i: u64) -> bool {
+    i < 200 || i % 1000 == 0
+}
+
+// ---------------------------------------------------------------------------
+// SHA-256 and chunked digests (the recorder's Sha256 and ChunkedDigest)
+// ---------------------------------------------------------------------------
+
+#[rustfmt::skip]
+const SHA_K: [u32; 64] = [
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
+    0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
+    0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
+    0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+];
+
+/// SHA-256 (FIPS 180-4), the recorder's `Sha256`.
+#[derive(Clone)]
+pub struct Sha256 {
+    h: [u32; 8],
+    block: [u8; 64],
+    used: usize,
+    total: u64,
+}
+
+impl Default for Sha256 {
+    fn default() -> Self {
+        Sha256 {
+            h: [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19],
+            block: [0; 64],
+            used: 0,
+            total: 0,
+        }
+    }
+}
+
+impl Sha256 {
+    fn compress(h: &mut [u32; 8], p: &[u8]) {
+        let mut w = [0u32; 64];
+        for (i, word) in p.chunks_exact(4).enumerate() {
+            w[i] = u32::from_be_bytes([word[0], word[1], word[2], word[3]]);
+        }
+        for i in 16..64 {
+            let s0 = w[i - 15].rotate_right(7) ^ w[i - 15].rotate_right(18) ^ (w[i - 15] >> 3);
+            let s1 = w[i - 2].rotate_right(17) ^ w[i - 2].rotate_right(19) ^ (w[i - 2] >> 10);
+            w[i] = w[i - 16].wrapping_add(s0).wrapping_add(w[i - 7]).wrapping_add(s1);
+        }
+        let [mut a, mut b, mut c, mut d, mut e, mut f, mut g, mut hh] = *h;
+        for (k, wi) in SHA_K.iter().zip(w.iter()) {
+            let s1 = e.rotate_right(6) ^ e.rotate_right(11) ^ e.rotate_right(25);
+            let ch = (e & f) ^ (!e & g);
+            let t1 = hh.wrapping_add(s1).wrapping_add(ch).wrapping_add(*k).wrapping_add(*wi);
+            let s0 = a.rotate_right(2) ^ a.rotate_right(13) ^ a.rotate_right(22);
+            let maj = (a & b) ^ (a & c) ^ (b & c);
+            let t2 = s0.wrapping_add(maj);
+            hh = g;
+            g = f;
+            f = e;
+            e = d.wrapping_add(t1);
+            d = c;
+            c = b;
+            b = a;
+            a = t1.wrapping_add(t2);
+        }
+        for (x, v) in h.iter_mut().zip([a, b, c, d, e, f, g, hh]) {
+            *x = x.wrapping_add(v);
+        }
+    }
+
+    pub fn update(&mut self, mut data: &[u8]) {
+        self.total += data.len() as u64;
+        if self.used > 0 {
+            let take = data.len().min(64 - self.used);
+            self.block[self.used..self.used + take].copy_from_slice(&data[..take]);
+            self.used += take;
+            data = &data[take..];
+            if self.used < 64 {
+                return;
+            }
+            let block = self.block;
+            Self::compress(&mut self.h, &block);
+            self.used = 0;
+        }
+        let mut blocks = data.chunks_exact(64);
+        for b in &mut blocks {
+            Self::compress(&mut self.h, b);
+        }
+        let rem = blocks.remainder();
+        self.block[..rem.len()].copy_from_slice(rem);
+        self.used = rem.len();
+    }
+
+    /// `hex()`: pads and returns the digest in lower-case hex.
+    pub fn hex(mut self) -> String {
+        let bits = self.total.wrapping_mul(8);
+        self.update(&[0x80]);
+        while self.used != 56 {
+            self.update(&[0]);
+        }
+        self.update(&bits.to_be_bytes());
+        self.h.iter().map(|w| format!("{w:08x}")).collect()
+    }
+}
+
+/// `sha256(data)` in lower-case hex.
+pub fn sha256_hex(data: &[u8]) -> String {
+    let mut s = Sha256::default();
+    s.update(data);
+    s.hex()
+}
+
+/// One `digests.txt` entry: name, cases, lines, SHA-256.
+pub type DigestEntry = [String; 4];
+
+/// The recorder's `ChunkedDigest`: a stream's SHA-256 whole and per chunk of
+/// `chunk` cases, named `<stream>` and `<stream>@<first>-<end>`.
+pub struct ChunkedDigest {
+    name: String,
+    chunk: u64,
+    total: Sha256,
+    part: Sha256,
+    cases: u64,
+    lines: u64,
+    part_lines: u64,
+    start: u64,
+    entries: Vec<DigestEntry>,
+}
+
+impl ChunkedDigest {
+    pub fn new(name: &str, chunk: u64) -> ChunkedDigest {
+        ChunkedDigest {
+            name: name.to_owned(),
+            chunk,
+            total: Sha256::default(),
+            part: Sha256::default(),
+            cases: 0,
+            lines: 0,
+            part_lines: 0,
+            start: 0,
+            entries: Vec::new(),
+        }
+    }
+
+    pub fn begin_case(&mut self, i: u64) {
+        if i != 0 && i % self.chunk == 0 {
+            self.flush(i);
+        }
+        self.cases = i + 1;
+    }
+
+    /// A line and its `\n`.
+    pub fn line(&mut self, l: &str) {
+        for p in [l.as_bytes(), b"\n"] {
+            self.total.update(p);
+            self.part.update(p);
+        }
+        self.lines += 1;
+        self.part_lines += 1;
+    }
+
+    fn flush(&mut self, end: u64) {
+        let part = std::mem::take(&mut self.part);
+        self.entries.push([
+            format!("{}@{}-{}", self.name, self.start, end),
+            (end - self.start).to_string(),
+            self.part_lines.to_string(),
+            part.hex(),
+        ]);
+        self.part_lines = 0;
+        self.start = end;
+    }
+
+    pub fn finish(mut self) -> Vec<DigestEntry> {
+        self.flush(self.cases);
+        let total = std::mem::take(&mut self.total);
+        self.entries
+            .insert(0, [self.name.clone(), self.cases.to_string(), self.lines.to_string(), total.hex()]);
+        self.entries
+    }
+}
+
+/// `read_digests`: `digests.txt` as name -> (lines, sha256).
+pub fn read_digests() -> std::collections::HashMap<String, (String, String)> {
+    read_fixture("digests.txt")
+        .iter()
+        .filter_map(|l| {
+            let v = split_tabs(l);
+            (v.len() >= 4).then(|| (v[0].to_owned(), (v[2].to_owned(), v[3].to_owned())))
+        })
+        .collect()
+}
+
+/// `check_digests`: compares computed entries with `digests.txt` (a chunk
+/// mismatch names its case range) and checks that `digests.txt` holds no
+/// other entry for the stream. Returns the matching entries and a report of
+/// the others.
+pub fn check_digests(stream: &str, entries: &[DigestEntry]) -> (usize, String) {
+    let digests = read_digests();
+    let mut ok = 0;
+    let mut report = String::new();
+    for e in entries {
+        let what = match e[0].split_once('@') {
+            Some((s, range)) => format!("{s} cases [{})", range.replacen('-', ", ", 1)),
+            None => format!("{} (whole stream)", e[0]),
+        };
+        match digests.get(&e[0]) {
+            None => {
+                let _ = writeln!(report, "{what}: no digest in digests.txt");
+            }
+            Some((lines, sha)) if *lines == e[2] && *sha == e[3] => ok += 1,
+            Some((lines, sha)) => {
+                let _ = writeln!(report, "{what}: digest (lines, sha256) expected {lines} {sha} actual {} {}", e[2], e[3]);
+            }
+        }
+    }
+    let known = digests
+        .keys()
+        .filter(|k| *k == stream || k.strip_prefix(stream).is_some_and(|r| r.starts_with('@')))
+        .count();
+    if known != entries.len() {
+        let _ = writeln!(report, "{stream}: digests.txt has {known} entries, computed {}", entries.len());
+    }
+    (ok, report)
+}
+
+/// Asserts a stream's digests, printing the count.
+pub fn assert_digests(stream: &str, entries: &[DigestEntry]) {
+    let (ok, report) = check_digests(stream, entries);
+    println!("{stream}: {ok}/{} digest entries match (whole stream + chunks)", entries.len());
+    assert!(report.is_empty(), "{report}");
+}
