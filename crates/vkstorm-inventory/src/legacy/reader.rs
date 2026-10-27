@@ -54,6 +54,11 @@ impl<'a> Stream<'a> {
         self.pos
     }
 
+    /// The whole input, read or not.
+    pub fn input(&self) -> &'a [u8] {
+        self.data
+    }
+
     /// The input not yet read.
     pub fn rest(&self) -> &'a [u8] {
         &self.data[self.pos..]
@@ -131,6 +136,194 @@ impl<'a> Stream<'a> {
             }
         }
         if extracted == 0 {
+            self.fail = true;
+        }
+        &self.data[start..end]
+    }
+}
+
+impl<'a> Stream<'a> {
+    /// `clear()`: resets every state bit.
+    pub fn clear(&mut self) {
+        self.eof = false;
+        self.fail = false;
+        self.bad = false;
+    }
+
+    /// The `sentry` of the unformatted and `noskipws` operations: a stream
+    /// that is not good sets `failbit` and does nothing.
+    fn sentry(&mut self) -> bool {
+        if self.good() {
+            true
+        } else {
+            self.fail = true;
+            false
+        }
+    }
+
+    /// `get(c)`: the next byte. A stream that is not good sets `failbit`;
+    /// the end of input sets `eofbit` and `failbit`. Either way nothing is
+    /// extracted and `None` is returned (`c` keeps its value).
+    pub fn get(&mut self) -> Option<u8> {
+        if !self.sentry() {
+            return None;
+        }
+        match self.data.get(self.pos) {
+            Some(&b) => {
+                self.pos += 1;
+                Some(b)
+            }
+            None => {
+                self.eof = true;
+                self.fail = true;
+                None
+            }
+        }
+    }
+
+    /// `>> std::ws`: skips white space (C `isspace`). A stream that is not
+    /// good sets `failbit`; reaching the end of input sets `eofbit` only.
+    pub fn skip_ws(&mut self) {
+        if !self.sentry() {
+            return;
+        }
+        while let Some(&b) = self.data.get(self.pos) {
+            if !super::scanf::is_space(b) {
+                return;
+            }
+            self.pos += 1;
+        }
+        self.eof = true;
+    }
+
+    /// `operator>>(std::istream&, const char*)` (`llstreamtools.cpp`): reads
+    /// the literal byte by byte with `get(c)`, and sets `failbit` at the
+    /// first byte that differs (that byte is extracted) or that cannot be
+    /// read.
+    ///
+    /// The C++ compares a `c` that a failed `get` left unchanged and stops
+    /// only on `badbit`; the stream has `failbit` set from then on and no
+    /// later `get` extracts anything, so the state and position are the
+    /// ones returned here.
+    pub fn expect(&mut self, literal: &[u8]) {
+        for &want in literal {
+            if self.bad {
+                return;
+            }
+            match self.get() {
+                Some(c) if c == want => {}
+                _ => {
+                    self.fail = true;
+                    return;
+                }
+            }
+        }
+    }
+
+    /// The digits of a formatted integer extraction (`>> S32`, `>> U32`,
+    /// the MSVC runtime's `num_get`): skips white space (`eofbit` and
+    /// `failbit` when the input ends there), then an optional sign and
+    /// decimal digits; reaching the end sets `eofbit`. Returns the sign and
+    /// the magnitude (saturated), or `None` with `failbit` when nothing was
+    /// converted. A stream that is not good sets `failbit` and returns
+    /// `None` without touching the target.
+    fn extract_number(&mut self) -> Result<(bool, u64, bool), bool> {
+        if !self.good() {
+            self.fail = true;
+            return Err(false);
+        }
+        while let Some(&b) = self.data.get(self.pos) {
+            if !super::scanf::is_space(b) {
+                break;
+            }
+            self.pos += 1;
+        }
+        if self.pos >= self.data.len() {
+            self.eof = true;
+            self.fail = true;
+            return Err(false);
+        }
+        let mut negative = false;
+        if let Some(&s @ (b'+' | b'-')) = self.data.get(self.pos) {
+            negative = s == b'-';
+            self.pos += 1;
+        }
+        let mut digits = 0usize;
+        let mut acc: u64 = 0;
+        let mut overflow = false;
+        while let Some(&b) = self.data.get(self.pos) {
+            if !b.is_ascii_digit() {
+                break;
+            }
+            match acc.checked_mul(10).and_then(|v| v.checked_add(u64::from(b - b'0'))) {
+                Some(v) if v <= u64::from(u32::MAX) + 1 => acc = v,
+                _ => overflow = true,
+            }
+            digits += 1;
+            self.pos += 1;
+        }
+        if self.pos >= self.data.len() {
+            self.eof = true;
+        }
+        if digits == 0 {
+            self.fail = true;
+            return Err(true);
+        }
+        Ok((negative, acc, overflow))
+    }
+
+    /// `>> S32`: the value stored into `v`. A conversion that fails stores
+    /// 0, an out-of-range value the nearest limit, both with `failbit`; a
+    /// stream that is not good leaves `v` as it is.
+    pub fn extract_i32(&mut self, v: &mut i32) {
+        match self.extract_number() {
+            Err(true) => *v = 0,
+            Err(false) => {}
+            Ok((negative, acc, overflow)) => {
+                let limit = if negative { 1u64 << 31 } else { (1u64 << 31) - 1 };
+                if overflow || acc > limit {
+                    self.fail = true;
+                    *v = if negative { i32::MIN } else { i32::MAX };
+                } else if negative {
+                    *v = (acc as i64).wrapping_neg() as i32;
+                } else {
+                    *v = acc as i32;
+                }
+            }
+        }
+    }
+
+    /// `>> U32`: as [`extract_i32`](Self::extract_i32), with a negative
+    /// value negated modulo 2^32 (`strtoul`) and `U32_MAX` on overflow.
+    pub fn extract_u32(&mut self, v: &mut u32) {
+        match self.extract_number() {
+            Err(true) => *v = 0,
+            Err(false) => {}
+            Ok((negative, acc, overflow)) => {
+                if overflow || acc > u64::from(u32::MAX) {
+                    self.fail = true;
+                    *v = u32::MAX;
+                } else if negative {
+                    *v = (acc as u32).wrapping_neg();
+                } else {
+                    *v = acc as u32;
+                }
+            }
+        }
+    }
+
+    /// `read(buf, n)`: up to `n` bytes. A stream that is not good sets
+    /// `failbit` and reads nothing; fewer than `n` bytes set `eofbit` and
+    /// `failbit`. Returns the bytes read (`gcount()` of them).
+    pub fn read(&mut self, n: usize) -> &'a [u8] {
+        let start = self.pos;
+        if !self.sentry() {
+            return &self.data[start..start];
+        }
+        let end = start.saturating_add(n).min(self.data.len());
+        self.pos = end;
+        if end - start < n {
+            self.eof = true;
             self.fail = true;
         }
         &self.data[start..end]
