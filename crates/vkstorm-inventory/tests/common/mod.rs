@@ -754,3 +754,486 @@ pub fn assert_digests(stream: &str, entries: &[DigestEntry]) {
     println!("{stream}: {ok}/{} digest entries match (whole stream + chunks)", entries.len());
     assert!(report.is_empty(), "{report}");
 }
+
+// ---------------------------------------------------------------------------
+// The C5 records and cases, shared by C5 and C9 (the tool's PermF, ItemF,
+// CatF, make_*, *_cols, base_item, prev_item, c5_names, c5_item_cases,
+// prev_cat, c5_cat_cases)
+// ---------------------------------------------------------------------------
+
+use vkstorm_inventory::category::{Category, ViewerCategory};
+use vkstorm_inventory::item::Item;
+use vkstorm_inventory::object::Object;
+use vkstorm_inventory::perms::PERM_ALL;
+use vkstorm_inventory::sale::SaleType;
+use vkstorm_inventory::types::{AssetType, FolderType, InventoryType};
+
+// ---------------------------------------------------------------------------
+// Field records (the tool's PermF, ItemF, CatF) and raw construction
+// ---------------------------------------------------------------------------
+
+#[derive(Clone)]
+pub struct PermF {
+    pub creator: [u8; 16],
+    pub owner: [u8; 16],
+    pub last: [u8; 16],
+    pub group: [u8; 16],
+    pub base: u32,
+    pub owner_mask: u32,
+    pub group_mask: u32,
+    pub everyone: u32,
+    pub next: u32,
+    pub group_owned: bool,
+}
+
+impl Default for PermF {
+    fn default() -> Self {
+        PermF {
+            creator: NUL,
+            owner: NUL,
+            last: NUL,
+            group: NUL,
+            base: PERM_ALL,
+            owner_mask: PERM_ALL,
+            group_mask: PERM_ALL,
+            everyone: PERM_ALL,
+            next: PERM_ALL,
+            group_owned: false,
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct ItemF {
+    pub id: [u8; 16],
+    pub parent: [u8; 16],
+    pub asset: [u8; 16],
+    pub thumb: [u8; 16],
+    pub ty: i32,
+    pub inv_type: i32,
+    pub flags: u32,
+    pub perm: PermF,
+    pub sale_type: i32,
+    pub sale_price: i32,
+    pub date: i64,
+    pub fav: bool,
+    pub runtime: Vec<u8>,
+    pub name: Vec<u8>,
+    pub desc: Vec<u8>,
+}
+
+impl Default for ItemF {
+    fn default() -> Self {
+        ItemF {
+            id: NUL,
+            parent: NUL,
+            asset: NUL,
+            thumb: NUL,
+            ty: -1,
+            inv_type: -1,
+            flags: 0,
+            perm: PermF::default(),
+            sale_type: 0,
+            sale_price: 10,
+            date: 0,
+            fav: false,
+            runtime: Vec::new(),
+            name: Vec::new(),
+            desc: Vec::new(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct CatF {
+    pub id: [u8; 16],
+    pub parent: [u8; 16],
+    pub thumb: [u8; 16],
+    pub ty: i32,
+    pub pref: i32,
+    pub fav: bool,
+    pub date: i64,
+    pub runtime: Vec<u8>,
+    pub name: Vec<u8>,
+    pub owner: [u8; 16],
+    pub version: i32,
+}
+
+impl Default for CatF {
+    fn default() -> Self {
+        CatF {
+            id: NUL,
+            parent: NUL,
+            thumb: NUL,
+            ty: 8,
+            pref: -1,
+            fav: false,
+            date: 0,
+            runtime: Vec::new(),
+            name: Vec::new(),
+            owner: NUL,
+            version: -1,
+        }
+    }
+}
+
+/// `make_perm`: `init`, the five raw masks, then `yesReallySetOwner`.
+pub fn make_perm(f: &PermF) -> Permissions {
+    let mut p = Permissions::default();
+    p.init(&f.creator, &f.owner, &f.last, &f.group);
+    p.base = f.base;
+    p.owner_mask = f.owner_mask;
+    p.group_mask = f.group_mask;
+    p.everyone = f.everyone;
+    p.next = f.next;
+    p.yes_really_set_owner(&f.owner, f.group_owned);
+    p
+}
+
+pub fn make_sale(t: i32, p: i32) -> SaleInfo {
+    SaleInfo { sale_type: SaleType(t), price: p }
+}
+
+/// `make_item` (`RawItem::assign`): every field raw.
+pub fn make_item(f: &ItemF) -> Item {
+    Item {
+        object: Object {
+            id: f.id,
+            parent: f.parent,
+            thumbnail: f.thumb,
+            asset_type: AssetType(f.ty),
+            favorite: f.fav,
+            creation_date: f.date,
+            runtime: f.runtime.clone(),
+            name: f.name.clone(),
+        },
+        permissions: make_perm(&f.perm),
+        asset: f.asset,
+        description: f.desc.clone(),
+        sale_info: make_sale(f.sale_type, f.sale_price),
+        inv_type: InventoryType(f.inv_type),
+        flags: f.flags,
+    }
+}
+
+/// `make_obj` (`RawObj::assign`).
+pub fn make_obj(f: &CatF) -> Object {
+    Object {
+        id: f.id,
+        parent: f.parent,
+        thumbnail: f.thumb,
+        asset_type: AssetType(f.ty),
+        favorite: f.fav,
+        creation_date: f.date,
+        runtime: f.runtime.clone(),
+        name: f.name.clone(),
+    }
+}
+
+/// `make_cat` (`RawCat::assign`).
+pub fn make_cat(f: &CatF) -> Category {
+    Category { object: make_obj(f), preferred_type: FolderType(f.pref) }
+}
+
+/// `make_vcat`: `make_cat` plus the owner and version.
+pub fn make_vcat(f: &CatF) -> ViewerCategory {
+    ViewerCategory { category: make_cat(f), owner: f.owner, version: f.version }
+}
+
+// ---------------------------------------------------------------------------
+// Columns (the tool's item_cols, cat_cols, vcat_cols, obj_cols)
+// ---------------------------------------------------------------------------
+
+pub fn item_cols(it: &Item) -> Vec<String> {
+    let o = &it.object;
+    let mut v = vec![uuid(&o.id), uuid(&o.parent), uuid(&it.asset), uuid(&o.thumbnail), d(o.asset_type.0), d(it.inv_type.0), x8(it.flags)];
+    let p = perm_cols(&it.permissions);
+    v.extend(p);
+    v.extend([
+        d(it.sale_info.sale_type.0),
+        d(it.sale_info.price),
+        d(o.creation_date),
+        bl(o.favorite),
+        esc(&o.runtime),
+        esc(&o.name),
+        esc(&it.description),
+    ]);
+    v
+}
+
+pub fn cat_cols(c: &Category) -> Vec<String> {
+    let o = &c.object;
+    vec![
+        uuid(&o.id),
+        uuid(&o.parent),
+        d(o.asset_type.0),
+        d(c.preferred_type.0),
+        uuid(&o.thumbnail),
+        bl(o.favorite),
+        d(o.creation_date),
+        esc(&o.runtime),
+        esc(&o.name),
+    ]
+}
+
+pub fn vcat_cols(c: &ViewerCategory) -> Vec<String> {
+    let mut v = cat_cols(&c.category);
+    v.push(uuid(&c.owner));
+    v.push(d(c.version));
+    v
+}
+
+pub fn obj_cols(o: &Object) -> Vec<String> {
+    vec![
+        uuid(&o.id),
+        uuid(&o.parent),
+        d(o.asset_type.0),
+        uuid(&o.thumbnail),
+        bl(o.favorite),
+        d(o.creation_date),
+        esc(&o.runtime),
+        esc(&o.name),
+    ]
+}
+
+pub fn with_ret(ret: bool, mut cols: Vec<String>) -> Vec<String> {
+    cols.insert(0, bl(ret));
+    cols
+}
+
+// ---------------------------------------------------------------------------
+// The cases (the tool's base_item, prev_item, c5_names, c5_item_cases, ...)
+// ---------------------------------------------------------------------------
+
+pub const ASSET_TYPES: [i32; 36] =
+    [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 17, 18, 19, 20, 21, 22, 24, 25, 40, 45, 49, 56, 57, 58, 59, 255, 26, 60, 127, -2, 50, 9];
+pub const INV_TYPES: [i32; 27] = [0, 1, 2, 3, 6, 7, 8, 9, 10, 15, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 28, -1, 255, 4, 5, 11, 29];
+pub const BASE_MASKS: [u32; 7] = [PERM_ALL, 0x7fffbfff, 0x7fff7fff, 0x7fffdfff, 0x7fff5fff, 0x00000000, 0x0000e000];
+pub const FLAGS: [u32; 7] = [0, 1, 0xff, 0x100, 0x1f1100, 0x7fffffff, 0xffffffff];
+pub const DATES: [i64; 7] = [0, 1, i32::MAX as i64, i32::MIN as i64, 2147483648, 4294967301, -1];
+pub const PRICES: [i32; 5] = [i32::MIN, -1, 0, 10, i32::MAX];
+/// `T_ | V_`: transfer and move.
+pub const NEXT_DEFAULT: u32 = 0x0008_2000;
+
+pub fn base_item() -> ItemF {
+    ItemF {
+        id: u(0xa1),
+        parent: u(0xa2),
+        asset: u(0xa3),
+        ty: 6,
+        inv_type: 6,
+        flags: 0,
+        perm: PermF {
+            creator: id_c(),
+            owner: id_a(),
+            last: id_b(),
+            group: id_g(),
+            base: PERM_ALL,
+            owner_mask: PERM_ALL,
+            group_mask: 0,
+            everyone: 0,
+            next: NEXT_DEFAULT,
+            group_owned: false,
+        },
+        sale_type: 0,
+        sale_price: 10,
+        date: 1700000000,
+        name: b"Base item".to_vec(),
+        desc: b"Base description".to_vec(),
+        ..ItemF::default()
+    }
+}
+
+pub fn prev_item() -> ItemF {
+    ItemF {
+        id: u(0x11),
+        parent: u(0x12),
+        asset: u(0x13),
+        thumb: u(0x14),
+        ty: 7,
+        inv_type: 7,
+        flags: 0x101,
+        perm: PermF {
+            creator: u(0x21),
+            owner: u(0x22),
+            last: u(0x23),
+            group: u(0x24),
+            base: PERM_ALL,
+            owner_mask: 0x0008e000,
+            group_mask: 0x00002000,
+            everyone: 0,
+            next: 0x00082000,
+            group_owned: false,
+        },
+        sale_type: 2,
+        sale_price: 25,
+        date: 1234567890,
+        fav: true,
+        runtime: b"pre-runtime".to_vec(),
+        name: b"pre name".to_vec(),
+        desc: b"pre desc".to_vec(),
+    }
+}
+
+pub fn c5_names() -> Vec<(Vec<u8>, Vec<u8>)> {
+    let p = |a: &[u8], b: &[u8]| (a.to_vec(), b.to_vec());
+    vec![
+        p(b"", b""),
+        p(b"Plain name", b"Plain description"),
+        p(b"pipe|name", b"pipe|desc"),
+        p(b"new\nline", b"new\nline"),
+        p(b"caf\xc3\xa9 \xf0\x9f\x98\x80", b"\xe6\x97\xa5\xe6\x9c\xac"),
+        (vec![b'n'; 63], vec![b'd'; 127]),
+        (vec![b'n'; 64], vec![b'd'; 128]),
+        (vec![b'n'; 255], vec![b'd'; 300]),
+        p(b"  leading and trailing  ", b"  leading and trailing  "),
+        p(b"tab\there", b"tab\there"),
+        p(b"cr\r", b"cr\r"),
+        p(b"del\x7f", b"del\x7f"),
+        // The C++ literal "\x01\x02ctrl" reads `\x02c` as one hex escape
+        // (0x2c, ','); "\x1f" "ctrl" is split, so it keeps its "c".
+        p(b"\x01,trl", b"\x1fctrl"),
+        p(b"|", b"|"),
+        p(b"name with spaces", b""),
+        p(b"<llsd>", b"</llsd>"),
+    ]
+}
+
+pub fn c5_item_cases() -> Vec<(String, ItemF)> {
+    let mut v = Vec::new();
+    let b = base_item();
+    for at in ASSET_TYPES {
+        let inv = if (0..60).contains(&at) { InventoryType::default_for_asset_type(AssetType(at)).0 } else { 255 };
+        v.push((format!("c5.at.{at}"), ItemF { ty: at, inv_type: inv, ..b.clone() }));
+    }
+    for it in INV_TYPES {
+        v.push((format!("c5.it.{it}"), ItemF { inv_type: it, ..b.clone() }));
+    }
+    let assets = [NUL, u(0xa3), MAGIC, not_magic()];
+    let asset_names = ["null", "a3", "magic", "notmagic"];
+    let types = [(6, 6), (7, 7), (3, 3), (10, 10)];
+    for m in BASE_MASKS {
+        for ai in 0..4 {
+            for (t, it) in types {
+                let mut f = b.clone();
+                f.perm.base = m;
+                f.asset = assets[ai];
+                f.ty = t;
+                f.inv_type = it;
+                v.push((format!("c5.mask.{}.{}.{t}", x8(m), asset_names[ai]), f));
+            }
+        }
+    }
+    let runtimes: [Vec<u8>; 4] = [Vec::new(), b"luau".to_vec(), vec![b'r'; 60], b"lu au".to_vec()];
+    for th in 0..2 {
+        for fv in 0..2 {
+            for (ri, rt) in runtimes.iter().enumerate() {
+                for t in [10, 7] {
+                    let f = ItemF {
+                        thumb: if th == 1 { u(0xb1) } else { NUL },
+                        fav: fv != 0,
+                        runtime: rt.clone(),
+                        ty: t,
+                        inv_type: t,
+                        ..b.clone()
+                    };
+                    v.push((format!("c5.meta.{th}{fv}{ri}.{t}"), f));
+                }
+            }
+        }
+    }
+    for fl in FLAGS {
+        for (t, it) in [(6, 6), (5, 18), (56, 25)] {
+            v.push((format!("c5.flags.{}.{t}", x8(fl)), ItemF { flags: fl, ty: t, inv_type: it, ..b.clone() }));
+        }
+    }
+    for st in 0..=3 {
+        for p in PRICES {
+            v.push((format!("c5.sale.{st}.{p}"), ItemF { sale_type: st, sale_price: p, ..b.clone() }));
+        }
+    }
+    for st in [-1, 4, 200, 255] {
+        v.push((format!("c5.sale.{st}.10"), ItemF { sale_type: st, ..b.clone() }));
+    }
+    for (i, (n, ds)) in c5_names().into_iter().enumerate() {
+        v.push((format!("c5.name.{i}"), ItemF { name: n, desc: ds, ..b.clone() }));
+    }
+    for dt in DATES {
+        v.push((format!("c5.date.{dt}"), ItemF { date: dt, ..b.clone() }));
+    }
+    {
+        let mut f = b.clone();
+        f.perm.owner = NUL;
+        f.perm.group_owned = true;
+        v.push(("c5.groupowned".to_owned(), f));
+        let mut f = b.clone();
+        f.perm = PermF::default();
+        v.push(("c5.perm.default".to_owned(), f));
+        let mut f = b.clone();
+        f.perm.group_mask = PERM_ALL;
+        f.perm.everyone = PERM_ALL;
+        f.perm.next = PERM_ALL;
+        v.push(("c5.perm.unfixed".to_owned(), f));
+    }
+    {
+        let mut f = ItemF { ty: 24, inv_type: -1, asset: u(0xc5), ..b.clone() };
+        v.push(("c5.link".to_owned(), f.clone()));
+        f.ty = 25;
+        f.inv_type = 8;
+        v.push(("c5.folderlink".to_owned(), f));
+    }
+    v
+}
+
+// ---------------------------------------------------------------------------
+// Categories and objects
+// ---------------------------------------------------------------------------
+
+pub fn prev_cat() -> CatF {
+    CatF {
+        id: u(0x31),
+        parent: u(0x32),
+        thumb: u(0x34),
+        ty: 8,
+        pref: 5,
+        fav: true,
+        date: 99,
+        runtime: b"pre-rt".to_vec(),
+        name: b"pre folder".to_vec(),
+        owner: u(0x33),
+        version: 3,
+    }
+}
+
+pub fn c5_cat_cases() -> Vec<(String, CatF)> {
+    let mut v = Vec::new();
+    let b = CatF {
+        id: u(0xd1),
+        parent: u(0xd2),
+        ty: 8,
+        name: b"Folder name".to_vec(),
+        owner: u(0xd3),
+        version: 7,
+        ..CatF::default()
+    };
+    for p in -1..=101 {
+        v.push((format!("c5c.pref.{p}"), CatF { pref: p, ..b.clone() }));
+    }
+    v.push(("c5c.pref.127".to_owned(), CatF { pref: 127, ..b.clone() }));
+    v.push(("c5c.pref.-128".to_owned(), CatF { pref: -128, ..b.clone() }));
+    for p in [0, 8, 46, -1, 127, 58] {
+        for k in 1..4 {
+            let f = CatF { pref: p, thumb: if k & 1 != 0 { u(0xb2) } else { NUL }, fav: k & 2 != 0, ..b.clone() };
+            v.push((format!("c5c.meta.{p}.{k}"), f));
+        }
+    }
+    for (i, (n, _)) in c5_names().into_iter().enumerate() {
+        v.push((format!("c5c.name.{i}"), CatF { pref: 0, name: n, ..b.clone() }));
+    }
+    for t in [-1, 255, 6, 24] {
+        v.push((format!("c5c.type.{t}"), CatF { pref: 0, ty: t, ..b.clone() }));
+    }
+    v.push(("c5c.runtime".to_owned(), CatF { runtime: b"luau".to_vec(), thumb: u(0xb2), ..b.clone() }));
+    v.push(("c5c.nullids".to_owned(), CatF { id: NUL, parent: NUL, owner: NUL, version: -1, ..b.clone() }));
+    v
+}
