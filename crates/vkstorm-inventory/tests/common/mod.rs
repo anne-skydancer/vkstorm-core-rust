@@ -81,9 +81,11 @@ pub fn llsd_bin(v: &Value) -> String {
 }
 
 /// `llsd_txt`: the notation serialization (`LLSDSerialize::toNotation`),
-/// escaped.
+/// escaped. `toNotation` formats with `OPTIONS_NONE`, so Binary is written
+/// raw (`b(4)"..."`), not as `b16"..."`.
 pub fn llsd_txt(v: &Value) -> String {
-    esc(&vkstorm_llsd::format(Format::Notation, v, Options::default()).0)
+    let opts = Options { pretty_binary: false, ..Options::default() };
+    esc(&vkstorm_llsd::format(Format::Notation, v, opts).0)
 }
 
 // ---------------------------------------------------------------------------
