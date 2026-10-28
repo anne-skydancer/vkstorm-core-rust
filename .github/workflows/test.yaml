@@ -1,0 +1,46 @@
+name: Rust tests
+
+# Runs the workspace's tests (crate unit tests and the recorded fixture
+# replays) on Windows and Linux for every push to main and every pull
+# request. package-ffi.yaml builds the packages but runs no tests.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    env:
+      # The C++ compiler that vkstorm-llsd's tests/cxx_as_real.rs uses to
+      # compare LLSD string-to-number coercion with the platform's real C++
+      # runtime: libstdc++ (g++) on Linux, the MSVC STL (clang++) on Windows.
+      VKS_CXX: ${{ startsWith(matrix.os, 'ubuntu') && 'g++' || 'clang++' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # rustup is on the runner images; rust-toolchain.toml selects the pinned toolchain.
+      - name: Rust toolchain
+        shell: bash
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Test the workspace (default features)
+        run: cargo test --workspace --locked --no-fail-fast
+      # Feature sets with their own tests. --all-features is not a valid
+      # set (it enables vkstorm-openjp2 features that are not meant to
+      # build). link-curl (vkstorm-http, vkstorm-audio) needs a libcurl to
+      # link against, which the viewer's curl package supplies; it is not
+      # tested here.
+      - name: Test the OpenSim paths (vkstorm-assets, opensim)
+        run: cargo test -p vkstorm-assets --features opensim --locked --no-fail-fast
+      - name: Test the JPEG codec (vkstorm-image, jpeg)
+        run: cargo test -p vkstorm-image --features jpeg --locked --no-fail-fast
