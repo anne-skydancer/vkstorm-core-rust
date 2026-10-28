@@ -12,7 +12,8 @@ mod r3b_support;
 
 use r3b_support::*;
 use vkstorm_inventory::fetch::{NULL_ID, Uuid};
-use r3b_support::ais_standin::{Command, ItemType};
+use vkstorm_inventory::ais::command::Command;
+use vkstorm_llsd::Value;
 
 thread_local! {
     /// Fetch replies from the reply generator (`r3b_support::mock`).
@@ -364,7 +365,7 @@ fn s05_transient_5xx_body() {
     r.step("busy_at_depth");
     // update_inventory_item: AISAPI::UpdateItem with the caller's LLSD body
     let body = recorded_body(id, "PATCH");
-    r.ais(Command::UpdateItem { item: w53 }, Some("w53"), body);
+    r.ais(Command::UpdateItem { item_id: w53, updates: Value::Undefined }, Some("w53"), body);
     r.settle(true, true);
     r.step("write_retry");
     report(id, &mut r, &none);
@@ -620,7 +621,7 @@ fn s17_no_library_cap_disconnected_body() {
     r.clock_advance(181.0);
     r.set_disconnected(true);
     r.fetch_descendents_of(b.ids.user[0]);
-    r.ais(Command::UpdateItem { item: b.ids.note1 }, Some("disconnected_update"), Vec::new());
+    r.ais(Command::UpdateItem { item_id: b.ids.note1, updates: Value::Undefined }, Some("disconnected_update"), Vec::new());
     r.frames(10, true);
     r.settle_ex(true, false, true);
     r.step("disconnected");
@@ -719,48 +720,48 @@ fn s20_callback_ids_body() {
         r.settle(true, true);
         r.step(name);
     };
-    let inv = ItemType::Inventory;
-    let lib = ItemType::Library;
-    r.ais(Command::FetchItem { item: d.cof_shirt_link, item_type: inv }, Some("fetch_item_link"), vec![]);
+    let inv = false;
+    let lib = true;
+    r.ais(Command::FetchItem { item_id: d.cof_shirt_link, library: inv }, Some("fetch_item_link"), vec![]);
     done(&mut r, "fetch_item_link");
-    r.ais(Command::FetchItem { item: d.note1, item_type: inv }, Some("fetch_item"), vec![]);
+    r.ais(Command::FetchItem { item_id: d.note1, library: inv }, Some("fetch_item"), vec![]);
     done(&mut r, "fetch_item");
-    r.ais(Command::FetchItem { item: d.lib_items[0], item_type: lib }, Some("fetch_item_library"), vec![]);
+    r.ais(Command::FetchItem { item_id: d.lib_items[0], library: lib }, Some("fetch_item_library"), vec![]);
     done(&mut r, "fetch_item_library");
-    r.ais(Command::FetchItem { item: pid(0xa0e00000, 9), item_type: inv }, Some("fetch_item_unknown"), vec![]);
+    r.ais(Command::FetchItem { item_id: pid(0xa0e00000, 9), library: inv }, Some("fetch_item_unknown"), vec![]);
     done(&mut r, "fetch_item_unknown");
-    let c = Command::FetchCategoryChildren { category: d.user[0], item_type: inv, recursive: false, depth: 1 };
+    let c = Command::FetchCategoryChildren { category_id: d.user[0], library: inv, recursive: false, depth: 1 };
     r.ais(c, Some("children_depth1"), vec![]);
     done(&mut r, "children_depth1");
-    let c = Command::FetchCategoryChildren { category: d.lib_folders[0], item_type: lib, recursive: true, depth: 0 };
+    let c = Command::FetchCategoryChildren { category_id: d.lib_folders[0], library: lib, recursive: true, depth: 0 };
     r.ais(c, Some("children_library_recursive"), vec![]);
     done(&mut r, "children_library_recursive");
-    let c = Command::FetchCategoryChildrenNamed { identifier: "current".into(), recursive: false, depth: 0 };
+    let c = Command::FetchCategoryChildrenByName { identifier: "current".into(), recursive: false, depth: 0 };
     r.ais(c, Some("children_by_name"), vec![]);
     done(&mut r, "children_by_name");
-    let c = Command::FetchCategoryCategories { category: d.user[1], item_type: inv, recursive: false, depth: 2 };
+    let c = Command::FetchCategoryCategories { category_id: d.user[1], library: inv, recursive: false, depth: 2 };
     r.ais(c, Some("categories"), vec![]);
     done(&mut r, "categories");
     let c = Command::FetchCategorySubset {
-        category: root(),
+        category_id: root(),
         children: vec![d.user[1], d.user[0]],
-        item_type: inv,
+        library: inv,
         recursive: false,
         depth: 3,
     };
     r.ais(c, Some("subset_depth3"), vec![]);
-    let c = Command::FetchCategorySubset { category: root(), children: vec![], item_type: inv, recursive: false, depth: 3 };
+    let c = Command::FetchCategorySubset { category_id: root(), children: vec![], library: inv, recursive: false, depth: 3 };
     r.ais(c, Some("subset_empty"), vec![]);
     done(&mut r, "subset");
     r.ais(Command::FetchCof, Some("cof"), vec![]);
     done(&mut r, "cof");
-    r.ais(Command::FetchCategoryLinks { category: d.outfit_b }, Some("links"), vec![]);
+    r.ais(Command::FetchCategoryLinks { category_id: d.outfit_b }, Some("links"), vec![]);
     done(&mut r, "links");
     r.ais(Command::FetchOrphans, Some("orphans"), vec![]);
     done(&mut r, "orphans");
     r.library_cap = false;
     r.refresh_env();
-    r.ais(Command::FetchItem { item: d.lib_items[1], item_type: lib }, Some("library_without_cap"), vec![]);
+    r.ais(Command::FetchItem { item_id: d.lib_items[1], library: lib }, Some("library_without_cap"), vec![]);
     done(&mut r, "library_without_cap");
     report(id, &mut r, &none);
 }
@@ -927,45 +928,48 @@ fn s09_writes_body() {
     let first_note = d.items_in[&d.user[0]][0];
     let second = d.items_in[&d.user[0]][1];
     let mut n = 7;
+    // a write with a transaction id gets the last fresh_tid(), as the C++
+    // generated it
     let mut write = |r: &mut Run, cmd: Command, tag: Option<&str>, step: &str| {
         let body = recorded_body_n(id, n);
         n += 1;
-        r.ais(cmd, tag, body);
+        let t = if cmd.uses_tid() { r.last_tid() } else { NULL_ID };
+        r.ais_tid(cmd, t, tag, body);
         r.settle(true, true);
         r.step(step);
     };
-    let t = r.fresh_tid();
-    write(&mut r, Command::CreateInventory { parent: d.user[0], tid: t }, Some("create_folder"), "create_folder");
-    let t = r.fresh_tid();
-    write(&mut r, Command::CreateInventory { parent: sys(FT_MY_OUTFITS), tid: t }, Some("create_outfit"), "create_outfit");
-    let t = r.fresh_tid();
-    write(&mut r, Command::CreateInventory { parent: outfit_c, tid: t }, Some("link_array"), "link_array");
-    let t = r.fresh_tid();
-    write(&mut r, Command::CreateInventory { parent: outfit_c, tid: t }, Some("link_array_2"), "link_array_2");
+    r.fresh_tid();
+    write(&mut r, Command::CreateInventory { parent_id: d.user[0], new_inventory: Value::Undefined }, Some("create_folder"), "create_folder");
+    r.fresh_tid();
+    write(&mut r, Command::CreateInventory { parent_id: sys(FT_MY_OUTFITS), new_inventory: Value::Undefined }, Some("create_outfit"), "create_outfit");
+    r.fresh_tid();
+    write(&mut r, Command::CreateInventory { parent_id: outfit_c, new_inventory: Value::Undefined }, Some("link_array"), "link_array");
+    r.fresh_tid();
+    write(&mut r, Command::CreateInventory { parent_id: outfit_c, new_inventory: Value::Undefined }, Some("link_array_2"), "link_array_2");
     let cof = sys(FT_CURRENT_OUTFIT);
-    let t = r.fresh_tid();
-    write(&mut r, Command::SlamFolder { folder: cof, tid: t }, Some("slam_cof"), "slam_cof");
-    let t = r.fresh_tid();
-    write(&mut r, Command::SlamFolder { folder: cof, tid: t }, Some("slam_cof_2"), "slam_cof_2");
-    write(&mut r, Command::UpdateItem { item: first_note }, Some("update_item_llsd"), "update_item_llsd");
-    write(&mut r, Command::UpdateItem { item: second }, Some("update_item_object"), "update_item_object");
-    write(&mut r, Command::UpdateCategory { category: d.user[1] }, Some("update_category"), "update_category");
-    write(&mut r, Command::UpdateCategory { category: d.user[2] }, None, "category_update_server");
-    write(&mut r, Command::UpdateCategory { category: d.outfit_b }, None, "change_type");
-    write(&mut r, Command::UpdateItem { item: d.note1 }, None, "item_update_server");
-    write(&mut r, Command::RemoveItem { item: d.obj2 }, Some("remove_item"), "remove_item");
-    write(&mut r, Command::RemoveItem { item: d.trash1 }, Some("remove_item_immediate"), "remove_item_immediate");
-    write(&mut r, Command::RemoveItem { item: gone_item }, Some("remove_item_410"), "remove_item_410");
-    write(&mut r, Command::RemoveCategory { category: d.user_sub[2] }, Some("remove_category"), "remove_category");
-    write(&mut r, Command::RemoveCategory { category: gone_folder }, Some("remove_category_410"), "remove_category_410");
+    r.fresh_tid();
+    write(&mut r, Command::SlamFolder { folder_id: cof, new_inventory: Value::Undefined }, Some("slam_cof"), "slam_cof");
+    r.fresh_tid();
+    write(&mut r, Command::SlamFolder { folder_id: cof, new_inventory: Value::Undefined }, Some("slam_cof_2"), "slam_cof_2");
+    write(&mut r, Command::UpdateItem { item_id: first_note, updates: Value::Undefined }, Some("update_item_llsd"), "update_item_llsd");
+    write(&mut r, Command::UpdateItem { item_id: second, updates: Value::Undefined }, Some("update_item_object"), "update_item_object");
+    write(&mut r, Command::UpdateCategory { category_id: d.user[1], updates: Value::Undefined }, Some("update_category"), "update_category");
+    write(&mut r, Command::UpdateCategory { category_id: d.user[2], updates: Value::Undefined }, None, "category_update_server");
+    write(&mut r, Command::UpdateCategory { category_id: d.outfit_b, updates: Value::Undefined }, None, "change_type");
+    write(&mut r, Command::UpdateItem { item_id: d.note1, updates: Value::Undefined }, None, "item_update_server");
+    write(&mut r, Command::RemoveItem { item_id: d.obj2 }, Some("remove_item"), "remove_item");
+    write(&mut r, Command::RemoveItem { item_id: d.trash1 }, Some("remove_item_immediate"), "remove_item_immediate");
+    write(&mut r, Command::RemoveItem { item_id: gone_item }, Some("remove_item_410"), "remove_item_410");
+    write(&mut r, Command::RemoveCategory { category_id: d.user_sub[2] }, Some("remove_category"), "remove_category");
+    write(&mut r, Command::RemoveCategory { category_id: gone_folder }, Some("remove_category_410"), "remove_category_410");
     r.settle(true, true);
     r.step("remove_protected");
-    write(&mut r, Command::PurgeDescendents { category: sys(FT_TRASH) }, Some("purge_trash"), "purge_trash");
-    let t = r.fresh_tid();
-    let c = Command::CopyLibraryCategory { source: d.lib_folders[0], dest: d.user[0], copy_subfolders: false, tid: t };
+    write(&mut r, Command::PurgeDescendents { category_id: sys(FT_TRASH) }, Some("purge_trash"), "purge_trash");
+    r.fresh_tid();
+    let c = Command::CopyLibraryCategory { source_id: d.lib_folders[0], dest_id: d.user[0], copy_subfolders: false };
     write(&mut r, c, Some("copy_library_depth0"), "copy_library_depth0");
-    let t = r.fresh_tid();
-    let c = Command::CopyLibraryCategory { source: d.lib_folders[3], dest: d.user[0], copy_subfolders: true, tid: t };
+    r.fresh_tid();
+    let c = Command::CopyLibraryCategory { source_id: d.lib_folders[3], dest_id: d.user[0], copy_subfolders: true };
     write(&mut r, c, Some("copy_library_recursive"), "copy_library_recursive");
     report_lines(id, &mut r, &|l| l == "jrn notify CannotRemoveProtectedCategories");
 }

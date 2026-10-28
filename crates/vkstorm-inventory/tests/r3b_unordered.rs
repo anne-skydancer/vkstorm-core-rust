@@ -476,7 +476,7 @@ fn c03_large() {
 /// postponed queue (the crate's `fetch::ais::PostponedQueue`).
 #[test]
 fn c08_postponed() {
-    use r3b_support::ais_standin::{Command, ItemType};
+    use vkstorm_inventory::ais::command::Command;
     let id = "c08_postponed";
     let mut b = Builder::new(true);
     basic(&mut b, 1, false, 1);
@@ -488,7 +488,7 @@ fn c08_postponed() {
         let item = pid(0xa0d00000, k as u64 + 1);
         let before = r.journal_count("callback ");
         for _ in 0..n {
-            r.ais(Command::FetchItem { item, item_type: ItemType::Inventory }, Some("postponed"), vec![]);
+            r.ais(Command::FetchItem { item_id: item, library: false }, Some("postponed"), vec![]);
         }
         let pending = r.ais_pending();
         r.fact(&format!("enqueued {n} ais_pending={pending}"));

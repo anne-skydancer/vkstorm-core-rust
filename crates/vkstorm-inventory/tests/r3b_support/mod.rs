@@ -3,8 +3,11 @@
 //! a replay model standing in for the C++ model, the frame loop and AIS pool
 //! of the recorder, and the comparison.
 //!
-//! What is under test is `vkstorm_inventory::fetch`. Everything else here is
-//! scaffolding that stands in for C++ the port keeps:
+//! What is under test is `vkstorm_inventory::fetch`, with sub-rung R3a's
+//! command layer (`vkstorm_inventory::ais`: `Command::build` for every
+//! request, `callback_ids` for every completion, `error_branch` for the 403
+//! alert). Everything else here is scaffolding that stands in for C++ the
+//! port keeps:
 //!
 //! - the replay model replaces `LLInventoryModel` and `AISUpdate` for what
 //!   the scheduler reads: it applies a recorded AIS reply with the parse
@@ -24,13 +27,16 @@
 //!   and replies are inputs.
 #![allow(dead_code)]
 
-pub mod ais_standin;
 pub mod mock;
 
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::path::PathBuf;
 
-use ais_standin::{AisCaps, AisNotices, AisReply, AisRequest, Command};
+use vkstorm_inventory::ais::command::{
+    CapKind, Command, CommandType, Refusal, Request as AisRequest, MAX_FOLDER_DEPTH_REQUEST,
+};
+use vkstorm_inventory::ais::result::{begin, callback_ids, error_branch, AlertState, CommandContext, HttpStatus};
+use vkstorm_inventory::ais::update::{ItemRecord, Model, ModelCategory, ModelRef};
 use vkstorm_inventory::fetch::scheduler::{
     self, Action, BackgroundFetch, BudgetClock, CategoryInfo, Ctx, Env, FetchModel, FetchPath, ItemInfo,
 };
@@ -950,31 +956,90 @@ impl ReplayModel {
     }
 }
 
-/// The reply's ids for the callback contract (as the stand-in reads them).
-pub fn reply_of(status: i32, v: Option<&Value>) -> AisReply {
-    let mut r = AisReply { status, ..Default::default() };
-    let Some(v) = v else { return r };
-    if !matches!(v, Value::Map(_)) {
-        return r;
-    }
-    let id = |k: &str| if has(v, k) { Some(as_uuid(get(v, k))) } else { None };
-    let arr = |k: &str| {
-        if has(v, k) {
-            Some(match get(v, k) {
-                Value::Array(a) => a.iter().map(as_uuid).collect(),
-                _ => Vec::new(),
-            })
-        } else {
-            None
+/// The region's two AIS capability URLs (`getInvCap`, `getLibCap`): empty
+/// when the region has none (or there is no region).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct AisCaps {
+    pub inventory: String,
+    pub library: String,
+}
+
+impl AisCaps {
+    /// The URL the command's capability lookup gives (R3a's `Command::cap`).
+    pub fn for_command(&self, cmd: &Command) -> &str {
+        match cmd.cap() {
+            CapKind::Inventory => &self.inventory,
+            CapKind::Library => &self.library,
         }
-    };
-    r.category_id = id("category_id");
-    r.item_id = id("item_id");
-    r.linked_id = id("linked_id");
-    r.created_categories = arr("_created_categories");
-    r.created_items = arr("_created_items");
-    r.updated_categories = arr("_updated_categories");
-    r
+    }
+}
+
+/// The command function: R3a's `Command::build` after the capability lookup.
+pub fn build_ais(cmd: &Command, tid: &Uuid, caps: &AisCaps) -> Result<AisRequest, Refusal> {
+    cmd.build(caps.for_command(cmd), tid)
+}
+
+/// The depth `AISUpdate` parses a reply with: the request body's `depth`,
+/// else `MAX_FOLDER_DEPTH_REQUEST`.
+pub fn request_depth(req: &AisRequest) -> i32 {
+    if has(&req.body, "depth") { as_integer(get(&req.body, "depth")) } else { MAX_FOLDER_DEPTH_REQUEST }
+}
+
+/// The model as R3a's error branch sees it in this replay: only its
+/// notification (the 403 alert) is used; the 410 handling of removals is the
+/// replay model's (`apply_write_reply`), so the lookups find nothing here.
+#[derive(Default)]
+struct NotifyOnly {
+    notified: Vec<&'static str>,
+}
+
+impl Model for NotifyOnly {
+    fn get_category(&mut self, _: &Uuid) -> Option<ModelCategory> {
+        None
+    }
+    fn get_item(&mut self, _: &Uuid) -> Option<ItemRecord> {
+        None
+    }
+    fn get_version(&mut self, _: ModelRef) -> i32 {
+        -1
+    }
+    fn set_version(&mut self, _: ModelRef, _: i32) {}
+    fn fetch(&mut self, _: ModelRef, _: i32) -> bool {
+        false
+    }
+    fn fetch_descendents_of(&mut self, _: &Uuid) -> bool {
+        false
+    }
+    fn on_object_deleted_from_server(&mut self, _: &Uuid, _: bool, _: bool, _: bool) {}
+    fn notify(&mut self, name: &'static str) {
+        self.notified.push(name);
+    }
+}
+
+/// The coroutine after the request, as far as this replay needs it: R3a's
+/// `begin`, `error_branch` (for the 403 alert) and `callback_ids`. `status`
+/// is the HTTP status of the final attempt; `0` stands for a transport
+/// failure without one.
+pub fn ais_result(
+    req: &AisRequest,
+    status: i32,
+    value: Option<&Value>,
+    alert: &mut AlertState,
+) -> (Vec<&'static str>, Vec<Uuid>) {
+    let mut result = value.cloned().unwrap_or(Value::Undefined);
+    begin(&mut result);
+    let mut notes = NotifyOnly::default();
+    if status != 0 {
+        let ctx = CommandContext {
+            command: req.command,
+            target_id: req.target_id,
+            body: req.body.clone(),
+            agent_id: NULL_ID,
+            in_open_sim: false,
+        };
+        error_branch(&ctx, &result, HttpStatus::http(status as u16), alert, &mut notes);
+    }
+    (notes.notified, callback_ids(&result, req.command))
 }
 
 // ---------------------------------------------------------------------------
@@ -1249,9 +1314,9 @@ pub struct Run {
     last_before: i32,
     last_after: i32,
     pub max_in_flight: i32,
-    /// The stand-in command layer's capabilities and 403 flag.
+    /// The capabilities R3a's command layer builds with, and its 403 flag.
     pub ais_caps: AisCaps,
-    pub notices: AisNotices,
+    pub notices: AlertState,
     /// Commands of other callers (writes, direct `AISAPI` calls): their
     /// callback tokens, by ticket.
     external: BTreeMap<u64, Option<u64>>,
@@ -1326,7 +1391,7 @@ impl Run {
             last_after: 0,
             max_in_flight: 0,
             ais_caps: AisCaps::default(),
-            notices: AisNotices::default(),
+            notices: AlertState::default(),
             external: BTreeMap::new(),
             next_external: EXTERNAL_TICKETS,
             legacy: Vec::new(),
@@ -1343,7 +1408,7 @@ impl Run {
         let order = index_order();
         let me = order.iter().position(|s| s == id).expect("scenario in index.txt");
         let s04 = order.iter().position(|s| s == "s04_forbidden").unwrap();
-        r.notices.first_depth0_403 = me <= s04;
+        r.notices.first_call = me <= s04;
         r.refresh_env();
         r.note(&format!("step begin {id}"));
         r.snapshot();
@@ -1492,6 +1557,11 @@ impl Run {
         t
     }
 
+    /// The id the last [`fresh_tid`](Self::fresh_tid) generated.
+    pub fn last_tid(&self) -> Uuid {
+        pid(0x7d000000, self.next_tid - 1)
+    }
+
     // ---- calling the scheduler -------------------------------------------
 
     pub fn with<R>(&mut self, f: impl FnOnce(&mut BackgroundFetch, &mut Ctx<'_>) -> R) -> R {
@@ -1520,8 +1590,14 @@ impl Run {
     /// An AISAPI command from outside the scheduler; `body` is the caller's
     /// LLSD body (writes), as recorded.
     pub fn ais(&mut self, cmd: Command, tag: Option<&str>, body: Vec<u8>) {
+        self.ais_tid(cmd, NULL_ID, tag, body);
+    }
+
+    /// [`ais`](Self::ais) for a write whose URL carries the transaction id
+    /// the C++ generated.
+    pub fn ais_tid(&mut self, cmd: Command, tid: Uuid, tag: Option<&str>, body: Vec<u8>) {
         let token = tag.map(|t| self.token(t));
-        match ais_standin::build(&cmd, &self.ais_caps) {
+        match build_ais(&cmd, &tid, &self.ais_caps) {
             Ok(req) => {
                 let ticket = self.next_external;
                 self.next_external += 1;
@@ -1607,7 +1683,7 @@ impl Run {
         for a in self.sched.take_actions() {
             match a {
                 Action::IssueAis { ticket, command } => {
-                    match ais_standin::build(&ais_standin::from_fetch(&command), &self.ais_caps) {
+                    match build_ais(&command.to_command(), &NULL_ID, &self.ais_caps) {
                         Ok(req) => self.enqueue_ais((ticket, req, Vec::new())),
                         Err(e) => self.fail(format!("the scheduler issued a refused command ({e:?}): {command:?}")),
                     }
@@ -2035,15 +2111,15 @@ impl Run {
             return;
         }
         let target = target_of(&req.url).to_owned();
-        let method = req.method.as_str();
+        let method = req.method.name();
         let (norm_target, tid) = normalise_tid(&target);
         if let Some(t) = tid {
             self.tids.push(t);
         }
         let head = ais_head(method, &norm_target, req.destination.as_deref(), body.len());
         let request = format!("head={} body={}", escape_text(head.as_bytes()), escape_text(&body));
-        let subset = req.command == ais_standin::CommandType::FetchCategorySubset;
-        let depth = req.depth.unwrap_or(ais_standin::MAX_FOLDER_DEPTH_REQUEST);
+        let subset = req.command == CommandType::FetchCategorySubset;
+        let depth = request_depth(&req);
         if self.mode != Mode::Seq {
             // replies from the generator; the transport's 503 retries
             let mut attempts = 0;
@@ -2146,11 +2222,12 @@ impl Run {
     }
 
     fn process_reply(&mut self, f: InFlight) {
-        if let Some(name) = self.notices.on_reply(&f.req, f.status) {
+        let (notified, ids) = ais_result(&f.req, f.status, f.value.as_ref(), &mut self.notices);
+        for name in notified {
             self.note(&format!("notify {name}"));
         }
         let value = f.value.clone();
-        let is_fetch = (f.req.command as i32) >= 9;
+        let is_fetch = f.req.command.is_fetch();
         if self.stop_armed > 0 {
             self.stop_armed -= 1;
             if self.stop_armed == 0 {
@@ -2175,8 +2252,6 @@ impl Run {
         for (id, exp) in fetches {
             self.cat_fetch(id, exp);
         }
-        let reply = reply_of(f.status, value.as_ref());
-        let ids = ais_standin::callback_ids(f.req.command, &reply);
         self.complete_ticket(f.ticket, &ids);
     }
 

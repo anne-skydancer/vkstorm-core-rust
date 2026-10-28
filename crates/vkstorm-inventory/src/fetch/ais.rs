@@ -5,15 +5,14 @@
 //! (`ais::command::Command::build`, `ais::result::process_result`); this
 //! module does not do it a second time.
 //!
-//! [`AisFetch`] mirrors the fetch variants of R3a's `ais::command::Command`
-//! field for field (same variant names, same field names, `library` for
-//! `ITEM_TYPE` `LIBRARY`), so the executor maps one onto the other
-//! one-to-one. The one piece of the command layer the scheduler needs inside
-//! its own loop is whether a command is refused at once (no capability, an
-//! empty subset): the C++ then calls the completion with null inside the
-//! call that issued it, and the scheduler's state at that point depends on
-//! it (the re-entrancy of s17). [`AisFetch::refusal`] is that test, the
-//! capability choice of R3a's `Command::cap()` plus its empty-subset check.
+//! [`AisFetch`] is the fetch variants of R3a's `ais::command::Command`, field
+//! for field; [`AisFetch::to_command`] is the R3a command, which the executor
+//! builds with `Command::build`. The one piece of the command layer the
+//! scheduler needs inside its own loop is whether a command is refused at
+//! once (no capability, an empty subset): the C++ then calls the completion
+//! with null inside the call that issued it, and the scheduler's state at
+//! that point depends on it (the re-entrancy of s17). [`AisFetch::refusal`]
+//! asks R3a's `Command::cap()` and `Command::build` for that.
 //!
 //! Also here: `EnqueueAISCommand`'s postponed queue (2,048 pending
 //! coroutines), which R3a's command layer leaves to its caller.
@@ -21,6 +20,11 @@
 use std::collections::VecDeque;
 
 use super::Uuid;
+use crate::ais::command::{CapKind, Command};
+use crate::perms::NULL_ID;
+
+/// Why a command function sends nothing (R3a's `ais::command::Refusal`).
+pub use crate::ais::command::Refusal;
 
 /// `MAX_SIMULTANEOUS_COROUTINES`
 pub const MAX_SIMULTANEOUS_COROUTINES: usize = 2048;
@@ -54,15 +58,6 @@ pub enum AisFetch {
     FetchOrphans,
 }
 
-/// Why a command function sends nothing (R3a's `ais::command::Refusal`).
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Refusal {
-    /// The capability is empty ("Inventory cap not found!").
-    NoCapability,
-    /// `FetchCategorySubset` with no children ("Empty request!").
-    EmptyRequest,
-}
-
 impl AisFetch {
     /// `AISAPI::COMMAND_TYPE` of the command.
     pub fn command_type(&self) -> i32 {
@@ -77,30 +72,41 @@ impl AisFetch {
         }
     }
 
-    /// Whether the command looks up `LibraryAPIv3` (else `InventoryAPIv3`).
-    pub fn uses_library_cap(&self) -> bool {
-        match self {
-            AisFetch::FetchItem { library, .. }
-            | AisFetch::FetchCategoryChildren { library, .. }
-            | AisFetch::FetchCategorySubset { library, .. } => *library,
-            _ => false,
+    /// The R3a command function call this decision stands for.
+    pub fn to_command(&self) -> Command {
+        match self.clone() {
+            AisFetch::FetchItem { item_id, library } => Command::FetchItem { item_id, library },
+            AisFetch::FetchCategoryChildren { category_id, library, recursive, depth } => {
+                Command::FetchCategoryChildren { category_id, library, recursive, depth }
+            }
+            AisFetch::FetchCategorySubset { category_id, children, library, recursive, depth } => {
+                Command::FetchCategorySubset { category_id, children, library, recursive, depth }
+            }
+            AisFetch::FetchCof => Command::FetchCof,
+            AisFetch::FetchCategoryLinks { category_id } => Command::FetchCategoryLinks { category_id },
+            AisFetch::FetchOrphans => Command::FetchOrphans,
         }
     }
 
+    /// Whether the command looks up `LibraryAPIv3` (else `InventoryAPIv3`):
+    /// R3a's `Command::cap()`.
+    pub fn uses_library_cap(&self) -> bool {
+        self.to_command().cap() == CapKind::Library
+    }
+
     /// Whether the command function refuses at once, given which of the
-    /// region's two AIS capabilities are present: the capability first,
-    /// then the empty subset.
+    /// region's two AIS capabilities are present: R3a's `Command::build`
+    /// with the capability present or empty (the capability first, then the
+    /// empty subset). No fetch command uses a transaction id.
     pub fn refusal(&self, inventory_cap: bool, library_cap: bool) -> Option<Refusal> {
-        let cap = if self.uses_library_cap() { library_cap } else { inventory_cap };
-        if !cap {
-            return Some(Refusal::NoCapability);
-        }
-        if let AisFetch::FetchCategorySubset { children, .. } = self {
-            if children.is_empty() {
-                return Some(Refusal::EmptyRequest);
-            }
-        }
-        None
+        let present = if self.uses_library_cap() { library_cap } else { inventory_cap };
+        self.to_command().build(if present { "cap" } else { "" }, &NULL_ID).err()
+    }
+}
+
+impl From<&AisFetch> for Command {
+    fn from(f: &AisFetch) -> Command {
+        f.to_command()
     }
 }
 
