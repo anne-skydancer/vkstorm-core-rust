@@ -128,6 +128,43 @@ impl HarnessModel {
     }
 }
 
+impl HarnessModel {
+    /// The model `validate()` reads after `buildParentChildMap` of this
+    /// model, for a model where nothing is lost: every folder in its
+    /// parent's vector in folder-id order (the roots under null), every item
+    /// in its parent's in item-id order, an item vector per folder.
+    pub fn built_snapshot(&self) -> Snapshot {
+        let mut s = Snapshot { root: self.root, library_root: self.library_root, ..Snapshot::default() };
+        s.category_tree.insert(NULL_ID, Vec::new());
+        for (k, (id, c)) in self.cats.iter().enumerate() {
+            let o = &c.cat.category.object;
+            s.categories.push(SnapCategory {
+                id: o.id,
+                parent: o.parent,
+                preferred_type: c.cat.category.preferred_type,
+                version: c.cat.version,
+                descendent_count: c.count,
+            });
+            s.category_map.insert(*id, Some(k));
+            s.category_tree.insert(*id, Vec::new());
+            s.item_tree.insert(*id, Vec::new());
+        }
+        for k in 0..s.categories.len() {
+            let c = &s.categories[k];
+            assert!(c.parent != NULL_ID || c.preferred_type == FolderType::ROOT_INVENTORY, "lost folder");
+            let parent = c.parent;
+            s.category_tree.get_mut(&parent).expect("lost folder").push(Some(k));
+        }
+        for (k, (id, it)) in self.items.iter().enumerate() {
+            s.items.push(SnapItem { id: *id, parent: it.object.parent, asset_type: it.object.asset_type, asset: it.asset });
+            s.item_map.insert(*id, k);
+            s.item_tree.get_mut(&it.object.parent).expect("lost item").push(Some(k));
+        }
+        s.backlinks = self.backlinks.clone();
+        s
+    }
+}
+
 /// The key of a keyed dump line (`dump_model_delta`), if it has one.
 pub fn line_key(l: &str) -> Option<String> {
     if l.starts_with("cat ") || l.starts_with("item ") || l.starts_with("children ") || l.starts_with("broken ") {

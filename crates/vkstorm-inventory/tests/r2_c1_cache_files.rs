@@ -10,7 +10,11 @@
 //!   difference, size), the notation rendering beside it (`.notation.txt`),
 //!   and the library digest the other states repeat;
 //! - the realistic 100k set from its committed `.gz` (decompressed SHA-256,
-//!   decode digests per 10,000 records, re-encode identity);
+//!   decode digests per 10,000 records, re-encode identity), `validate()`
+//!   of the populated model rebuilt from that cache, and the reload: the
+//!   model summary and `loadSkeleton` return values of a login from the
+//!   cache (the crate's login load), and `validate()` after
+//!   `buildParentChildMap` (rebuilt: nothing is lost in this world);
 //! - the Library cache (decode digests per 1,000 records, item types,
 //!   re-encode identity, the library root).
 //!
@@ -18,16 +22,23 @@
 //! (`*.cache_call`: `cache()`'s folder selection and gzip stay C++), the two
 //! random worlds whose bytes are not committed (no input here), and the
 //! lines of the realistic and Library cases that record the C++ model
-//! (populate, login, model digests; see `r2_c2_load.rs` for what of a login
-//! the crate replays).
+//! (the world and populate summaries, the login journal and model digests,
+//! the later login steps; see `r2_c2_load.rs` for what of a login the crate
+//! replays).
 
 mod common;
 mod r2common;
 
+use r2common::fixture_model::{HCat, HarnessModel};
 use r2common::gz::gunzip_strict;
+use r2common::snapshot::{agent, f, lf, lib_owner};
 use r2common::*;
 use vkstorm_inventory::cache::{self, Decoded};
+use vkstorm_inventory::category::ViewerCategory;
+use vkstorm_inventory::login::{CacheInput, Skeleton, SkeletonEntry};
 use vkstorm_inventory::model::EmptyModel;
+use vkstorm_inventory::types::FolderType;
+use vkstorm_inventory::validate;
 use vkstorm_llsd::{Format, Limits};
 
 use common::sha256_hex;
@@ -134,9 +145,91 @@ fn c1_realistic() {
     assert_case(file, &case.id, &case.lines[start..start + produced.len()], &produced);
     let mut tally = Tally::default();
     tally.replayed("decode and re-encode", produced.len());
-    tally.left("world, populated model, validation, reload", case.lines.len() - produced.len());
+
+    // validate() of the populated model, rebuilt from the cache it wrote
+    // (as r2_c4_validation.rs rebuilds populate): every folder has the
+    // server's version and the count of its loaded children; the library
+    // is the standard world's, without items.
+    let mut populated = HarnessModel { root: f(1), library_root: lf(1), library_owner: lib_owner(), ..HarnessModel::default() };
+    for c in d.categories.iter().cloned().chain(standard_library()) {
+        populated.cats.insert(c.category.object.id, HCat { cat: c, count: 0 });
+    }
+    for it in &d.items {
+        if it.is_link_type() {
+            populated.backlinks.push((it.linked_id(), it.object.id));
+        }
+        populated.items.insert(it.object.id, it.clone());
+    }
+    let mut snap = populated.built_snapshot();
+    let counts: Vec<i32> =
+        snap.categories.iter().map(|c| (snap.category_tree[&c.id].len() + snap.item_tree[&c.id].len()) as i32).collect();
+    for (c, n) in snap.categories.iter_mut().zip(counts) {
+        c.descendent_count = n;
+    }
+    let v_start = start + produced.len();
+    let validation = dump_validation(&validate::validate(&snap, Default::default()).info);
+    assert_case(file, "realistic_100k (populated)", &case.lines[v_start..v_start + validation.len()], &validation);
+    tally.replayed("validation of the populated model (rebuilt)", validation.len());
+
+    // The reload: a login from that cache with the world's skeletons (the
+    // agent's: the cached folders with their versions; the standard
+    // library's, without a cache), then validate() after
+    // buildParentChildMap, rebuilt as it files a model where nothing is
+    // lost.
+    let entry = |c: &ViewerCategory| SkeletonEntry {
+        name: Some(c.category.object.name.clone()),
+        folder_id: Some(c.category.object.id),
+        parent_id: Some(c.category.object.parent),
+        version: Some(c.version),
+        type_default: Some(c.category.preferred_type.0),
+    };
+    let lib_entries: Vec<SkeletonEntry> = standard_library().iter().map(entry).collect();
+    let agent_entries: Vec<SkeletonEntry> = d.categories.iter().map(entry).collect();
+    let mut model = HarnessModel { root: f(1), library_root: lf(1), library_owner: lib_owner(), ..HarnessModel::default() };
+    let lib_plan = Skeleton::import(&lib_owner(), &lib_entries).load(&CacheInput::default(), false, &model);
+    let lib_rv = lib_plan.rv;
+    model.apply(lib_plan);
+    let input = CacheInput { gz_present: true, gunzip_ok: true, file: Some(&plain), second_instance: false };
+    let agent_plan = Skeleton::import(&agent(), &agent_entries).load(&input, false, &model);
+    let agent_rv = agent_plan.rv;
+    model.apply(agent_plan);
+    let known = model.cats.values().filter(|c| c.cat.version != -1).count();
+    let links = model.items.values().filter(|i| i.is_link_type()).count();
+    let summary =
+        format!("reload cats={} cats_known_version={known} items={} links={links}", model.cats.len(), model.items.len());
+    let at = case.lines.iter().position(|l| l.starts_with("reload cats=")).unwrap();
+    assert_case(file, "realistic_100k (reload summary)", &case.lines[at..=at], &[summary]);
+    let steps = [format!("step load_library rv={}", u8::from(lib_rv)), format!("step load_agent rv={}", u8::from(agent_rv))];
+    let at = case.lines.iter().position(|l| l.starts_with("step load_library")).unwrap();
+    assert_case(file, "realistic_100k (reload steps)", &case.lines[at..at + 2], &steps);
+    let mut info = validate::validate(&model.built_snapshot(), Default::default()).info;
+    info.initialized = true;
+    let reload_validation = dump_validation(&info);
+    let at = at + 3; // after "step build_parent_child_map"
+    assert_case(file, "realistic_100k (reload validation)", &case.lines[at..at + reload_validation.len()], &reload_validation);
+    tally.replayed("reload: summary, load steps, validation", 1 + steps.len() + reload_validation.len());
+    tally.left("world, populated summary, reload digests, build and later steps", case.lines.len() - tally.replayed);
     tally.print(file);
-    assert_eq!((tally.replayed, tally.left), (14, 31));
+    assert_eq!((tally.replayed, tally.left), (25, 20));
+}
+
+/// The standard world's library folders (`standard_world()`), with the
+/// server's versions.
+fn standard_library() -> Vec<ViewerCategory> {
+    let mk = |id, parent, ft: i32, name: &[u8], version| {
+        let mut c = ViewerCategory { owner: lib_owner(), version, ..ViewerCategory::default() };
+        c.category.object.id = id;
+        c.category.object.parent = parent;
+        c.category.object.name = name.to_vec();
+        c.category.preferred_type = FolderType(ft);
+        c
+    };
+    vec![
+        mk(lf(1), [0; 16], 8, b"Library", 11),
+        mk(lf(2), lf(1), 5, b"Clothing", 5),
+        mk(lf(3), lf(1), 6, b"Objects", 4),
+        mk(lf(4), lf(3), -1, b"Furniture", 2),
+    ]
 }
 
 #[test]
