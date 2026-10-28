@@ -329,9 +329,12 @@ pub fn columns_for(case: &str, field: &str, n: usize) -> Vec<String> {
 
 /// The value an expected column requires of the crate (README "Marked
 /// values"): `None` to skip the column (`UB`), else the value to compare
-/// with. `RT(win=..;linux=..;crate=..)` requires its `crate=` value; an `RT`
-/// without one, or an `RT-MISMATCH`, can never match.
+/// with. `RT(win=..;linux=..;crate=..)` requires the value of this build's
+/// C++ runtime (port rule 1): `win=` under the MSVC target environment,
+/// `linux=` otherwise; the `crate=` value is no longer read. An `RT` without
+/// that key, or an `RT-MISMATCH`, can never match.
 pub fn expected_value(expected: &str) -> Option<Result<&str, &str>> {
+    const KEY: &str = if cfg!(target_env = "msvc") { "win=" } else { "linux=" };
     if expected == "UB" {
         return None;
     }
@@ -342,8 +345,8 @@ pub fn expected_value(expected: &str) -> Option<Result<&str, &str>> {
         return Some(
             inner
                 .split(';')
-                .find_map(|kv| kv.strip_prefix("crate="))
-                .ok_or("RT(...) states no crate= value"),
+                .find_map(|kv| kv.strip_prefix(KEY))
+                .ok_or("RT(...) states no value for this platform's C++ runtime"),
         );
     }
     Some(Ok(expected))
