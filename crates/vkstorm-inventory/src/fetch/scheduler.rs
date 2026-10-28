@@ -18,7 +18,7 @@
 
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
-use super::ais::{self, AisCaps, AisNotices, AisReply, AisRequest, Command, CommandType, ItemType};
+use super::ais::AisFetch;
 use super::legacy::{FolderBody, FolderRequest, ItemBody, ItemRequest};
 use super::{CategoryFetch, FetchType, NULL_ID, QueueEntry, Uuid, VERSION_UNKNOWN, FT_MARKETPLACE_LISTINGS};
 
@@ -115,8 +115,10 @@ pub struct Env {
     pub agent_id: Uuid,
     /// `InventorySortOrder` (`LLInventoryPanel::DEFAULT_SORT_ORDER`)
     pub sort_order: u32,
-    /// `InventoryAPIv3`, `LibraryAPIv3`
-    pub ais_caps: AisCaps,
+    /// The region has `InventoryAPIv3` (`getInvCap()` is not empty).
+    pub inventory_cap: bool,
+    /// The region has `LibraryAPIv3` (`getLibCap()` is not empty).
+    pub library_cap: bool,
     /// `FetchInventoryDescendents2`
     pub cap_fid2: String,
     /// `FetchLibDescendents2`
@@ -153,12 +155,13 @@ pub fn fetch_path(region_cap_fid2: &str, ais_available: bool) -> FetchPath {
 /// Everything the scheduler asks the outside to do, in order.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Action {
-    /// `EnqueueAISCommand`: run `request` on the coprocedure pool "AIS"
-    /// (through [`ais::PostponedQueue`]); report its end with
-    /// [`BackgroundFetch::ais_reply`] and [`BackgroundFetch::ais_complete`].
-    AisEnqueue { ticket: u64, request: AisRequest },
-    /// Call a caller's `AISAPI::completion_t` with `id`.
-    AisCallback { token: CallerToken, id: Uuid },
+    /// Call the `AISAPI` command function `command` (R3a's
+    /// `ais::command::Command`, built and run by the AIS command layer, the
+    /// coprocedure pool through [`super::ais::PostponedQueue`]); report the
+    /// ids its completion is called with through
+    /// [`BackgroundFetch::ais_complete`]. The scheduler only issues commands
+    /// the command layer will not refuse ([`AisFetch::refusal`]).
+    IssueAis { ticket: u64, command: AisFetch },
     /// Call a caller's `nullary_func_t`.
     Callback { token: CallerToken },
     /// `LLNotificationsUtil::add(name)`
@@ -193,16 +196,12 @@ enum Completion {
     Cof { callback: Option<CallerToken> },
     /// `fetchFolderAndLinks`'s lambda.
     FolderAndLinks { category: Uuid, callback: Option<CallerToken> },
-    /// A caller's own `completion_t`.
-    External(CallerToken),
-    /// No callback.
-    Nothing,
 }
 
 #[derive(Clone, Debug)]
 struct Pending {
     completion: Completion,
-    request: AisRequest,
+    command: AisFetch,
 }
 
 #[derive(Clone, Debug)]
@@ -228,8 +227,8 @@ pub struct SchedState {
     pub forced: Vec<Uuid>,
 }
 
-/// `LLInventoryModelBackgroundFetch` together with the `AISAPI` state its
-/// commands need (open commands, the 403 flag).
+/// `LLInventoryModelBackgroundFetch`, with its open AIS commands (the
+/// completions of the lambdas it passes to `AISAPI`).
 #[derive(Debug, Default)]
 pub struct BackgroundFetch {
     recursive_inventory_fetch_started: bool,
@@ -247,7 +246,6 @@ pub struct BackgroundFetch {
     expected_folder_ids: Vec<Uuid>,
     idle_registered: bool,
 
-    notices: AisNotices,
     next_ticket: u64,
     pending: BTreeMap<u64, Pending>,
     next_handler: u64,
@@ -282,11 +280,6 @@ impl BackgroundFetch {
     /// The actions produced since the last call, in order.
     pub fn take_actions(&mut self) -> Vec<Action> {
         std::mem::take(&mut self.actions)
-    }
-
-    /// The process-wide 403 flag (`first_call` in `InvokeAISCommandCoro`).
-    pub fn notices_mut(&mut self) -> &mut AisNotices {
-        &mut self.notices
     }
 
     fn add_idle(&mut self) {
@@ -523,7 +516,7 @@ impl BackgroundFetch {
         self.expected_folder_ids.push(cat_id);
         self.ais_call(
             cx,
-            Command::FetchCategoryLinks { category: cat_id },
+            AisFetch::FetchCategoryLinks { category_id: cat_id },
             Completion::FolderAndLinks { category: cat_id, callback },
         );
         // start idle loop to track completion
@@ -540,7 +533,7 @@ impl BackgroundFetch {
         }
         self.incr_fetch_folder_count(1);
         self.expected_folder_ids.push(cat_id);
-        self.ais_call(cx, Command::FetchCof, Completion::Cof { callback });
+        self.ais_call(cx, AisFetch::FetchCof, Completion::Cof { callback });
         self.background_fetch_active = true;
         self.folder_fetch_active = true;
         self.add_idle();
@@ -569,76 +562,40 @@ impl BackgroundFetch {
 
     // ---- AIS commands ----------------------------------------------------
 
-    /// Runs an `AISAPI` command for a caller outside the scheduler (writes,
-    /// direct fetches): its callback comes back as [`Action::AisCallback`].
-    /// Returns false when nothing was sent (the callback, if any, was then
-    /// called with null at once).
-    pub fn ais_command(&mut self, cx: &mut Ctx<'_>, cmd: Command, callback: Option<CallerToken>) -> bool {
-        let c = match callback {
-            Some(t) => Completion::External(t),
-            None => Completion::Nothing,
-        };
-        self.ais_call(cx, cmd, c)
-    }
-
-    fn ais_call(&mut self, cx: &mut Ctx<'_>, cmd: Command, completion: Completion) -> bool {
-        match ais::build(&cmd, &cx.env.ais_caps) {
-            Ok(request) => {
-                let ticket = self.next_ticket;
-                self.next_ticket += 1;
-                self.pending.insert(ticket, Pending { completion, request: request.clone() });
-                self.actions.push(Action::AisEnqueue { ticket, request });
-                true
-            }
-            Err(_) => {
-                // No capability, or an empty subset: the callback with null,
-                // at once (the re-entrancy of s17).
-                self.complete(cx, completion, NULL_ID);
-                false
-            }
+    fn ais_call(&mut self, cx: &mut Ctx<'_>, command: AisFetch, completion: Completion) -> bool {
+        if command.refusal(cx.env.inventory_cap, cx.env.library_cap).is_some() {
+            // No capability, or an empty subset: the completion with null,
+            // at once, inside this call (the re-entrancy of s17).
+            self.complete(cx, completion, NULL_ID);
+            return false;
         }
+        let ticket = self.next_ticket;
+        self.next_ticket += 1;
+        self.pending.insert(ticket, Pending { completion, command: command.clone() });
+        self.actions.push(Action::IssueAis { ticket, command });
+        true
     }
 
-    /// The command's reply arrived (`InvokeAISCommandCoro` before
-    /// `onUpdateReceived`): the 403 notification, if any, as an action. Call
-    /// before applying the update, then [`ais_complete`] after it.
-    ///
-    /// [`ais_complete`]: BackgroundFetch::ais_complete
-    pub fn ais_reply(&mut self, ticket: u64, status: i32) {
-        if let Some(p) = self.pending.get(&ticket) {
-            if let Some(name) = self.notices.on_reply(&p.request, status) {
-                self.actions.push(Action::Notify { name });
-            }
-        }
-    }
-
-    /// The command finished (after the update was applied, or without a
-    /// request when `gDisconnected`): run its callback with the reply's ids.
-    pub fn ais_complete(&mut self, cx: &mut Ctx<'_>, ticket: u64, reply: &AisReply) {
+    /// The command's completion was called (`InvokeAISCommandCoro` after the
+    /// update was applied, or at once when `gDisconnected`): `callback_ids`
+    /// are the ids the command layer calls it with (R3a's
+    /// `CommandResult::callbacks`); the scheduler's completions are
+    /// single-id, so the first one counts, null when there is none.
+    pub fn ais_complete(&mut self, cx: &mut Ctx<'_>, ticket: u64, callback_ids: &[Uuid]) {
         let Some(p) = self.pending.remove(&ticket) else { return };
-        let ids = ais::callback_ids(p.request.command, reply);
-        match p.completion {
-            Completion::External(token) => {
-                for id in ids {
-                    self.actions.push(Action::AisCallback { token, id });
-                }
-            }
-            c => {
-                // internal completions are single-id commands
-                self.complete(cx, c, ids[0]);
-            }
-        }
+        let id = callback_ids.first().copied().unwrap_or(NULL_ID);
+        self.complete(cx, p.completion, id);
     }
 
-    /// `LLCoros::checkStop()` threw inside the command's update: its callback
-    /// never runs (the counts it would have released stay raised).
+    /// `LLCoros::checkStop()` threw inside the command's update: its
+    /// completion never runs (the counts it would have released stay raised).
     pub fn ais_abandoned(&mut self, ticket: u64) {
         self.pending.remove(&ticket);
     }
 
-    /// The command type of an open ticket.
-    pub fn ais_command_type(&self, ticket: u64) -> Option<CommandType> {
-        self.pending.get(&ticket).map(|p| p.request.command)
+    /// The command of an open ticket.
+    pub fn ais_pending(&self, ticket: u64) -> Option<&AisFetch> {
+        self.pending.get(&ticket).map(|p| &p.command)
     }
 
     fn complete(&mut self, cx: &mut Ctx<'_>, completion: Completion, response_id: Uuid) {
@@ -673,8 +630,6 @@ impl BackgroundFetch {
                 }
                 self.on_ais_folder_callback(cx, category, response_id, FetchType::Default);
             }
-            Completion::External(token) => self.actions.push(Action::AisCallback { token, id: response_id }),
-            Completion::Nothing => {}
         }
     }
 
@@ -860,12 +815,11 @@ impl BackgroundFetch {
                 // Lost and found
                 self.ais_call(
                     cx,
-                    Command::FetchOrphans,
+                    AisFetch::FetchOrphans,
                     Completion::Folder { request: NULL_ID, fetch_type: FetchType::Default },
                 );
             } else if let Some(cat) = cx.model.category(&cat_id) {
-                let item_type =
-                    if cat.owner_id == ALEXANDRIA_LINDEN_ID { ItemType::Library } else { ItemType::Inventory };
+                let library = cat.owner_id == ALEXANDRIA_LINDEN_ID;
                 if info.fetch_type == FetchType::ContentRecursive {
                     // fetch content only, ignore cat itself
                     let categories = cx.model.child_categories(&cat_id);
@@ -899,10 +853,10 @@ impl BackgroundFetch {
                         self.incr_fetch_folder_count(1);
                         self.ais_call(
                             cx,
-                            Command::FetchCategorySubset {
-                                category: cat_id,
+                            AisFetch::FetchCategorySubset {
+                                category_id: cat_id,
                                 children: children.clone(),
-                                item_type,
+                                library,
                                 recursive: true,
                                 depth: 0,
                             },
@@ -937,9 +891,9 @@ impl BackgroundFetch {
                         self.expected_folder_ids.push(cat_id);
                         self.ais_call(
                             cx,
-                            Command::FetchCategoryChildren {
-                                category: cat_id,
-                                item_type,
+                            AisFetch::FetchCategoryChildren {
+                                category_id: cat_id,
+                                library,
                                 recursive: info.fetch_type == FetchType::Recursive,
                                 depth: 0,
                             },
@@ -962,18 +916,14 @@ impl BackgroundFetch {
                 Some(item) => {
                     if !item.complete || info.fetch_type == FetchType::Forced {
                         self.fetch_count += 1;
-                        let t = if item.owner_id == cx.env.agent_id { ItemType::Inventory } else { ItemType::Library };
-                        self.ais_call(cx, Command::FetchItem { item: info.id, item_type: t }, Completion::Item);
+                        let library = item.owner_id != cx.env.agent_id;
+                        self.ais_call(cx, AisFetch::FetchItem { item_id: info.id, library }, Completion::Item);
                     }
                 }
                 None => {
                     // unknown: assume the agent's inventory
                     self.fetch_count += 1;
-                    self.ais_call(
-                        cx,
-                        Command::FetchItem { item: info.id, item_type: ItemType::Inventory },
-                        Completion::Item,
-                    );
+                    self.ais_call(cx, AisFetch::FetchItem { item_id: info.id, library: false }, Completion::Item);
                 }
             }
         }

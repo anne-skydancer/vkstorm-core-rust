@@ -24,12 +24,13 @@
 //!   and replies are inputs.
 #![allow(dead_code)]
 
+pub mod ais_standin;
 pub mod mock;
 
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::path::PathBuf;
 
-use vkstorm_inventory::fetch::ais::{AisCaps, AisReply, AisRequest, Command};
+use ais_standin::{AisCaps, AisNotices, AisReply, AisRequest, Command};
 use vkstorm_inventory::fetch::scheduler::{
     self, Action, BackgroundFetch, BudgetClock, CategoryInfo, Ctx, Env, FetchModel, FetchPath, ItemInfo,
 };
@@ -864,7 +865,7 @@ impl ReplayModel {
     }
 }
 
-/// The reply's ids for the callback contract.
+/// The reply's ids for the callback contract (as the stand-in reads them).
 pub fn reply_of(status: i32, v: Option<&Value>) -> AisReply {
     let mut r = AisReply { status, ..Default::default() };
     let Some(v) = v else { return r };
@@ -1043,6 +1044,26 @@ pub enum Startup {
     Started,
 }
 
+/// The recording modes (README "Recording modes").
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Mode {
+    Seq,
+    Phased,
+    Lockstep,
+    Conc,
+}
+
+/// A request of an unordered mode: its phase and line (without the reply's
+/// length and digest, which come from the recording).
+#[derive(Clone, Debug)]
+struct WireRec {
+    phase: usize,
+    line: String,
+}
+
+/// Tickets of commands from callers other than the scheduler.
+const EXTERNAL_TICKETS: u64 = 1 << 62;
+
 pub const CAPS_NONE: u32 = 0;
 pub const CAPS_AIS: u32 = 1;
 pub const CAPS_LEGACY: u32 = 2;
@@ -1065,11 +1086,16 @@ impl BudgetClock for ScriptedClock {
 
 struct InFlight {
     ticket: u64,
+    req: AisRequest,
     sent_frame: u64,
     status: i32,
     value: Option<Value>,
     subset: bool,
     depth: i32,
+    /// LOCKSTEP: arrival number and release order key; held until released.
+    seq: usize,
+    key: String,
+    released: bool,
 }
 
 /// A request made by a caller other than the scheduler (writes): its body.
@@ -1114,6 +1140,24 @@ pub struct Run {
     /// Fetch replies from the reply generator instead of the recording; in
     /// a SEQ replay each generated status must equal the recorded one.
     pub mock: Option<mock::Mock>,
+    pub mode: Mode,
+    /// LOCKSTEP: the mock holds every reply until released.
+    pub hold: bool,
+    /// `PoolSizeAIS` as the scheduler reads it (the pool keeps its size).
+    pub pool_setting: u32,
+    phases: usize,
+    rounds: usize,
+    unordered: Vec<WireRec>,
+    last_before: i32,
+    last_after: i32,
+    pub max_in_flight: i32,
+    /// The stand-in command layer's capabilities and 403 flag.
+    pub ais_caps: AisCaps,
+    pub notices: AisNotices,
+    /// Commands of other callers (writes, direct `AISAPI` calls): their
+    /// callback tokens, by ticket.
+    external: BTreeMap<u64, Option<u64>>,
+    next_external: u64,
 }
 
 impl Run {
@@ -1158,17 +1202,43 @@ impl Run {
             stops_thrown: 0,
             cache: None,
             mock: None,
+            mode: Mode::Seq,
+            hold: false,
+            pool_setting: 2,
+            phases: 0,
+            rounds: 0,
+            unordered: Vec::new(),
+            last_before: 0,
+            last_after: 0,
+            max_in_flight: 0,
+            ais_caps: AisCaps::default(),
+            notices: AisNotices::default(),
+            external: BTreeMap::new(),
+            next_external: EXTERNAL_TICKETS,
         };
         // The process-wide 403 flag: s04 (index order) raises the alert; every
         // later scenario sees it spent.
         let order = index_order();
         let me = order.iter().position(|s| s == id).expect("scenario in index.txt");
         let s04 = order.iter().position(|s| s == "s04_forbidden").unwrap();
-        r.sched.notices_mut().first_depth0_403 = me <= s04;
+        r.notices.first_depth0_403 = me <= s04;
         r.refresh_env();
         r.note(&format!("step begin {id}"));
         r.snapshot();
         r
+    }
+
+    /// Switches a new run to an unordered mode on a pool of `pool`
+    /// coroutines, with generated replies.
+    pub fn unordered(&mut self, mode: Mode, pool: usize) {
+        self.mode = mode;
+        self.pool_size = pool;
+        self.pool_setting = pool as u32;
+        self.hold = mode == Mode::Lockstep;
+        if self.mock.is_none() {
+            self.mock = Some(mock::Mock::new(&self.world));
+        }
+        self.refresh_env();
     }
 
     pub fn refresh_env(&mut self) {
@@ -1195,18 +1265,20 @@ impl Run {
             disconnected: self.env.disconnected,
             exiting: false,
             in_second_life: self.in_second_life,
-            pool_size_ais: self.pool_size as u32,
+            pool_size_ais: self.pool_setting,
             batch_size_ais3: self.batch_size,
             past_wearables_wait: self.startup > Startup::WearablesWait,
             agent_id: self.world.agent,
             sort_order: 7,
-            ais_caps,
+            inventory_cap: !ais_caps.inventory.is_empty(),
+            library_cap: !ais_caps.library.is_empty(),
             cap_fid2: cap("fid2"),
             cap_fld2: cap("fld2"),
             cap_fi2: cap("fi2"),
             cap_fl2: cap("fl2"),
         };
         self.model.ais_available = self.env.ais_available;
+        self.ais_caps = ais_caps;
     }
 
     pub fn set_region(&mut self, present: bool, caps: u32, received: bool) {
@@ -1322,14 +1394,39 @@ impl Run {
     /// LLSD body (writes), as recorded.
     pub fn ais(&mut self, cmd: Command, tag: Option<&str>, body: Vec<u8>) {
         let token = tag.map(|t| self.token(t));
-        let before = self.queue.len();
-        self.with(|s, cx| {
-            s.ais_command(cx, cmd, token);
-        });
-        if self.queue.len() > before {
-            // the command just enqueued
-            self.queue.back_mut().unwrap().2 = body;
+        match ais_standin::build(&cmd, &self.ais_caps) {
+            Ok(req) => {
+                let ticket = self.next_external;
+                self.next_external += 1;
+                self.external.insert(ticket, token);
+                self.queue.push_back((ticket, req, body));
+            }
+            // refused: the callback with null, at once
+            Err(_) => self.external_callbacks(token, &[NULL_ID]),
         }
+    }
+
+    fn external_callbacks(&mut self, token: Option<u64>, ids: &[Uuid]) {
+        if let Some(t) = token {
+            let tag = self.tokens.get(&t).cloned().unwrap_or_default();
+            for id in ids {
+                self.note(&format!("callback {tag} {}", uuid_string(id)));
+            }
+        }
+    }
+
+    /// A command's completion with `ids`: the scheduler's, or another caller's.
+    fn complete_ticket(&mut self, ticket: u64, ids: &[Uuid]) {
+        if let Some(token) = self.external.remove(&ticket) {
+            self.external_callbacks(token, ids);
+            return;
+        }
+        let env = self.env.clone();
+        {
+            let mut cx = Ctx::new(&mut self.model, &env);
+            self.sched.ais_complete(&mut cx, ticket, ids);
+        }
+        self.drain();
     }
 
     /// `LLViewerInventoryCategory::fetch(expiry)`
@@ -1369,10 +1466,11 @@ impl Run {
     fn drain(&mut self) {
         for a in self.sched.take_actions() {
             match a {
-                Action::AisEnqueue { ticket, request } => self.queue.push_back((ticket, request, Vec::new())),
-                Action::AisCallback { token, id } => {
-                    let tag = self.tokens.get(&token).cloned().unwrap_or_default();
-                    self.note(&format!("callback {tag} {}", uuid_string(&id)));
+                Action::IssueAis { ticket, command } => {
+                    match ais_standin::build(&ais_standin::from_fetch(&command), &self.ais_caps) {
+                        Ok(req) => self.queue.push_back((ticket, req, Vec::new())),
+                        Err(e) => self.fail(format!("the scheduler issued a refused command ({e:?}): {command:?}")),
+                    }
                 }
                 Action::Callback { token } => {
                     let tag = self.tokens.get(&token).cloned().unwrap_or_default();
@@ -1394,6 +1492,7 @@ impl Run {
 
     pub fn frame(&mut self, idle: bool) {
         self.frame_no += 1;
+        self.last_before = self.sched.state().fetch_count;
         if idle && self.sched.idle_registered() {
             let env = self.env.clone();
             let mut clock = self.clock;
@@ -1404,8 +1503,81 @@ impl Run {
             self.clock = clock;
             self.drain();
         }
+        self.last_after = self.sched.state().fetch_count;
+        self.max_in_flight = self.max_in_flight.max(self.last_after);
         self.mainloop();
         self.snapshot();
+    }
+
+    /// `frame_note`: a frame and its counts.
+    pub fn frame_note(&mut self, label: &str) {
+        self.frame(true);
+        let pool = self.pool_count();
+        self.note(&format!(
+            "frame {label} count_before={} count_after_idle={} pool={pool}",
+            self.last_before, self.last_after
+        ));
+    }
+
+    /// LOCKSTEP `held()`: the unreleased requests, sorted by method and
+    /// target, then arrival.
+    pub fn held(&self) -> Vec<usize> {
+        let mut h: Vec<(String, usize)> = self
+            .active
+            .iter()
+            .filter(|f| !f.released && f.sent_frame != u64::MAX)
+            .map(|f| (f.key.clone(), f.seq))
+            .collect();
+        h.sort();
+        h.into_iter().map(|(_, s)| s).collect()
+    }
+
+    /// The held request whose target contains `needle`.
+    pub fn held_matching(&self, needle: &str) -> Option<usize> {
+        self.active.iter().find(|f| !f.released && f.key.contains(needle)).map(|f| f.seq)
+    }
+
+    /// LOCKSTEP `release_one`: the reply processed, then four more frames
+    /// (the update's yields and the callback), without the idle callbacks.
+    pub fn release_one(&mut self, seq: usize) {
+        if let Some(f) = self.active.iter_mut().find(|f| f.seq == seq) {
+            f.released = true;
+        }
+        for _ in 0..5 {
+            self.frame(false);
+        }
+    }
+
+    /// LOCKSTEP `round`: a phase starts, one dispatch frame, then every
+    /// held reply released in order.
+    pub fn round(&mut self, label: &str) -> bool {
+        self.rounds += 1;
+        self.phases += 1;
+        self.frame(true);
+        let (n, d) = (self.rounds, self.last_after - self.last_before);
+        let st = self.sched_text();
+        self.note(&format!("round {label} {n} dispatched={d} sch={st}"));
+        let h = self.held();
+        for q in &h {
+            self.release_one(*q);
+        }
+        !h.is_empty()
+    }
+
+    /// LOCKSTEP `drain`: rounds until nothing is held or queued.
+    pub fn drain_rounds(&mut self, label: &str) {
+        for _ in 0..1000 {
+            let any = self.round(label);
+            let s = self.sched.state();
+            if self.error.is_some() || (!any && s.folder_queue.is_empty() && s.item_queue.is_empty() && s.fetch_count == 0) {
+                return;
+            }
+        }
+        self.fail(format!("drain {label}: more than 1000 rounds"));
+    }
+
+    pub fn journal_count(&self, prefix: &str) -> usize {
+        self.journal.iter().filter(|l| l.starts_with(prefix)).count()
     }
 
     pub fn frames(&mut self, n: usize, idle: bool) {
@@ -1418,7 +1590,8 @@ impl Run {
         let frame = self.frame_no;
         let mut k = 0;
         while k < self.active.len() {
-            if self.active[k].sent_frame < frame && self.active[k].sent_frame != u64::MAX {
+            let f = &self.active[k];
+            if f.sent_frame < frame && f.sent_frame != u64::MAX && (!self.hold || f.released) {
                 let f = self.active.remove(k);
                 self.process_reply(f);
                 // the freed coroutine takes the next queued command
@@ -1440,12 +1613,7 @@ impl Run {
     fn send(&mut self, ticket: u64, req: AisRequest, body: Vec<u8>) {
         if self.env.disconnected {
             // InvokeAISCommandCoro: gDisconnected, no request
-            let env = self.env.clone();
-            {
-                let mut cx = Ctx::new(&mut self.model, &env);
-                self.sched.ais_complete(&mut cx, ticket, &AisReply::disconnected());
-            }
-            self.drain();
+            self.complete_ticket(ticket, &[NULL_ID]);
             return;
         }
         let target = target_of(&req.url).to_owned();
@@ -1456,6 +1624,39 @@ impl Run {
         }
         let head = ais_head(method, &norm_target, req.destination.as_deref(), body.len());
         let request = format!("head={} body={}", escape_text(head.as_bytes()), escape_text(&body));
+        let subset = req.command == ais_standin::CommandType::FetchCategorySubset;
+        let depth = req.depth.unwrap_or(ais_standin::MAX_FOLDER_DEPTH_REQUEST);
+        if self.mode != Mode::Seq {
+            // replies from the generator; the transport's 503 retries
+            let mut attempts = 0;
+            let (status, value) = loop {
+                let (st, v) = self.mock.as_mut().expect("generated replies").ais(method, &norm_target);
+                attempts += 1;
+                let seq = self.wires.len() + 1;
+                self.wires.push(format!("{method} {norm_target} status={st} {request}"));
+                self.wire_targets.push((method.to_owned(), norm_target.clone(), st));
+                let phase = self.phases;
+                self.unordered.push(WireRec { phase, line: format!("{method} {norm_target} status={st} {request}") });
+                let _ = seq;
+                if !(st == 503 && attempts < 6) {
+                    break (st, v);
+                }
+            };
+            let seq = self.wires.len();
+            self.active.push(InFlight {
+                ticket,
+                req: req.clone(),
+                sent_frame: self.frame_no,
+                status,
+                value,
+                subset,
+                depth,
+                seq,
+                key: format!("{method} {norm_target}"),
+                released: false,
+            });
+            return;
+        }
         let mut attempts = 0;
         let mut last: Option<RecWire> = None;
         loop {
@@ -1508,11 +1709,15 @@ impl Run {
         let Some(w) = last else { return };
         self.active.push(InFlight {
             ticket,
+            req: req.clone(),
             sent_frame: self.frame_no,
             status: w.status,
             value: w.value,
-            subset: req.command == vkstorm_inventory::fetch::ais::CommandType::FetchCategorySubset,
-            depth: req.depth.unwrap_or(vkstorm_inventory::fetch::ais::MAX_FOLDER_DEPTH_REQUEST),
+            subset,
+            depth,
+            seq: self.wires.len(),
+            key: format!("{method} {norm_target}"),
+            released: false,
         });
     }
 
@@ -1523,13 +1728,11 @@ impl Run {
     }
 
     fn process_reply(&mut self, f: InFlight) {
-        self.sched.ais_reply(f.ticket, f.status);
-        self.drain();
+        if let Some(name) = self.notices.on_reply(&f.req, f.status) {
+            self.note(&format!("notify {name}"));
+        }
         let value = f.value.clone();
-        let is_fetch = matches!(
-            self.sched.ais_command_type(f.ticket),
-            Some(t) if (t as i32) >= 9
-        );
+        let is_fetch = (f.req.command as i32) >= 9;
         if self.stop_armed > 0 {
             self.stop_armed -= 1;
             if self.stop_armed == 0 {
@@ -1554,12 +1757,8 @@ impl Run {
             self.cat_fetch(id, exp);
         }
         let reply = reply_of(f.status, value.as_ref());
-        let env = self.env.clone();
-        {
-            let mut cx = Ctx::new(&mut self.model, &env);
-            self.sched.ais_complete(&mut cx, f.ticket, &reply);
-        }
-        self.drain();
+        let ids = ais_standin::callback_ids(f.req.command, &reply);
+        self.complete_ticket(f.ticket, &ids);
     }
 
     /// A request C++ model code makes outside the fetch code (the
@@ -1829,7 +2028,35 @@ impl Run {
         for f in &self.facts {
             out.push(format!("fact {f}"));
         }
-        out.extend(self.wires.iter().cloned());
+        match self.mode {
+            Mode::Seq => out.extend(self.wires.iter().cloned()),
+            Mode::Phased | Mode::Lockstep => {
+                let mut tails = recorded_tails(&self.id);
+                let mut recs = self.unordered.clone();
+                for r in &mut recs {
+                    let tail = tails
+                        .get_mut(&(Some(r.phase), r.line.clone()))
+                        .and_then(|v| v.pop())
+                        .unwrap_or_else(|| "resp=?".to_owned());
+                    r.line = format!("{} {tail}", r.line);
+                }
+                let mut lines: Vec<(usize, String)> = recs.into_iter().map(|r| (r.phase, r.line)).collect();
+                lines.sort();
+                out.extend(lines.into_iter().map(|(p, l)| format!("wire@{p} {l}")));
+            }
+            Mode::Conc => {
+                let mut tails = recorded_tails(&self.id);
+                let mut ms: BTreeMap<String, usize> = BTreeMap::new();
+                for r in &self.unordered {
+                    let tail = tails
+                        .get_mut(&(None, r.line.clone()))
+                        .and_then(|v| v.last().cloned())
+                        .unwrap_or_else(|| "resp=?".to_owned());
+                    *ms.entry(format!("{} {tail}", r.line)).or_default() += 1;
+                }
+                out.extend(ms.into_iter().map(|(l, n)| format!("wire* {n}x {l}")));
+            }
+        }
         let distinct: BTreeSet<&String> = self.tids.iter().collect();
         out.push(format!(
             "tids requests={} distinct={} fresh={}",
@@ -1843,6 +2070,25 @@ impl Run {
         out.push(format!("pub {}", self.public_state()));
         out
     }
+}
+
+/// The recorded replies' `resp=... rtype=...` of an unordered scenario, by
+/// phase (`None` for CONC) and request line.
+fn recorded_tails(id: &str) -> BTreeMap<(Option<usize>, String), Vec<String>> {
+    let mut out: BTreeMap<(Option<usize>, String), Vec<String>> = BTreeMap::new();
+    for l in scenario_lines(id) {
+        let (phase, rest) = if let Some(r) = l.strip_prefix("wire@") {
+            let (p, rest) = r.split_once(' ').unwrap();
+            (Some(p.parse::<usize>().unwrap()), rest.to_owned())
+        } else if let Some(r) = l.strip_prefix("wire* ") {
+            (None, r.split_once(' ').unwrap().1.to_owned())
+        } else {
+            continue;
+        };
+        let k = rest.rfind(" resp=").unwrap();
+        out.entry((phase, rest[..k].to_owned())).or_default().push(rest[k + 1..].to_owned());
+    }
+    out
 }
 
 fn normalise_tid(target: &str) -> (String, Option<String>) {
@@ -1867,15 +2113,18 @@ pub fn compared(lines: &[String], skip: &dyn Fn(&str) -> bool) -> Vec<String> {
         .iter()
         .filter(|l| {
             let l = l.as_str();
-            if l.starts_with("mdl ") || l.starts_with("mdl-") {
+            if l.starts_with("mdl ") || l.starts_with("mdl-") || l.starts_with('#') {
                 return false;
             }
             if let Some(j) = l.strip_prefix("jrn ") {
                 let keep = j.starts_with("step ")
                     || j.starts_with("sch ")
+                    || j.starts_with("sch@step ")
                     || j == "fetch.completed"
                     || j.starts_with("callback ")
-                    || j.starts_with("notify ");
+                    || j.starts_with("notify ")
+                    || j.starts_with("frame ")
+                    || j.starts_with("round ");
                 if !keep {
                     return false;
                 }

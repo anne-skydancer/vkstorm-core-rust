@@ -12,7 +12,7 @@ mod r3b_support;
 
 use r3b_support::*;
 use vkstorm_inventory::fetch::{NULL_ID, Uuid};
-use vkstorm_inventory::fetch::ais::{Command, ItemType};
+use r3b_support::ais_standin::{Command, ItemType};
 
 thread_local! {
     /// Fetch replies from the reply generator (`r3b_support::mock`).

@@ -5,11 +5,14 @@
 //!
 //! What moved here is the decision making: the folder and item queues and
 //! their priorities, the forced set, the subset batches and their
-//! boundaries, the depth limit, the fallbacks between full, folder-and-
+//! boundaries, the depth requested, the fallbacks between full, folder-and-
 //! content and content fetches, the concurrency limit, the frame budget, the
-//! choice between AIS, the legacy capabilities and nothing, the legacy batches
-//! and their 403 split, the completion bookkeeping, and the bytes of every
-//! request (AIS URLs, legacy POST bodies).
+//! choice between AIS, the legacy capabilities and nothing, the legacy
+//! batches and their 403 split, the completion bookkeeping, and the bytes of
+//! the legacy requests (POST bodies). Which AIS command to call is decided
+//! here ([`ais::AisFetch`]); building its request and reading its reply
+//! (URL, depth clamp, callback ids, the 403 alert) is the AIS command layer
+//! of sub-rung R3a (`ais::command`, `ais::result`), not repeated here.
 //!
 //! What stays C++: the coroutines and the coprocedure pool, the HTTP
 //! transport (and its 503 retries), the model's containers and observers,
@@ -31,7 +34,7 @@
 //! clock through [`scheduler::BudgetClock`], read at the same three points
 //! as `LLTimer::getTotalSeconds()` in `bulkFetchViaAis` (the K5 seam). Every
 //! effect on the outside is an [`scheduler::Action`] in an ordered list the
-//! caller drains: enqueue this AIS request, post this legacy body, run this
+//! caller drains: call this AIS command, post this legacy body, run this
 //! callback, raise this notification, fire the completion signal.
 //!
 //! An AIS command that cannot be sent (no capability, an empty subset) calls
