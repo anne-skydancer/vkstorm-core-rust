@@ -177,7 +177,17 @@ fn c4_validation_qa_libstdcxx() {
     assert_eq!((t.replayed, t.left), (92, 8));
 }
 
+/// The default engine is the platform's own, and replays the recording of
+/// the platform's C++ standard library (both engines are also replayed
+/// explicitly above, on every platform).
 #[test]
-fn qa_default_engine_is_msvc() {
-    assert_eq!(QaRandom::default().library(), QaLibrary::Msvc);
+fn c4_validation_qa_native() {
+    let (file, library) = if cfg!(target_env = "msvc") {
+        ("cache/c4_validation_qa.msvc.txt", QaLibrary::Msvc)
+    } else {
+        ("cache/c4_validation_qa.libstdcxx.txt", QaLibrary::Libstdcxx)
+    };
+    assert_eq!(QaRandom::default().library(), library);
+    let t = replay(file, Some(QaRandom::default()));
+    assert_eq!((t.replayed, t.left), (92, 8));
 }

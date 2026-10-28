@@ -20,10 +20,12 @@
 //! `std::uniform_int_distribution<>(0, 1)`, whose algorithm also differs by
 //! library. [`QaRandom`] reproduces both (the R2 C4 runtime edge, open
 //! decision 4); the engine's state carries over between calls, so the
-//! caller keeps one for the process. The crate's default
-//! ([`QaRandom::default`]) is MSVC's, the library of the committed
-//! recording, as R1 settled its runtime values on one platform
-//! (`RT(...;crate=16)`); [`QaRandom::native`] picks the build's own.
+//! caller keeps one for the process. The default ([`QaRandom::default`],
+//! [`QaRandom::native`]) is the engine of the standard library the crate is
+//! built with: the viewer beside it draws from that library, so Windows
+//! reproduces the MSVC recording and Linux the libstdc++ one (the
+//! per-platform rule, as for R1's runtime values `RT(win=..;linux=..)`).
+//! [`QaRandom::new`] picks either explicitly.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
@@ -188,9 +190,9 @@ pub struct QaRandom {
 }
 
 impl Default for QaRandom {
-    /// MSVC's engine, the library of the committed recording.
+    /// The engine of the build's own standard library ([`QaRandom::native`]).
     fn default() -> Self {
-        QaRandom::new(QaLibrary::Msvc)
+        QaRandom::native()
     }
 }
 
