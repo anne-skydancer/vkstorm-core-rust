@@ -1150,6 +1150,9 @@ struct WireRec {
 /// `BGItemHttpHandler`).
 struct LegacyFlight {
     handler: u64,
+    /// A foreground item request (`requestPost(true, ...)`): no handler of
+    /// the background fetch.
+    foreground: bool,
     folder: bool,
     sent_frame: u64,
     status: i32,
@@ -1263,6 +1266,8 @@ pub struct Run {
     /// `CallAfterCategoryFetchStage1` observers waiting: incomplete folders
     /// and the callback's tag.
     stage1: Vec<(Vec<Uuid>, String)>,
+    /// The model changed since the observers last ran (`notifyObservers`).
+    model_changed: bool,
     /// The mock delays legacy replies (c11's `delay_ms=3000`): they arrive
     /// only while the test settles, never during a burst of frames.
     pub legacy_delay: bool,
@@ -1329,6 +1334,7 @@ impl Run {
             reply_delay: 0,
             max_pool: 0,
             stage1: Vec::new(),
+            model_changed: false,
             legacy_delay: false,
             settling: false,
         };
@@ -1634,7 +1640,88 @@ impl Run {
         self.wire_targets.push(("POST".to_owned(), target, status));
         let phase = self.phases;
         self.unordered.push(WireRec { phase, line });
-        self.legacy.push(LegacyFlight { handler, folder, sent_frame: self.frame_no, status, value });
+        self.legacy.push(LegacyFlight { handler, foreground: false, folder, sent_frame: self.frame_no, status, value });
+    }
+
+    /// A foreground `requestPost` of item bodies (`fetchFromServer`, the item
+    /// observer's `fetch_items_from_llsd`): C++ model code, here as
+    /// scaffolding; the bodies come from the crate's `fetch::legacy`.
+    fn foreground_post(&mut self, cap: &str, body: Vec<u8>) {
+        let target = format!("/cap/{cap}");
+        let head = legacy_head(&target, body.len());
+        let request = format!("head={} body={}", escape_text(head.as_bytes()), escape_text(&body));
+        let v = vkstorm_llsd::parse(vkstorm_llsd::Format::Xml, &body, Default::default()).1.unwrap_or(Value::map());
+        let (status, value) = self.mock.as_mut().expect("generated replies").legacy_items(&v);
+        let line = format!("POST {target} status={status} {request}");
+        self.wires.push(line.clone());
+        self.wire_targets.push(("POST".to_owned(), target, status));
+        let phase = self.phases;
+        self.unordered.push(WireRec { phase, line });
+        self.legacy.push(LegacyFlight { handler: 0, foreground: true, folder: false, sent_frame: self.frame_no, status, value });
+    }
+
+    fn legacy_cap(&self, cap: &str) -> bool {
+        match cap {
+            "fi2" => !self.env.cap_fi2.is_empty(),
+            "fl2" => !self.env.cap_fl2.is_empty(),
+            _ => false,
+        }
+    }
+
+    /// `LLViewerInventoryItem::fetchFromServer()` without AIS.
+    pub fn fetch_from_server(&mut self, item: Uuid) {
+        let Some(it) = self.model.items.get(&item).cloned() else { return };
+        if it.complete {
+            return;
+        }
+        let cap = if self.world.agent != it.owner { "fl2" } else { "fi2" };
+        if self.legacy_cap(cap) {
+            let body = vkstorm_inventory::fetch::legacy::ItemBody {
+                agent_id: Some(self.world.agent),
+                items: vec![vkstorm_inventory::fetch::legacy::ItemRequest { item_id: item, owner_id: it.owner }],
+            };
+            self.foreground_post(cap, body.to_xml());
+        }
+    }
+
+    /// `LLInventoryFetchItemsObserver::startFetch()` without AIS, then
+    /// `fetch_items_from_llsd` (bodies with `cap_name`).
+    pub fn items_observer_start_legacy(&mut self, ids: &[Uuid]) {
+        let mut inv = Vec::new();
+        let mut lib = Vec::new();
+        for id in ids {
+            if self.model.items.get(id).is_some_and(|i| i.complete) || self.model.cats.contains_key(id) || *id == NULL_ID {
+                continue;
+            }
+            let owner = self.model.items.get(id).map_or(self.world.agent, |i| i.owner);
+            let e = Value::Map(
+                [(b"item_id".to_vec(), Value::Uuid(*id)), (b"owner_id".to_vec(), Value::Uuid(owner))].into_iter().collect(),
+            );
+            if owner == self.world.agent {
+                inv.push(e);
+            } else if owner == self.model.libowner {
+                lib.push(e);
+            }
+        }
+        for (cap, name, items) in [("fi2", "FetchInventory2", inv), ("fl2", "FetchLib2", lib)] {
+            if items.is_empty() {
+                continue;
+            }
+            if self.legacy_cap(cap) {
+                let body = Value::Map(
+                    [
+                        (b"agent_id".to_vec(), Value::Uuid(self.world.agent)),
+                        (b"cap_name".to_vec(), Value::String(name.as_bytes().to_vec())),
+                        (b"items".to_vec(), Value::Array(items)),
+                    ]
+                    .into_iter()
+                    .collect(),
+                );
+                self.foreground_post(cap, vkstorm_inventory::fetch::legacy::llsd_xml(&body));
+            } else {
+                self.note("msg FetchInventory (not modelled)");
+            }
+        }
     }
 
     /// `gInventory.handleResponses(false)` inside `bulkFetch()`: every reply
@@ -1645,7 +1732,7 @@ impl Run {
         let ready = !self.legacy_delay || self.settling;
         let mut k = 0;
         while k < self.legacy.len() {
-            if ready && self.legacy[k].sent_frame + self.reply_delay < frame {
+            if ready && !self.legacy[k].foreground && self.legacy[k].sent_frame + self.reply_delay < frame {
                 let f = self.legacy.remove(k);
                 self.legacy_completed(f);
             } else {
@@ -1664,6 +1751,15 @@ impl Run {
     /// handler's destruction.
     fn legacy_completed(&mut self, f: LegacyFlight) {
         let env = self.env.clone();
+        self.model_changed = true;
+        if f.foreground {
+            if let Some(Value::Array(items)) = f.value.as_ref().map(|v| get(v, "items").clone()) {
+                for it in &items {
+                    self.model.legacy_item(it, None);
+                }
+            }
+            return;
+        }
         if f.folder {
             let is_map = matches!(f.value, Some(Value::Map(_)));
             if f.status != 200 {
@@ -1780,11 +1876,17 @@ impl Run {
     /// `idleNotifyObservers`: a waiting stage-1 observer's `changed()`
     /// (scaffolding: the observers stay C++).
     fn observers(&mut self) {
+        if !std::mem::take(&mut self.model_changed) {
+            return;
+        }
+        let fetcher_done = self.sched.is_everything_fetched() && !self.sched.folder_fetch_active();
         let mut k = 0;
         while k < self.stage1.len() {
             let model = &self.model;
             self.stage1[k].0.retain(|c| model.cats.contains_key(c) && !model.is_category_complete(c));
-            if self.stage1[k].0.is_empty() {
+            // LLInventoryFetchDescendentsObserver::changed: also done when
+            // the fetcher is done with folders
+            if self.stage1[k].0.is_empty() || fetcher_done {
                 let (_, tag) = self.stage1.remove(k);
                 self.note(&format!("callback {tag}"));
             } else {
@@ -1894,6 +1996,16 @@ impl Run {
 
     fn mainloop(&mut self) {
         let frame = self.frame_no;
+        // foreground item requests: their handlers run with the HTTP pump
+        let mut k = 0;
+        while k < self.legacy.len() {
+            if self.legacy[k].foreground && self.legacy[k].sent_frame + self.reply_delay < frame {
+                let f = self.legacy.remove(k);
+                self.legacy_completed(f);
+            } else {
+                k += 1;
+            }
+        }
         let mut k = 0;
         while k < self.active.len() {
             let f = &self.active[k];
@@ -2051,6 +2163,7 @@ impl Run {
                 return;
             }
         }
+        self.model_changed = true;
         let mut fetches = Vec::new();
         if let Some(v) = &value {
             fetches = if is_fetch {

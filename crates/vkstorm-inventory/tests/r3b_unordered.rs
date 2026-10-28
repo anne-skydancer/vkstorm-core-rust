@@ -536,3 +536,109 @@ fn c10_legacy() {
 fn oc10_legacy() {
     legacy_burst("oc10_legacy", true);
 }
+
+// ---- s13/o13, s10b: fetch fallbacks without AIS -----------------------------------
+
+/// s13/o13: the COF without AIS blocked by the login's 180 s mark (finding
+/// 4) then served, a folder over UDP without capabilities (C++ message:
+/// not compared), the legacy scheduler, the COF over UDP, fetchFromServer's
+/// foreground POSTs (with agent_id) and the item observer's (with
+/// cap_name), nothing without capabilities.
+fn fetch_fallbacks(id: &str, other_grid: bool) {
+    let mut b = Builder::new(true);
+    basic(&mut b, 3, false, 3);
+    let mut r = phased(id, &b, CAPS_ALL, other_grid);
+    r.pool_size = 2;
+    r.pool_setting = 2;
+    r.refresh_env();
+    r.login();
+    r.walk();
+    let d = b.ids.clone();
+    r.set_region(true, CAPS_LEGACY, true);
+    let cof = sys(FT_CURRENT_OUTFIT);
+    r.set_version(cof, -1);
+    r.cof_without_ais("cof_legacy");
+    r.settle(true, true);
+    r.step("cof_legacy_timer_blocks");
+    r.clock_advance(181.0);
+    r.fetch_descendents_of(cof);
+    r.settle(true, true);
+    r.step("cof_legacy_after_timer");
+    r.set_region(true, CAPS_NONE, true);
+    r.set_version(d.user[0], -1);
+    r.fetch_descendents_of(d.user[0]);
+    r.settle(true, false);
+    r.step("folder_udp");
+    r.set_region(true, CAPS_LEGACY, true);
+    r.set_version(d.user[1], -1);
+    r.fetch_descendents_of(d.user[1]);
+    r.settle(true, true);
+    r.step("folder_legacy");
+    r.set_version(cof, -1);
+    r.clock_advance(11.0);
+    r.set_region(true, CAPS_NONE, true);
+    r.cof_without_ais("cof_udp");
+    r.settle(true, false);
+    r.step("cof_udp");
+    r.set_region(true, CAPS_LEGACY, true);
+    r.set_complete(d.obj1, false);
+    r.fetch_from_server(d.obj1);
+    r.settle(true, false);
+    r.step("item_fetch_from_server");
+    r.set_complete(d.lib_items[1], false);
+    r.fetch_from_server(d.lib_items[1]);
+    r.settle(true, false);
+    r.step("library_item_fetch_from_server");
+    r.set_complete(d.obj2, false);
+    r.set_complete(d.lib_items[2], false);
+    r.items_observer_start_legacy(&[d.obj2, d.lib_items[2]]);
+    r.settle(true, false);
+    r.step("item_observer_legacy");
+    r.set_region(true, CAPS_NONE, true);
+    r.set_complete(d.note1, false);
+    r.items_observer_start_legacy(&[d.note1]);
+    r.settle(true, false);
+    r.step("item_observer_no_caps");
+    report(id, &mut r);
+}
+
+#[test]
+fn s13_sl_fetch_fallbacks() {
+    fetch_fallbacks("s13_sl_fetch_fallbacks", false);
+}
+
+#[cfg(not(feature = "opensim"))]
+#[test]
+fn o13_fetch_fallbacks() {
+    fetch_fallbacks("o13_fetch_fallbacks", true);
+}
+
+/// s10b: another grid with FSUseAis3Api off: the region's InventoryAPIv3 is
+/// ignored, the legacy walk; item fetches without capabilities go over UDP
+/// (C++ messages: not compared).
+#[cfg(not(feature = "opensim"))]
+#[test]
+fn s10b_legacy_caps_other_grid() {
+    let id = "s10b_legacy_caps_other_grid";
+    let mut b = Builder::new(true);
+    basic(&mut b, 2, true, 3);
+    let mut r = phased(id, &b, CAPS_ALL, true);
+    r.pool_size = 2;
+    r.pool_setting = 2;
+    r.fs_use_ais3_api = false;
+    r.refresh_env();
+    r.login();
+    r.walk();
+    r.find_lost_items();
+    r.settle(true, true);
+    r.step("lost_and_found");
+    r.set_region(true, CAPS_NONE, true);
+    let root1 = b.ids.items_in[&root()][0];
+    let lib0 = b.ids.lib_items[0];
+    r.set_complete(root1, false);
+    r.set_complete(lib0, false);
+    r.items_observer_start_legacy(&[root1, lib0]);
+    r.settle(true, false);
+    r.step("udp_item_fetch");
+    report(id, &mut r);
+}
