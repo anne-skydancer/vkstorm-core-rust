@@ -177,7 +177,7 @@ fn set1_task_files() {
 /// standard file is `pending_none`'s input (Contents, A, B).
 #[test]
 fn set1_standard_file_matches_recorder() {
-    assert_bytes("files/pending_none.inv", &standard_file());
+    assert_bytes("files/pending_none.inv", standard_file());
 }
 
 /// `scrub_names`.

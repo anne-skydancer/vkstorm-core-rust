@@ -335,6 +335,7 @@ pub fn content_lines(text: &[u8]) -> Vec<Vec<u8>> {
 pub fn assert_text(fixture: &str, produced: &[u8]) {
     let want = content_lines(&read_bytes(fixture));
     let got = content_lines(produced);
+    assert!(!want.is_empty(), "{fixture} has no content lines");
     let mut report = String::new();
     let mut shown = 0;
     let mut last_case = String::new();
@@ -499,11 +500,14 @@ pub fn legacy_item(s: &ItemSpec) -> Vec<u8> {
 }
 
 /// Contents (obj), A, B.
-pub fn standard_file() -> Vec<u8> {
-    let mut f = legacy_object(&obj_id(), b"Contents", AssetType::CATEGORY, &NULL_ID);
-    f.extend(legacy_item(&spec_a()));
-    f.extend(legacy_item(&spec_b()));
-    f
+pub fn standard_file() -> &'static [u8] {
+    static F: OnceLock<Vec<u8>> = OnceLock::new();
+    F.get_or_init(|| {
+        let mut f = legacy_object(&obj_id(), b"Contents", AssetType::CATEGORY, &NULL_ID);
+        f.extend(legacy_item(&spec_a()));
+        f.extend(legacy_item(&spec_b()));
+        f
+    })
 }
 
 pub fn item_llsd(v: &ViewerItem) -> Value {
@@ -511,9 +515,11 @@ pub fn item_llsd(v: &ViewerItem) -> Value {
 }
 
 pub fn standard_reply(serial: i32) -> Value {
+    static C: OnceLock<Value> = OnceLock::new();
+    let contents = C.get_or_init(|| Value::Array(vec![item_llsd(&make_item(&spec_a())), item_llsd(&make_item(&spec_b()))]));
     let mut body = Value::map();
     insert(&mut body, "inventory_serial", Value::Integer(serial));
-    insert(&mut body, "contents", Value::Array(vec![item_llsd(&make_item(&spec_a())), item_llsd(&make_item(&spec_b()))]));
+    insert(&mut body, "contents", contents.clone());
     body
 }
 
@@ -1160,7 +1166,7 @@ impl Scene {
         let x = self.take_xfer(i);
         let mut code = 0;
         match how {
-            "ok" => self.write_file(&x.local, &standard_file()),
+            "ok" => self.write_file(&x.local, standard_file()),
             "nofile" => {
                 self.cache.remove(&x.local);
             }
