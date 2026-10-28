@@ -14,10 +14,13 @@ replaces the generated files in
   <viewer>/indra/newview/tests/fixtures/inventory/{cache,msgs}
   crates/vkstorm-inventory/tests/fixtures/{cache,msgs}
 
-keeping README.md, .gitattributes and the other platform's own records
-(c4_validation_qa.msvc.txt is recorded on Windows, c4_validation_qa.libstdcxx.txt
-and c5_write_safety.linux.txt on Linux: run the script on both to refresh
-both).
+keeping README.md, .gitattributes and the other standard library's own
+records: its <area>/<library>/ tree and its c4_validation_qa.<library>.txt.
+Since upstream 28fee038e0 the model's maps are std::unordered_map, so every
+record that follows their order is kept per C++ standard library, in
+cache/msvc/ and msgs/msvc/ (recorded on Windows) and cache/libstdcxx/ and
+msgs/libstdcxx/ (recorded on Linux); the C2 inputs in cache/c2/ are shared.
+Run the script on both platforms to refresh both.
 
 A record run never passes (the test fails on purpose after writing
 DUMP_COMPLETE), so the exit status is not used: the script records twice
@@ -45,9 +48,9 @@ KEEP = {"README.md", ".gitattributes"}
 
 
 def other_platform_files():
-    if os.name == "nt":
-        return {"c4_validation_qa.libstdcxx.txt", "c5_write_safety.linux.txt"}
-    return {"c4_validation_qa.msvc.txt"}
+    """The other standard library's records (a file, or a directory in each area)."""
+    other = "libstdcxx" if os.name == "nt" else "msvc"
+    return {other, "c4_validation_qa.%s.txt" % other}
 
 
 def replace_generated(dest, generated):

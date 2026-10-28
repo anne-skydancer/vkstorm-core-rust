@@ -1,6 +1,6 @@
 # vkstorm inventory model oracle (recorder R2): the public Linden Library cache (indra/llinventory/tests/fixtures/library)
 # generator: INTEGRATION_TEST_llinventorymodel_parity with VKS_INVMODEL_DUMP (indra/newview/tests/llinventorymodel_parity_test.cpp)
-# viewer commit: 8d18dd15dd
+# viewer commit: d0c9c4a259
 # platform: windows-msvc
 # seed: none
 # format: tests/fixtures/inventory/cache/README.md; lines starting with '#' are not compared
@@ -18,15 +18,15 @@ item_types 0:353 1:72 3:38 5:1098 6:2602 7:57 10:7 13:804 20:24 21:97 56:415 57:
 reencode identical=1 size=3416877
 library_root 1c7a7fd0-104e-a8b1-51c6-32ea9b08e38b
 loaded cats=517 cats_known_version=490 items=5585 links=0
-login_lines sha256=379dcfb1bbc8e8b2aa4a8c64c6c0a1dd58a24ee262cde3e4c3e8e217a7836c0a count=513
-model sha256=cbe32d0ee0ec491bf354e1dc8b25ac38bd4bcaffd2cf625a4988a7a182973440 lines=6601
+login_lines sha256=35d4f9c78ef197e5effc0c9d52ba5269d438a548954fed26ef757575415a57b0 count=513
+model sha256=9b825d2938faa1b5332c4cb795304d59a375048a75a32f9fe3d3b0ac1107aaf0 lines=6601
 model[0..999] sha256=7d1c4cf6a5e85e94f711b29cba9fd8e07289ef8af241ce50f78b1c71ef0c6b57
 model[1000..1999] sha256=1f71dd12def6d70d420642d0433cd7ae716248971df28469ce955f73321c105d
 model[2000..2999] sha256=ede8a34d92f4528a7f7b2c1c48043f5c7d41765d11372d1608c11c4fba0b419c
 model[3000..3999] sha256=bf8570798d1d2e60bd467dca6a9e91db600826f14df0e334163f58df18dfbc96
 model[4000..4999] sha256=fbf18a4f3fad47ba80ba66ad39287e5875f1714283e58d7c5f09746270ebf159
 model[5000..5999] sha256=8163dfaaff6a6df07ef0485538d316e57ebbc41afbc47c41397d5841957f004f
-model[6000..6600] sha256=d8f9243bd972eaa48cd45188e01abe004d38a82f398790e18bc520502758f64c
+model[6000..6600] sha256=5bd79ab1ea25dedf20c98785e09e155af2f7a43c8dd201549b34a220bd27fd30
 files after_library [ba2a564a-f0f1-4b82-9c61-b7520bfcd09f.inv.llsd.gz gz]
 files after_agent [ba2a564a-f0f1-4b82-9c61-b7520bfcd09f.inv.llsd.gz gz]
 files temp []
