@@ -13,7 +13,11 @@
 //!   obfuscation ([`item`], [`category`], [`object`], [`shadow`]);
 //! - their LLSD forms ([`llsd`]) and legacy text forms ([`legacy`]);
 //! - items, folders, aggregate permissions, `LLCategory` and sale info in
-//!   UDP message blocks ([`message`]).
+//!   UDP message blocks ([`message`]);
+//! - the AIS decisions of `llaisapi.cpp` ([`ais`]): the parse of an AIS reply
+//!   into the ordered operations `AISUpdate::doUpdate()` applies, the
+//!   coroutine's status, error-branch and callback decisions, and the
+//!   requests of the command functions.
 //!
 //! It is not the inventory model. In this rung the model containers stay C++:
 //! `LLInventoryItem`, `LLInventoryCategory` and `LLInventoryObject` keep their
@@ -32,6 +36,7 @@
 #![forbid(unsafe_code)]
 
 pub mod aggregate;
+pub mod ais;
 pub mod category;
 pub mod category_obj;
 pub mod flags;
