@@ -5,8 +5,9 @@
 //! decode's item filter, the login load's broken-link and parent checks)
 //! read them through [`ModelLookup`]: the stored type of the item or folder
 //! under an id, if the model has one. The C ABI can implement it by
-//! resolving the ids a call reads before making it ([`ModelObjects`]), so no
-//! callback into C++ is needed.
+//! resolving the ids a call reads before making it ([`ModelObjects`]; the
+//! login load lists them with [`crate::login::lookup_ids`]), so no callback
+//! into C++ is needed.
 
 use std::collections::BTreeMap;
 

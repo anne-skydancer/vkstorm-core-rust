@@ -5,6 +5,7 @@
 //! `gunzip_file` as the C++ glue around the cache codec does it.
 #![allow(dead_code)]
 
+pub mod fixture_model;
 pub mod gz;
 pub mod snapshot;
 

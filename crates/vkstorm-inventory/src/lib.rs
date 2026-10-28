@@ -13,7 +13,11 @@
 //!   obfuscation ([`item`], [`category`], [`object`], [`shadow`]);
 //! - their LLSD forms ([`llsd`]) and legacy text forms ([`legacy`]);
 //! - items, folders, aggregate permissions, `LLCategory` and sale info in
-//!   UDP message blocks ([`message`]).
+//!   UDP message blocks ([`message`]);
+//! - from `LLInventoryModel` (`newview`): the cache file codec ([`cache`]),
+//!   the login load and discard rules of `loadSkeleton` ([`login`]) and
+//!   `validate()` ([`validate`]), over flat views of the C++ model
+//!   ([`model`]).
 //!
 //! It is not the inventory model. In this rung the model containers stay C++:
 //! `LLInventoryItem`, `LLInventoryCategory` and `LLInventoryObject` keep their
@@ -39,6 +43,7 @@ pub mod flags;
 pub mod item;
 pub mod legacy;
 pub mod llsd;
+pub mod login;
 pub mod message;
 pub mod model;
 pub mod object;
