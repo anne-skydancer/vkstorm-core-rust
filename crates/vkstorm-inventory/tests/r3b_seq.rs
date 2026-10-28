@@ -11,7 +11,7 @@
 mod r3b_support;
 
 use r3b_support::*;
-use vkstorm_inventory::fetch::Uuid;
+use vkstorm_inventory::fetch::{NULL_ID, Uuid};
 use vkstorm_inventory::fetch::ais::{Command, ItemType};
 
 fn run_world(id: &str, b: &Builder) -> Run {
@@ -21,6 +21,13 @@ fn run_world(id: &str, b: &Builder) -> Run {
 
 fn none(_: &str) -> bool {
     false
+}
+
+/// Compares the lines only; the model dump is not checked (a scenario whose
+/// folders C++ model code changes outside the fetch path).
+fn report_lines(id: &str, r: &mut Run, skip: &dyn Fn(&str) -> bool) {
+    let (n, total) = check(id, r, skip);
+    eprintln!("{id}: {n} of {total} lines compared; model dump not checked");
 }
 
 fn report(id: &str, r: &mut Run, skip: &dyn Fn(&str) -> bool) {
@@ -46,6 +53,16 @@ fn recorded_body(id: &str, method: &str) -> Vec<u8> {
         .iter()
         .find(|l| l.starts_with("wire ") && l.split(' ').nth(2) == Some(method))
         .unwrap();
+    let a = l.find(" body=").unwrap() + 6;
+    let e = l.rfind(" resp=").unwrap();
+    unescape(&l[a..e])
+}
+
+/// The body of recorded request `n` (1-based).
+fn recorded_body_n(id: &str, n: usize) -> Vec<u8> {
+    let lines = scenario_lines(id);
+    let prefix = format!("wire {n} ");
+    let l = lines.iter().find(|l| l.starts_with(&prefix)).unwrap();
     let a = l.find(" body=").unwrap() + 6;
     let e = l.rfind(" resp=").unwrap();
     unescape(&l[a..e])
@@ -90,6 +107,71 @@ fn s01_login_cold() {
     r.settle(true, true);
     r.step("orphans");
     r.step("logout_cache");
+    report(id, &mut r, &none);
+}
+
+// ---- 2: login_warm (s01's logout cache) --------------------------------------------
+
+/// s01's run, for its final model: the cache s02a and s02b load and the
+/// folder versions the server has after it.
+fn s01_after() -> (Builder, ReplayModel) {
+    let id = "s01_login_cold";
+    let b = std_world(6, true, 3);
+    let mut r = run_world(id, &b);
+    r.login();
+    r.cof(b.ids.outfit_a);
+    r.walk();
+    r.find_lost_items();
+    r.settle(true, true);
+    assert!(r.error.is_none());
+    (b, std::mem::take(&mut r.model))
+}
+
+/// `s02_world()`: the server after s01, every folder at the version the
+/// viewer cached.
+fn s02_world(b: &Builder, m: &ReplayModel) -> World {
+    let mut w = b.w.clone();
+    for f in &mut w.folders {
+        if let Some(c) = m.cats.get(&f.id) {
+            if c.version >= 0 {
+                f.version = c.version;
+            }
+        }
+    }
+    w
+}
+
+#[test]
+fn s02a_login_warm_full() {
+    let id = "s02a_login_warm_full";
+    let (b, m) = s01_after();
+    let w = s02_world(&b, &m);
+    let lines = scenario_lines(id);
+    let mut r = Run::new(id, w, &lines);
+    r.cache = Some(m.save_cache());
+    r.login();
+    r.cof(NULL_ID);
+    r.walk();
+    report(id, &mut r, &none);
+}
+
+#[test]
+fn s02b_login_warm_partial() {
+    let id = "s02b_login_warm_partial";
+    let (b, m) = s01_after();
+    let mut w = s02_world(&b, &m);
+    let (tree, leaf) = (b.ids.user[0], b.ids.user_leaf[3]);
+    for f in &mut w.folders {
+        if f.id == tree || f.id == leaf {
+            f.version += 1;
+        }
+    }
+    let lines = scenario_lines(id);
+    let mut r = Run::new(id, w, &lines);
+    r.cache = Some(m.save_cache());
+    r.login();
+    r.cof(NULL_ID);
+    r.walk();
     report(id, &mut r, &none);
 }
 
@@ -702,4 +784,120 @@ fn o15a_library_owner_ais() {
     r.settle(true, true);
     r.step("library_folder");
     report(id, &mut r, &none);
+}
+
+// ---- 9: AIS writes ---------------------------------------------------------------------
+
+/// Every write's URL, method, tid and callbacks are the crate's (`ais`);
+/// each body is the caller's LLSD (C++ model code), taken from the
+/// recording. The model refuses `remove_protected` before any request
+/// (`CannotRemoveProtectedCategories`, model code: not compared). The
+/// writes' effects on the model are C++ (`AISUpdate`): the dump is not
+/// checked.
+#[test]
+fn s09_writes() {
+    let id = "s09_writes";
+    let b = std_world(3, false, 3);
+    let mut r = run_world(id, &b);
+    r.login();
+    r.walk();
+    let d = b.ids.clone();
+    let outfit_c = parse_uuid("c1000000-0000-4000-8000-000000000002");
+    let gone_item = pid(0xa0c00000, 1);
+    let gone_folder = pid(0xc0c00000, 1);
+    let first_note = d.items_in[&d.user[0]][0];
+    let second = d.items_in[&d.user[0]][1];
+    let mut n = 7;
+    let mut write = |r: &mut Run, cmd: Command, tag: Option<&str>, step: &str| {
+        let body = recorded_body_n(id, n);
+        n += 1;
+        r.ais(cmd, tag, body);
+        r.settle(true, true);
+        r.step(step);
+    };
+    let t = r.fresh_tid();
+    write(&mut r, Command::CreateInventory { parent: d.user[0], tid: t }, Some("create_folder"), "create_folder");
+    let t = r.fresh_tid();
+    write(&mut r, Command::CreateInventory { parent: sys(FT_MY_OUTFITS), tid: t }, Some("create_outfit"), "create_outfit");
+    let t = r.fresh_tid();
+    write(&mut r, Command::CreateInventory { parent: outfit_c, tid: t }, Some("link_array"), "link_array");
+    let t = r.fresh_tid();
+    write(&mut r, Command::CreateInventory { parent: outfit_c, tid: t }, Some("link_array_2"), "link_array_2");
+    let cof = sys(FT_CURRENT_OUTFIT);
+    let t = r.fresh_tid();
+    write(&mut r, Command::SlamFolder { folder: cof, tid: t }, Some("slam_cof"), "slam_cof");
+    let t = r.fresh_tid();
+    write(&mut r, Command::SlamFolder { folder: cof, tid: t }, Some("slam_cof_2"), "slam_cof_2");
+    write(&mut r, Command::UpdateItem { item: first_note }, Some("update_item_llsd"), "update_item_llsd");
+    write(&mut r, Command::UpdateItem { item: second }, Some("update_item_object"), "update_item_object");
+    write(&mut r, Command::UpdateCategory { category: d.user[1] }, Some("update_category"), "update_category");
+    write(&mut r, Command::UpdateCategory { category: d.user[2] }, None, "category_update_server");
+    write(&mut r, Command::UpdateCategory { category: d.outfit_b }, None, "change_type");
+    write(&mut r, Command::UpdateItem { item: d.note1 }, None, "item_update_server");
+    write(&mut r, Command::RemoveItem { item: d.obj2 }, Some("remove_item"), "remove_item");
+    write(&mut r, Command::RemoveItem { item: d.trash1 }, Some("remove_item_immediate"), "remove_item_immediate");
+    write(&mut r, Command::RemoveItem { item: gone_item }, Some("remove_item_410"), "remove_item_410");
+    write(&mut r, Command::RemoveCategory { category: d.user_sub[2] }, Some("remove_category"), "remove_category");
+    write(&mut r, Command::RemoveCategory { category: gone_folder }, Some("remove_category_410"), "remove_category_410");
+    r.settle(true, true);
+    r.step("remove_protected");
+    write(&mut r, Command::PurgeDescendents { category: sys(FT_TRASH) }, Some("purge_trash"), "purge_trash");
+    let t = r.fresh_tid();
+    let c = Command::CopyLibraryCategory { source: d.lib_folders[0], dest: d.user[0], copy_subfolders: false, tid: t };
+    write(&mut r, c, Some("copy_library_depth0"), "copy_library_depth0");
+    let t = r.fresh_tid();
+    let c = Command::CopyLibraryCategory { source: d.lib_folders[3], dest: d.user[0], copy_subfolders: true, tid: t };
+    write(&mut r, c, Some("copy_library_recursive"), "copy_library_recursive");
+    report_lines(id, &mut r, &|l| l == "jrn notify CannotRemoveProtectedCategories");
+}
+
+// ---- 14: Second Life write fallbacks (no AIS) -------------------------------------------
+
+/// The login walk is the scheduler's (AIS). Every write after it is C++
+/// model code without AIS (UDP messages, `CreateInventoryCategory`): its
+/// one POST is fed as an input (`foreign_request`, not compared) and its
+/// callbacks are not compared; the steps' request counts are.
+fn write_fallbacks(id: &str, other_grid: bool) {
+    let b = std_world(3, false, 3);
+    let mut r = run_world(id, &b);
+    if other_grid {
+        r.in_second_life = false;
+        r.refresh_env();
+    }
+    r.login();
+    r.walk();
+    r.set_region(true, CAPS_LEGACY, true);
+    r.foreign_request();
+    r.settle(true, true);
+    r.step("create_cap");
+    r.set_region(true, CAPS_NONE, true);
+    for step in [
+        "create_none",
+        "item_update_server",
+        "category_update_server",
+        "change_type",
+        "link_array",
+        "update_item_llsd",
+        "update_item_object",
+        "update_category",
+        "remove_item",
+        "remove_category_with_item",
+        "remove_empty_category",
+        "purge_trash",
+        "slam_cof",
+    ] {
+        r.settle(true, true);
+        r.step(step);
+    }
+    report_lines(id, &mut r, &|l| l.starts_with("jrn callback ") || l.starts_with("wire 7 "));
+}
+
+#[test]
+fn s14_sl_write_fallbacks() {
+    write_fallbacks("s14_sl_write_fallbacks", false);
+}
+
+#[test]
+fn o14_write_fallbacks() {
+    write_fallbacks("o14_write_fallbacks", true);
 }

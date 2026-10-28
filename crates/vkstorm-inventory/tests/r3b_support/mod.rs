@@ -353,7 +353,94 @@ pub struct ReplayModel {
     pub item_children: BTreeMap<Uuid, Vec<Uuid>>,
 }
 
+/// An inventory cache file as the replay model needs it: the cached
+/// folders' versions and the cached items.
+#[derive(Clone, Debug, Default)]
+pub struct CacheFile {
+    pub cats: BTreeMap<Uuid, i32>,
+    pub items: Vec<MItem>,
+}
+
 impl ReplayModel {
+    fn viewer_count(&self, id: &Uuid) -> i32 {
+        (self.cat_children.get(id).map_or(0, Vec::len) + self.item_children.get(id).map_or(0, Vec::len)) as i32
+    }
+
+    /// `cache(root)` and `cache(library root)` at logout: a folder is saved
+    /// when its version is known and its server count equals its viewer
+    /// count (`LLCanCache`); an item when its parent was saved.
+    pub fn save_cache(&self) -> CacheFile {
+        let mut f = CacheFile::default();
+        for top in [self.root, self.libroot] {
+            let Some(c) = self.cats.get(&top) else { continue };
+            let mut cached: BTreeSet<Uuid> = BTreeSet::new();
+            let can = |c: &MCat| c.version != -1 && c.count == self.viewer_count(&c.id);
+            if can(c) {
+                cached.insert(top);
+                f.cats.insert(top, c.version);
+            }
+            let mut stack = vec![top];
+            while let Some(id) = stack.pop() {
+                for k in self.cat_children.get(&id).cloned().unwrap_or_default() {
+                    if let Some(c) = self.cats.get(&k) {
+                        if can(c) {
+                            cached.insert(k);
+                            f.cats.insert(k, c.version);
+                        }
+                    }
+                    stack.push(k);
+                }
+                for i in self.item_children.get(&id).cloned().unwrap_or_default() {
+                    if let Some(it) = self.items.get(&i) {
+                        if cached.contains(&it.parent) {
+                            f.items.push(it.clone());
+                        }
+                    }
+                }
+            }
+        }
+        f
+    }
+
+    /// `loadSkeleton` with a cache: a skeleton folder keeps its version when
+    /// the cache has it at the same version; cached items under a folder
+    /// with a version are added; a folder with a version gets the count of
+    /// its loaded children.
+    pub fn load_warm(&mut self, w: &World, cache: &CacheFile) {
+        let mut counts: BTreeMap<Uuid, i32> = BTreeMap::new();
+        for f in &w.folders {
+            let owner = if f.owner == w.libowner && w.libroot != NULL_ID { w.libowner } else { w.agent };
+            let version = match cache.cats.get(&f.id) {
+                Some(v) if *v == f.version => f.version,
+                _ => -1,
+            };
+            self.cats.insert(
+                f.id,
+                MCat {
+                    id: f.id,
+                    parent: f.parent,
+                    pref: f.ftype as i8,
+                    owner,
+                    version,
+                    count: -1,
+                    fetch: CategoryFetchState::new(self.now),
+                },
+            );
+            *counts.entry(f.parent).or_default() += 1;
+        }
+        for it in &cache.items {
+            if self.cats.get(&it.parent).is_some_and(|c| c.version != -1) {
+                self.items.insert(it.id, it.clone());
+                *counts.entry(it.parent).or_default() += 1;
+            }
+        }
+        for c in self.cats.values_mut() {
+            if c.version != -1 {
+                c.count = counts.get(&c.id).copied().unwrap_or(0);
+            }
+        }
+    }
+
     /// `findCategoryUUIDForType`: the first direct child of the root with
     /// that preferred type.
     pub fn find_category_for_type(&self, t: i32) -> Uuid {
@@ -1009,6 +1096,8 @@ pub struct Run {
     /// The `checkStop()` armed for the n-th AIS update (s24).
     pub stop_armed: u32,
     pub stops_thrown: u32,
+    /// The cache a warm login loads (s02a, s02b).
+    pub cache: Option<CacheFile>,
 }
 
 impl Run {
@@ -1051,6 +1140,7 @@ impl Run {
             error: None,
             stop_armed: 0,
             stops_thrown: 0,
+            cache: None,
         };
         // The process-wide 403 flag: s04 (index order) raises the alert; every
         // later scenario sees it spent.
@@ -1444,6 +1534,25 @@ impl Run {
         self.drain();
     }
 
+    /// A request C++ model code makes outside the fetch code (the
+    /// `CreateInventoryCategory` coroutine of s14): consumed from the
+    /// recording as an input, so that the request counts stay aligned. Its
+    /// line is copied, not built.
+    pub fn foreign_request(&mut self) {
+        let w = self.rec_wires[self.next_wire].clone();
+        self.next_wire += 1;
+        self.wires.push(format!(
+            "wire {} {} {} status={} {} {}",
+            self.wires.len() + 1,
+            w.method,
+            w.target,
+            w.status,
+            w.request,
+            w.tail
+        ));
+        self.wire_targets.push((w.method.clone(), w.target.clone(), w.status));
+    }
+
     pub fn pool_count(&self) -> usize {
         self.queue.len() + self.active.len()
     }
@@ -1607,7 +1716,10 @@ impl Run {
 
     pub fn inventory_skel(&mut self) {
         let w = self.world.clone();
-        self.model.load_cold(&w);
+        match self.cache.take() {
+            Some(c) => self.model.load_warm(&w, &c),
+            None => self.model.load_cold(&w),
+        }
     }
 
     pub fn inventory_send2(&mut self) {
@@ -1783,11 +1895,10 @@ pub fn check(id: &str, run: &mut Run, skip: &dyn Fn(&str) -> bool) -> (usize, us
 }
 
 /// The fetch state of every folder in the recorded model dump (`mdl cat ...
-/// version= ... fetching= timer{...}`) against the replay model: the version
-/// (the replay model's AIS applier) and the fetch state and request timer
-/// (the scheduler's `setFetching` calls through `fetch::timer`). Returns
-/// `(checked, mismatches)`; the descendent count is the C++ model's
-/// accounting and is not checked.
+/// version= count= ... fetching= timer{...}`) against the replay model: the
+/// version and descendent count (the replay model's AIS applier) and the
+/// fetch state and request timer (the scheduler's `setFetching` calls
+/// through `fetch::timer`). Returns `(checked, mismatches)`.
 pub fn check_model_fetch_state(id: &str, run: &Run) -> (usize, Vec<String>) {
     let mut checked = 0;
     let mut bad = Vec::new();
@@ -1799,6 +1910,7 @@ pub fn check_model_fetch_state(id: &str, run: &Run) -> (usize, Vec<String>) {
             rest[a..].split(' ').next().unwrap().to_owned()
         };
         let version: i32 = field("version").parse().unwrap();
+        let count: i32 = field("count").parse().unwrap();
         let fetching: i32 = field("fetching").parse().unwrap();
         let t = rest.find("timer{").map(|a| rest[a..].to_owned()).unwrap();
         checked += 1;
@@ -1813,11 +1925,12 @@ pub fn check_model_fetch_state(id: &str, run: &Run) -> (usize, Vec<String>) {
             tm.has_expired(run.model.now) as i32,
             (tm.expiry - run.model.now) as f32
         );
-        if c.version != version || c.fetch.fetching as i32 != fetching || mine_t != t {
+        if c.version != version || c.count != count || c.fetch.fetching as i32 != fetching || mine_t != t {
             bad.push(format!(
-                "{}: recorded version={version} fetching={fetching} {t}, replay version={} fetching={} {mine_t}",
+                "{}: recorded version={version} count={count} fetching={fetching} {t}, replay version={} count={} fetching={} {mine_t}",
                 uuid_string(&cid),
                 c.version,
+                c.count,
                 c.fetch.fetching as i32
             ));
         }
