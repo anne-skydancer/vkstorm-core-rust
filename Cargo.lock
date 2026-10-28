@@ -627,6 +627,7 @@ name = "vkstorm-inventory"
 version = "0.1.0"
 dependencies = [
  "vkstorm-llsd",
+ "vkstorm-messages",
 ]
 
 [[package]]

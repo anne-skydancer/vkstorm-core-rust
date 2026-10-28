@@ -11,7 +11,9 @@
 //!   ([`perms`], [`aggregate`], [`sale`]);
 //! - item, category and object records, their CRCs and the asset id
 //!   obfuscation ([`item`], [`category`], [`object`], [`shadow`]);
-//! - their LLSD forms ([`llsd`]) and legacy text forms ([`legacy`]).
+//! - their LLSD forms ([`llsd`]) and legacy text forms ([`legacy`]);
+//! - items, folders, aggregate permissions, `LLCategory` and sale info in
+//!   UDP message blocks ([`message`]).
 //!
 //! It is not the inventory model. In this rung the model containers stay C++:
 //! `LLInventoryItem`, `LLInventoryCategory` and `LLInventoryObject` keep their
@@ -36,6 +38,7 @@ pub mod flags;
 pub mod item;
 pub mod legacy;
 pub mod llsd;
+pub mod message;
 pub mod object;
 pub mod perms;
 pub mod sale;

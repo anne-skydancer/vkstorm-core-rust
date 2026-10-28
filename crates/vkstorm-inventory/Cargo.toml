@@ -11,8 +11,10 @@ default = []
 # OpenSim grid support: the OpenSim-only inventory paths, such as the export
 # permission column of mask_to_string. Absent from a Second Life-only build.
 # Mirrors the viewer's CMake OPENSIM option.
-opensim = []
+opensim = ["vkstorm-messages/opensim"]
 
 [dependencies]
 # Value for the LLSD forms, and text::uuid_set for LLUUID::set semantics.
 vkstorm-llsd = { path = "../vkstorm-llsd" }
+# The UDP message builder and reader for the item message blocks (message).
+vkstorm-messages = { path = "../vkstorm-messages" }
