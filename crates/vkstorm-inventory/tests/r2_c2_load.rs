@@ -222,7 +222,7 @@ fn load_lines(input: &CaseInput) -> (Vec<String>, Login<'_>) {
 
 #[test]
 fn c2_load() {
-    let file = "cache/c2_load.txt";
+    let file = &r2common::cache_lib("c2_load.txt");
     let ids: Vec<String> =
         String::from_utf8(read_bytes("cache/c2/cases.txt")).unwrap().lines().map(str::to_owned).collect();
     assert_eq!(ids.len(), 64);
@@ -279,7 +279,7 @@ fn c2_load() {
 /// makes it), then the standard agent skeleton without a cache.
 #[test]
 fn library_real_listings() {
-    let file = "cache/library_real.txt";
+    let file = &r2common::cache_lib("library_real.txt");
     let case = &read_cases(file)[0];
     let name = "ba2a564a-f0f1-4b82-9c61-b7520bfcd09f.inv.llsd.gz";
     let gz = read_bytes(&format!("model/library/{name}"));

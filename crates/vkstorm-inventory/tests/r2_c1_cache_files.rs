@@ -88,9 +88,9 @@ fn notation_file(plain: &[u8]) -> String {
 
 #[test]
 fn c1_cache_files() {
-    let file = "cache/c1_cache_files.txt";
+    let file = &cache_lib("c1_cache_files.txt");
     let mut tally = Tally::default();
-    let library = read_bytes("cache/c1/standard.library.inv.llsd");
+    let library = read_bytes(&cache_lib("c1/standard.library.inv.llsd"));
     let library_digest = sha256_hex(&reencode(&decode(&library)));
     let mut notation_files = 0;
     for case in read_cases(file) {
@@ -102,37 +102,50 @@ fn c1_cache_files() {
             tally.left("uncommitted random world", case.lines.len());
             continue;
         }
-        let rel = format!("cache/c1/{}.inv.llsd", case.id);
-        let plain = read_bytes(&rel);
-        let mut out = vec![format!("file {rel} size={} sha256={}", plain.len(), sha256_hex(&plain))];
+        // The record names the file as the recorder's tree did (`cache/c1/`);
+        // this build's copy is the one of its standard library.
+        let label = format!("cache/c1/{}.inv.llsd", case.id);
+        let plain = read_bytes(&cache_lib(&format!("c1/{}.inv.llsd", case.id)));
+        let mut out = vec![format!("file {label} size={} sha256={}", plain.len(), sha256_hex(&plain))];
         let version = u32::from_be_bytes([plain[0], plain[1], plain[2], plain[3]]);
         out.push(format!("header={version} last_byte={}", plain.last().map(|&b| i32::from(b)).unwrap_or(-1)));
         let d = decode(&plain);
         out.push(decode_line(&d, true));
         out.extend(records(&d).into_iter().map(|l| format!("  {l}")));
         out.push(reencode_line(&reencode(&d), &plain, true));
+        // The library's cache file follows the record order of its world's
+        // model, which is unordered_map order since upstream 28fee038e0 and
+        // so differs between worlds. Only the standard world's library file
+        // is committed: the other worlds' line is left to the viewer test.
+        let mut expected: &[String] = &case.lines;
         if case.lines.last().is_some_and(|l| l.starts_with("library file")) {
-            out.push(format!("library file size={} sha256={library_digest}", library.len()));
+            if case.id == "standard.agent" {
+                out.push(format!("library file size={} sha256={library_digest}", library.len()));
+            } else {
+                expected = &case.lines[..case.lines.len() - 1];
+                tally.left("library file of a world whose library cache is not committed", 1);
+            }
         }
-        assert_case(file, &case.id, &case.lines, &out);
+        assert_case(file, &case.id, expected, &out);
         tally.replayed("cache file", out.len());
 
-        let notation = String::from_utf8(read_bytes(&format!("cache/c1/{}.notation.txt", case.id))).unwrap();
+        let notation = String::from_utf8(read_bytes(&cache_lib(&format!("c1/{}.notation.txt", case.id)))).unwrap();
         assert_eq!(notation_file(&plain), notation, "{}.notation.txt", case.id);
         notation_files += 1;
     }
     tally.print(file);
     assert_eq!(notation_files, 6);
-    assert_eq!((tally.replayed, tally.left), (792, 26));
+    // 4 library file lines of the non-standard worlds are left (see above).
+    assert_eq!((tally.replayed, tally.left), (788, 30));
 }
 
 #[test]
 fn c1_realistic() {
-    let file = "cache/c1_realistic.txt";
+    let file = &cache_lib("c1_realistic.txt");
     let cases = read_cases(file);
     assert_eq!(cases.len(), 1);
     let case = &cases[0];
-    let plain = gunzip_strict(&read_bytes("cache/c1/realistic_100k.inv.llsd.gz"));
+    let plain = gunzip_strict(&read_bytes(&cache_lib("c1/realistic_100k.inv.llsd.gz")));
     let d = decode(&plain);
     let recs = records(&d);
     let mut produced = vec![format!("file size={} sha256={}", plain.len(), sha256_hex(&plain))];
@@ -234,7 +247,7 @@ fn standard_library() -> Vec<ViewerCategory> {
 
 #[test]
 fn library_real() {
-    let file = "cache/library_real.txt";
+    let file = &cache_lib("library_real.txt");
     let cases = read_cases(file);
     let case = &cases[0];
     let name = "ba2a564a-f0f1-4b82-9c61-b7520bfcd09f.inv.llsd.gz";

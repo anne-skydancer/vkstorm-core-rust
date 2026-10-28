@@ -160,18 +160,23 @@ fn replay(file: &str, mut qa: Option<QaRandom>) -> Tally {
 
 #[test]
 fn c4_validation() {
-    let t = replay("cache/c4_validation.txt", None);
+    let t = replay(&r2common::cache_lib("c4_validation.txt"), None);
     assert_eq!(t.kinds["validation"], (205, 0));
     assert_eq!((t.replayed, t.left), (1595, 80));
 }
 
+// Each library's QA recording also follows that library's unordered_map
+// order (upstream 28fee038e0), which the harness reproduces for its own
+// library only: each file is replayed where it was recorded.
 #[test]
+#[cfg(target_env = "msvc")]
 fn c4_validation_qa_msvc() {
     let t = replay("cache/c4_validation_qa.msvc.txt", Some(QaRandom::new(QaLibrary::Msvc)));
     assert_eq!((t.replayed, t.left), (92, 8));
 }
 
 #[test]
+#[cfg(not(target_env = "msvc"))]
 fn c4_validation_qa_libstdcxx() {
     let t = replay("cache/c4_validation_qa.libstdcxx.txt", Some(QaRandom::new(QaLibrary::Libstdcxx)));
     assert_eq!((t.replayed, t.left), (92, 8));

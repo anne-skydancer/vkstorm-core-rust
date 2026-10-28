@@ -8,6 +8,22 @@
 pub mod fixture_model;
 pub mod gz;
 pub mod snapshot;
+#[path = "../support_unordered/mod.rs"]
+pub mod support_unordered;
+
+/// The standard library whose records this build replays: since upstream
+/// 28fee038e0 `LLInventoryModel`'s maps are `std::unordered_map`s, so the
+/// records that follow their order are kept per library
+/// (`fixtures/cache/README.md`): `cache/<library>/`, `msgs/<library>/`.
+/// The viewer beside the crate uses the same library, as for `RT(...)`.
+#[allow(dead_code)]
+pub const LIBRARY: &str = if cfg!(target_env = "msvc") { "msvc" } else { "libstdcxx" };
+
+/// `cache/<library>/<rest>`: a record that follows the model's map order.
+#[allow(dead_code)]
+pub fn cache_lib(rest: &str) -> String {
+    format!("cache/{LIBRARY}/{rest}")
+}
 
 use vkstorm_inventory::validate::Snapshot;
 
