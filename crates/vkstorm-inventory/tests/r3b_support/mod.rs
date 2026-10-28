@@ -1,0 +1,1667 @@
+//! Replay support for the R3b fetch wire corpus (`fixtures/ais/fetch`,
+//! README there): the synthetic inventories of `llinvfetch_parity_scenarios.cpp`,
+//! a replay model standing in for the C++ model, the frame loop and AIS pool
+//! of the recorder, and the comparison.
+//!
+//! What is under test is `vkstorm_inventory::fetch`. Everything else here is
+//! scaffolding that stands in for C++ the port keeps:
+//!
+//! - the replay model replaces `LLInventoryModel` and `AISUpdate` for what
+//!   the scheduler reads: it applies a recorded AIS reply with the parse
+//!   rules of `AISUpdate::parseCategory`/`parseItem`/`parseLink` (fetch
+//!   form: versions only with a known descendent count at depth >= 0; the
+//!   subset's top skipped; created categories applied in id order and
+//!   appended to their parent) and `updateCategory`/`updateItem`'s child
+//!   lists. It does not reproduce the model dump, observer batches,
+//!   marketplace hooks or UDP messages (those lines are not compared);
+//! - the frame loop runs the idle callback, then the coroutines: a reply is
+//!   processed one frame after its request was sent, in send order, and a
+//!   free pool coroutine takes the next queued command at once;
+//! - the transport: a request is matched with the next recorded request; a
+//!   503 answered request repeated identically is llcorehttp's retry (at
+//!   most 6 attempts); request heads come from the two recorded header
+//!   templates (AIS coroutine adapter, legacy `requestPost`). Status codes
+//!   and replies are inputs.
+#![allow(dead_code)]
+
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::path::PathBuf;
+
+use vkstorm_inventory::fetch::ais::{AisCaps, AisReply, AisRequest, Command};
+use vkstorm_inventory::fetch::scheduler::{
+    self, Action, BackgroundFetch, BudgetClock, CategoryInfo, Ctx, Env, FetchModel, FetchPath, ItemInfo,
+};
+use vkstorm_inventory::fetch::timer::{CategoryFetchState, FETCH_DEFAULT_EXPIRY};
+use vkstorm_inventory::fetch::{CategoryFetch, NULL_ID, Uuid, uuid_string};
+use vkstorm_inventory::llsd::coerce::{as_integer, as_uuid, get, has};
+use vkstorm_llsd::Value;
+
+// ---------------------------------------------------------------------------
+// ids (vks_inv::pid and the scenario constants)
+// ---------------------------------------------------------------------------
+
+/// `<tag as 8 hex digits>-0000-4000-8000-<n as 12 hex digits>`
+pub fn pid(tag: u32, n: u64) -> Uuid {
+    let mut u = [0u8; 16];
+    u[0..4].copy_from_slice(&tag.to_be_bytes());
+    u[6] = 0x40;
+    u[8] = 0x80;
+    u[10..16].copy_from_slice(&n.to_be_bytes()[2..8]);
+    u
+}
+
+pub fn parse_uuid(s: &str) -> Uuid {
+    vkstorm_llsd::text::uuid_set(s.as_bytes())
+}
+
+pub fn agent() -> Uuid {
+    pid(0xa9e00000, 1)
+}
+pub fn library_owner() -> Uuid {
+    scheduler::ALEXANDRIA_LINDEN_ID
+}
+pub const ROOT_TAG: u32 = 0xc0000000;
+pub fn root() -> Uuid {
+    pid(ROOT_TAG, 1)
+}
+pub fn libroot() -> Uuid {
+    pid(0xd0000000, 1)
+}
+pub fn sys(t: i32) -> Uuid {
+    pid(0xc0000001, (t + 2) as u64)
+}
+pub fn usr(n: u64) -> Uuid {
+    pid(0xc0100000, n)
+}
+pub fn itm(n: u64) -> Uuid {
+    pid(0xa0000000, n)
+}
+pub fn lnk(n: u64) -> Uuid {
+    pid(0xb0000000, n)
+}
+pub fn libf(n: u64) -> Uuid {
+    pid(0xd0000000, n)
+}
+pub fn libi(n: u64) -> Uuid {
+    pid(0xd1000000, n)
+}
+
+pub fn ver(n: u64) -> i32 {
+    1 + ((n * 7) % 13) as i32
+}
+
+// folder types used by the scenarios
+pub const FT_NONE: i32 = -1;
+pub const FT_ROOT_INVENTORY: i32 = 8;
+pub const FT_TEXTURE: i32 = 0;
+pub const FT_CLOTHING: i32 = 5;
+pub const FT_OBJECT: i32 = 6;
+pub const FT_NOTECARD: i32 = 7;
+pub const FT_LSL_TEXT: i32 = 10;
+pub const FT_BODYPART: i32 = 13;
+pub const FT_TRASH: i32 = 14;
+pub const FT_SNAPSHOT: i32 = 15;
+pub const FT_LOST_AND_FOUND: i32 = 16;
+pub const FT_ANIMATION: i32 = 20;
+pub const FT_GESTURE: i32 = 21;
+pub const FT_CURRENT_OUTFIT: i32 = 46;
+pub const FT_OUTFIT: i32 = 47;
+pub const FT_MY_OUTFITS: i32 = 48;
+pub const FT_MARKETPLACE_LISTINGS: i32 = 53;
+pub const LANDMARK: i32 = 3;
+
+/// The 21 system folders, in the order the Builder creates them.
+pub const SYSTEM: [i32; 21] = [0, 1, 2, 3, 5, 6, 7, 10, 13, 14, 15, 16, 20, 21, 23, 46, 48, 50, 53, 56, 57];
+
+// ---------------------------------------------------------------------------
+// The synthetic inventories (Builder, basic)
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Debug)]
+pub struct WFolder {
+    pub id: Uuid,
+    pub parent: Uuid,
+    pub owner: Uuid,
+    pub ftype: i32,
+    pub version: i32,
+}
+
+#[derive(Clone, Debug)]
+pub struct WItem {
+    pub id: Uuid,
+    pub parent: Uuid,
+    pub owner: Uuid,
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct World {
+    pub agent: Uuid,
+    pub libowner: Uuid,
+    pub root: Uuid,
+    pub libroot: Uuid,
+    pub folders: Vec<WFolder>,
+    pub items: Vec<WItem>,
+}
+
+impl World {
+    pub fn add_folder(&mut self, id: Uuid, parent: Uuid, ftype: i32, version: i32, library: bool) {
+        let owner = if library { self.libowner } else { self.agent };
+        self.folders.push(WFolder { id, parent, owner, ftype, version });
+    }
+    pub fn add_item(&mut self, id: Uuid, parent: Uuid, library: bool) {
+        let owner = if library { self.libowner } else { self.agent };
+        self.items.push(WItem { id, parent, owner });
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct Ids {
+    pub user: Vec<Uuid>,
+    pub user_sub: Vec<Uuid>,
+    pub user_leaf: Vec<Uuid>,
+    pub lib_folders: Vec<Uuid>,
+    pub lib_items: Vec<Uuid>,
+    pub mkt: Vec<Uuid>,
+    pub items_in: BTreeMap<Uuid, Vec<Uuid>>,
+    pub shirt: Uuid,
+    pub pants: Uuid,
+    pub jacket: Uuid,
+    pub shape: Uuid,
+    pub skin: Uuid,
+    pub tex1: Uuid,
+    pub obj1: Uuid,
+    pub obj2: Uuid,
+    pub note1: Uuid,
+    pub trash1: Uuid,
+    pub outfit_a: Uuid,
+    pub outfit_b: Uuid,
+    pub cof_shirt_link: Uuid,
+}
+
+pub struct Builder {
+    pub w: World,
+    pub ids: Ids,
+    pub n_user: u64,
+    pub n_item: u64,
+    pub n_link: u64,
+    pub n_lib: u64,
+    pub n_libitem: u64,
+}
+
+impl Builder {
+    pub fn new(library: bool) -> Self {
+        let mut w = World {
+            agent: agent(),
+            libowner: library_owner(),
+            root: root(),
+            libroot: if library { libroot() } else { NULL_ID },
+            ..Default::default()
+        };
+        w.add_folder(root(), NULL_ID, FT_ROOT_INVENTORY, 30, false);
+        for t in SYSTEM {
+            w.add_folder(sys(t), root(), t, ver((t + 2) as u64), false);
+        }
+        if library {
+            w.add_folder(libroot(), NULL_ID, FT_ROOT_INVENTORY, 12, true);
+        }
+        Builder { w, ids: Ids::default(), n_user: 1, n_item: 1, n_link: 1, n_lib: 2, n_libitem: 1 }
+    }
+    pub fn item(&mut self, parent: Uuid) -> Uuid {
+        let id = itm(self.n_item);
+        self.w.add_item(id, parent, false);
+        self.n_item += 1;
+        self.ids.items_in.entry(parent).or_default().push(id);
+        id
+    }
+    pub fn libitem(&mut self, parent: Uuid) -> Uuid {
+        let id = libi(self.n_libitem);
+        self.w.add_item(id, parent, true);
+        self.n_libitem += 1;
+        self.ids.lib_items.push(id);
+        id
+    }
+    pub fn folder(&mut self, parent: Uuid, ftype: i32) -> Uuid {
+        let id = usr(self.n_user);
+        self.w.add_folder(id, parent, ftype, ver(self.n_user), false);
+        self.n_user += 1;
+        id
+    }
+    pub fn libfolder(&mut self, parent: Uuid) -> Uuid {
+        let id = libf(self.n_lib);
+        self.w.add_folder(id, parent, FT_NONE, ver(self.n_lib), true);
+        self.n_lib += 1;
+        self.ids.lib_folders.push(id);
+        id
+    }
+    pub fn link(&mut self, parent: Uuid) -> Uuid {
+        let id = lnk(self.n_link);
+        self.n_link += 1;
+        self.w.items.push(WItem { id, parent, owner: self.w.agent });
+        id
+    }
+}
+
+/// `basic(b, user_folders, orphan, lib_folders)`: only ids, parents, types
+/// and owners matter here (the replies come from the recording).
+pub fn basic(b: &mut Builder, user_folders: usize, _orphan: bool, lib_folders: usize) {
+    b.ids.tex1 = b.item(sys(FT_TEXTURE));
+    b.item(sys(FT_TEXTURE));
+    b.ids.shirt = b.item(sys(FT_CLOTHING));
+    b.ids.pants = b.item(sys(FT_CLOTHING));
+    b.ids.jacket = b.item(sys(FT_CLOTHING));
+    b.ids.shape = b.item(sys(FT_BODYPART));
+    b.ids.skin = b.item(sys(FT_BODYPART));
+    b.ids.obj1 = b.item(sys(FT_OBJECT));
+    b.ids.obj2 = b.item(sys(FT_OBJECT));
+    b.ids.note1 = b.item(sys(FT_NOTECARD));
+    b.item(sys(FT_LSL_TEXT));
+    b.item(sys(LANDMARK));
+    b.item(sys(FT_GESTURE));
+    b.item(sys(FT_ANIMATION));
+    b.item(sys(FT_SNAPSHOT));
+    b.ids.trash1 = b.item(sys(FT_TRASH));
+    b.item(sys(FT_TRASH));
+    b.item(root());
+    b.item(root());
+    for _u in 1..=user_folders {
+        let u = b.folder(root(), FT_NONE);
+        b.ids.user.push(u);
+        for _k in 1..=3 {
+            b.item(u);
+        }
+        for _s in 1..=2 {
+            let s = b.folder(u, FT_NONE);
+            b.ids.user_sub.push(s);
+            b.item(s);
+            b.item(s);
+            let l = b.folder(s, FT_NONE);
+            b.ids.user_leaf.push(l);
+            b.item(l);
+        }
+    }
+    b.ids.outfit_a = b.folder(sys(FT_MY_OUTFITS), FT_OUTFIT);
+    let a = b.ids.outfit_a;
+    b.link(a);
+    b.link(a);
+    b.link(a);
+    b.ids.outfit_b = b.folder(sys(FT_MY_OUTFITS), FT_OUTFIT);
+    let ob = b.ids.outfit_b;
+    b.link(ob);
+    let cof = sys(FT_CURRENT_OUTFIT);
+    b.ids.cof_shirt_link = b.link(cof);
+    for _ in 0..4 {
+        b.link(cof);
+    }
+    for _m in 1..=2 {
+        let m = b.folder(sys(FT_MARKETPLACE_LISTINGS), FT_NONE);
+        b.ids.mkt.push(m);
+        b.item(m);
+    }
+    if b.w.libroot != NULL_ID {
+        b.libitem(libroot());
+        b.libitem(libroot());
+        for _l in 1..=lib_folders {
+            let f = b.libfolder(libroot());
+            b.libitem(f);
+            b.libitem(f);
+            for _s in 1..=2 {
+                let s = b.libfolder(f);
+                b.libitem(s);
+                b.libitem(s);
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// The replay model
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Debug)]
+pub struct MCat {
+    pub id: Uuid,
+    pub parent: Uuid,
+    pub pref: i8,
+    pub owner: Uuid,
+    pub version: i32,
+    pub count: i32,
+    pub fetch: CategoryFetchState,
+}
+
+#[derive(Clone, Debug)]
+pub struct MItem {
+    pub id: Uuid,
+    pub parent: Uuid,
+    pub owner: Uuid,
+    pub complete: bool,
+}
+
+#[derive(Debug, Default)]
+pub struct ReplayModel {
+    /// `LLFrameTimer`'s frame time.
+    pub now: f64,
+    pub ais_available: bool,
+    pub usable: bool,
+    pub agent: Uuid,
+    pub root: Uuid,
+    pub libroot: Uuid,
+    pub libowner: Uuid,
+    pub base_outfit: Uuid,
+    pub cats: BTreeMap<Uuid, MCat>,
+    pub cat_children: BTreeMap<Uuid, Vec<Uuid>>,
+    pub items: BTreeMap<Uuid, MItem>,
+    pub item_children: BTreeMap<Uuid, Vec<Uuid>>,
+}
+
+impl ReplayModel {
+    /// `findCategoryUUIDForType`: the first direct child of the root with
+    /// that preferred type.
+    pub fn find_category_for_type(&self, t: i32) -> Uuid {
+        if let Some(kids) = self.cat_children.get(&self.root) {
+            for k in kids {
+                if self.cats.get(k).is_some_and(|c| c.pref as i32 == t) {
+                    return *k;
+                }
+            }
+        }
+        NULL_ID
+    }
+
+    /// The login skeletons of a cold login (no cache: every version
+    /// unknown), then `buildParentChildMap` (children in id order).
+    pub fn load_cold(&mut self, w: &World) {
+        for f in &w.folders {
+            let owner = if f.owner == w.libowner && w.libroot != NULL_ID { w.libowner } else { w.agent };
+            self.cats.insert(
+                f.id,
+                MCat {
+                    id: f.id,
+                    parent: f.parent,
+                    pref: f.ftype as i8,
+                    owner,
+                    version: -1,
+                    count: -1,
+                    fetch: CategoryFetchState::new(self.now),
+                },
+            );
+        }
+        self.build_parent_child_map();
+    }
+
+    pub fn build_parent_child_map(&mut self) {
+        self.cat_children.clear();
+        self.item_children.clear();
+        self.cat_children.insert(NULL_ID, Vec::new());
+        for id in self.cats.keys() {
+            self.cat_children.insert(*id, Vec::new());
+            self.item_children.insert(*id, Vec::new());
+        }
+        let cats: Vec<(Uuid, Uuid)> = self.cats.values().map(|c| (c.id, c.parent)).collect();
+        for (id, parent) in cats {
+            if let Some(v) = self.cat_children.get_mut(&parent) {
+                v.push(id);
+            }
+        }
+        let items: Vec<(Uuid, Uuid)> = self.items.values().map(|i| (i.id, i.parent)).collect();
+        for (id, parent) in items {
+            if let Some(v) = self.item_children.get_mut(&parent) {
+                v.push(id);
+            }
+        }
+        // validate(): a missing library root makes the inventory unusable
+        self.usable = self.root != NULL_ID && self.libroot != NULL_ID;
+    }
+
+    fn update_category(&mut self, c: MCat) {
+        if !self.usable {
+            return;
+        }
+        if let Some(old) = self.cats.get(&c.id).cloned() {
+            if old.parent != c.parent {
+                if let Some(v) = self.cat_children.get_mut(&old.parent) {
+                    vector_replace_with_last(v, &c.id);
+                }
+                if let Some(v) = self.cat_children.get_mut(&c.parent) {
+                    v.push(c.id);
+                }
+            }
+            let fetching = old.fetch.fetching;
+            let mut n = c;
+            n.fetch.fetching = fetching;
+            self.cats.insert(n.id, n);
+        } else {
+            let id = c.id;
+            let parent = c.parent;
+            let mut n = c;
+            n.fetch.fetching = CategoryFetch::None;
+            self.cats.insert(id, n);
+            if let Some(v) = self.cat_children.get_mut(&parent) {
+                v.push(id);
+            }
+            self.cat_children.insert(id, Vec::new());
+            self.item_children.insert(id, Vec::new());
+        }
+    }
+
+    fn update_item(&mut self, i: MItem) {
+        if !self.usable {
+            return;
+        }
+        if let Some(old) = self.items.get(&i.id).cloned() {
+            if old.parent != i.parent {
+                if let Some(v) = self.item_children.get_mut(&old.parent) {
+                    vector_replace_with_last(v, &i.id);
+                }
+                if let Some(v) = self.item_children.get_mut(&i.parent) {
+                    v.push(i.id);
+                }
+            }
+            self.items.insert(i.id, i);
+        } else {
+            let (id, parent) = (i.id, i.parent);
+            self.items.insert(id, i);
+            if let Some(v) = self.item_children.get_mut(&parent) {
+                v.push(id);
+            }
+        }
+    }
+}
+
+fn vector_replace_with_last(v: &mut Vec<Uuid>, id: &Uuid) {
+    if let Some(p) = v.iter().position(|x| x == id) {
+        v.swap_remove(p);
+    }
+}
+
+impl FetchModel for ReplayModel {
+    fn root_folder_id(&self) -> Uuid {
+        self.root
+    }
+    fn library_root_folder_id(&self) -> Uuid {
+        self.libroot
+    }
+    fn library_owner_id(&self) -> Uuid {
+        self.libowner
+    }
+    fn marketplace_listings_id(&self) -> Uuid {
+        self.find_category_for_type(FT_MARKETPLACE_LISTINGS)
+    }
+    fn current_outfit_id(&self) -> Uuid {
+        self.find_category_for_type(FT_CURRENT_OUTFIT)
+    }
+    fn base_outfit_id(&self) -> Uuid {
+        self.base_outfit
+    }
+    fn category(&self, id: &Uuid) -> Option<CategoryInfo> {
+        self.cats
+            .get(id)
+            .map(|c| CategoryInfo { version: c.version, preferred_type: c.pref, owner_id: c.owner })
+    }
+    fn child_categories(&self, id: &Uuid) -> Option<Vec<Uuid>> {
+        self.cat_children.get(id).cloned()
+    }
+    fn item(&self, id: &Uuid) -> Option<ItemInfo> {
+        self.items.get(id).map(|i| ItemInfo { complete: i.complete, owner_id: i.owner })
+    }
+    fn is_object_descendent_of(&self, obj: &Uuid, cat: &Uuid) -> bool {
+        if obj == cat {
+            return true;
+        }
+        let mut parent = if let Some(c) = self.cats.get(obj) {
+            c.parent
+        } else if let Some(i) = self.items.get(obj) {
+            i.parent
+        } else {
+            return false;
+        };
+        let mut steps = 0;
+        loop {
+            if parent == NULL_ID {
+                return false;
+            }
+            if parent == *cat {
+                return true;
+            }
+            match self.cats.get(&parent) {
+                Some(c) => {
+                    steps += 1;
+                    if steps > self.cats.len() {
+                        return false;
+                    }
+                    parent = c.parent;
+                }
+                None => return false,
+            }
+        }
+    }
+    fn get_fetching(&mut self, id: &Uuid) -> CategoryFetch {
+        let now = self.now;
+        self.cats.get_mut(id).map_or(CategoryFetch::None, |c| c.fetch.get_fetching(now))
+    }
+    fn set_fetching(&mut self, id: &Uuid, state: CategoryFetch) {
+        let (now, ais) = (self.now, self.ais_available);
+        if let Some(c) = self.cats.get_mut(id) {
+            c.fetch.set_fetching(state, now, ais);
+        }
+    }
+    fn set_version(&mut self, id: &Uuid, version: i32) {
+        if let Some(c) = self.cats.get_mut(id) {
+            c.version = version;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// The AIS reply applier (fetch form of AISUpdate), for the replay model
+// ---------------------------------------------------------------------------
+
+fn map_len(v: &Value) -> usize {
+    match v {
+        Value::Map(m) => m.len(),
+        Value::Array(a) => a.len(),
+        _ => 0,
+    }
+}
+
+#[derive(Default)]
+struct Upd {
+    depth0: i32,
+    subset: bool,
+    known: BTreeMap<Uuid, i32>,
+    cats: BTreeMap<Uuid, MCat>,
+    items: BTreeMap<Uuid, MItem>,
+    lost: BTreeSet<Uuid>,
+    /// `fetch()` calls made while parsing (stale versions) and applying.
+    fetches: Vec<(Uuid, i32)>,
+}
+
+impl ReplayModel {
+    /// Applies a fetch reply as `AISUpdate(update, type, request_body).doUpdate()`
+    /// does for the scheduler's view; returns the `fetch(expiry)` calls the
+    /// update made, in order.
+    pub fn apply_fetch_reply(&mut self, subset: bool, depth: i32, v: &Value) -> Vec<(Uuid, i32)> {
+        let mut u = Upd { depth0: depth, subset, ..Default::default() };
+        // parseContent
+        if has(v, "linked_id") && has(v, "parent_id") {
+            self.parse_link(&mut u, v, depth);
+        } else if has(v, "item_id") && has(v, "parent_id") {
+            self.parse_item(&mut u, v);
+        }
+        if u.subset {
+            if has(v, "_embedded") {
+                self.parse_embedded(&mut u, get(v, "_embedded"), depth - 1);
+            }
+        } else if has(v, "category_id") && has(v, "parent_id") {
+            self.parse_category(&mut u, v, depth);
+        } else if has(v, "_embedded") {
+            self.parse_embedded(&mut u, get(v, "_embedded"), depth);
+        }
+        // doUpdate
+        let cats = std::mem::take(&mut u.cats);
+        for (_, c) in cats {
+            self.update_category(c);
+        }
+        if !u.lost.is_empty() {
+            let lf = self.find_category_for_type(FT_LOST_AND_FOUND);
+            if lf != NULL_ID {
+                for id in &u.lost {
+                    if let Some(i) = u.items.get_mut(id) {
+                        i.parent = lf;
+                    }
+                }
+            }
+        }
+        let items = std::mem::take(&mut u.items);
+        for (_, i) in items {
+            self.update_item(i);
+        }
+        u.fetches
+    }
+
+    fn parse_embedded(&mut self, u: &mut Upd, emb: &Value, depth: i32) {
+        if let Value::Map(links) = get(emb, "links") {
+            for l in links.values() {
+                self.parse_link(u, l, depth);
+            }
+        }
+        if let Value::Map(items) = get(emb, "items") {
+            for i in items.values() {
+                self.parse_item(u, i);
+            }
+        }
+        let item = get(emb, "item");
+        if has(item, "item_id") {
+            self.parse_item(u, item);
+        }
+        if let Value::Map(cats) = get(emb, "categories") {
+            for c in cats.values() {
+                self.parse_category(u, c, depth);
+            }
+        }
+        let cat = get(emb, "category");
+        if has(cat, "category_id") {
+            self.parse_category(u, cat, depth);
+        }
+    }
+
+    fn parse_item(&mut self, u: &mut Upd, m: &Value) {
+        let id = as_uuid(get(m, "item_id"));
+        let mut it = match self.items.get(&id) {
+            Some(c) => c.clone(),
+            None => MItem { id, parent: NULL_ID, owner: NULL_ID, complete: false },
+        };
+        it.id = id;
+        it.parent = as_uuid(get(m, "parent_id"));
+        let perms = get(m, "permissions");
+        if has(perms, "owner_id") {
+            it.owner = as_uuid(get(perms, "owner_id"));
+        }
+        it.complete = true;
+        if it.parent == NULL_ID {
+            u.lost.insert(id);
+        }
+        u.items.insert(id, it);
+    }
+
+    fn parse_link(&mut self, u: &mut Upd, m: &Value, depth: i32) {
+        let id = as_uuid(get(m, "item_id"));
+        let mut it = match self.items.get(&id) {
+            Some(c) => c.clone(),
+            None => MItem { id, parent: NULL_ID, owner: NULL_ID, complete: false },
+        };
+        it.id = id;
+        it.parent = as_uuid(get(m, "parent_id"));
+        // fetch: default permissions, owned by the agent
+        it.owner = self.agent;
+        it.complete = true;
+        if it.parent == NULL_ID {
+            u.lost.insert(id);
+        }
+        u.items.insert(id, it);
+        if has(m, "_embedded") {
+            self.parse_embedded(u, get(m, "_embedded"), depth);
+        }
+    }
+
+    fn parse_category(&mut self, u: &mut Upd, m: &Value, depth: i32) {
+        let id = as_uuid(get(m, "category_id"));
+        let version = if has(m, "version") { as_integer(get(m, "version")) } else { -1 };
+        if let Some(curr) = self.cats.get_mut(&id) {
+            if curr.version > -1 && curr.count != -1 && version > -1 && version < curr.version {
+                // stale folder (FIRE-33337): unknown again, fetch()
+                curr.version = -1;
+                u.fetches.push((id, FETCH_DEFAULT_EXPIRY));
+                return;
+            }
+        }
+        let mut c = match self.cats.get(&id) {
+            Some(curr) => {
+                let mut c = curr.clone();
+                c.fetch.fetching = CategoryFetch::None;
+                c
+            }
+            None => MCat {
+                id,
+                parent: NULL_ID,
+                pref: -1,
+                owner: if has(m, "agent_id") { as_uuid(get(m, "agent_id")) } else { NULL_ID },
+                version: -1,
+                count: -1,
+                fetch: CategoryFetchState::new(self.now),
+            },
+        };
+        c.id = id;
+        c.parent = as_uuid(get(m, "parent_id"));
+        if has(m, "type_default") {
+            c.pref = as_integer(get(m, "type_default")) as i8;
+        }
+        if has(m, "_embedded") {
+            let emb = get(m, "_embedded");
+            if has(emb, "categories") && has(emb, "links") && has(emb, "items") {
+                let n = map_len(get(emb, "categories")) + map_len(get(emb, "links")) + map_len(get(emb, "items"));
+                u.known.insert(id, n as i32);
+            } else if has(emb, "links") && (c.pref as i32 == FT_CURRENT_OUTFIT || c.pref as i32 == FT_OUTFIT) {
+                u.known.insert(id, map_len(get(emb, "links")) as i32);
+            }
+        }
+        if let Some(&n) = u.known.get(&id) {
+            c.count = n;
+            if version > -1 && depth >= 0 {
+                c.version = version;
+            }
+        }
+        u.cats.insert(id, c);
+        if has(m, "_embedded") {
+            self.parse_embedded(u, get(m, "_embedded"), depth - 1);
+        }
+    }
+}
+
+/// The reply's ids for the callback contract.
+pub fn reply_of(status: i32, v: Option<&Value>) -> AisReply {
+    let mut r = AisReply { status, ..Default::default() };
+    let Some(v) = v else { return r };
+    if !matches!(v, Value::Map(_)) {
+        return r;
+    }
+    let id = |k: &str| if has(v, k) { Some(as_uuid(get(v, k))) } else { None };
+    let arr = |k: &str| {
+        if has(v, k) {
+            Some(match get(v, k) {
+                Value::Array(a) => a.iter().map(as_uuid).collect(),
+                _ => Vec::new(),
+            })
+        } else {
+            None
+        }
+    };
+    r.category_id = id("category_id");
+    r.item_id = id("item_id");
+    r.linked_id = id("linked_id");
+    r.created_categories = arr("_created_categories");
+    r.created_items = arr("_created_items");
+    r.updated_categories = arr("_updated_categories");
+    r
+}
+
+// ---------------------------------------------------------------------------
+// The recording
+// ---------------------------------------------------------------------------
+
+pub fn fixture_dir() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/ais/fetch")
+}
+
+/// A scenario's compared lines (after `== <id>`).
+pub fn scenario_lines(id: &str) -> Vec<String> {
+    let p = fixture_dir().join("scenarios").join(format!("{id}.txt"));
+    let text = std::fs::read_to_string(&p).unwrap_or_else(|e| panic!("{}: {e}", p.display()));
+    let mut out = Vec::new();
+    let mut started = false;
+    for l in text.split('\n') {
+        if !started {
+            if l.starts_with("== ") {
+                started = true;
+            }
+            continue;
+        }
+        if !l.is_empty() {
+            out.push(l.to_owned());
+        }
+    }
+    out
+}
+
+/// One recorded request.
+#[derive(Clone, Debug)]
+pub struct RecWire {
+    pub method: String,
+    pub target: String,
+    pub status: i32,
+    /// `head=... body=...` as recorded.
+    pub request: String,
+    /// `resp=... rtype=...`
+    pub tail: String,
+    pub body: Option<Vec<u8>>,
+}
+
+pub fn recorded_wires(id: &str, lines: &[String]) -> Vec<RecWire> {
+    let mut bodies: BTreeMap<usize, Vec<u8>> = BTreeMap::new();
+    let p = fixture_dir().join("responses").join(format!("{id}.txt"));
+    if let Ok(data) = std::fs::read(&p) {
+        let mut heads = Vec::new();
+        let mut pos = 0;
+        while pos < data.len() {
+            let end = data[pos..].iter().position(|&b| b == b'\n').map_or(data.len(), |e| pos + e);
+            let line = &data[pos..end];
+            if line.starts_with(b"--- ") {
+                heads.push((pos, end + 1, String::from_utf8_lossy(line).into_owned()));
+            }
+            pos = end + 1;
+        }
+        for (k, (_, body_start, head)) in heads.iter().enumerate() {
+            let body_end = if k + 1 < heads.len() { heads[k + 1].0 } else { data.len() };
+            let n: usize = head.split(' ').nth(2).unwrap().parse().unwrap();
+            let mut body = data[*body_start..body_end].to_vec();
+            if body.ends_with(b"\n") {
+                body.pop();
+            }
+            bodies.insert(n, body);
+        }
+    }
+    let mut out = Vec::new();
+    for l in lines {
+        let Some(rest) = l.strip_prefix("wire ") else { continue };
+        let (n, rest) = rest.split_once(' ').unwrap();
+        let n: usize = n.parse().unwrap();
+        let mut f = rest.splitn(3, ' ');
+        let method = f.next().unwrap().to_owned();
+        let target = f.next().unwrap().to_owned();
+        let rest = f.next().unwrap();
+        let (status, rest) = rest.split_once(' ').unwrap();
+        let status: i32 = status.strip_prefix("status=").unwrap().parse().unwrap();
+        let k = rest.rfind(" resp=").unwrap();
+        out.push(RecWire {
+            method,
+            target,
+            status,
+            request: rest[..k].to_owned(),
+            tail: rest[k + 1..].to_owned(),
+            body: bodies.remove(&n),
+        });
+    }
+    out
+}
+
+/// `escape_text` of the recorder.
+pub fn escape_text(s: &[u8]) -> String {
+    let mut out = String::new();
+    for &c in s {
+        match c {
+            b'\r' => out.push_str("\\r"),
+            b'\n' => out.push_str("\\n"),
+            b'\t' => out.push_str("\\t"),
+            b'\\' => out.push_str("\\\\"),
+            0x20..=0x7e => out.push(c as char),
+            _ => out.push_str(&format!("\\x{c:02x}")),
+        }
+    }
+    out
+}
+
+/// The AIS coroutine adapter's request head (the transport's header set).
+pub fn ais_head(method: &str, target: &str, destination: Option<&str>, body_len: usize) -> String {
+    let mut h = format!(
+        "{method} {target} HTTP/1.1\r\nHost: 127.0.0.1:{{PORT}}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\n"
+    );
+    if let Some(d) = destination {
+        h.push_str(&format!("Destination: {d}\r\n"));
+    }
+    h.push_str("Accept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n");
+    if body_len > 0 {
+        h.push_str(&format!("Content-Length: {body_len}\r\n"));
+    }
+    h.push_str("\r\n");
+    h
+}
+
+/// `requestPost`'s request head.
+pub fn legacy_head(target: &str, body_len: usize) -> String {
+    format!(
+        "POST {target} HTTP/1.1\r\nHost: 127.0.0.1:{{PORT}}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nContent-Type: application/llsd+xml\r\nAccept: application/llsd+xml\r\nContent-Length: {body_len}\r\n\r\n"
+    )
+}
+
+pub const BASE: &str = "http://127.0.0.1:{PORT}";
+
+pub fn target_of(url: &str) -> &str {
+    url.strip_prefix(BASE).unwrap_or(url)
+}
+
+// ---------------------------------------------------------------------------
+// The run: frames, pool, journal
+// ---------------------------------------------------------------------------
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Startup {
+    None,
+    InventorySend,
+    InventorySkel,
+    InventorySend2,
+    InventoryCallbacks,
+    WearablesWait,
+    Started,
+}
+
+pub const CAPS_NONE: u32 = 0;
+pub const CAPS_AIS: u32 = 1;
+pub const CAPS_LEGACY: u32 = 2;
+pub const CAPS_ALL: u32 = 3;
+
+/// The scripted budget clock of `llinvfetch_parity_bgf.cpp`.
+#[derive(Debug, Clone, Copy)]
+pub struct ScriptedClock {
+    pub now: f64,
+    pub step: f64,
+}
+
+impl BudgetClock for ScriptedClock {
+    fn total_seconds(&mut self) -> f64 {
+        let t = self.now;
+        self.now += self.step;
+        t
+    }
+}
+
+struct InFlight {
+    ticket: u64,
+    sent_frame: u64,
+    status: i32,
+    body: Option<Vec<u8>>,
+    subset: bool,
+    depth: i32,
+}
+
+/// A request made by a caller other than the scheduler (writes): its body.
+pub struct Run {
+    pub id: String,
+    pub world: World,
+    pub model: ReplayModel,
+    pub sched: BackgroundFetch,
+    pub env: Env,
+    pub clock: ScriptedClock,
+    pub startup: Startup,
+    // region
+    pub region: bool,
+    pub caps: u32,
+    pub caps_received: bool,
+    pub library_cap: bool,
+    pub fs_use_ais3_api: bool,
+    pub in_second_life: bool,
+    pub pool_size: usize,
+    pub batch_size: i32,
+    // the pool and the wire
+    queue: VecDeque<(u64, AisRequest, Vec<u8>)>,
+    active: Vec<InFlight>,
+    frame_no: u64,
+    rec_wires: Vec<RecWire>,
+    next_wire: usize,
+    pub wires: Vec<String>,
+    wire_targets: Vec<(String, String, i32)>,
+    tids: Vec<String>,
+    next_tid: u64,
+    pub journal: Vec<String>,
+    pub facts: Vec<String>,
+    last_snap: String,
+    tokens: BTreeMap<u64, String>,
+    next_token: u64,
+    pub error: Option<String>,
+    /// The `checkStop()` armed for the n-th AIS update (s24).
+    pub stop_armed: u32,
+    pub stops_thrown: u32,
+}
+
+impl Run {
+    pub fn new(id: &str, world: World, rec_lines: &[String]) -> Self {
+        let model = ReplayModel {
+            now: 1000.0,
+            agent: world.agent,
+            ..Default::default()
+        };
+        let mut r = Run {
+            id: id.to_owned(),
+            world,
+            model,
+            sched: BackgroundFetch::new(),
+            env: Env::default(),
+            clock: ScriptedClock { now: 1000.0, step: 0.0 },
+            startup: Startup::None,
+            region: true,
+            caps: CAPS_ALL,
+            caps_received: true,
+            library_cap: true,
+            fs_use_ais3_api: true,
+            in_second_life: true,
+            pool_size: 2,
+            batch_size: 20,
+            queue: VecDeque::new(),
+            active: Vec::new(),
+            frame_no: 0,
+            rec_wires: recorded_wires(id, rec_lines),
+            next_wire: 0,
+            wires: Vec::new(),
+            wire_targets: Vec::new(),
+            tids: Vec::new(),
+            next_tid: 1,
+            journal: Vec::new(),
+            facts: Vec::new(),
+            last_snap: String::new(),
+            tokens: BTreeMap::new(),
+            next_token: 1,
+            error: None,
+            stop_armed: 0,
+            stops_thrown: 0,
+        };
+        // The process-wide 403 flag: s04 (index order) raises the alert; every
+        // later scenario sees it spent.
+        let order = index_order();
+        let me = order.iter().position(|s| s == id).expect("scenario in index.txt");
+        let s04 = order.iter().position(|s| s == "s04_forbidden").unwrap();
+        r.sched.notices_mut().first_depth0_403 = me <= s04;
+        r.refresh_env();
+        r.note(&format!("step begin {id}"));
+        r.snapshot();
+        r
+    }
+
+    pub fn refresh_env(&mut self) {
+        let ais_caps = if self.region && self.caps & CAPS_AIS != 0 {
+            AisCaps {
+                inventory: format!("{BASE}/cap/inv"),
+                library: if self.library_cap { format!("{BASE}/cap/lib") } else { String::new() },
+            }
+        } else {
+            AisCaps::default()
+        };
+        let legacy = self.region && self.caps & CAPS_LEGACY != 0;
+        let cap = |c: &str| if legacy { format!("{BASE}/cap/{c}") } else { String::new() };
+        self.env = Env {
+            use_http_inventory: true,
+            ais_available: scheduler::ais_available(
+                self.region,
+                self.fs_use_ais3_api,
+                self.in_second_life,
+                !ais_caps.inventory.is_empty(),
+            ),
+            region: self.region,
+            capabilities_received: self.caps_received,
+            disconnected: self.env.disconnected,
+            exiting: false,
+            in_second_life: self.in_second_life,
+            pool_size_ais: self.pool_size as u32,
+            batch_size_ais3: self.batch_size,
+            past_wearables_wait: self.startup > Startup::WearablesWait,
+            agent_id: self.world.agent,
+            sort_order: 7,
+            ais_caps,
+            cap_fid2: cap("fid2"),
+            cap_fld2: cap("fld2"),
+            cap_fi2: cap("fi2"),
+            cap_fl2: cap("fl2"),
+        };
+        self.model.ais_available = self.env.ais_available;
+    }
+
+    pub fn set_region(&mut self, present: bool, caps: u32, received: bool) {
+        self.region = present;
+        self.caps = caps;
+        self.caps_received = received;
+        self.refresh_env();
+    }
+
+    pub fn set_disconnected(&mut self, d: bool) {
+        self.env.disconnected = d;
+        self.refresh_env();
+    }
+
+    pub fn set_batch_size(&mut self, n: i32) {
+        self.batch_size = n;
+        self.refresh_env();
+    }
+
+    pub fn set_startup(&mut self, s: Startup) {
+        self.startup = s;
+        self.refresh_env();
+    }
+
+    pub fn note(&mut self, l: &str) {
+        self.journal.push(l.to_owned());
+    }
+
+    pub fn fact(&mut self, f: &str) {
+        self.facts.push(f.to_owned());
+    }
+
+    pub fn requests(&self) -> usize {
+        self.wires.len()
+    }
+
+    pub fn step(&mut self, name: &str) {
+        let n = self.requests();
+        self.note(&format!("step {name} requests={n}"));
+    }
+
+    pub fn sched_text(&self) -> String {
+        let s = self.sched.state();
+        let q = |v: &[vkstorm_inventory::fetch::QueueEntry]| {
+            v.iter().map(|e| format!("{}:{}", uuid_string(&e.id), e.fetch_type as i32)).collect::<Vec<_>>().join(",")
+        };
+        let ids = |v: &[Uuid]| v.iter().map(uuid_string).collect::<Vec<_>>().join(",");
+        let b = |x: bool| if x { "1" } else { "0" };
+        format!(
+            "act={}{} st={}{}{}{} fc={} ffc={} fq=[{}] iq=[{}] exp=[{}] force=[{}]",
+            b(s.bg_active),
+            b(s.folder_active),
+            b(s.inv_started),
+            b(s.lib_started),
+            b(s.mkt_started),
+            b(s.all_fetched),
+            s.fetch_count,
+            s.folder_fetch_count,
+            q(&s.folder_queue),
+            q(&s.item_queue),
+            ids(&s.expected),
+            ids(&s.forced)
+        )
+    }
+
+    pub fn snapshot(&mut self) {
+        let s = self.sched_text();
+        if s != self.last_snap {
+            self.last_snap = s.clone();
+            self.note(&format!("sch {s}"));
+        }
+    }
+
+    pub fn token(&mut self, tag: &str) -> u64 {
+        let t = self.next_token;
+        self.next_token += 1;
+        self.tokens.insert(t, tag.to_owned());
+        t
+    }
+
+    pub fn fresh_tid(&mut self) -> Uuid {
+        let t = pid(0x7d000000, self.next_tid);
+        self.next_tid += 1;
+        t
+    }
+
+    // ---- calling the scheduler -------------------------------------------
+
+    pub fn with<R>(&mut self, f: impl FnOnce(&mut BackgroundFetch, &mut Ctx<'_>) -> R) -> R {
+        let env = self.env.clone();
+        let r = {
+            let mut cx = Ctx::new(&mut self.model, &env);
+            f(&mut self.sched, &mut cx)
+        };
+        self.drain();
+        r
+    }
+
+    pub fn start(&mut self, id: Uuid, recursive: bool) {
+        self.with(|s, cx| s.start(cx, id, recursive));
+    }
+    pub fn schedule_folder(&mut self, id: Uuid, forced: bool) {
+        self.with(|s, _| s.schedule_folder_fetch(id, forced));
+    }
+    pub fn schedule_item(&mut self, id: Uuid, forced: bool) {
+        self.with(|s, _| s.schedule_item_fetch(id, forced));
+    }
+    pub fn find_lost_items(&mut self) {
+        self.with(|s, _| s.find_lost_items());
+    }
+
+    /// An AISAPI command from outside the scheduler; `body` is the caller's
+    /// LLSD body (writes), as recorded.
+    pub fn ais(&mut self, cmd: Command, tag: Option<&str>, body: Vec<u8>) {
+        let token = tag.map(|t| self.token(t));
+        let before = self.queue.len();
+        self.with(|s, cx| {
+            s.ais_command(cx, cmd, token);
+        });
+        if self.queue.len() > before {
+            // the command just enqueued
+            self.queue.back_mut().unwrap().2 = body;
+        }
+    }
+
+    /// `LLViewerInventoryCategory::fetch(expiry)`
+    pub fn cat_fetch(&mut self, id: Uuid, expiry: i32) -> bool {
+        let now = self.model.now;
+        let Some(c) = self.model.cats.get_mut(&id) else { return false };
+        let version = c.version;
+        if !c.fetch.fetch_gate(version, expiry, now) {
+            return false;
+        }
+        match scheduler::fetch_path(&self.env.cap_fid2, self.env.ais_available) {
+            FetchPath::Start => self.start(id, false),
+            FetchPath::Udp => self.note("msg FetchInventoryDescendents (not modelled)"),
+        }
+        true
+    }
+
+    /// `gInventory.fetchDescendentsOf(id)`
+    pub fn fetch_descendents_of(&mut self, id: Uuid) {
+        if id != NULL_ID && self.model.cats.contains_key(&id) {
+            self.cat_fetch(id, FETCH_DEFAULT_EXPIRY);
+        }
+    }
+
+    pub fn set_version(&mut self, id: Uuid, v: i32) {
+        self.model.cats.get_mut(&id).expect("category").version = v;
+    }
+
+    pub fn set_complete(&mut self, id: Uuid, c: bool) {
+        self.model.items.get_mut(&id).expect("item").complete = c;
+    }
+
+    pub fn clock_advance(&mut self, s: f64) {
+        self.model.now += s;
+    }
+
+    fn drain(&mut self) {
+        for a in self.sched.take_actions() {
+            match a {
+                Action::AisEnqueue { ticket, request } => self.queue.push_back((ticket, request, Vec::new())),
+                Action::AisCallback { token, id } => {
+                    let tag = self.tokens.get(&token).cloned().unwrap_or_default();
+                    self.note(&format!("callback {tag} {}", uuid_string(&id)));
+                }
+                Action::Callback { token } => {
+                    let tag = self.tokens.get(&token).cloned().unwrap_or_default();
+                    self.note(&format!("callback {tag}"));
+                }
+                Action::Notify { name } => self.note(&format!("notify {name}")),
+                Action::FetchCompleted => self.note("fetch.completed"),
+                Action::AddIdle => {}
+                other => {
+                    if self.error.is_none() {
+                        self.error = Some(format!("unexpected action in an AIS replay: {other:?}"));
+                    }
+                }
+            }
+        }
+    }
+
+    // ---- frames ----------------------------------------------------------
+
+    pub fn frame(&mut self, idle: bool) {
+        self.frame_no += 1;
+        if idle && self.sched.idle_registered() {
+            let env = self.env.clone();
+            let mut clock = self.clock;
+            {
+                let mut cx = Ctx::new(&mut self.model, &env);
+                self.sched.background_fetch(&mut cx, &mut clock);
+            }
+            self.clock = clock;
+            self.drain();
+        }
+        self.mainloop();
+        self.snapshot();
+    }
+
+    pub fn frames(&mut self, n: usize, idle: bool) {
+        for _ in 0..n {
+            self.frame(idle);
+        }
+    }
+
+    fn mainloop(&mut self) {
+        let frame = self.frame_no;
+        let mut k = 0;
+        while k < self.active.len() {
+            if self.active[k].sent_frame < frame {
+                let f = self.active.remove(k);
+                self.process_reply(f);
+                // the freed coroutine takes the next queued command
+                self.start_queued();
+            } else {
+                k += 1;
+            }
+        }
+        self.start_queued();
+    }
+
+    fn start_queued(&mut self) {
+        while self.active.len() < self.pool_size {
+            let Some((ticket, req, body)) = self.queue.pop_front() else { break };
+            self.send(ticket, req, body);
+        }
+    }
+
+    fn send(&mut self, ticket: u64, req: AisRequest, body: Vec<u8>) {
+        if self.env.disconnected {
+            // InvokeAISCommandCoro: gDisconnected, no request
+            let env = self.env.clone();
+            {
+                let mut cx = Ctx::new(&mut self.model, &env);
+                self.sched.ais_complete(&mut cx, ticket, &AisReply::disconnected());
+            }
+            self.drain();
+            return;
+        }
+        let target = target_of(&req.url).to_owned();
+        let method = req.method.as_str();
+        let (norm_target, tid) = normalise_tid(&target);
+        if let Some(t) = tid {
+            self.tids.push(t);
+        }
+        let head = ais_head(method, &norm_target, req.destination.as_deref(), body.len());
+        let request = format!("head={} body={}", escape_text(head.as_bytes()), escape_text(&body));
+        let mut attempts = 0;
+        let mut last: Option<RecWire> = None;
+        loop {
+            let Some(w) = self.rec_wires.get(self.next_wire).cloned() else {
+                if last.is_none() {
+                    self.fail(format!("request {} not recorded: {method} {norm_target}", self.wires.len() + 1));
+                }
+                break;
+            };
+            let same = w.method == method && w.target == norm_target && w.request == request;
+            if last.is_some() && !same {
+                break;
+            }
+            if !same {
+                self.fail(format!(
+                    "request {} differs:\n  expected {} {} {}\n  actual   {method} {norm_target} {request}",
+                    self.wires.len() + 1,
+                    w.method,
+                    w.target,
+                    w.request
+                ));
+                return;
+            }
+            self.next_wire += 1;
+            attempts += 1;
+            self.wires.push(format!(
+                "wire {} {method} {norm_target} status={} {request} {}",
+                self.wires.len() + 1,
+                w.status,
+                w.tail
+            ));
+            self.wire_targets.push((method.to_owned(), norm_target.clone(), w.status));
+            let retry = w.status == 503 && attempts < 6;
+            last = Some(w);
+            if !retry {
+                break;
+            }
+        }
+        let Some(w) = last else { return };
+        self.active.push(InFlight {
+            ticket,
+            sent_frame: self.frame_no,
+            status: w.status,
+            body: w.body,
+            subset: req.command == vkstorm_inventory::fetch::ais::CommandType::FetchCategorySubset,
+            depth: req.depth.unwrap_or(vkstorm_inventory::fetch::ais::MAX_FOLDER_DEPTH_REQUEST),
+        });
+    }
+
+    fn fail(&mut self, e: String) {
+        if self.error.is_none() {
+            self.error = Some(e);
+        }
+    }
+
+    fn process_reply(&mut self, f: InFlight) {
+        self.sched.ais_reply(f.ticket, f.status);
+        self.drain();
+        let value = f.body.as_deref().and_then(|b| vkstorm_llsd::parse(vkstorm_llsd::Format::Xml, b, Default::default()).1);
+        let is_fetch = matches!(
+            self.sched.ais_command_type(f.ticket),
+            Some(t) if (t as i32) >= 9
+        );
+        if self.stop_armed > 0 {
+            self.stop_armed -= 1;
+            if self.stop_armed == 0 {
+                // checkStop() throws at the update's first yield: nothing
+                // applied, no callback
+                self.stops_thrown += 1;
+                self.sched.ais_abandoned(f.ticket);
+                return;
+            }
+        }
+        let mut fetches = Vec::new();
+        if let Some(v) = &value {
+            if is_fetch {
+                fetches = self.model.apply_fetch_reply(f.subset, f.depth, v);
+            }
+        }
+        for (id, exp) in fetches {
+            self.cat_fetch(id, exp);
+        }
+        let reply = reply_of(f.status, value.as_ref());
+        let env = self.env.clone();
+        {
+            let mut cx = Ctx::new(&mut self.model, &env);
+            self.sched.ais_complete(&mut cx, f.ticket, &reply);
+        }
+        self.drain();
+    }
+
+    pub fn pool_count(&self) -> usize {
+        self.queue.len() + self.active.len()
+    }
+
+    fn idle_now(&self) -> bool {
+        self.pool_count() == 0 && self.sched.state().fetch_count == 0
+    }
+
+    /// `settle(idle, queues_empty)`: frames until nothing is in flight and
+    /// nothing changes for 8 frames.
+    pub fn settle(&mut self, idle: bool, queues_empty: bool) {
+        self.settle_ex(idle, queues_empty, true);
+    }
+
+    pub fn settle_ex(&mut self, idle: bool, queues_empty: bool, fetch_idle: bool) {
+        let mut stable = 0;
+        let mut last = String::new();
+        for _ in 0..100_000 {
+            self.frame(idle);
+            if self.error.is_some() {
+                return;
+            }
+            let mut ok = self.pool_count() == 0 && (!fetch_idle || self.sched.state().fetch_count == 0);
+            if ok && queues_empty {
+                let s = self.sched.state();
+                ok = s.folder_queue.is_empty() && s.item_queue.is_empty();
+            }
+            let now = format!("{}|{}|{}", self.last_snap, self.wires.len(), self.journal.len());
+            if ok && now == last {
+                stable += 1;
+                if stable >= 8 {
+                    return;
+                }
+            } else {
+                stable = 0;
+            }
+            last = now;
+        }
+        self.fail("settle did not end".into());
+    }
+
+    pub fn until(&mut self, mut pred: impl FnMut(&Run) -> bool) {
+        for _ in 0..100_000 {
+            self.frame(true);
+            if self.error.is_some() || pred(self) {
+                return;
+            }
+        }
+        self.fail("until did not end".into());
+    }
+
+    pub fn idle(&self) -> bool {
+        self.idle_now()
+    }
+
+    // ---- the login steps (frozen copies of llstartup.cpp) -------------------
+
+    pub fn login(&mut self) {
+        self.model.root = self.world.root;
+        self.set_startup(Startup::InventorySend);
+        self.inventory_send();
+        self.set_startup(Startup::InventorySkel);
+        self.inventory_skel();
+        self.snapshot();
+        self.set_startup(Startup::InventorySend2);
+        self.inventory_send2();
+        self.snapshot();
+        self.set_startup(Startup::InventoryCallbacks);
+        self.inventory_callbacks();
+        self.step("login");
+    }
+
+    pub fn inventory_send(&mut self) {
+        if self.world.libroot != NULL_ID {
+            self.model.libroot = self.world.libroot;
+            self.model.libowner = self.world.libowner;
+        }
+    }
+
+    pub fn inventory_skel(&mut self) {
+        let w = self.world.clone();
+        self.model.load_cold(&w);
+    }
+
+    pub fn inventory_send2(&mut self) {
+        self.model.build_parent_child_map();
+        if !self.model.usable {
+            self.note("notify InventoryUnusable");
+        }
+        self.start(NULL_ID, true);
+    }
+
+    pub fn inventory_callbacks(&mut self) {
+        self.start(NULL_ID, true);
+        let cof = self.model.current_outfit_id();
+        if self.model.cats.get(&cof).is_some_and(|c| c.version == -1) {
+            self.model.set_fetching(&cof, CategoryFetch::Recursive);
+        }
+    }
+
+    /// STATE_WEARABLES_WAIT: `callAfterCOFFetch` with AIS, pumped without the
+    /// idle callbacks.
+    pub fn cof(&mut self, base_outfit: Uuid) {
+        self.set_startup(Startup::WearablesWait);
+        self.model.base_outfit = base_outfit;
+        let t = self.token("cof");
+        self.with(|s, cx| s.fetch_cof(cx, Some(t)));
+        self.settle(false, false);
+        self.step("cof");
+    }
+
+    pub fn walk(&mut self) {
+        self.set_startup(Startup::Started);
+        self.settle(true, true);
+        self.step("walk");
+    }
+
+    pub fn public_state(&self) -> String {
+        let b = |x: bool| if x { "1" } else { "0" };
+        let s = &self.sched;
+        let m = &self.model;
+        format!(
+            "folder_active={} everything={} bulk_complete={} inv_started={} inv_completed={} inv_in_progress={} lib_started={} lib_completed={} lib_in_progress={}",
+            b(s.folder_fetch_active()),
+            b(s.is_everything_fetched()),
+            b(s.is_bulk_fetch_processing_complete()),
+            b(s.inventory_fetch_started()),
+            b(s.inventory_fetch_completed(m)),
+            b(s.inventory_fetch_in_progress(m)),
+            b(s.library_fetch_started()),
+            b(s.library_fetch_completed(m)),
+            b(s.library_fetch_in_progress(m)),
+        )
+    }
+
+    /// The compared lines, in the recorder's order.
+    pub fn finish(&mut self) -> Vec<String> {
+        let mut out = Vec::new();
+        let mut caps: BTreeMap<String, usize> = BTreeMap::new();
+        let mut methods: BTreeMap<String, usize> = BTreeMap::new();
+        let mut s503 = 0;
+        for (m, t, st) in &self.wire_targets {
+            let cap = match t.strip_prefix("/cap/") {
+                Some(r) => r.split(['/', '?']).next().unwrap().to_owned(),
+                None => "other".to_owned(),
+            };
+            *caps.entry(cap).or_default() += 1;
+            *methods.entry(m.clone()).or_default() += 1;
+            if *st == 503 {
+                s503 += 1;
+            }
+        }
+        let j = |m: &BTreeMap<String, usize>| m.iter().map(|(k, v)| format!("{k}:{v}")).collect::<Vec<_>>().join(",");
+        out.push(format!(
+            "count requests={} caps={} methods={} status503={}",
+            self.wires.len(),
+            j(&caps),
+            j(&methods),
+            s503
+        ));
+        for f in &self.facts {
+            out.push(format!("fact {f}"));
+        }
+        out.extend(self.wires.iter().cloned());
+        let distinct: BTreeSet<&String> = self.tids.iter().collect();
+        out.push(format!(
+            "tids requests={} distinct={} fresh={}",
+            self.tids.len(),
+            distinct.len(),
+            if self.tids.len() == distinct.len() { "yes" } else { "NO" }
+        ));
+        for l in &self.journal {
+            out.push(format!("jrn {l}"));
+        }
+        out.push(format!("pub {}", self.public_state()));
+        out
+    }
+}
+
+fn normalise_tid(target: &str) -> (String, Option<String>) {
+    if let Some(k) = target.find("tid=") {
+        let v = target[k + 4..k + 4 + 36].to_owned();
+        (format!("{}tid={{tid}}{}", &target[..k], &target[k + 4 + 36..]), Some(v))
+    } else {
+        (target.to_owned(), None)
+    }
+}
+
+pub fn index_order() -> Vec<String> {
+    let t = std::fs::read_to_string(fixture_dir().join("index.txt")).unwrap();
+    t.lines().filter(|l| !l.starts_with('#') && !l.is_empty()).map(str::to_owned).collect()
+}
+
+/// The recorded lines a replay compares: everything but the C++ model's own
+/// output (`batch*`, `market*`, `msg`, model dump, scenario notes) and the
+/// lines a scenario names as left to the viewer test.
+pub fn compared(lines: &[String], skip: &dyn Fn(&str) -> bool) -> Vec<String> {
+    lines
+        .iter()
+        .filter(|l| {
+            let l = l.as_str();
+            if l.starts_with("mdl ") || l.starts_with("mdl-") {
+                return false;
+            }
+            if let Some(j) = l.strip_prefix("jrn ") {
+                let keep = j.starts_with("step ")
+                    || j.starts_with("sch ")
+                    || j == "fetch.completed"
+                    || j.starts_with("callback ")
+                    || j.starts_with("notify ");
+                if !keep {
+                    return false;
+                }
+            }
+            !skip(l)
+        })
+        .cloned()
+        .collect()
+}
+
+/// Compares and reports: `(compared, total)` line counts on success.
+pub fn check(id: &str, run: &mut Run, skip: &dyn Fn(&str) -> bool) -> (usize, usize) {
+    let lines = scenario_lines(id);
+    let expected = compared(&lines, skip);
+    let actual: Vec<String> = run.finish().into_iter().filter(|l| !skip(l)).collect();
+    let mut first = None;
+    for i in 0..expected.len().max(actual.len()) {
+        if expected.get(i) != actual.get(i) {
+            first = Some(i);
+            break;
+        }
+    }
+    if let Some(i) = first {
+        let cut = |s: Option<&String>| s.map_or("<none>".to_owned(), |s| s.chars().take(700).collect());
+        let ctx_from = i.saturating_sub(3);
+        let mut msg = format!(
+            "{id}: line {} of {} compared lines differs\n  expected: {}\n  actual:   {}\n",
+            i + 1,
+            expected.len(),
+            cut(expected.get(i)),
+            cut(actual.get(i))
+        );
+        for k in ctx_from..i {
+            msg.push_str(&format!("  ctx {}: {}\n", k + 1, cut(expected.get(k))));
+        }
+        if let Some(e) = &run.error {
+            msg.push_str(&format!("  replay error: {e}\n"));
+        }
+        panic!("{msg}");
+    }
+    if let Some(e) = &run.error {
+        panic!("{id}: replay error: {e}");
+    }
+    (expected.len(), lines.len())
+}

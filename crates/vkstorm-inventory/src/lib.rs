@@ -13,7 +13,10 @@
 //!   obfuscation ([`item`], [`category`], [`object`], [`shadow`]);
 //! - their LLSD forms ([`llsd`]) and legacy text forms ([`legacy`]);
 //! - items, folders, aggregate permissions, `LLCategory` and sale info in
-//!   UDP message blocks ([`message`]).
+//!   UDP message blocks ([`message`]);
+//! - the background fetch's scheduler and request building
+//!   (`LLInventoryModelBackgroundFetch`, the fetch side of `AISAPI`), driven
+//!   by explicit events and producing an ordered action list ([`fetch`]).
 //!
 //! It is not the inventory model. In this rung the model containers stay C++:
 //! `LLInventoryItem`, `LLInventoryCategory` and `LLInventoryObject` keep their
@@ -34,6 +37,7 @@
 pub mod aggregate;
 pub mod category;
 pub mod category_obj;
+pub mod fetch;
 pub mod flags;
 pub mod item;
 pub mod legacy;

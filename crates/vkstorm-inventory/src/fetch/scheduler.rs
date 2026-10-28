@@ -1,0 +1,1214 @@
+//! `LLInventoryModelBackgroundFetch` (`newview/llinventorymodelbackgroundfetch.cpp`):
+//! the folder and item queues, the AIS scheduler `bulkFetchViaAis`, the
+//! legacy scheduler `bulkFetch`, the AIS completion handlers, the legacy
+//! handlers' scheduling rules, and the public predicates.
+//!
+//! Every function keeps the C++ name in its doc comment and follows the C++
+//! line by line, including its recorded defects (R3b README "Findings"):
+//! the legacy 403 split's empty POST (1), legacy replies stranded by a
+//! switch to AIS (2), a queue drained when the region has no inventory
+//! capability (3), the forced set on the legacy path (8), version 0 after
+//! an outage (9). `incrFetchFolderCount` resets the folder count on the
+//! fetch count's underflow, as the C++ does.
+//!
+//! Not ported: the `#ifdef OPENSIM` UDP background loop of
+//! `backgroundFetch()` (the recorded build has `OPENSIM` off; R3b "Not
+//! covered"). With the `opensim` feature, `bulkFetch()`'s `#ifdef OPENSIM`
+//! condition is followed.
+
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
+
+use super::ais::{self, AisCaps, AisNotices, AisReply, AisRequest, Command, CommandType, ItemType};
+use super::legacy::{FolderBody, FolderRequest, ItemBody, ItemRequest};
+use super::{CategoryFetch, FetchType, NULL_ID, QueueEntry, Uuid, VERSION_UNKNOWN, FT_MARKETPLACE_LISTINGS};
+
+/// `ALEXANDRIA_LINDEN_ID`: the owner whose folders AIS fetches through
+/// `LibraryAPIv3`.
+pub const ALEXANDRIA_LINDEN_ID: Uuid = [
+    0xba, 0x2a, 0x56, 0x4a, 0xf0, 0xf1, 0x4b, 0x82, 0x9c, 0x61, 0xb7, 0x52, 0x0b, 0xfc, 0xd0, 0x9f,
+];
+
+/// `bulkFetch()`'s `max_batch_size`.
+pub const LEGACY_MAX_BATCH_SIZE: u32 = 10;
+/// `bulkFetch()`'s `max_concurrent_fetches` (outstanding requests).
+pub const LEGACY_MAX_CONCURRENT_FETCHES: i32 = 12;
+
+/// A caller's callback, registered on the C++ side: a `nullary_func_t` or an
+/// `AISAPI::completion_t`. The scheduler only passes the token back.
+pub type CallerToken = u64;
+
+/// What the scheduler reads of a category.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct CategoryInfo {
+    pub version: i32,
+    pub preferred_type: i8,
+    pub owner_id: Uuid,
+}
+
+/// What the scheduler reads of an item.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ItemInfo {
+    /// `mIsComplete` (`isFinished()`).
+    pub complete: bool,
+    /// `getPermissions().getOwner()`
+    pub owner_id: Uuid,
+}
+
+/// The model as the scheduler sees it (`gInventory`, the categories' fetch
+/// state, the appearance manager's base outfit). Reads are the C++ getters;
+/// the three writes are the ones the scheduler makes, applied at once.
+pub trait FetchModel {
+    fn root_folder_id(&self) -> Uuid;
+    fn library_root_folder_id(&self) -> Uuid;
+    /// `getLibraryOwnerID()` (the legacy scheduler's library test).
+    fn library_owner_id(&self) -> Uuid;
+    fn marketplace_listings_id(&self) -> Uuid;
+    /// `findCategoryUUIDForType(FT_CURRENT_OUTFIT)`
+    fn current_outfit_id(&self) -> Uuid;
+    /// `LLAppearanceMgr::getBaseOutfitUUID()`
+    fn base_outfit_id(&self) -> Uuid;
+    fn category(&self, id: &Uuid) -> Option<CategoryInfo>;
+    /// `getDirectDescendentsOf`'s category array, in model order; `None` when
+    /// the model has no array for the id.
+    fn child_categories(&self, id: &Uuid) -> Option<Vec<Uuid>>;
+    fn item(&self, id: &Uuid) -> Option<ItemInfo>;
+    fn is_object_descendent_of(&self, obj: &Uuid, cat: &Uuid) -> bool;
+    /// `LLViewerInventoryCategory::getFetching()` (may reset an expired mark).
+    fn get_fetching(&mut self, id: &Uuid) -> CategoryFetch;
+    /// `LLViewerInventoryCategory::setFetching()`
+    fn set_fetching(&mut self, id: &Uuid, state: CategoryFetch);
+    /// `LLViewerInventoryCategory::setVersion()`
+    fn set_version(&mut self, id: &Uuid, version: i32);
+}
+
+/// The frame budget's clock: `LLTimer::getTotalSeconds()` in
+/// `bulkFetchViaAis`, read before the dispatch loops and after each entry.
+pub trait BudgetClock {
+    fn total_seconds(&mut self) -> f64;
+}
+
+/// The environment the scheduler reads: settings, the region and its
+/// capabilities, the session state.
+#[derive(Clone, Debug, Default)]
+pub struct Env {
+    /// `use_http_inventory()` (forced on in Second Life).
+    pub use_http_inventory: bool,
+    /// `AISAPI::isAvailable()`, see [`ais_available`].
+    pub ais_available: bool,
+    /// `gAgent.getRegion()` is set.
+    pub region: bool,
+    /// `getRegion()->capabilitiesReceived()`
+    pub capabilities_received: bool,
+    /// `gDisconnected`
+    pub disconnected: bool,
+    /// `LLApp::isExiting()`
+    pub exiting: bool,
+    /// `LLGridManager::isInSecondLife()`
+    pub in_second_life: bool,
+    /// `PoolSizeAIS`
+    pub pool_size_ais: u32,
+    /// `BatchSizeAIS3`
+    pub batch_size_ais3: i32,
+    /// `LLStartUp::getStartupState() > STATE_WEARABLES_WAIT`
+    pub past_wearables_wait: bool,
+    /// `gAgent.getID()`
+    pub agent_id: Uuid,
+    /// `InventorySortOrder` (`LLInventoryPanel::DEFAULT_SORT_ORDER`)
+    pub sort_order: u32,
+    /// `InventoryAPIv3`, `LibraryAPIv3`
+    pub ais_caps: AisCaps,
+    /// `FetchInventoryDescendents2`
+    pub cap_fid2: String,
+    /// `FetchLibDescendents2`
+    pub cap_fld2: String,
+    /// `FetchInventory2`
+    pub cap_fi2: String,
+    /// `FetchLib2`
+    pub cap_fl2: String,
+}
+
+/// `AISAPI::isAvailable()`: a region, `FSUseAis3Api` or Second Life (the
+/// setting matters only off Second Life), and the region's `InventoryAPIv3`.
+pub fn ais_available(region: bool, fs_use_ais3_api: bool, in_second_life: bool, has_inventory_cap: bool) -> bool {
+    region && (fs_use_ais3_api || in_second_life) && has_inventory_cap
+}
+
+/// What `LLViewerInventoryCategory::fetch()` does once its gate passed
+/// ([`super::timer::CategoryFetchState::fetch_gate`]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FetchPath {
+    /// `LLInventoryModelBackgroundFetch::start(id, false)`
+    Start,
+    /// The UDP `FetchInventoryDescendents` message (`<FS:Ansariel> [UDP-Msg]`):
+    /// `SortOrder` = sort order & 1, `FetchFolders` false, `FetchItems` true.
+    Udp,
+}
+
+/// `fetch()` after its gate: the background fetch when the region has
+/// `FetchInventoryDescendents2` or AIS is available, else UDP.
+pub fn fetch_path(region_cap_fid2: &str, ais_available: bool) -> FetchPath {
+    if !region_cap_fid2.is_empty() || ais_available { FetchPath::Start } else { FetchPath::Udp }
+}
+
+/// Everything the scheduler asks the outside to do, in order.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Action {
+    /// `EnqueueAISCommand`: run `request` on the coprocedure pool "AIS"
+    /// (through [`ais::PostponedQueue`]); report its end with
+    /// [`BackgroundFetch::ais_reply`] and [`BackgroundFetch::ais_complete`].
+    AisEnqueue { ticket: u64, request: AisRequest },
+    /// Call a caller's `AISAPI::completion_t` with `id`.
+    AisCallback { token: CallerToken, id: Uuid },
+    /// Call a caller's `nullary_func_t`.
+    Callback { token: CallerToken },
+    /// `LLNotificationsUtil::add(name)`
+    Notify { name: &'static str },
+    /// `mFoldersFetchedSignal()` (the fetch completion callback).
+    FetchCompleted,
+    /// `gIdleCallbacks.addFunction(backgroundFetchCB)`: from now on run
+    /// [`BackgroundFetch::background_fetch`] every frame (never removed).
+    AddIdle,
+    /// `gInventory.requestPost(false, url, body, handler, label)` with a new
+    /// `BGFolderHttpHandler` (`folder` true) or `BGItemHttpHandler`.
+    LegacyPost { handler: u64, folder: bool, url: String, body: Vec<u8>, label: &'static str },
+    /// `gInventory.handleResponses(false)` (then `notifyObservers()` when
+    /// `notify_observers`): pump the legacy handlers, then call
+    /// [`BackgroundFetch::bulk_fetch_after_pump`].
+    LegacyPump { notify_observers: bool },
+    /// `gInventory.notifyObservers()` (a legacy handler off Second Life).
+    NotifyObservers,
+}
+
+/// What an AIS command's completion does.
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum Completion {
+    /// `onAISFolderCalback(request, response, fetch_type)`; the null request
+    /// is the orphans fetch.
+    Folder { request: Uuid, fetch_type: FetchType },
+    /// `onAISContentCalback(category, children, response, fetch_type)`
+    Content { children: Vec<Uuid> },
+    /// `ais_simple_item_callback`
+    Item,
+    /// `fetchCOF`'s lambda.
+    Cof { callback: Option<CallerToken> },
+    /// `fetchFolderAndLinks`'s lambda.
+    FolderAndLinks { category: Uuid, callback: Option<CallerToken> },
+    /// A caller's own `completion_t`.
+    External(CallerToken),
+    /// No callback.
+    Nothing,
+}
+
+#[derive(Clone, Debug)]
+struct Pending {
+    completion: Completion,
+    request: AisRequest,
+}
+
+#[derive(Clone, Debug)]
+struct LegacyHandler {
+    body: FolderBody,
+    recursive: Vec<Uuid>,
+}
+
+/// The scheduler's private state, as the R3b recorder prints it (`jrn sch`).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SchedState {
+    pub bg_active: bool,
+    pub folder_active: bool,
+    pub inv_started: bool,
+    pub lib_started: bool,
+    pub mkt_started: bool,
+    pub all_fetched: bool,
+    pub fetch_count: i32,
+    pub folder_fetch_count: i32,
+    pub folder_queue: Vec<QueueEntry>,
+    pub item_queue: Vec<QueueEntry>,
+    pub expected: Vec<Uuid>,
+    pub forced: Vec<Uuid>,
+}
+
+/// `LLInventoryModelBackgroundFetch` together with the `AISAPI` state its
+/// commands need (open commands, the 403 flag).
+#[derive(Debug, Default)]
+pub struct BackgroundFetch {
+    recursive_inventory_fetch_started: bool,
+    recursive_library_fetch_started: bool,
+    recursive_marketplace_fetch_started: bool,
+    all_recursive_folders_fetched: bool,
+    background_fetch_active: bool,
+    folder_fetch_active: bool,
+    fetch_count: i32,
+    last_fetch_count: i32,
+    fetch_folder_count: i32,
+    fetch_folder_queue: VecDeque<QueueEntry>,
+    fetch_item_queue: VecDeque<QueueEntry>,
+    force_fetch_set: BTreeSet<Uuid>,
+    expected_folder_ids: Vec<Uuid>,
+    idle_registered: bool,
+
+    notices: AisNotices,
+    next_ticket: u64,
+    pending: BTreeMap<u64, Pending>,
+    next_handler: u64,
+    legacy: BTreeMap<u64, LegacyHandler>,
+    legacy_item_handlers: BTreeSet<u64>,
+    pump_pending: bool,
+
+    actions: Vec<Action>,
+}
+
+/// The model and environment of one call.
+pub struct Ctx<'a> {
+    pub model: &'a mut dyn FetchModel,
+    pub env: &'a Env,
+}
+
+impl<'a> Ctx<'a> {
+    pub fn new(model: &'a mut dyn FetchModel, env: &'a Env) -> Self {
+        Ctx { model, env }
+    }
+}
+
+fn entry(id: Uuid, fetch_type: FetchType, is_category: bool) -> QueueEntry {
+    QueueEntry { id, is_category, fetch_type }
+}
+
+impl BackgroundFetch {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// The actions produced since the last call, in order.
+    pub fn take_actions(&mut self) -> Vec<Action> {
+        std::mem::take(&mut self.actions)
+    }
+
+    /// The process-wide 403 flag (`first_call` in `InvokeAISCommandCoro`).
+    pub fn notices_mut(&mut self) -> &mut AisNotices {
+        &mut self.notices
+    }
+
+    fn add_idle(&mut self) {
+        if !self.idle_registered {
+            self.idle_registered = true;
+            self.actions.push(Action::AddIdle);
+        }
+    }
+
+    /// Whether `backgroundFetchCB` is in the idle callbacks.
+    pub fn idle_registered(&self) -> bool {
+        self.idle_registered
+    }
+
+    // ---- predicates ------------------------------------------------------
+
+    /// `isBulkFetchProcessingComplete()`
+    pub fn is_bulk_fetch_processing_complete(&self) -> bool {
+        self.fetch_folder_queue.is_empty() && self.fetch_item_queue.is_empty() && self.fetch_count <= 0
+    }
+
+    /// `isFolderFetchProcessingComplete()`
+    pub fn is_folder_fetch_processing_complete(&self) -> bool {
+        self.fetch_folder_queue.is_empty() && self.fetch_folder_count <= 0
+    }
+
+    pub fn library_fetch_started(&self) -> bool {
+        self.recursive_library_fetch_started
+    }
+
+    pub fn library_fetch_completed(&self, model: &dyn FetchModel) -> bool {
+        self.library_fetch_started() && self.fetch_queue_contains_no_descendents_of(model, &model.library_root_folder_id())
+    }
+
+    pub fn library_fetch_in_progress(&self, model: &dyn FetchModel) -> bool {
+        self.library_fetch_started() && !self.library_fetch_completed(model)
+    }
+
+    pub fn inventory_fetch_started(&self) -> bool {
+        self.recursive_inventory_fetch_started
+    }
+
+    pub fn inventory_fetch_completed(&self, model: &dyn FetchModel) -> bool {
+        self.inventory_fetch_started() && self.fetch_queue_contains_no_descendents_of(model, &model.root_folder_id())
+    }
+
+    pub fn inventory_fetch_in_progress(&self, model: &dyn FetchModel) -> bool {
+        self.inventory_fetch_started() && !self.inventory_fetch_completed(model)
+    }
+
+    /// `isEverythingFetched()`
+    pub fn is_everything_fetched(&self) -> bool {
+        self.all_recursive_folders_fetched
+    }
+
+    /// `folderFetchActive()`
+    pub fn folder_fetch_active(&self) -> bool {
+        self.folder_fetch_active
+    }
+
+    /// `fetchQueueContainsNoDescendentsOf()`
+    pub fn fetch_queue_contains_no_descendents_of(&self, model: &dyn FetchModel, cat_id: &Uuid) -> bool {
+        !self
+            .fetch_folder_queue
+            .iter()
+            .chain(self.fetch_item_queue.iter())
+            .any(|e| model.is_object_descendent_of(&e.id, cat_id))
+    }
+
+    /// The private state, for the recorder's `sch` lines.
+    pub fn state(&self) -> SchedState {
+        SchedState {
+            bg_active: self.background_fetch_active,
+            folder_active: self.folder_fetch_active,
+            inv_started: self.recursive_inventory_fetch_started,
+            lib_started: self.recursive_library_fetch_started,
+            mkt_started: self.recursive_marketplace_fetch_started,
+            all_fetched: self.all_recursive_folders_fetched,
+            fetch_count: self.fetch_count,
+            folder_fetch_count: self.fetch_folder_count,
+            folder_queue: self.fetch_folder_queue.iter().copied().collect(),
+            item_queue: self.fetch_item_queue.iter().copied().collect(),
+            expected: self.expected_folder_ids.clone(),
+            forced: self.force_fetch_set.iter().copied().collect(),
+        }
+    }
+
+    // ---- counts ----------------------------------------------------------
+
+    /// `incrFetchCount()`
+    pub fn incr_fetch_count(&mut self, fetching: i32) {
+        self.fetch_count += fetching;
+        if self.fetch_count < 0 {
+            self.fetch_count = 0;
+        }
+    }
+
+    /// `incrFetchFolderCount()`: the underflow check reads the fetch count,
+    /// as in the C++.
+    pub fn incr_fetch_folder_count(&mut self, fetching: i32) {
+        self.incr_fetch_count(fetching);
+        self.fetch_folder_count += fetching;
+        if self.fetch_count < 0 {
+            self.fetch_folder_count = 0;
+        }
+    }
+
+    // ---- queue entry points ----------------------------------------------
+
+    /// `addRequestAtFront()`
+    pub fn add_request_at_front(&mut self, id: Uuid, recursive: bool, is_category: bool) {
+        let t = if recursive { FetchType::Recursive } else { FetchType::Default };
+        if is_category {
+            self.fetch_folder_queue.push_front(entry(id, t, true));
+        } else {
+            self.fetch_item_queue.push_front(entry(id, t, false));
+        }
+    }
+
+    /// `addRequestAtBack()`
+    pub fn add_request_at_back(&mut self, id: Uuid, recursive: bool, is_category: bool) {
+        let t = if recursive { FetchType::Recursive } else { FetchType::Default };
+        if is_category {
+            self.fetch_folder_queue.push_back(entry(id, t, true));
+        } else {
+            self.fetch_item_queue.push_back(entry(id, t, false));
+        }
+    }
+
+    /// `start(id, recursive)`; the null id starts the login walk.
+    pub fn start(&mut self, cx: &mut Ctx<'_>, id: Uuid, recursive: bool) {
+        let cat = cx.model.category(&id);
+        let ais = cx.env.ais_available;
+        if cat.is_some() || (id == NULL_ID && !self.is_everything_fetched()) {
+            self.background_fetch_active = true;
+            self.folder_fetch_active = true;
+            let recursion_type = if recursive { FetchType::Recursive } else { FetchType::Default };
+            if id == NULL_ID {
+                if !self.recursive_inventory_fetch_started {
+                    self.recursive_inventory_fetch_started |= recursive;
+                    let root = cx.model.root_folder_id();
+                    if recursive && ais {
+                        // root and content separately: most system folders
+                        // are requested independently
+                        self.fetch_folder_queue.push_front(entry(root, FetchType::FolderAndContent, true));
+                    } else {
+                        self.fetch_folder_queue.push_back(entry(root, recursion_type, true));
+                    }
+                    self.add_idle();
+                }
+                if !self.recursive_library_fetch_started {
+                    self.recursive_library_fetch_started |= recursive;
+                    let lib = cx.model.library_root_folder_id();
+                    self.fetch_folder_queue.push_back(entry(lib, recursion_type, true));
+                    self.add_idle();
+                }
+            } else if recursive && cat.is_some_and(|c| c.preferred_type == FT_MARKETPLACE_LISTINGS) {
+                if self.fetch_folder_queue.back().is_none_or(|b| b.id != id) {
+                    if recursive && ais {
+                        self.fetch_folder_queue.push_front(entry(id, FetchType::FolderAndContent, true));
+                    } else {
+                        self.fetch_folder_queue.push_front(entry(id, recursion_type, true));
+                    }
+                    self.add_idle();
+                    self.recursive_marketplace_fetch_started = true;
+                }
+            } else {
+                if ais {
+                    if self.fetch_folder_queue.back().is_none_or(|b| b.id != id) {
+                        // On AIS the root goes to the top; follow-ups go back
+                        self.fetch_folder_queue.push_back(entry(id, recursion_type, true));
+                        self.add_idle();
+                    }
+                } else if self.fetch_folder_queue.front().is_none_or(|f| f.id != id) {
+                    // Specific folder requests go to front of queue.
+                    self.fetch_folder_queue.push_front(entry(id, recursion_type, true));
+                    self.add_idle();
+                }
+                if id == cx.model.library_root_folder_id() {
+                    self.recursive_library_fetch_started |= recursive;
+                }
+                if id == cx.model.root_folder_id() {
+                    self.recursive_inventory_fetch_started |= recursive;
+                }
+            }
+        } else if let Some(item) = cx.model.item(&id) {
+            if !item.complete {
+                self.schedule_item_fetch(id, false);
+            }
+        }
+    }
+
+    /// `scheduleFolderFetch()`
+    pub fn schedule_folder_fetch(&mut self, cat_id: Uuid, forced: bool) {
+        if self.fetch_folder_queue.front().is_none_or(|f| f.id != cat_id) {
+            self.background_fetch_active = true;
+            self.folder_fetch_active = true;
+            if forced {
+                // check if already requested
+                if self.force_fetch_set.insert(cat_id) {
+                    self.fetch_folder_queue.push_front(entry(cat_id, FetchType::Forced, true));
+                }
+            } else {
+                // version presence acts as duplicate prevention for normal fetches
+                self.fetch_folder_queue.push_front(entry(cat_id, FetchType::Default, true));
+            }
+            self.add_idle();
+        }
+    }
+
+    /// `scheduleItemFetch()`
+    pub fn schedule_item_fetch(&mut self, item_id: Uuid, forced: bool) {
+        if self.fetch_item_queue.front().is_none_or(|f| f.id != item_id) {
+            self.background_fetch_active = true;
+            if forced {
+                if self.force_fetch_set.insert(item_id) {
+                    self.fetch_item_queue.push_front(entry(item_id, FetchType::Forced, false));
+                }
+            } else {
+                // 'isFinished' being set acts as duplicate prevention
+                self.fetch_item_queue.push_front(entry(item_id, FetchType::Default, false));
+            }
+            self.add_idle();
+        }
+    }
+
+    /// `fetchFolderAndLinks(cat_id, callback)` (AIS only); `None` is `no_op`.
+    pub fn fetch_folder_and_links(&mut self, cx: &mut Ctx<'_>, cat_id: Uuid, callback: Option<CallerToken>) {
+        if cx.model.category(&cat_id).is_some() {
+            // Mark folder (update timer) so that background fetch won't request it
+            cx.model.set_fetching(&cat_id, CategoryFetch::Recursive);
+        }
+        self.incr_fetch_folder_count(1);
+        self.expected_folder_ids.push(cat_id);
+        self.ais_call(
+            cx,
+            Command::FetchCategoryLinks { category: cat_id },
+            Completion::FolderAndLinks { category: cat_id, callback },
+        );
+        // start idle loop to track completion
+        self.background_fetch_active = true;
+        self.folder_fetch_active = true;
+        self.add_idle();
+    }
+
+    /// `fetchCOF(callback)` (AIS only).
+    pub fn fetch_cof(&mut self, cx: &mut Ctx<'_>, callback: Option<CallerToken>) {
+        let cat_id = cx.model.current_outfit_id();
+        if cx.model.category(&cat_id).is_some() {
+            cx.model.set_fetching(&cat_id, CategoryFetch::Recursive);
+        }
+        self.incr_fetch_folder_count(1);
+        self.expected_folder_ids.push(cat_id);
+        self.ais_call(cx, Command::FetchCof, Completion::Cof { callback });
+        self.background_fetch_active = true;
+        self.folder_fetch_active = true;
+        self.add_idle();
+    }
+
+    /// `findLostItems()`
+    pub fn find_lost_items(&mut self) {
+        self.background_fetch_active = true;
+        self.folder_fetch_active = true;
+        self.fetch_folder_queue.push_back(entry(NULL_ID, FetchType::Recursive, true));
+        self.add_idle();
+    }
+
+    /// `setAllFoldersFetched()`
+    pub fn set_all_folders_fetched(&mut self) {
+        if self.recursive_inventory_fetch_started && self.recursive_library_fetch_started {
+            self.all_recursive_folders_fetched = true;
+        }
+        self.folder_fetch_active = false;
+        if self.is_bulk_fetch_processing_complete() {
+            self.background_fetch_active = false;
+        }
+        // For now only informs about initial fetch being done
+        self.actions.push(Action::FetchCompleted);
+    }
+
+    // ---- AIS commands ----------------------------------------------------
+
+    /// Runs an `AISAPI` command for a caller outside the scheduler (writes,
+    /// direct fetches): its callback comes back as [`Action::AisCallback`].
+    /// Returns false when nothing was sent (the callback, if any, was then
+    /// called with null at once).
+    pub fn ais_command(&mut self, cx: &mut Ctx<'_>, cmd: Command, callback: Option<CallerToken>) -> bool {
+        let c = match callback {
+            Some(t) => Completion::External(t),
+            None => Completion::Nothing,
+        };
+        self.ais_call(cx, cmd, c)
+    }
+
+    fn ais_call(&mut self, cx: &mut Ctx<'_>, cmd: Command, completion: Completion) -> bool {
+        match ais::build(&cmd, &cx.env.ais_caps) {
+            Ok(request) => {
+                let ticket = self.next_ticket;
+                self.next_ticket += 1;
+                self.pending.insert(ticket, Pending { completion, request: request.clone() });
+                self.actions.push(Action::AisEnqueue { ticket, request });
+                true
+            }
+            Err(_) => {
+                // No capability, or an empty subset: the callback with null,
+                // at once (the re-entrancy of s17).
+                self.complete(cx, completion, NULL_ID);
+                false
+            }
+        }
+    }
+
+    /// The command's reply arrived (`InvokeAISCommandCoro` before
+    /// `onUpdateReceived`): the 403 notification, if any, as an action. Call
+    /// before applying the update, then [`ais_complete`] after it.
+    ///
+    /// [`ais_complete`]: BackgroundFetch::ais_complete
+    pub fn ais_reply(&mut self, ticket: u64, status: i32) {
+        if let Some(p) = self.pending.get(&ticket) {
+            if let Some(name) = self.notices.on_reply(&p.request, status) {
+                self.actions.push(Action::Notify { name });
+            }
+        }
+    }
+
+    /// The command finished (after the update was applied, or without a
+    /// request when `gDisconnected`): run its callback with the reply's ids.
+    pub fn ais_complete(&mut self, cx: &mut Ctx<'_>, ticket: u64, reply: &AisReply) {
+        let Some(p) = self.pending.remove(&ticket) else { return };
+        let ids = ais::callback_ids(p.request.command, reply);
+        match p.completion {
+            Completion::External(token) => {
+                for id in ids {
+                    self.actions.push(Action::AisCallback { token, id });
+                }
+            }
+            c => {
+                // internal completions are single-id commands
+                self.complete(cx, c, ids[0]);
+            }
+        }
+    }
+
+    /// `LLCoros::checkStop()` threw inside the command's update: its callback
+    /// never runs (the counts it would have released stay raised).
+    pub fn ais_abandoned(&mut self, ticket: u64) {
+        self.pending.remove(&ticket);
+    }
+
+    /// The command type of an open ticket.
+    pub fn ais_command_type(&self, ticket: u64) -> Option<CommandType> {
+        self.pending.get(&ticket).map(|p| p.request.command)
+    }
+
+    fn complete(&mut self, cx: &mut Ctx<'_>, completion: Completion, response_id: Uuid) {
+        match completion {
+            Completion::Folder { request, fetch_type } => self.on_ais_folder_callback(cx, request, response_id, fetch_type),
+            Completion::Content { children } => self.on_ais_content_callback(cx, &children, response_id),
+            Completion::Item => {
+                // ais_simple_item_callback
+                self.incr_fetch_count(-1);
+            }
+            Completion::Cof { callback } => {
+                if let Some(token) = callback {
+                    self.actions.push(Action::Callback { token });
+                }
+                let cat_id = cx.model.current_outfit_id();
+                self.on_ais_folder_callback(cx, cat_id, response_id, FetchType::Default);
+                if response_id != NULL_ID {
+                    // COF might have fetched the base outfit folder through a
+                    // link, but not its content: make sure it's up to date
+                    let base = cx.model.base_outfit_id();
+                    if base != NULL_ID {
+                        let cat = cx.model.category(&base);
+                        if cat.is_none_or(|c| c.version == VERSION_UNKNOWN) {
+                            self.fetch_folder_and_links(cx, base, None);
+                        }
+                    }
+                }
+            }
+            Completion::FolderAndLinks { category, callback } => {
+                if let Some(token) = callback {
+                    self.actions.push(Action::Callback { token });
+                }
+                self.on_ais_folder_callback(cx, category, response_id, FetchType::Default);
+            }
+            Completion::External(token) => self.actions.push(Action::AisCallback { token, id: response_id }),
+            Completion::Nothing => {}
+        }
+    }
+
+    /// `onAISContentCalback()`
+    fn on_ais_content_callback(&mut self, cx: &mut Ctx<'_>, content_ids: &[Uuid], response_id: Uuid) {
+        // Don't emplace_front on failure - this may run inside bulkFetchViaAis
+        self.incr_fetch_folder_count(-1);
+        for folder in content_ids {
+            if let Some(pos) = self.expected_folder_ids.iter().position(|e| e == folder) {
+                self.expected_folder_ids.remove(pos);
+            }
+            if cx.model.category(folder).is_some() {
+                cx.model.set_fetching(folder, CategoryFetch::None);
+            }
+            if response_id == NULL_ID {
+                // Failed to fetch, get it individually
+                self.fetch_folder_queue.push_back(entry(*folder, FetchType::Recursive, true));
+            } else if let Some(children) = cx.model.child_categories(folder) {
+                // verify the descendants are fetched fully (depth limit)
+                for c in children {
+                    self.fetch_folder_queue.push_back(entry(c, FetchType::Recursive, true));
+                }
+            }
+        }
+        if !self.fetch_folder_queue.is_empty() {
+            self.background_fetch_active = true;
+            self.folder_fetch_active = true;
+            self.add_idle();
+        }
+    }
+
+    /// `onAISFolderCalback()`
+    fn on_ais_folder_callback(&mut self, cx: &mut Ctx<'_>, request_id: Uuid, response_id: Uuid, fetch_type: FetchType) {
+        self.incr_fetch_folder_count(-1);
+        if let Some(pos) = self.expected_folder_ids.iter().position(|e| *e == request_id) {
+            self.expected_folder_ids.remove(pos);
+        }
+        // else: "ais shouldn't respond twice" (llassert, a warning)
+
+        if request_id == NULL_ID {
+            // orphans, no other actions needed
+            return;
+        }
+
+        let mut new_state = CategoryFetch::None;
+        let mut request_descendants = false;
+        if response_id == NULL_ID {
+            // Failure
+            if fetch_type == FetchType::Recursive {
+                // A full recursive request failed: folder and content separately
+                self.fetch_folder_queue.push_back(entry(request_id, FetchType::FolderAndContent, true));
+            } else if fetch_type == FetchType::FolderAndContent {
+                // "Failed to download folder ... Requesting known content separately"
+                self.fetch_folder_queue.push_back(entry(request_id, FetchType::ContentRecursive, true));
+                // the version stops the viewer requesting the folder forever
+                if cx.model.category(&request_id).is_some_and(|c| c.version == VERSION_UNKNOWN) {
+                    cx.model.set_version(&request_id, 0);
+                }
+                // back off for a bit in case something force-requests at once
+                new_state = CategoryFetch::Failed;
+            }
+        } else if fetch_type == FetchType::Recursive {
+            // Got the folder and content, verify the content
+            request_descendants = true;
+        } else if fetch_type == FetchType::FolderAndContent {
+            // read folder for content request
+            self.fetch_folder_queue.push_front(entry(request_id, FetchType::ContentRecursive, true));
+        }
+
+        if request_descendants {
+            if let Some(children) = cx.model.child_categories(&request_id) {
+                for c in children {
+                    self.fetch_folder_queue.push_back(entry(c, FetchType::Recursive, true));
+                }
+            }
+        }
+
+        if !self.fetch_folder_queue.is_empty() {
+            self.background_fetch_active = true;
+            self.folder_fetch_active = true;
+            self.add_idle();
+        }
+
+        // done
+        if cx.model.category(&request_id).is_some() {
+            cx.model.set_fetching(&request_id, new_state);
+        }
+    }
+
+    // ---- the idle callback -------------------------------------------------
+
+    /// `backgroundFetch()`, the idle callback. On the legacy path with
+    /// requests in flight this stops at [`Action::LegacyPump`]; the caller
+    /// pumps the handlers and then calls [`bulk_fetch_after_pump`].
+    ///
+    /// [`bulk_fetch_after_pump`]: BackgroundFetch::bulk_fetch_after_pump
+    pub fn background_fetch(&mut self, cx: &mut Ctx<'_>, clock: &mut dyn BudgetClock) {
+        if !self.background_fetch_active {
+            return;
+        }
+        if cx.env.use_http_inventory {
+            if cx.env.ais_available {
+                self.bulk_fetch_via_ais(cx, clock);
+            } else if cx.env.region && cx.env.capabilities_received {
+                self.bulk_fetch(cx);
+            }
+        }
+        // #ifdef OPENSIM: the UDP loop (not in this build)
+    }
+
+    /// `bulkFetchViaAis()`
+    fn bulk_fetch_via_ais(&mut self, cx: &mut Ctx<'_>, clock: &mut dyn BudgetClock) {
+        if cx.env.disconnected {
+            return;
+        }
+        // Don't have too many requests at once, AIS throttles. Reserve one
+        // request for actions outside of fetch (like renames). U32
+        // arithmetic: a pool of 0 wraps to the top and clamps to 50.
+        let max_concurrent_fetches = cx.env.pool_size_ais.wrapping_sub(1).clamp(1, 50);
+        if (self.fetch_count as u32) >= max_concurrent_fetches {
+            return;
+        }
+
+        // Don't loop for too long (in case of large, fully loaded inventory)
+        let mut curent_time = clock.total_seconds();
+        let max_time: f64 = if cx.env.past_wearables_wait { 0.006f32 as f64 } else { 1.0 };
+        let end_time = curent_time + max_time;
+        let last_fetch_count = self.fetch_count;
+
+        while let Some(&info) = self.fetch_folder_queue.front() {
+            if !((self.fetch_count as u32) < max_concurrent_fetches && curent_time < end_time) {
+                break;
+            }
+            self.bulk_fetch_via_ais_entry(cx, info);
+            self.fetch_folder_queue.pop_front();
+            curent_time = clock.total_seconds();
+        }
+
+        // Items even if the recursive fetch isn't done: a folder that keeps
+        // timing out must not block them
+        while let Some(&info) = self.fetch_item_queue.front() {
+            if !((self.fetch_count as u32) < max_concurrent_fetches && curent_time < end_time) {
+                break;
+            }
+            self.bulk_fetch_via_ais_entry(cx, info);
+            self.fetch_item_queue.pop_front();
+            curent_time = clock.total_seconds();
+        }
+
+        if last_fetch_count != self.fetch_count || self.last_fetch_count != self.fetch_count {
+            // "Total active fetches" (debug log)
+            self.last_fetch_count = self.fetch_count;
+        }
+
+        if self.is_folder_fetch_processing_complete() && self.folder_fetch_active {
+            if !self.recursive_inventory_fetch_started || self.recursive_marketplace_fetch_started {
+                self.set_all_folders_fetched();
+            } else {
+                // the marketplace after the main inventory, unless a floater
+                // asked for it
+                self.recursive_marketplace_fetch_started = true;
+                let mkt = cx.model.marketplace_listings_id();
+                if mkt != NULL_ID {
+                    self.fetch_folder_queue.push_front(entry(mkt, FetchType::FolderAndContent, true));
+                } else {
+                    self.set_all_folders_fetched();
+                }
+            }
+        }
+
+        if self.is_bulk_fetch_processing_complete() {
+            self.background_fetch_active = false;
+        }
+    }
+
+    /// `bulkFetchViaAis(const FetchQueueInfo&)`
+    fn bulk_fetch_via_ais_entry(&mut self, cx: &mut Ctx<'_>, info: QueueEntry) {
+        if info.is_category {
+            let cat_id = info.id;
+            if cat_id == NULL_ID {
+                self.incr_fetch_folder_count(1);
+                self.expected_folder_ids.push(cat_id);
+                // Lost and found
+                self.ais_call(
+                    cx,
+                    Command::FetchOrphans,
+                    Completion::Folder { request: NULL_ID, fetch_type: FetchType::Default },
+                );
+            } else if let Some(cat) = cx.model.category(&cat_id) {
+                let item_type =
+                    if cat.owner_id == ALEXANDRIA_LINDEN_ID { ItemType::Library } else { ItemType::Inventory };
+                if info.fetch_type == FetchType::ContentRecursive {
+                    // fetch content only, ignore cat itself
+                    let categories = cx.model.child_categories(&cat_id);
+                    let target_state = CategoryFetch::Recursive;
+                    let mut content_done = true;
+                    // Top limit is 'as many as you can put into url'
+                    let batch_limit = cx.env.batch_size_ais3.clamp(1, 40) as usize;
+                    let mut children = Vec::new();
+                    if let Some(cats) = &categories {
+                        for child in cats {
+                            let Some(c) = cx.model.category(child) else { continue };
+                            if c.version != VERSION_UNKNOWN || cx.model.get_fetching(child) >= target_state {
+                                continue;
+                            }
+                            if c.preferred_type == FT_MARKETPLACE_LISTINGS {
+                                // special case, marketplace will fetch that as needed
+                                continue;
+                            }
+                            children.push(*child);
+                            self.expected_folder_ids.push(*child);
+                            cx.model.set_fetching(child, target_state);
+                            if children.len() >= batch_limit {
+                                content_done = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if !children.is_empty() {
+                        // increment before call in case of immediate callback
+                        self.incr_fetch_folder_count(1);
+                        self.ais_call(
+                            cx,
+                            Command::FetchCategorySubset {
+                                category: cat_id,
+                                children: children.clone(),
+                                item_type,
+                                recursive: true,
+                                depth: 0,
+                            },
+                            Completion::Content { children },
+                        );
+                    }
+
+                    if content_done {
+                        // something else might have downloaded folders: verify
+                        // every complete child has its children done as well
+                        if let Some(cats) = &categories {
+                            for child in cats {
+                                if cx.model.category(child).is_some_and(|c| c.version != VERSION_UNKNOWN) {
+                                    self.fetch_folder_queue.push_back(entry(*child, FetchType::Recursive, true));
+                                }
+                            }
+                        }
+                    } else {
+                        // send it back to get the rest
+                        self.fetch_folder_queue.push_back(entry(cat_id, FetchType::ContentRecursive, true));
+                    }
+                } else if cat.version == VERSION_UNKNOWN || info.fetch_type == FetchType::Forced {
+                    let target_state = if info.fetch_type > FetchType::ContentRecursive {
+                        CategoryFetch::Recursive
+                    } else {
+                        CategoryFetch::Normal
+                    };
+                    // start again if we did a non-recursive fetch before
+                    if cx.model.get_fetching(&cat_id) < target_state {
+                        self.incr_fetch_folder_count(1);
+                        cx.model.set_fetching(&cat_id, target_state);
+                        self.expected_folder_ids.push(cat_id);
+                        self.ais_call(
+                            cx,
+                            Command::FetchCategoryChildren {
+                                category: cat_id,
+                                item_type,
+                                recursive: info.fetch_type == FetchType::Recursive,
+                                depth: 0,
+                            },
+                            Completion::Folder { request: cat_id, fetch_type: info.fetch_type },
+                        );
+                    }
+                } else if info.fetch_type == FetchType::Recursive || info.fetch_type == FetchType::FolderAndContent {
+                    // Already fetched, check if anything inside needs fetching
+                    if let Some(cats) = cx.model.child_categories(&cat_id) {
+                        for c in cats {
+                            // not push_front, to not cause an infinite loop
+                            self.fetch_folder_queue.push_back(entry(c, FetchType::Recursive, true));
+                        }
+                    }
+                }
+            }
+            // else: an unknown folder is dropped
+        } else {
+            match cx.model.item(&info.id) {
+                Some(item) => {
+                    if !item.complete || info.fetch_type == FetchType::Forced {
+                        self.fetch_count += 1;
+                        let t = if item.owner_id == cx.env.agent_id { ItemType::Inventory } else { ItemType::Library };
+                        self.ais_call(cx, Command::FetchItem { item: info.id, item_type: t }, Completion::Item);
+                    }
+                }
+                None => {
+                    // unknown: assume the agent's inventory
+                    self.fetch_count += 1;
+                    self.ais_call(
+                        cx,
+                        Command::FetchItem { item: info.id, item_type: ItemType::Inventory },
+                        Completion::Item,
+                    );
+                }
+            }
+        }
+
+        if info.fetch_type == FetchType::Forced {
+            self.force_fetch_set.remove(&info.id);
+        }
+    }
+
+    // ---- the legacy scheduler -------------------------------------------
+
+    /// `bulkFetch()` up to `handleResponses`.
+    fn bulk_fetch(&mut self, cx: &mut Ctx<'_>) {
+        if !cx.env.region || cx.env.disconnected || cx.env.exiting {
+            return;
+        }
+        if self.fetch_count != 0 {
+            // Process completed background HTTP requests first.
+            self.pump_pending = true;
+            self.actions.push(Action::LegacyPump { notify_observers: cx.env.in_second_life });
+            return;
+        }
+        self.bulk_fetch_batches(cx);
+    }
+
+    /// The rest of `bulkFetch()` after the caller pumped the legacy handlers
+    /// (only after an [`Action::LegacyPump`]).
+    pub fn bulk_fetch_after_pump(&mut self, cx: &mut Ctx<'_>) {
+        if !std::mem::take(&mut self.pump_pending) {
+            return;
+        }
+        self.bulk_fetch_batches(cx);
+    }
+
+    fn bulk_fetch_batches(&mut self, cx: &mut Ctx<'_>) {
+        if self.fetch_count > LEGACY_MAX_CONCURRENT_FETCHES {
+            return;
+        }
+        let mut item_count: u32 = 0;
+        let mut folder_count: u32 = 0;
+        let sort_order = (cx.env.sort_order & 0x1) as i32;
+        let agent = cx.env.agent_id;
+        let mut recursive_cats: Vec<Uuid> = Vec::new();
+        let mut all_cats: Vec<Uuid> = Vec::new(); // duplicate avoidance
+        let mut folders: Vec<FolderRequest> = Vec::new();
+        let mut folders_lib: Vec<FolderRequest> = Vec::new();
+        let mut items: Vec<ItemRequest> = Vec::new();
+        let mut items_lib: Vec<ItemRequest> = Vec::new();
+
+        while let Some(&info) = self.fetch_folder_queue.front() {
+            if item_count + folder_count >= LEGACY_MAX_BATCH_SIZE {
+                break;
+            }
+            if info.is_category {
+                let cat_id = info.id;
+                if cat_id == NULL_ID {
+                    // DEV-17797 Lost and found
+                    folders.push(FolderRequest {
+                        folder_id: NULL_ID,
+                        id_as_string: true,
+                        owner_id: agent,
+                        sort_order,
+                        fetch_folders: false,
+                    });
+                    folder_count += 1;
+                } else if let Some(cat) = cx.model.category(&cat_id) {
+                    if cat.version == VERSION_UNKNOWN && !all_cats.contains(&cat_id) {
+                        let f = FolderRequest {
+                            folder_id: cat_id,
+                            id_as_string: false,
+                            owner_id: cat.owner_id,
+                            sort_order,
+                            fetch_folders: true,
+                        };
+                        // <FS:Beq> the library owner for OpenSim
+                        if cx.model.library_owner_id() == cat.owner_id {
+                            folders_lib.push(f);
+                        } else {
+                            folders.push(f);
+                        }
+                        folder_count += 1;
+                    }
+                    #[cfg(feature = "opensim")]
+                    let descend = cat.version != VERSION_UNKNOWN || !cx.env.in_second_life;
+                    #[cfg(not(feature = "opensim"))]
+                    let descend = cat.version != VERSION_UNKNOWN;
+                    if descend && info.fetch_type >= FetchType::ContentRecursive {
+                        // May already have this folder, but append child folders
+                        for c in cx.model.child_categories(&cat_id).unwrap_or_default() {
+                            self.fetch_folder_queue.push_back(entry(c, info.fetch_type, true));
+                        }
+                    }
+                }
+                if info.fetch_type >= FetchType::ContentRecursive {
+                    recursive_cats.push(cat_id);
+                }
+                all_cats.push(cat_id);
+            }
+            self.fetch_folder_queue.pop_front();
+        }
+
+        while let Some(&info) = self.fetch_item_queue.front() {
+            if item_count + folder_count >= LEGACY_MAX_BATCH_SIZE {
+                break;
+            }
+            if let Some(item) = cx.model.item(&info.id) {
+                let r = ItemRequest { item_id: info.id, owner_id: item.owner_id };
+                if item.owner_id == agent {
+                    items.push(r);
+                } else {
+                    items_lib.push(r);
+                }
+                item_count += 1;
+            }
+            self.fetch_item_queue.pop_front();
+        }
+
+        if item_count + folder_count > 0 {
+            if folder_count > 0 {
+                if !folders.is_empty() && !cx.env.cap_fid2.is_empty() {
+                    let body = FolderBody { folders: Some(folders) };
+                    self.legacy_folder_post(cx.env.cap_fid2.clone(), body, recursive_cats.clone(), "Inventory Folder");
+                }
+                if !folders_lib.is_empty() && !cx.env.cap_fld2.is_empty() {
+                    let body = FolderBody { folders: Some(folders_lib) };
+                    self.legacy_folder_post(cx.env.cap_fld2.clone(), body, recursive_cats.clone(), "Library Folder");
+                }
+            }
+            if item_count > 0 {
+                if !items.is_empty() && !cx.env.cap_fi2.is_empty() {
+                    let body = ItemBody { agent_id: None, items };
+                    self.legacy_item_post(cx.env.cap_fi2.clone(), body.to_xml(), "Inventory Item");
+                }
+                if !items_lib.is_empty() && !cx.env.cap_fl2.is_empty() {
+                    let body = ItemBody { agent_id: None, items: items_lib };
+                    self.legacy_item_post(cx.env.cap_fl2.clone(), body.to_xml(), "Library Item");
+                }
+            }
+            // mFetchTimer.reset(): read only by the OPENSIM UDP loop
+        } else if self.is_bulk_fetch_processing_complete() {
+            self.set_all_folders_fetched();
+        }
+    }
+
+    fn legacy_folder_post(&mut self, url: String, body: FolderBody, recursive: Vec<Uuid>, label: &'static str) {
+        let handler = self.next_handler;
+        self.next_handler += 1;
+        // BGFolderHttpHandler's constructor
+        self.incr_fetch_count(1);
+        let xml = body.to_xml();
+        self.legacy.insert(handler, LegacyHandler { body, recursive });
+        self.actions.push(Action::LegacyPost { handler, folder: true, url, body: xml, label });
+    }
+
+    fn legacy_item_post(&mut self, url: String, body: Vec<u8>, label: &'static str) {
+        let handler = self.next_handler;
+        self.next_handler += 1;
+        // BGItemHttpHandler's constructor
+        self.incr_fetch_count(1);
+        self.legacy_item_handlers.insert(handler);
+        self.actions.push(Action::LegacyPost { handler, folder: false, url, body, label });
+    }
+
+    /// `BGFolderHttpHandler::getIsRecursive()`: the reply's applier asks it
+    /// for every category of a folder whose parent the model has; a
+    /// recursive one goes to [`add_request_at_back`] (recursive), any other
+    /// one is applied (`updateCategory` when incomplete).
+    ///
+    /// [`add_request_at_back`]: BackgroundFetch::add_request_at_back
+    pub fn legacy_is_recursive(&self, handler: u64, cat_id: &Uuid) -> bool {
+        self.legacy.get(&handler).is_some_and(|h| h.recursive.contains(cat_id))
+    }
+
+    /// The end of `processData()`, after the applier wrote the folders,
+    /// categories and items.
+    pub fn legacy_data_done(&mut self, cx: &mut Ctx<'_>) {
+        if self.is_bulk_fetch_processing_complete() {
+            self.set_all_folders_fetched();
+        }
+        if !cx.env.in_second_life {
+            self.actions.push(Action::NotifyObservers);
+        }
+    }
+
+    /// `processFailure(HttpStatus)`: a 403 splits the request in two when it
+    /// can; anything else only checks for completion.
+    pub fn legacy_http_failure(&mut self, cx: &mut Ctx<'_>, handler: u64, status: i32) {
+        if status == 403 {
+            // Too large, split into two if possible
+            if cx.env.disconnected || cx.env.exiting {
+                return;
+            }
+            if cx.env.cap_fid2.is_empty() {
+                // "Failed to get AIS2 cap"
+                return;
+            }
+            let Some(h) = self.legacy.get(&handler).cloned() else { return };
+            if h.body.len() > 1 {
+                // Can split, assume that this isn't the library
+                for (body, rec) in super::legacy::split_403(&h.body, &h.recursive) {
+                    self.legacy_folder_post(cx.env.cap_fid2.clone(), body, rec, "Inventory Folder");
+                }
+                return;
+            }
+            // Can't split
+            self.actions.push(Action::Notify { name: "InventoryLimitReachedAIS" });
+        }
+        if self.is_bulk_fetch_processing_complete() {
+            self.set_all_folders_fetched();
+        }
+        if !cx.env.in_second_life {
+            self.actions.push(Action::NotifyObservers);
+        }
+    }
+
+    /// `processFailure(const char* reason)`: a missing body, malformed LLSD,
+    /// a non-map or a 200-with-error. Every folder of the request is queued
+    /// again at the front, without limit (survey risk "the legacy unbounded
+    /// re-queue").
+    pub fn legacy_reply_failure(&mut self, cx: &mut Ctx<'_>, handler: u64) {
+        if let Some(h) = self.legacy.get(&handler).cloned() {
+            for f in h.body.folders.iter().flatten() {
+                let recursive = h.recursive.contains(&f.folder_id);
+                self.add_request_at_front(f.folder_id, recursive, true);
+            }
+        }
+        if !cx.env.in_second_life {
+            self.actions.push(Action::NotifyObservers);
+        }
+    }
+
+    /// A legacy handler was destroyed (after its `onCompleted`).
+    pub fn legacy_handler_released(&mut self, handler: u64) {
+        if self.legacy.remove(&handler).is_some() || self.legacy_item_handlers.remove(&handler) {
+            self.incr_fetch_count(-1);
+        }
+    }
+}
