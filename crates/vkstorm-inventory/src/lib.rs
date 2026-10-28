@@ -18,6 +18,10 @@
 //!   the login load and discard rules of `loadSkeleton` ([`login`]) and
 //!   `validate()` ([`validate`]), over flat views of the C++ model
 //!   ([`model`]).
+//! - the AIS decisions of `llaisapi.cpp` ([`ais`]): the parse of an AIS reply
+//!   into the ordered operations `AISUpdate::doUpdate()` applies, the
+//!   coroutine's status, error-branch and callback decisions, and the
+//!   requests of the command functions.
 //!
 //! It is not the inventory model. In this rung the model containers stay C++:
 //! `LLInventoryItem`, `LLInventoryCategory` and `LLInventoryObject` keep their
@@ -46,6 +50,7 @@
 #![forbid(unsafe_code)]
 
 pub mod aggregate;
+pub mod ais;
 pub mod cache;
 pub mod category;
 pub mod category_obj;
