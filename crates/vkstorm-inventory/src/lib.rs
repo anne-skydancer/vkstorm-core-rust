@@ -13,7 +13,10 @@
 //!   obfuscation ([`item`], [`category`], [`object`], [`shadow`]);
 //! - their LLSD forms ([`llsd`]) and legacy text forms ([`legacy`]);
 //! - items, folders, aggregate permissions, `LLCategory` and sale info in
-//!   UDP message blocks ([`message`]).
+//!   UDP message blocks ([`message`]);
+//! - the decisions of object contents ("task inventory": the task file
+//!   loader, the capability reply, the serial and request-state machine and
+//!   the messages it sends, [`task`]).
 //!
 //! It is not the inventory model. In this rung the model containers stay C++:
 //! `LLInventoryItem`, `LLInventoryCategory` and `LLInventoryObject` keep their
@@ -43,5 +46,6 @@ pub mod object;
 pub mod perms;
 pub mod sale;
 pub mod shadow;
+pub mod task;
 pub mod text;
 pub mod types;
