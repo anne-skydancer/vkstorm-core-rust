@@ -420,3 +420,119 @@ fn o15b_library_owner_legacy() {
     r.step("library_folder");
     report(id, &mut r);
 }
+
+// ---- CONC: production concurrency, compared as multisets ------------------------
+
+fn conc(id: &str, b: &Builder, caps: u32, other_grid: bool) -> Run {
+    let lines = scenario_lines(id);
+    let mut r = Run::new(id, b.w.clone(), &lines);
+    r.unordered(Mode::Conc, 20);
+    if other_grid {
+        r.in_second_life = false;
+    }
+    r.set_region(true, caps, true);
+    // the mock's delay_ms: long against a burst of frames
+    r.reply_delay = 50;
+    r
+}
+
+#[test]
+fn c01_login_cold() {
+    let id = "c01_login_cold";
+    let mut b = Builder::new(true);
+    basic(&mut b, 6, false, 3);
+    let mut r = conc(id, &b, CAPS_ALL, false);
+    r.login();
+    r.walk();
+    report(id, &mut r);
+}
+
+#[test]
+fn c02_saturate() {
+    let id = "c02_saturate";
+    let mut b = Builder::new(true);
+    basic(&mut b, 40, false, 1);
+    b.w.add_folder(pid(0x4b000000, 1), root(), FT_NONE, 3, false);
+    let mut r = conc(id, &b, CAPS_ALL, false);
+    r.login();
+    r.walk();
+    report(id, &mut r);
+}
+
+#[test]
+fn c03_large() {
+    let id = "c03_large";
+    let mut b = Builder::new(true);
+    large(&mut b);
+    let mut r = conc(id, &b, CAPS_ALL, false);
+    r.reply_delay = 0;
+    r.login();
+    r.walk();
+    let (n, total) = check(id, &mut r, &none);
+    eprintln!("{id}: {n} of {total} lines compared; model dump recorded as digests, not checked");
+}
+
+/// c08: 2,047, 2,048 and 2,049 AIS commands at once: EnqueueAISCommand's
+/// postponed queue (the crate's `fetch::ais::PostponedQueue`).
+#[test]
+fn c08_postponed() {
+    use r3b_support::ais_standin::{Command, ItemType};
+    let id = "c08_postponed";
+    let mut b = Builder::new(true);
+    basic(&mut b, 1, false, 1);
+    let mut r = conc(id, &b, CAPS_ALL, false);
+    r.reply_delay = 0;
+    r.login();
+    r.walk();
+    for (k, n) in [2047usize, 2048, 2049].into_iter().enumerate() {
+        let item = pid(0xa0d00000, k as u64 + 1);
+        let before = r.journal_count("callback ");
+        for _ in 0..n {
+            r.ais(Command::FetchItem { item, item_type: ItemType::Inventory }, Some("postponed"), vec![]);
+        }
+        let pending = r.ais_pending();
+        r.fact(&format!("enqueued {n} ais_pending={pending}"));
+        r.settle(true, true);
+        let fired = r.journal_count("callback ") - before;
+        r.fact(&format!("enqueued {n} callbacks={fired}"));
+        r.step(&format!("enqueued_{n}"));
+    }
+    let (c, total) = check(id, &mut r, &none);
+    eprintln!("{id}: {c} of {total} lines compared");
+}
+
+/// c10/oc10: a burst of unknown folders, inventory and library, and
+/// incomplete items of both owners on the legacy capabilities: up to 16
+/// handlers.
+fn legacy_burst(id: &str, other_grid: bool) {
+    let mut b = Builder::new(true);
+    basic(&mut b, 30, false, 8);
+    let mut r = conc(id, &b, CAPS_LEGACY, other_grid);
+    r.login();
+    r.walk();
+    let d = b.ids.clone();
+    for f in d.user.iter().chain(&d.user_sub).chain(&d.lib_folders) {
+        r.fetch_descendents_of(*f);
+    }
+    let root_items = d.items_in[&root()].clone();
+    for i in [root_items[0], root_items[1], d.lib_items[0], d.lib_items[1]] {
+        if r.model.items.contains_key(&i) {
+            r.set_complete(i, false);
+            r.schedule_item(i, false);
+        }
+    }
+    r.settle(true, true);
+    r.step("burst");
+    report(id, &mut r);
+}
+
+#[test]
+fn c10_legacy() {
+    legacy_burst("c10_legacy", false);
+}
+
+#[cfg(not(feature = "opensim"))]
+#[test]
+fn oc10_legacy() {
+    legacy_burst("oc10_legacy", true);
+}

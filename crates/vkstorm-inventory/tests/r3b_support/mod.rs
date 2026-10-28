@@ -326,6 +326,51 @@ pub fn basic(b: &mut Builder, user_folders: usize, orphan: bool, lib_folders: us
     }
 }
 
+/// `large(b)`: 5,000 folders, 300 under the root, a chain 60 deep, 60,000
+/// items (`llinvfetch_parity_scenarios.cpp`).
+pub fn large(b: &mut Builder) {
+    basic(b, 0, false, 3);
+    let top = 300 - SYSTEM.len();
+    let mut all_user = Vec::new();
+    for _u in 1..=top {
+        let u = b.folder(root(), FT_NONE);
+        b.ids.user.push(u);
+        all_user.push(u);
+        for _c in 1..=4 {
+            let c = b.folder(u, FT_NONE);
+            all_user.push(c);
+            for _g in 1..=3 {
+                let g = b.folder(c, FT_NONE);
+                all_user.push(g);
+            }
+        }
+    }
+    let mut parent = b.ids.user[0];
+    for _k in 1..=60 {
+        parent = b.folder(parent, FT_NONE);
+        all_user.push(parent);
+        b.ids.user_leaf.push(parent);
+    }
+    let mut k = 0;
+    while b.w.folders.len() < 5000 {
+        let p = b.ids.user[1 + (k % 4)];
+        let f = b.folder(p, FT_NONE);
+        all_user.push(f);
+        k += 1;
+    }
+    for f in &all_user {
+        for _ in 0..12 {
+            if b.w.items.len() >= 60000 {
+                break;
+            }
+            b.item(*f);
+        }
+    }
+    while b.w.items.len() < 60000 {
+        b.item(sys(FT_OBJECT));
+    }
+}
+
 // ---------------------------------------------------------------------------
 // The replay model
 // ---------------------------------------------------------------------------
@@ -1209,6 +1254,12 @@ pub struct Run {
     external: BTreeMap<u64, Option<u64>>,
     next_external: u64,
     legacy: Vec<LegacyFlight>,
+    /// `EnqueueAISCommand`'s postponed commands (the crate's queue).
+    postponed: vkstorm_inventory::fetch::ais::PostponedQueue<(u64, AisRequest, Vec<u8>)>,
+    /// CONC: replies come back this many frames after their request (the
+    /// mock's `delay_ms`, long against a burst of frames).
+    pub reply_delay: u64,
+    max_pool: usize,
     /// `CallAfterCategoryFetchStage1` observers waiting: incomplete folders
     /// and the callback's tag.
     stage1: Vec<(Vec<Uuid>, String)>,
@@ -1274,6 +1325,9 @@ impl Run {
             external: BTreeMap::new(),
             next_external: EXTERNAL_TICKETS,
             legacy: Vec::new(),
+            postponed: Default::default(),
+            reply_delay: 0,
+            max_pool: 0,
             stage1: Vec::new(),
             legacy_delay: false,
             settling: false,
@@ -1466,11 +1520,24 @@ impl Run {
                 let ticket = self.next_external;
                 self.next_external += 1;
                 self.external.insert(ticket, token);
-                self.queue.push_back((ticket, req, body));
+                self.enqueue_ais((ticket, req, body));
             }
             // refused: the callback with null, at once
             Err(_) => self.external_callbacks(token, &[NULL_ID]),
         }
+    }
+
+    /// `EnqueueAISCommand`: into the pool's pending queue, or postponed.
+    fn enqueue_ais(&mut self, c: (u64, AisRequest, Vec<u8>)) {
+        let pending = self.queue.len();
+        if let Some(c) = self.postponed.enqueue(c, pending) {
+            self.queue.push_back(c);
+        }
+    }
+
+    /// `countPending("AIS")`
+    pub fn ais_pending(&self) -> usize {
+        self.queue.len()
     }
 
     fn external_callbacks(&mut self, token: Option<u64>, ids: &[Uuid]) {
@@ -1535,7 +1602,7 @@ impl Run {
             match a {
                 Action::IssueAis { ticket, command } => {
                     match ais_standin::build(&ais_standin::from_fetch(&command), &self.ais_caps) {
-                        Ok(req) => self.queue.push_back((ticket, req, Vec::new())),
+                        Ok(req) => self.enqueue_ais((ticket, req, Vec::new())),
                         Err(e) => self.fail(format!("the scheduler issued a refused command ({e:?}): {command:?}")),
                     }
                 }
@@ -1578,7 +1645,7 @@ impl Run {
         let ready = !self.legacy_delay || self.settling;
         let mut k = 0;
         while k < self.legacy.len() {
-            if ready && self.legacy[k].sent_frame < frame {
+            if ready && self.legacy[k].sent_frame + self.reply_delay < frame {
                 let f = self.legacy.remove(k);
                 self.legacy_completed(f);
             } else {
@@ -1695,10 +1762,18 @@ impl Run {
             self.clock = clock;
             self.drain();
         }
+        // AISAPI::onIdle, registered while commands are postponed
+        if !self.postponed.is_empty() {
+            let pending = self.queue.len();
+            for c in self.postponed.on_idle(pending) {
+                self.queue.push_back(c);
+            }
+        }
         self.last_after = self.sched.state().fetch_count;
         self.max_in_flight = self.max_in_flight.max(self.last_after);
         self.observers();
         self.mainloop();
+        self.max_pool = self.max_pool.max(self.pool_count());
         self.snapshot();
     }
 
@@ -1822,7 +1897,7 @@ impl Run {
         let mut k = 0;
         while k < self.active.len() {
             let f = &self.active[k];
-            if f.sent_frame < frame && f.sent_frame != u64::MAX && (!self.hold || f.released) {
+            if f.sent_frame + self.reply_delay < frame && f.sent_frame != u64::MAX && (!self.hold || f.released) {
                 let f = self.active.remove(k);
                 self.process_reply(f);
                 // the freed coroutine takes the next queued command
@@ -2012,7 +2087,7 @@ impl Run {
     }
 
     pub fn pool_count(&self) -> usize {
-        self.queue.len() + self.active.len()
+        self.queue.len() + self.active.len() + self.postponed.len()
     }
 
     fn idle_now(&self) -> bool {
@@ -2301,7 +2376,15 @@ impl Run {
             distinct.len(),
             if self.tids.len() == distinct.len() { "yes" } else { "NO" }
         ));
-        if self.mode == Mode::Phased {
+        if self.mode == Mode::Conc {
+            let mut ms: BTreeMap<&String, usize> = BTreeMap::new();
+            for l in &self.journal {
+                if l.starts_with("msg ") || l.starts_with("notify ") || l.starts_with("callback ") {
+                    *ms.entry(l).or_default() += 1;
+                }
+            }
+            out.extend(ms.into_iter().map(|(l, n)| format!("jrn* {n}x {l}")));
+        } else if self.mode == Mode::Phased {
             let mut seg: Vec<String> = Vec::new();
             for l in &self.journal {
                 if l.starts_with("sch ") {
@@ -2323,6 +2406,14 @@ impl Run {
             }
         }
         out.push(format!("pub {}", self.public_state()));
+        if self.mode == Mode::Conc {
+            let yn = |b: bool| if b { "yes" } else { "NO" };
+            out.push(format!("bound viewer_in_flight<=19 {}", yn(self.max_in_flight <= 19)));
+            if !caps.contains_key("inv") && !caps.contains_key("lib") {
+                out.push(format!("bound legacy_in_flight<=16 {}", yn(self.max_in_flight <= 16)));
+            }
+            out.push(format!("bound ais_pool<=20 {}", yn(self.max_pool <= 20)));
+        }
         out
     }
 }
@@ -2369,6 +2460,15 @@ pub fn compared(lines: &[String], skip: &dyn Fn(&str) -> bool) -> Vec<String> {
         .filter(|l| {
             let l = l.as_str();
             if l.starts_with("mdl ") || l.starts_with("mdl-") || l.starts_with('#') {
+                return false;
+            }
+            if let Some(j) = l.strip_prefix("jrn* ") {
+                // CONC: the order-free journal; UDP messages are C++ model code
+                let line = j.split_once(' ').map_or("", |x| x.1);
+                return (line.starts_with("notify ") || line.starts_with("callback ")) && !skip(l);
+            }
+            if l.starts_with("jrn-") {
+                // large: digests of the whole journal, observer batches included
                 return false;
             }
             if let Some(j) = l.strip_prefix("jrn ") {
@@ -2443,8 +2543,11 @@ pub fn check_model_fetch_state(id: &str, run: &Run) -> (usize, Vec<String>) {
         };
         let version: i32 = field("version").parse().unwrap();
         let count: i32 = field("count").parse().unwrap();
-        let fetching: i32 = field("fetching").parse().unwrap();
-        let t = rest.find("timer{").map(|a| rest[a..].to_owned()).unwrap();
+        // CONC dumps leave out the fetch state and timer (which reply touched
+        // a folder last depends on timing)
+        let has_state = rest.contains(" fetching=");
+        let fetching: i32 = if has_state { field("fetching").parse().unwrap() } else { -1 };
+        let t = rest.find("timer{").map(|a| rest[a..].to_owned()).unwrap_or_default();
         checked += 1;
         let Some(c) = run.model.cats.get(&cid) else {
             bad.push(format!("{}: not in the replay model", uuid_string(&cid)));
@@ -2457,7 +2560,8 @@ pub fn check_model_fetch_state(id: &str, run: &Run) -> (usize, Vec<String>) {
             tm.has_expired(run.model.now) as i32,
             (tm.expiry - run.model.now) as f32
         );
-        if c.version != version || c.count != count || c.fetch.fetching as i32 != fetching || mine_t != t {
+        let state_differs = has_state && (c.fetch.fetching as i32 != fetching || mine_t != t);
+        if c.version != version || c.count != count || state_differs {
             bad.push(format!(
                 "{}: recorded version={version} count={count} fetching={fetching} {t}, replay version={} count={} fetching={} {mine_t}",
                 uuid_string(&cid),

@@ -1064,3 +1064,22 @@ fn generated_replies() {
     s14_sl_write_fallbacks_body();
     o14_write_fallbacks_body();
 }
+
+/// s03: 5,000 folders, 60,000 items, 300 under the root: 15 subset batches
+/// and the 60-deep chain's follow-up. Recorded without replies (large):
+/// the replies are generated, each status held to the recorded one; the
+/// journal and model are recorded as digests over the C++ model's lines
+/// too (observer batches), so only the requests, counts and public state
+/// are compared.
+#[test]
+fn s03_large() {
+    let id = "s03_large";
+    let mut b = Builder::new(true);
+    large(&mut b);
+    let mut r = run_world(id, &b);
+    r.mock = Some(r3b_support::mock::Mock::new(&b.w));
+    r.login();
+    r.cof(b.ids.outfit_a);
+    r.walk();
+    report_lines(id, &mut r, &|l| l.starts_with("jrn "));
+}

@@ -107,9 +107,15 @@ impl AisFetch {
 /// `EnqueueAISCommand` and `onIdle`: commands go to the coprocedure pool
 /// while it holds fewer than 2,048 pending; the rest wait here in order.
 /// `pending_in_pool` is `LLCoprocedureManager::countPending("AIS")`.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct PostponedQueue<T> {
     queue: VecDeque<T>,
+}
+
+impl<T> Default for PostponedQueue<T> {
+    fn default() -> Self {
+        PostponedQueue { queue: VecDeque::new() }
+    }
 }
 
 impl<T> PostponedQueue<T> {
