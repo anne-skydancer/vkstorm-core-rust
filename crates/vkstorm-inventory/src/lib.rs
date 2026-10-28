@@ -22,6 +22,9 @@
 //!   into the ordered operations `AISUpdate::doUpdate()` applies, the
 //!   coroutine's status, error-branch and callback decisions, and the
 //!   requests of the command functions.
+//! - the background fetch's scheduler and request building
+//!   (`LLInventoryModelBackgroundFetch`, the fetch side of `AISAPI`), driven
+//!   by explicit events and producing an ordered action list ([`fetch`]).
 //!
 //! It is not the inventory model. In this rung the model containers stay C++:
 //! `LLInventoryItem`, `LLInventoryCategory` and `LLInventoryObject` keep their
@@ -54,6 +57,7 @@ pub mod ais;
 pub mod cache;
 pub mod category;
 pub mod category_obj;
+pub mod fetch;
 pub mod flags;
 pub mod item;
 pub mod legacy;
