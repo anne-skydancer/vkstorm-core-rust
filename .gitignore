@@ -6,3 +6,7 @@ tools/image-eval/c/*.obj
 # autobuild packaging (packaging/build_package.py)
 /stage/
 *.tar.zst
+
+# Python bytecode
+__pycache__/
+*.pyc

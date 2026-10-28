@@ -1,3 +1,11 @@
+# Every file is text with LF line endings on every platform, whatever the
+# local core.autocrlf says (as in the viewer repository). Files that are not
+# text are marked below.
+* text eol=lf
+
+# Test fixtures are compared byte for byte: stored and checked out as is.
+crates/*/tests/fixtures/** -text
+
 # Recorded message corpus (vkstorm-messages)
 *.vksm binary
 # Recorded parity corpora (vkstorm-assets): stored as is
