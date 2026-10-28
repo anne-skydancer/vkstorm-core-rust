@@ -42,5 +42,7 @@ jobs:
       # tested here.
       - name: Test the OpenSim paths (vkstorm-assets, opensim)
         run: cargo test -p vkstorm-assets --features opensim --locked --no-fail-fast
+      - name: Test the OpenSim paths (vkstorm-inventory, opensim)
+        run: cargo test -p vkstorm-inventory --features opensim --locked --no-fail-fast
       - name: Test the JPEG codec (vkstorm-image, jpeg)
         run: cargo test -p vkstorm-image --features jpeg --locked --no-fail-fast
