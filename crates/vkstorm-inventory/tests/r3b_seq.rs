@@ -14,9 +14,22 @@ use r3b_support::*;
 use vkstorm_inventory::fetch::{NULL_ID, Uuid};
 use vkstorm_inventory::fetch::ais::{Command, ItemType};
 
-fn run_world(id: &str, b: &Builder) -> Run {
+thread_local! {
+    /// Fetch replies from the reply generator (`r3b_support::mock`).
+    static GENERATED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+fn new_run(id: &str, w: World) -> Run {
     let lines = scenario_lines(id);
-    Run::new(id, b.w.clone(), &lines)
+    let mut r = Run::new(id, w.clone(), &lines);
+    if GENERATED.with(|g| g.get()) {
+        r.mock = Some(r3b_support::mock::Mock::new(&w));
+    }
+    r
+}
+
+fn run_world(id: &str, b: &Builder) -> Run {
+    new_run(id, b.w.clone())
 }
 
 fn none(_: &str) -> bool {
@@ -97,6 +110,10 @@ fn unescape(s: &str) -> Vec<u8> {
 
 #[test]
 fn s01_login_cold() {
+    s01_login_cold_body();
+}
+
+fn s01_login_cold_body() {
     let id = "s01_login_cold";
     let b = std_world(6, true, 3);
     let mut r = run_world(id, &b);
@@ -127,10 +144,17 @@ fn s01_after() -> (Builder, ReplayModel) {
     (b, std::mem::take(&mut r.model))
 }
 
-/// `s02_world()`: the server after s01, every folder at the version the
-/// viewer cached.
+/// `s02_world()`: the server after s01: the orphan moved to Lost And Found
+/// (the server acted on the viewer's MoveInventoryItem), every folder at the
+/// version the viewer cached.
 fn s02_world(b: &Builder, m: &ReplayModel) -> World {
     let mut w = b.w.clone();
+    let orphan = pid(0xa0f00000, 1);
+    for i in &mut w.items {
+        if i.id == orphan {
+            i.parent = sys(FT_LOST_AND_FOUND);
+        }
+    }
     for f in &mut w.folders {
         if let Some(c) = m.cats.get(&f.id) {
             if c.version >= 0 {
@@ -143,11 +167,14 @@ fn s02_world(b: &Builder, m: &ReplayModel) -> World {
 
 #[test]
 fn s02a_login_warm_full() {
+    s02a_login_warm_full_body();
+}
+
+fn s02a_login_warm_full_body() {
     let id = "s02a_login_warm_full";
     let (b, m) = s01_after();
     let w = s02_world(&b, &m);
-    let lines = scenario_lines(id);
-    let mut r = Run::new(id, w, &lines);
+    let mut r = new_run(id, w);
     r.cache = Some(m.save_cache());
     r.login();
     r.cof(NULL_ID);
@@ -157,6 +184,10 @@ fn s02a_login_warm_full() {
 
 #[test]
 fn s02b_login_warm_partial() {
+    s02b_login_warm_partial_body();
+}
+
+fn s02b_login_warm_partial_body() {
     let id = "s02b_login_warm_partial";
     let (b, m) = s01_after();
     let mut w = s02_world(&b, &m);
@@ -166,8 +197,9 @@ fn s02b_login_warm_partial() {
             f.version += 1;
         }
     }
-    let lines = scenario_lines(id);
-    let mut r = Run::new(id, w, &lines);
+    w.add_item(pid(0xa0100000, 1), tree, false);
+    w.add_item(pid(0xa0100000, 2), leaf, false);
+    let mut r = new_run(id, w);
     r.cache = Some(m.save_cache());
     r.login();
     r.cof(NULL_ID);
@@ -193,6 +225,10 @@ fn walk_started(r: &mut Run) {
 
 #[test]
 fn d2a_sl_wait_login() {
+    d2a_sl_wait_login_body();
+}
+
+fn d2a_sl_wait_login_body() {
     let id = "d2a_sl_wait_login";
     let b = std_world(6, true, 3);
     let mut r = run_world(id, &b);
@@ -208,6 +244,10 @@ fn d2a_sl_wait_login() {
 
 #[test]
 fn d2b_sl_wait_midwalk() {
+    d2b_sl_wait_midwalk_body();
+}
+
+fn d2b_sl_wait_midwalk_body() {
     let id = "d2b_sl_wait_midwalk";
     let b = std_world(6, true, 3);
     let mut r = run_world(id, &b);
@@ -223,6 +263,10 @@ fn d2b_sl_wait_midwalk() {
 
 #[test]
 fn d2c_sl_region_change_wait() {
+    d2c_sl_region_change_wait_body();
+}
+
+fn d2c_sl_region_change_wait_body() {
     let id = "d2c_sl_region_change_wait";
     let b = std_world(6, true, 3);
     let mut r = run_world(id, &b);
@@ -240,6 +284,10 @@ fn d2c_sl_region_change_wait() {
 
 #[test]
 fn d2d_sl_fsuseais3api_off() {
+    d2d_sl_fsuseais3api_off_body();
+}
+
+fn d2d_sl_fsuseais3api_off_body() {
     let id = "d2d_sl_fsuseais3api_off";
     let b = std_world(6, true, 3);
     let mut r = run_world(id, &b);
@@ -255,6 +303,10 @@ fn d2d_sl_fsuseais3api_off() {
 
 #[test]
 fn s04_forbidden() {
+    s04_forbidden_body();
+}
+
+fn s04_forbidden_body() {
     let id = "s04_forbidden";
     let mut b = std_world(2, false, 3);
     let x3 = pid(0xf3000000, 1);
@@ -281,6 +333,10 @@ fn s04_forbidden() {
 
 #[test]
 fn s05_transient_5xx() {
+    s05_transient_5xx_body();
+}
+
+fn s05_transient_5xx_body() {
     let id = "s05_transient_5xx";
     let mut b = std_world(1, false, 1);
     let t52 = pid(0x52000000, 1);
@@ -318,9 +374,16 @@ fn s05_transient_5xx() {
 
 #[test]
 fn s06_outage() {
+    s06_outage_body();
+}
+
+fn s06_outage_body() {
     let id = "s06_outage";
     let b = std_world(6, false, 3);
     let mut r = run_world(id, &b);
+    if let Some(m) = r.mock.as_mut() {
+        m.set_mode(4, 404, 0, 0);
+    }
     r.login();
     r.walk();
     r.schedule_folder(root(), true);
@@ -340,6 +403,10 @@ fn s06_outage() {
 
 #[test]
 fn s07_forced() {
+    s07_forced_body();
+}
+
+fn s07_forced_body() {
     let id = "s07_forced";
     let b = std_world(3, false, 3);
     let mut r = run_world(id, &b);
@@ -410,6 +477,10 @@ fn s07_forced() {
 
 #[test]
 fn s08_items() {
+    s08_items_body();
+}
+
+fn s08_items_body() {
     let id = "s08_items";
     let b = std_world(3, false, 3);
     let mut r = run_world(id, &b);
@@ -448,6 +519,10 @@ fn s08_items() {
 
 #[test]
 fn s15_batch_boundaries() {
+    s15_batch_boundaries_body();
+}
+
+fn s15_batch_boundaries_body() {
     let id = "s15_batch_boundaries";
     let mut b = std_world(1, false, 1);
     let parent = b.ids.user[0];
@@ -500,6 +575,10 @@ fn s15_batch_boundaries() {
 
 #[test]
 fn s16_depth_boundaries() {
+    s16_depth_boundaries_body();
+}
+
+fn s16_depth_boundaries_body() {
     let id = "s16_depth_boundaries";
     let mut b = std_world(0, false, 0);
     for levels in [48, 49, 50] {
@@ -526,6 +605,10 @@ fn s16_depth_boundaries() {
 
 #[test]
 fn s17_no_library_cap_disconnected() {
+    s17_no_library_cap_disconnected_body();
+}
+
+fn s17_no_library_cap_disconnected_body() {
     let id = "s17_no_library_cap_disconnected";
     let b = std_world(2, false, 2);
     let mut r = run_world(id, &b);
@@ -551,6 +634,10 @@ fn s17_no_library_cap_disconnected() {
 
 #[test]
 fn s18_fetch_errors() {
+    s18_fetch_errors_body();
+}
+
+fn s18_fetch_errors_body() {
     let id = "s18_fetch_errors";
     let mut b = std_world(2, false, 1);
     let f404 = pid(0x4c000000, 1);
@@ -580,6 +667,10 @@ fn s18_fetch_errors() {
 
 #[test]
 fn s19_frame_budget() {
+    s19_frame_budget_body();
+}
+
+fn s19_frame_budget_body() {
     let id = "s19_frame_budget";
     let b = std_world(100, false, 1);
     let mut r = run_world(id, &b);
@@ -613,6 +704,10 @@ fn s19_frame_budget() {
 
 #[test]
 fn s20_callback_ids() {
+    s20_callback_ids_body();
+}
+
+fn s20_callback_ids_body() {
     let id = "s20_callback_ids";
     let b = std_world(2, true, 2);
     let mut r = run_world(id, &b);
@@ -674,6 +769,10 @@ fn s20_callback_ids() {
 
 #[test]
 fn s21_priority() {
+    s21_priority_body();
+}
+
+fn s21_priority_body() {
     let id = "s21_priority";
     let b = std_world(6, false, 1);
     let mut r = run_world(id, &b);
@@ -710,6 +809,10 @@ fn s21_priority() {
 
 #[test]
 fn s22_no_library() {
+    s22_no_library_body();
+}
+
+fn s22_no_library_body() {
     let id = "s22_no_library";
     let mut b = Builder::new(false);
     basic(&mut b, 2, false, 0);
@@ -727,6 +830,10 @@ fn s22_no_library() {
 
 #[test]
 fn s23_root_only_start() {
+    s23_root_only_start_body();
+}
+
+fn s23_root_only_start_body() {
     let id = "s23_root_only_start";
     let b = std_world(2, false, 1);
     let mut r = run_world(id, &b);
@@ -744,6 +851,10 @@ fn s23_root_only_start() {
 
 #[test]
 fn s24_shutdown_abort() {
+    s24_shutdown_abort_body();
+}
+
+fn s24_shutdown_abort_body() {
     let id = "s24_shutdown_abort";
     let b = std_world(2, false, 1);
     let mut r = run_world(id, &b);
@@ -770,6 +881,10 @@ fn s24_shutdown_abort() {
 
 #[test]
 fn o15a_library_owner_ais() {
+    o15a_library_owner_ais_body();
+}
+
+fn o15a_library_owner_ais_body() {
     let id = "o15a_library_owner_ais";
     let mut b = Builder::new(true);
     b.w.libowner = pid(0x0b1b0000, 1);
@@ -796,6 +911,10 @@ fn o15a_library_owner_ais() {
 /// checked.
 #[test]
 fn s09_writes() {
+    s09_writes_body();
+}
+
+fn s09_writes_body() {
     let id = "s09_writes";
     let b = std_world(3, false, 3);
     let mut r = run_world(id, &b);
@@ -894,10 +1013,54 @@ fn write_fallbacks(id: &str, other_grid: bool) {
 
 #[test]
 fn s14_sl_write_fallbacks() {
+    s14_sl_write_fallbacks_body();
+}
+
+fn s14_sl_write_fallbacks_body() {
     write_fallbacks("s14_sl_write_fallbacks", false);
 }
 
 #[test]
 fn o14_write_fallbacks() {
+    o14_write_fallbacks_body();
+}
+
+fn o14_write_fallbacks_body() {
     write_fallbacks("o14_write_fallbacks", true);
+}
+
+/// Every scenario above again, its fetch replies built by the reply
+/// generator instead of read from the recording: the generator that the
+/// scenarios recorded without replies depend on is held to the recorded
+/// statuses, requests and model state here. Writes keep their recorded
+/// replies.
+#[test]
+fn generated_replies() {
+    GENERATED.with(|g| g.set(true));
+    s01_login_cold_body();
+    s02a_login_warm_full_body();
+    s02b_login_warm_partial_body();
+    d2a_sl_wait_login_body();
+    d2b_sl_wait_midwalk_body();
+    d2c_sl_region_change_wait_body();
+    d2d_sl_fsuseais3api_off_body();
+    s04_forbidden_body();
+    s05_transient_5xx_body();
+    s06_outage_body();
+    s07_forced_body();
+    s08_items_body();
+    s15_batch_boundaries_body();
+    s16_depth_boundaries_body();
+    s17_no_library_cap_disconnected_body();
+    s18_fetch_errors_body();
+    s19_frame_budget_body();
+    s20_callback_ids_body();
+    s21_priority_body();
+    s22_no_library_body();
+    s23_root_only_start_body();
+    s24_shutdown_abort_body();
+    o15a_library_owner_ais_body();
+    s09_writes_body();
+    s14_sl_write_fallbacks_body();
+    o14_write_fallbacks_body();
 }

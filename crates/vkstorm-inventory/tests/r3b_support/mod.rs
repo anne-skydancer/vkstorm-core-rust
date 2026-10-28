@@ -24,6 +24,8 @@
 //!   and replies are inputs.
 #![allow(dead_code)]
 
+pub mod mock;
+
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::path::PathBuf;
 
@@ -131,6 +133,8 @@ pub struct WItem {
     pub id: Uuid,
     pub parent: Uuid,
     pub owner: Uuid,
+    /// A link's target.
+    pub linked: Option<Uuid>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -150,7 +154,7 @@ impl World {
     }
     pub fn add_item(&mut self, id: Uuid, parent: Uuid, library: bool) {
         let owner = if library { self.libowner } else { self.agent };
-        self.items.push(WItem { id, parent, owner });
+        self.items.push(WItem { id, parent, owner, linked: None });
     }
 }
 
@@ -233,17 +237,17 @@ impl Builder {
         self.ids.lib_folders.push(id);
         id
     }
-    pub fn link(&mut self, parent: Uuid) -> Uuid {
+    pub fn link(&mut self, parent: Uuid, target: Uuid) -> Uuid {
         let id = lnk(self.n_link);
         self.n_link += 1;
-        self.w.items.push(WItem { id, parent, owner: self.w.agent });
+        self.w.items.push(WItem { id, parent, owner: self.w.agent, linked: Some(target) });
         id
     }
 }
 
 /// `basic(b, user_folders, orphan, lib_folders)`: only ids, parents, types
 /// and owners matter here (the replies come from the recording).
-pub fn basic(b: &mut Builder, user_folders: usize, _orphan: bool, lib_folders: usize) {
+pub fn basic(b: &mut Builder, user_folders: usize, orphan: bool, lib_folders: usize) {
     b.ids.tex1 = b.item(sys(FT_TEXTURE));
     b.item(sys(FT_TEXTURE));
     b.ids.shirt = b.item(sys(FT_CLOTHING));
@@ -280,18 +284,19 @@ pub fn basic(b: &mut Builder, user_folders: usize, _orphan: bool, lib_folders: u
         }
     }
     b.ids.outfit_a = b.folder(sys(FT_MY_OUTFITS), FT_OUTFIT);
-    let a = b.ids.outfit_a;
-    b.link(a);
-    b.link(a);
-    b.link(a);
+    let (a, d) = (b.ids.outfit_a, b.ids.clone());
+    b.link(a, d.shirt);
+    b.link(a, d.pants);
+    b.link(a, d.shape);
     b.ids.outfit_b = b.folder(sys(FT_MY_OUTFITS), FT_OUTFIT);
     let ob = b.ids.outfit_b;
-    b.link(ob);
+    b.link(ob, d.jacket);
     let cof = sys(FT_CURRENT_OUTFIT);
-    b.ids.cof_shirt_link = b.link(cof);
-    for _ in 0..4 {
-        b.link(cof);
-    }
+    b.ids.cof_shirt_link = b.link(cof, d.shirt);
+    b.link(cof, d.pants);
+    b.link(cof, d.shape);
+    b.link(cof, d.skin);
+    b.link(cof, a);
     for _m in 1..=2 {
         let m = b.folder(sys(FT_MARKETPLACE_LISTINGS), FT_NONE);
         b.ids.mkt.push(m);
@@ -310,6 +315,11 @@ pub fn basic(b: &mut Builder, user_folders: usize, _orphan: bool, lib_folders: u
                 b.libitem(s);
             }
         }
+    }
+    if orphan {
+        let o = pid(0xa0f00000, 1);
+        let agent = b.w.agent;
+        b.w.items.push(WItem { id: o, parent: NULL_ID, owner: agent, linked: None });
     }
 }
 
@@ -919,7 +929,8 @@ pub struct RecWire {
     pub request: String,
     /// `resp=... rtype=...`
     pub tail: String,
-    pub body: Option<Vec<u8>>,
+    /// The recorded reply, parsed.
+    pub value: Option<Value>,
 }
 
 pub fn recorded_wires(id: &str, lines: &[String]) -> Vec<RecWire> {
@@ -964,7 +975,9 @@ pub fn recorded_wires(id: &str, lines: &[String]) -> Vec<RecWire> {
             status,
             request: rest[..k].to_owned(),
             tail: rest[k + 1..].to_owned(),
-            body: bodies.remove(&n),
+            value: bodies
+                .remove(&n)
+                .and_then(|b| vkstorm_llsd::parse(vkstorm_llsd::Format::Xml, &b, Default::default()).1),
         });
     }
     out
@@ -1054,7 +1067,7 @@ struct InFlight {
     ticket: u64,
     sent_frame: u64,
     status: i32,
-    body: Option<Vec<u8>>,
+    value: Option<Value>,
     subset: bool,
     depth: i32,
 }
@@ -1098,6 +1111,9 @@ pub struct Run {
     pub stops_thrown: u32,
     /// The cache a warm login loads (s02a, s02b).
     pub cache: Option<CacheFile>,
+    /// Fetch replies from the reply generator instead of the recording; in
+    /// a SEQ replay each generated status must equal the recorded one.
+    pub mock: Option<mock::Mock>,
 }
 
 impl Run {
@@ -1141,6 +1157,7 @@ impl Run {
             stop_armed: 0,
             stops_thrown: 0,
             cache: None,
+            mock: None,
         };
         // The process-wide 403 flag: s04 (index order) raises the alert; every
         // later scenario sees it spent.
@@ -1471,6 +1488,17 @@ impl Run {
                 w.tail
             ));
             self.wire_targets.push((method.to_owned(), norm_target.clone(), w.status));
+            let mut w = w;
+            if method == "GET" {
+                if let Some(m) = self.mock.as_mut() {
+                    let (st, v) = m.ais(method, &norm_target);
+                    if st != w.status {
+                        let n = self.wires.len();
+                        self.fail(format!("request {n}: generated status {st}, recorded {}", w.status));
+                    }
+                    w.value = v;
+                }
+            }
             let retry = w.status == 503 && attempts < 6;
             last = Some(w);
             if !retry {
@@ -1482,7 +1510,7 @@ impl Run {
             ticket,
             sent_frame: self.frame_no,
             status: w.status,
-            body: w.body,
+            value: w.value,
             subset: req.command == vkstorm_inventory::fetch::ais::CommandType::FetchCategorySubset,
             depth: req.depth.unwrap_or(vkstorm_inventory::fetch::ais::MAX_FOLDER_DEPTH_REQUEST),
         });
@@ -1497,7 +1525,7 @@ impl Run {
     fn process_reply(&mut self, f: InFlight) {
         self.sched.ais_reply(f.ticket, f.status);
         self.drain();
-        let value = f.body.as_deref().and_then(|b| vkstorm_llsd::parse(vkstorm_llsd::Format::Xml, b, Default::default()).1);
+        let value = f.value.clone();
         let is_fetch = matches!(
             self.sched.ais_command_type(f.ticket),
             Some(t) if (t as i32) >= 9
