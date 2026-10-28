@@ -43,12 +43,24 @@ fn mtime_secs(m: &fs::Metadata) -> i64 {
 /// Walks `dir` recursively calling `f` with each regular file whose path
 /// contains `needle`, its size and its modification time.
 fn walk(dir: &Path, needle: &str, f: &mut dyn FnMut(String, u64, i64)) {
-    let Ok(rd) = fs::read_dir(dir) else { return };
+    walk_while(dir, needle, &mut || true, f);
+}
+
+/// [`walk`] that stops, returning false, as soon as `running` says no
+/// (checked before each directory entry, as upstream d527adf68c checks
+/// `LLApp::isRunning()` in `purge`'s directory loop).
+fn walk_while(dir: &Path, needle: &str, running: &mut dyn FnMut() -> bool, f: &mut dyn FnMut(String, u64, i64)) -> bool {
+    let Ok(rd) = fs::read_dir(dir) else { return true };
     for e in rd.flatten() {
+        if !running() {
+            return false;
+        }
         let path = e.path();
         let Ok(ft) = e.file_type() else { continue };
         if ft.is_dir() {
-            walk(&path, needle, f);
+            if !walk_while(&path, needle, running, f) {
+                return false;
+            }
         } else if ft.is_file() {
             let s = path.to_string_lossy().into_owned();
             if s.contains(needle) {
@@ -58,6 +70,7 @@ fn walk(dir: &Path, needle: &str, f: &mut dyn FnMut(String, u64, i64)) {
             }
         }
     }
+    true
 }
 
 /// What one purge did (`LLDiskCache::purge`'s accounting).
@@ -72,6 +85,11 @@ pub struct PurgeReport {
     /// Whether the high water mark was reached (else nothing was done).
     pub purged: bool,
     pub took_ms: u128,
+    /// The purge stopped early because the application is shutting down
+    /// ([`DiskCache::purge_while`]): files removed so far stay removed, the
+    /// stored cache size is not updated and the rest is not reported, as
+    /// upstream d527adf68c returns from `purge`.
+    pub interrupted: bool,
 }
 
 /// `LLDiskCache`'s state.
@@ -133,6 +151,15 @@ impl DiskCache {
     /// water mark, once it is over the high water mark; static assets are
     /// skipped (and counted).
     pub fn purge(&mut self) -> PurgeReport {
+        self.purge_while(&mut || true)
+    }
+
+    /// `purge` with upstream d527adf68c's shutdown early-out: `running` is
+    /// `LLApp::isRunning()`, asked before each directory entry of the scan,
+    /// before each file of the delete loop and before each line of the
+    /// debug listing; when it says no, the purge returns at once
+    /// ([`PurgeReport::interrupted`]).
+    pub fn purge_while(&mut self, running: &mut dyn FnMut() -> bool) -> PurgeReport {
         if self.enable_debug_info {
             let size = self.dir_file_size(false);
             ll_infos!("Total dir size before purge is {}", size);
@@ -140,11 +167,15 @@ impl DiskCache {
         let start = Instant::now();
         let mut file_info: Vec<(i64, u64, String)> = Vec::new();
         let mut file_size_total: u64 = 0;
-        walk(Path::new(&self.cache_dir), CACHE_FILENAME_PREFIX, &mut |path, size, time| {
+        let completed = walk_while(Path::new(&self.cache_dir), CACHE_FILENAME_PREFIX, running, &mut |path, size, time| {
             file_size_total += size;
             file_info.push((time, size, path));
         });
         let mut report = PurgeReport { files: file_info.len(), size_before: file_size_total, ..Default::default() };
+        if !completed {
+            report.interrupted = true;
+            return report;
+        }
         ll_debugs!("Cache is {}% full", ((file_size_total as f32) / self.max_size_bytes as f32 * 100.0) as i32);
         if (file_size_total as f64) < self.max_size_bytes as f64 * (self.high_percent as f64 / 100.0) {
             ll_debugs!("Not exceded high water - do nothing");
@@ -162,6 +193,13 @@ impl DiskCache {
         let mut deleted_size_total: u64 = 0;
         let mut actions: Vec<(String, &'static str)> = Vec::new();
         for (_, this_file_size, path) in file_info.iter() {
+            if !running() {
+                report.interrupted = true;
+                report.deleted_size = deleted_size_total;
+                report.deleted = del;
+                report.skipped = skip;
+                return report;
+            }
             let mut should_remove = (file_size_total - deleted_size_total) > target_size;
             if !should_remove {
                 break;
@@ -191,6 +229,13 @@ impl DiskCache {
         if self.enable_debug_info {
             let mut deleted_so_far: u64 = 0;
             for (time, size, path) in file_info.iter() {
+                if !running() {
+                    report.interrupted = true;
+                    report.deleted_size = deleted_size_total;
+                    report.deleted = del;
+                    report.skipped = skip;
+                    return report;
+                }
                 deleted_so_far += size;
                 let action = match actions.iter().find(|(p, _)| p == path) {
                     Some((_, "DELETE")) => {
@@ -381,6 +426,50 @@ mod tests {
         assert_eq!(cache.dir_file_size(true), 600);
         cache.clear_cache();
         assert_eq!(cache.dir_file_size(true), 0);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    /// Upstream d527adf68c: a purge asked to stop deletes nothing more,
+    /// leaves the stored size alone and says it was interrupted.
+    #[test]
+    fn purge_stops_when_the_app_is_not_running() {
+        let dir = std::env::temp_dir().join(format!("vks_diskcache_stop_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        let dirs = dir.to_string_lossy().into_owned();
+        let delim = std::path::MAIN_SEPARATOR.to_string();
+        let mut cache = DiskCache::new(&dirs, &delim, 1000, false, 90.0, 50.0);
+        let mut ids = Vec::new();
+        for i in 0..10u8 {
+            let id = [i + 1; 16];
+            let p = cache.filepath(&id);
+            fs::write(&p, vec![0u8; 100]).unwrap();
+            let t = filetime_secs(1_600_000_000 + i as i64 * 10);
+            fs::File::options().write(true).open(&p).unwrap().set_modified(t).unwrap();
+            ids.push(id);
+        }
+        // Stopped before the scan: nothing listed, nothing deleted.
+        let r = cache.purge_while(&mut || false);
+        assert!(r.interrupted && !r.purged && r.files == 0);
+        assert_eq!(ids.iter().filter(|id| Path::new(&cache.filepath(id)).exists()).count(), 10);
+        // Stopped after the scan, before the second deletion: one file goes.
+        let mut scan_checks = 0;
+        walk_while(Path::new(&dirs), CACHE_FILENAME_PREFIX, &mut || {
+            scan_checks += 1;
+            true
+        }, &mut |_, _, _| {});
+        let mut asked = 0;
+        let mut running = || {
+            asked += 1;
+            asked <= scan_checks + 1
+        };
+        let r = cache.purge_while(&mut running);
+        assert!(r.interrupted && r.purged);
+        assert_eq!((r.files, r.deleted), (10, 1));
+        assert!(!Path::new(&cache.filepath(&ids[0])).exists());
+        assert!(Path::new(&cache.filepath(&ids[1])).exists());
+        // Running throughout: the ordinary purge.
+        let r = cache.purge_while(&mut || true);
+        assert!(!r.interrupted);
         let _ = fs::remove_dir_all(&dir);
     }
 

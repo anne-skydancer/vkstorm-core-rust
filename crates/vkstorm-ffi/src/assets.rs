@@ -1333,6 +1333,34 @@ pub unsafe extern "C" fn vks_diskcache_purge(c: *mut VksDiskCache) -> i32 {
     cache.lock().unwrap_or_else(|e| e.into_inner()).absorb_scan(&work);
     1
 }
+/// `purge` with upstream d527adf68c's shutdown early-out: `is_running` is
+/// `LLApp::isRunning()` (returns non-zero while the application runs; null
+/// means always running), asked during the scan, the delete loop and the
+/// debug listing. Returns 1 when the purge ran to the end, 2 when it
+/// stopped because the application is shutting down (the scan result is
+/// then not recorded, as the C++ returns before `updateCacheSize`), and 0
+/// on failure.
+///
+/// # Safety
+/// `c` must come from `vks_diskcache_new` and be live; `is_running`, when
+/// not null, must be callable from the purge thread.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn vks_diskcache_purge_while(c: *mut VksDiskCache, is_running: Option<extern "C" fn() -> i32>) -> i32 {
+    if c.is_null() {
+        return 0;
+    }
+    let cache = &unsafe { &*c }.inner;
+    let mut work = cache.lock().unwrap_or_else(|e| e.into_inner()).clone();
+    let mut running = || is_running.map(|f| f() != 0).unwrap_or(true);
+    let Ok(report) = catch_unwind(AssertUnwindSafe(|| work.purge_while(&mut running))) else {
+        return 0;
+    };
+    if report.interrupted {
+        return 2;
+    }
+    cache.lock().unwrap_or_else(|e| e.into_inner()).absorb_scan(&work);
+    1
+}
 diskcache_fn!(vks_diskcache_clear, |c| -> i32, 0, { c.clear_cache(); 1 });
 diskcache_fn!(vks_diskcache_set_max_size, |c, size: u64| -> i32, 0, { c.set_max_size_bytes(size); 1 });
 diskcache_fn!(vks_diskcache_set_high_water, |c, pct: f32| -> i32, 0, { c.set_high_water_percentage(pct); 1 });

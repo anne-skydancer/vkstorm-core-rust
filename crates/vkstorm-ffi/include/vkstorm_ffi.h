@@ -1030,6 +1030,10 @@ typedef struct VksDiskCache VksDiskCache;
 VksDiskCache* vks_diskcache_new(const char* dir, size_t dir_len, const char* delim, size_t delim_len, uint64_t max_size, int32_t debug, float high, float low);
 void     vks_diskcache_free(VksDiskCache* c);
 int32_t  vks_diskcache_purge(VksDiskCache* c);
+/* purge with upstream's shutdown early-out: is_running is LLApp::isRunning()
+ * (non-zero while running; NULL = always). 1 done, 2 stopped for shutdown
+ * (scan not recorded), 0 failed. */
+int32_t      vks_diskcache_purge_while(VksDiskCache* c, int32_t (*is_running)(void));
 int32_t  vks_diskcache_clear(VksDiskCache* c);
 int32_t  vks_diskcache_set_max_size(VksDiskCache* c, uint64_t size);
 int32_t  vks_diskcache_set_high_water(VksDiskCache* c, float pct);
