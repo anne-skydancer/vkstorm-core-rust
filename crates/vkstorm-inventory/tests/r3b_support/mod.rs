@@ -367,8 +367,8 @@ impl ReplayModel {
         NULL_ID
     }
 
-    /// The login skeletons of a cold login (no cache: every version
-    /// unknown), then `buildParentChildMap` (children in id order).
+    /// `loadSkeleton` of a cold login (no cache: every version unknown);
+    /// `buildParentChildMap` then lists children in id order.
     pub fn load_cold(&mut self, w: &World) {
         for f in &w.folders {
             let owner = if f.owner == w.libowner && w.libroot != NULL_ID { w.libowner } else { w.agent };
@@ -385,16 +385,15 @@ impl ReplayModel {
                 },
             );
         }
-        self.build_parent_child_map();
     }
 
+    /// `buildParentChildMap`: existing arrays are kept, so a second call
+    /// lists every child twice (s21 calls it before the login step does).
     pub fn build_parent_child_map(&mut self) {
-        self.cat_children.clear();
-        self.item_children.clear();
-        self.cat_children.insert(NULL_ID, Vec::new());
+        self.cat_children.entry(NULL_ID).or_default();
         for id in self.cats.keys() {
-            self.cat_children.insert(*id, Vec::new());
-            self.item_children.insert(*id, Vec::new());
+            self.cat_children.entry(*id).or_default();
+            self.item_children.entry(*id).or_default();
         }
         let cats: Vec<(Uuid, Uuid)> = self.cats.values().map(|c| (c.id, c.parent)).collect();
         for (id, parent) in cats {
@@ -615,6 +614,37 @@ impl ReplayModel {
         for (_, i) in items {
             self.update_item(i);
         }
+        self.apply_version_updates(&mut u, v);
+        u.fetches
+    }
+
+    /// `parseMeta`'s `_updated_category_versions` and `doUpdate`'s last loop
+    /// (FIRE-33455: versions only rise; a -1 refetches with 360 s).
+    fn apply_version_updates(&mut self, u: &mut Upd, v: &Value) {
+        let Value::Map(m) = get(v, "_updated_category_versions") else { return };
+        let mut ucv: BTreeMap<Uuid, i32> = BTreeMap::new();
+        for (k, val) in m {
+            ucv.insert(vkstorm_llsd::text::uuid_set(k), as_integer(val));
+        }
+        for (id, version) in ucv {
+            let Some(c) = self.cats.get_mut(&id) else { continue };
+            if c.version != version {
+                if version != -1 {
+                    if c.version == -1 || version > c.version {
+                        c.version = version;
+                    }
+                } else {
+                    u.fetches.push((id, vkstorm_inventory::fetch::timer::FETCH_LONG_EXPIRY));
+                }
+            }
+        }
+    }
+
+    /// A write's reply (no `mFetch`): only the version updates matter to the
+    /// scheduler here.
+    pub fn apply_write_reply(&mut self, v: &Value) -> Vec<(Uuid, i32)> {
+        let mut u = Upd::default();
+        self.apply_version_updates(&mut u, v);
         u.fetches
     }
 
@@ -1281,7 +1311,7 @@ impl Run {
         let frame = self.frame_no;
         let mut k = 0;
         while k < self.active.len() {
-            if self.active[k].sent_frame < frame {
+            if self.active[k].sent_frame < frame && self.active[k].sent_frame != u64::MAX {
                 let f = self.active.remove(k);
                 self.process_reply(f);
                 // the freed coroutine takes the next queued command
@@ -1389,14 +1419,18 @@ impl Run {
                 // applied, no callback
                 self.stops_thrown += 1;
                 self.sched.ais_abandoned(f.ticket);
+                // the pool coroutine is gone for good: its slot stays taken
+                self.active.push(InFlight { sent_frame: u64::MAX, ..f });
                 return;
             }
         }
         let mut fetches = Vec::new();
         if let Some(v) = &value {
-            if is_fetch {
-                fetches = self.model.apply_fetch_reply(f.subset, f.depth, v);
-            }
+            fetches = if is_fetch {
+                self.model.apply_fetch_reply(f.subset, f.depth, v)
+            } else {
+                self.model.apply_write_reply(v)
+            };
         }
         for (id, exp) in fetches {
             self.cat_fetch(id, exp);
@@ -1463,6 +1497,88 @@ impl Run {
 
     pub fn idle(&self) -> bool {
         self.idle_now()
+    }
+
+    pub fn msg_count(&self) -> usize {
+        self.journal.iter().filter(|l| l.starts_with("msg ")).count()
+    }
+
+    /// The request lines without their `wire <n> ` prefix.
+    pub fn wire_bodies(&self) -> Vec<String> {
+        self.wires.iter().map(|l| l.splitn(3, ' ').nth(2).unwrap().to_owned()).collect()
+    }
+
+    /// `d2_wait`: frames without capabilities; nothing may be sent.
+    pub fn d2_wait(&mut self, name: &str, frames: usize) {
+        let (req0, msg0, q0) = (self.requests(), self.msg_count(), self.sched_text());
+        self.frames(frames, true);
+        let (req1, msg1, q1) = (self.requests(), self.msg_count(), self.sched_text());
+        self.fact(&format!(
+            "d2 wait {name} frames={frames} requests={} msgs={} queue_retained={}",
+            req1 - req0,
+            msg1 - msg0,
+            if q0 == q1 { "yes" } else { "NO" }
+        ));
+        self.step(name);
+    }
+
+    /// `same_as_s01`: the request log against s01's.
+    pub fn same_as_s01(&mut self) {
+        let s01: Vec<String> = scenario_lines("s01_login_cold")
+            .into_iter()
+            .filter_map(|l| l.strip_prefix("wire ").map(|r| r.splitn(2, ' ').nth(1).unwrap().to_owned()))
+            .collect();
+        let w = self.wire_bodies();
+        let verdict = if w.len() != s01.len() {
+            format!("NO ({} requests, s01 {})", w.len(), s01.len())
+        } else if let Some(i) = (0..w.len()).find(|&i| w[i] != s01[i]) {
+            format!("NO (request {} differs)", i + 1)
+        } else {
+            "yes".to_owned()
+        };
+        self.fact(&format!("d2 same_requests_as s01_login_cold: {verdict}"));
+    }
+
+    /// `LLInventoryFetchItemsObserver::startFetch()` with AIS (scaffolding:
+    /// the observer stays C++).
+    pub fn items_observer_start(&mut self, ids: &[Uuid]) {
+        let mut requests: BTreeMap<Uuid, Vec<Uuid>> = BTreeMap::new();
+        for id in ids {
+            if self.model.items.get(id).is_some_and(|i| i.complete) {
+                continue;
+            }
+            if self.model.cats.contains_key(id) || *id == NULL_ID {
+                continue;
+            }
+            match self.model.items.get(id) {
+                Some(i) => requests.entry(i.parent).or_default().push(*id),
+                None => self.schedule_item(*id, false),
+            }
+        }
+        for (folder, items) in requests {
+            match self.model.cats.get(&folder).cloned() {
+                Some(c) => {
+                    let viewer_count = self.model.cat_children.get(&folder).map_or(0, Vec::len)
+                        + self.model.item_children.get(&folder).map_or(0, Vec::len);
+                    if c.version == -1 {
+                        self.cat_fetch(folder, FETCH_DEFAULT_EXPIRY);
+                    } else if items.len() > 7 {
+                        self.schedule_folder(folder, true);
+                    } else if viewer_count <= items.len() || (c.count as i64) <= items.len() as i64 {
+                        self.schedule_folder(folder, true);
+                    } else {
+                        for i in items {
+                            self.schedule_item(i, false);
+                        }
+                    }
+                }
+                None => {
+                    for i in items {
+                        self.schedule_item(i, false);
+                    }
+                }
+            }
+        }
     }
 
     // ---- the login steps (frozen copies of llstartup.cpp) -------------------
@@ -1664,4 +1780,47 @@ pub fn check(id: &str, run: &mut Run, skip: &dyn Fn(&str) -> bool) -> (usize, us
         panic!("{id}: replay error: {e}");
     }
     (expected.len(), lines.len())
+}
+
+/// The fetch state of every folder in the recorded model dump (`mdl cat ...
+/// version= ... fetching= timer{...}`) against the replay model: the version
+/// (the replay model's AIS applier) and the fetch state and request timer
+/// (the scheduler's `setFetching` calls through `fetch::timer`). Returns
+/// `(checked, mismatches)`; the descendent count is the C++ model's
+/// accounting and is not checked.
+pub fn check_model_fetch_state(id: &str, run: &Run) -> (usize, Vec<String>) {
+    let mut checked = 0;
+    let mut bad = Vec::new();
+    for l in scenario_lines(id) {
+        let Some(rest) = l.strip_prefix("mdl cat ") else { continue };
+        let cid = parse_uuid(&rest[..36]);
+        let field = |k: &str| -> String {
+            let a = rest.find(&format!(" {k}=")).unwrap() + k.len() + 2;
+            rest[a..].split(' ').next().unwrap().to_owned()
+        };
+        let version: i32 = field("version").parse().unwrap();
+        let fetching: i32 = field("fetching").parse().unwrap();
+        let t = rest.find("timer{").map(|a| rest[a..].to_owned()).unwrap();
+        checked += 1;
+        let Some(c) = run.model.cats.get(&cid) else {
+            bad.push(format!("{}: not in the replay model", uuid_string(&cid)));
+            continue;
+        };
+        let tm = &c.fetch.requested;
+        let mine_t = format!(
+            "timer{{started={} expired={} to_expire={:.3}}}",
+            tm.started as i32,
+            tm.has_expired(run.model.now) as i32,
+            (tm.expiry - run.model.now) as f32
+        );
+        if c.version != version || c.fetch.fetching as i32 != fetching || mine_t != t {
+            bad.push(format!(
+                "{}: recorded version={version} fetching={fetching} {t}, replay version={} fetching={} {mine_t}",
+                uuid_string(&cid),
+                c.version,
+                c.fetch.fetching as i32
+            ));
+        }
+    }
+    (checked, bad)
 }
