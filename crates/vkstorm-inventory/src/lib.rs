@@ -32,6 +32,7 @@
 #![forbid(unsafe_code)]
 
 pub mod aggregate;
+pub mod cache;
 pub mod category;
 pub mod category_obj;
 pub mod flags;
@@ -39,6 +40,7 @@ pub mod item;
 pub mod legacy;
 pub mod llsd;
 pub mod message;
+pub mod model;
 pub mod object;
 pub mod perms;
 pub mod sale;
