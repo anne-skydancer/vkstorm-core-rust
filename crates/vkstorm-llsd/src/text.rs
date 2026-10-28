@@ -378,10 +378,14 @@ fn extract_hex_real(r: &mut Reader<'_>, negative: bool) -> (f64, bool) {
     (v, v.is_finite())
 }
 
-/// `LLSD(string).asReal()`: `istringstream >> v`, then `get()` must hit the
-/// end of the string, else 0.0. After a failed extraction `get()` reports
-/// EOF at once, so the value the extraction stored (infinity on overflow) is
-/// what comes back.
+/// `LLSD(string).asReal()` as the MSVC runtime computes it:
+/// `istringstream >> v`, then `get()` must hit the end of the string, else
+/// 0.0. After a failed extraction `get()` reports EOF at once, so the value
+/// the extraction stored (infinity on overflow) is what comes back.
+///
+/// The LLSD XML parser uses this on every platform (the serializer rung's
+/// qualified behaviour). Code that reproduces the viewer's own C++ `LLSD`
+/// coercions uses [`string_as_real_native`] instead.
 pub fn string_as_real(s: &[u8]) -> f64 {
     let mut src = SliceSource::new(s);
     let mut r = Reader::new(&mut src);
@@ -390,6 +394,135 @@ pub fn string_as_real(s: &[u8]) -> f64 {
         return v;
     }
     if r.peek().is_none() { v } else { 0.0 }
+}
+
+/// The MSVC form of `LLSD(string).asReal()`; the same function as
+/// [`string_as_real`], named for the runtime it reproduces.
+pub fn string_as_real_msvc(s: &[u8]) -> f64 {
+    string_as_real(s)
+}
+
+/// `LLSD(string).asReal()` as libstdc++ computes it.
+///
+/// libstdc++'s `num_get<double>` (`_M_extract_float`) collects, after the
+/// sentry skips whitespace: an optional sign, then digits, at most one `.`
+/// (not after the exponent marker) and at most one `e`/`E`, accepted only
+/// after a mantissa digit and followed by an optional sign. It stops at the
+/// first other byte; there is no hexadecimal, infinity or NaN form. The
+/// collected text then goes to `strtod` (`__convert_to_v`): unless `strtod`
+/// consumes all of it the result is 0 with the failbit set, and a result of
+/// +/-infinity becomes +/-`DBL_MAX` with the failbit set. Underflow is
+/// accepted with the value `strtod` gives. After a failure `get()` reports
+/// EOF, so the stored value comes back; after a success the string must be
+/// exhausted, else 0.0.
+pub fn string_as_real_libstdcxx(s: &[u8]) -> f64 {
+    let mut i = 0;
+    while i < s.len() && is_space(s[i]) {
+        i += 1;
+    }
+    if i == s.len() {
+        return 0.0; // the sentry fails; the value keeps its 0.0
+    }
+    let mut text: Vec<u8> = Vec::with_capacity(32);
+    if s[i] == b'+' || s[i] == b'-' {
+        text.push(s[i]);
+        i += 1;
+    }
+    let mut found_mantissa = false;
+    let mut found_dec = false;
+    let mut found_sci = false;
+    while i < s.len() {
+        let c = s[i];
+        if c.is_ascii_digit() {
+            text.push(c);
+            found_mantissa = true;
+        } else if c == b'.' && !found_dec && !found_sci {
+            text.push(b'.');
+            found_dec = true;
+        } else if (c == b'e' || c == b'E') && !found_sci && found_mantissa {
+            text.push(b'e');
+            found_sci = true;
+            if i + 1 < s.len() && (s[i + 1] == b'+' || s[i + 1] == b'-') {
+                i += 1;
+                text.push(s[i]);
+            }
+        } else {
+            break;
+        }
+        i += 1;
+    }
+    let at_end = i == s.len();
+    let (v, ok) = libstdcxx_convert(&text);
+    if !ok {
+        return v;
+    }
+    if at_end { v } else { 0.0 }
+}
+
+/// `__convert_to_v` for double: `strtod` must consume the whole collected
+/// text, which only holds `[+-]`, digits, `.` and `e`.
+fn libstdcxx_convert(text: &[u8]) -> (f64, bool) {
+    let mut i = 0;
+    if i < text.len() && (text[i] == b'+' || text[i] == b'-') {
+        i += 1;
+    }
+    let mut digits = 0;
+    while i < text.len() && text[i].is_ascii_digit() {
+        i += 1;
+        digits += 1;
+    }
+    if i < text.len() && text[i] == b'.' {
+        i += 1;
+        while i < text.len() && text[i].is_ascii_digit() {
+            i += 1;
+            digits += 1;
+        }
+    }
+    if digits == 0 {
+        return (0.0, false);
+    }
+    if i < text.len() && text[i] == b'e' {
+        i += 1;
+        if i < text.len() && (text[i] == b'+' || text[i] == b'-') {
+            i += 1;
+        }
+        let mut exp_digits = 0;
+        while i < text.len() && text[i].is_ascii_digit() {
+            i += 1;
+            exp_digits += 1;
+        }
+        if exp_digits == 0 {
+            return (0.0, false); // strtod stops before the `e`
+        }
+    }
+    if i != text.len() {
+        return (0.0, false);
+    }
+    let Ok(v) = std::str::from_utf8(text).unwrap_or("").parse::<f64>() else {
+        return (0.0, false);
+    };
+    if v == f64::INFINITY {
+        (f64::MAX, false)
+    } else if v == f64::NEG_INFINITY {
+        (f64::MIN, false)
+    } else {
+        (v, true)
+    }
+}
+
+/// `LLSD(string).asReal()` as the C++ runtime of this build computes it: the
+/// MSVC form under the MSVC target environment, the libstdc++ form
+/// otherwise. This is what the viewer's own `LLSD` class returns on the same
+/// platform (port rule 1).
+pub fn string_as_real_native(s: &[u8]) -> f64 {
+    #[cfg(target_env = "msvc")]
+    {
+        string_as_real_msvc(s)
+    }
+    #[cfg(not(target_env = "msvc"))]
+    {
+        string_as_real_libstdcxx(s)
+    }
 }
 
 /// `(int)` of a double as x86 does it: out-of-range and NaN give `i32::MIN`.
@@ -900,6 +1033,28 @@ mod tests {
         assert_eq!(string_as_real(b"42.0 "), 0.0);
         assert_eq!(string_as_real(b" 42.0"), 42.0);
         assert_eq!(string_as_real(b"nan"), 0.0);
+        // libstdc++: no hex, inf or nan; strtod must take the whole collected
+        // text; overflow stores +/-DBL_MAX.
+        assert_eq!(string_as_real_libstdcxx(b"0x10"), 0.0);
+        assert_eq!(string_as_real_libstdcxx(b"0"), 0.0);
+        assert_eq!(string_as_real_libstdcxx(b"inf"), 0.0);
+        assert_eq!(string_as_real_libstdcxx(b"nan"), 0.0);
+        assert_eq!(string_as_real_libstdcxx(b"1e"), 0.0);
+        assert_eq!(string_as_real_libstdcxx(b"1e+"), 0.0);
+        assert_eq!(string_as_real_libstdcxx(b"1e5x"), 0.0);
+        assert_eq!(string_as_real_libstdcxx(b"1e999"), f64::MAX);
+        assert_eq!(string_as_real_libstdcxx(b"-1e999"), f64::MIN);
+        assert_eq!(string_as_real_libstdcxx(b"1e-999"), 0.0);
+        assert_eq!(string_as_real_libstdcxx(b"5."), 5.0);
+        assert_eq!(string_as_real_libstdcxx(b".5"), 0.5);
+        assert_eq!(string_as_real_libstdcxx(b"1.e5"), 1e5);
+        assert_eq!(string_as_real_libstdcxx(b"."), 0.0);
+        assert_eq!(string_as_real_libstdcxx(b" 5"), 5.0);
+        assert_eq!(string_as_real_libstdcxx(b"5 "), 0.0);
+        assert_eq!(string_as_real_libstdcxx(b"1.2.3"), 0.0);
+        assert_eq!(string_as_real_libstdcxx(b"007.5"), 7.5);
+        assert_eq!(string_as_real_libstdcxx(b"-2.5E-3"), -0.0025);
+        assert_eq!(string_as_real_msvc(b"0x10"), 16.0);
         assert_eq!(sscanf_int(b" 12abc"), Some(12));
         assert_eq!(sscanf_int(b"abc"), None);
         assert_eq!(sscanf_int(b"2147483648"), Some(-2147483648));
