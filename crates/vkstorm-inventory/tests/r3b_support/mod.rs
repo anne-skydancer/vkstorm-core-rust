@@ -146,6 +146,8 @@ pub struct World {
     pub libroot: Uuid,
     pub folders: Vec<WFolder>,
     pub items: Vec<WItem>,
+    /// Folders only in the login skeleton, unknown to the server.
+    pub not_on_server: Vec<Uuid>,
 }
 
 impl World {
@@ -1207,6 +1209,9 @@ pub struct Run {
     external: BTreeMap<u64, Option<u64>>,
     next_external: u64,
     legacy: Vec<LegacyFlight>,
+    /// `CallAfterCategoryFetchStage1` observers waiting: incomplete folders
+    /// and the callback's tag.
+    stage1: Vec<(Vec<Uuid>, String)>,
     /// The mock delays legacy replies (c11's `delay_ms=3000`): they arrive
     /// only while the test settles, never during a burst of frames.
     pub legacy_delay: bool,
@@ -1269,6 +1274,7 @@ impl Run {
             external: BTreeMap::new(),
             next_external: EXTERNAL_TICKETS,
             legacy: Vec::new(),
+            stage1: Vec::new(),
             legacy_delay: false,
             settling: false,
         };
@@ -1691,8 +1697,47 @@ impl Run {
         }
         self.last_after = self.sched.state().fetch_count;
         self.max_in_flight = self.max_in_flight.max(self.last_after);
+        self.observers();
         self.mainloop();
         self.snapshot();
+    }
+
+    /// `idleNotifyObservers`: a waiting stage-1 observer's `changed()`
+    /// (scaffolding: the observers stay C++).
+    fn observers(&mut self) {
+        let mut k = 0;
+        while k < self.stage1.len() {
+            let model = &self.model;
+            self.stage1[k].0.retain(|c| model.cats.contains_key(c) && !model.is_category_complete(c));
+            if self.stage1[k].0.is_empty() {
+                let (_, tag) = self.stage1.remove(k);
+                self.note(&format!("callback {tag}"));
+            } else {
+                k += 1;
+            }
+        }
+    }
+
+    /// `callAfterCOFFetch` without AIS: the COF's mark cleared, then
+    /// `callAfterCategoryFetch` (the stage-1 observer's `startFetch()`).
+    pub fn cof_without_ais(&mut self, tag: &str) {
+        let cof = self.model.current_outfit_id();
+        self.model.set_fetching(&cof, CategoryFetch::None);
+        let mut incomplete = Vec::new();
+        if let Some(c) = self.model.cats.get(&cof).cloned() {
+            if c.version == -1 {
+                self.cat_fetch(cof, FETCH_DEFAULT_EXPIRY);
+                incomplete.push(cof);
+            } else if !self.model.is_category_complete(&cof) {
+                self.schedule_folder(cof, true);
+                incomplete.push(cof);
+            }
+        }
+        if incomplete.is_empty() {
+            self.note(&format!("callback {tag}"));
+        } else {
+            self.stage1.push((incomplete, tag.to_owned()));
+        }
     }
 
     /// `frame_note`: a frame and its counts.

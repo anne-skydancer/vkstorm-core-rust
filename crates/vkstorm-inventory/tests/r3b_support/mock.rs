@@ -63,7 +63,8 @@ impl Mock {
     /// `POST /control/world` with the scenario's world.
     pub fn new(w: &World) -> Self {
         let mut s = Mock { agent: w.agent, fail_status: 404, ..Default::default() };
-        for f in &w.folders {
+        // a scripted folder's tag comes from its id (README "Mock fidelity")
+        for f in w.folders.iter().filter(|f| !w.not_on_server.contains(&f.id)) {
             s.folders.insert(f.id, MFolder { parent: f.parent, ftype: f.ftype, version: f.version, owner: f.owner });
             s.child_f.entry(f.parent).or_default().push(f.id);
         }

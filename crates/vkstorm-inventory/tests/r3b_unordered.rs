@@ -268,3 +268,155 @@ fn c11_legacy_limits() {
 fn oc11_legacy_limits() {
     legacy_limits("oc11_legacy_limits", true);
 }
+
+/// s12/o12: the region changes under the walk: AIS, no region, capabilities
+/// not received, legacy only (the AIS-typed queue goes out as legacy
+/// POSTs), AIS back with the legacy reply unpumped (finding 2), legacy
+/// again, capabilities without inventory capabilities (the queue drained,
+/// finding 3), AIS back.
+fn region_change(id: &str, other_grid: bool) {
+    let mut b = Builder::new(true);
+    basic(&mut b, 6, false, 3);
+    let lines = scenario_lines(id);
+    let mut r = Run::new(id, b.w.clone(), &lines);
+    r.unordered(Mode::Phased, 2);
+    if other_grid {
+        r.in_second_life = false;
+        r.refresh_env();
+    }
+    r.login();
+    r.set_startup(Startup::Started);
+    r.until(|r| r.requests() >= 2 && r.pool_count() == 0 && r.sched.state().fetch_count == 0);
+    r.step("ais_two_requests");
+    r.set_region(false, CAPS_NONE, true);
+    r.frames(30, true);
+    r.step("no_region");
+    r.set_region(true, CAPS_NONE, false);
+    r.frames(30, true);
+    r.step("caps_not_received");
+    r.set_region(true, CAPS_LEGACY, true);
+    r.until(|r| r.sched.state().fetch_count > 0);
+    r.step("legacy_batch_sent");
+    r.set_region(true, CAPS_ALL, true);
+    r.settle_ex(true, false, false);
+    r.step("ais_with_legacy_reply_unpumped");
+    r.set_region(true, CAPS_LEGACY, true);
+    r.settle(true, false);
+    r.step("legacy_again");
+    let (u5, s10) = (b.ids.user[5], b.ids.user_sub[10]);
+    r.set_version(u5, -1);
+    r.set_version(s10, -1);
+    r.schedule_folder(u5, false);
+    r.schedule_folder(s10, false);
+    r.set_region(true, CAPS_NONE, true);
+    r.frames(30, true);
+    r.step("caps_without_inventory");
+    r.set_region(true, CAPS_ALL, true);
+    r.frames(30, true);
+    r.start(vkstorm_inventory::fetch::NULL_ID, true);
+    r.settle(true, false);
+    r.step("ais_back_start");
+    r.fetch_descendents_of(u5);
+    r.settle(true, false);
+    r.step("ais_back_fetch");
+    report(id, &mut r);
+}
+
+#[test]
+fn s12_region_change() {
+    region_change("s12_region_change", false);
+}
+
+#[cfg(not(feature = "opensim"))]
+#[test]
+fn o12_region_change() {
+    region_change("o12_region_change", true);
+}
+
+/// s10a/o10a: the legacy scheduler without AIS: the walk (root and library
+/// only, finding 5), the COF observer, lost and found, a 403 split
+/// (finding 1, survey bug 7), a 200-with-error re-issued until it
+/// succeeds, bad_folders, the forced set kept for the session (finding 8).
+fn legacy_caps(id: &str, other_grid: bool) {
+    let mut b = Builder::new(true);
+    basic(&mut b, 3, true, 3);
+    let lib4 = pid(0xf4000000, 3);
+    let e0 = pid(0xe0000000, 1);
+    let bad = pid(0xc0500000, 1);
+    let x4 = pid(0xf4000000, 2);
+    b.w.add_folder(lib4, libroot(), FT_NONE, 3, true);
+    b.w.add_folder(e0, root(), FT_NONE, 4, false);
+    b.item(e0);
+    b.w.add_folder(bad, root(), FT_NONE, 2, false);
+    b.w.not_on_server.push(bad);
+    b.w.add_folder(x4, root(), FT_NONE, 5, false);
+    let mut r = phased(id, &b, CAPS_LEGACY, other_grid);
+    r.mock.as_mut().unwrap().set_mode(0, 404, 0, 3);
+    r.pool_size = 2;
+    r.pool_setting = 2;
+    r.refresh_env();
+    r.login();
+    r.walk();
+    r.cof_without_ais("cof");
+    r.settle(true, true);
+    r.step("cof");
+    r.find_lost_items();
+    r.settle(true, true);
+    r.step("lost_and_found");
+    for f in [b.ids.user[0], x4, b.ids.user[1], b.ids.lib_folders[0], lib4] {
+        r.fetch_descendents_of(f);
+    }
+    r.settle(true, true);
+    r.step("forbidden_split");
+    r.fetch_descendents_of(e0);
+    r.settle(true, true);
+    r.step("error_200");
+    r.fetch_descendents_of(bad);
+    r.settle(true, true);
+    r.step("bad_folder");
+    r.schedule_folder(b.ids.user[2], true);
+    r.settle(true, true);
+    r.step("forced_unknown");
+    r.set_version(b.ids.user[2], -1);
+    r.schedule_folder(b.ids.user[2], true);
+    r.settle(true, true);
+    r.step("forced_again");
+    r.schedule_folder(root(), true);
+    r.settle(true, true);
+    r.step("forced_known");
+    report(id, &mut r);
+}
+
+#[test]
+fn s10a_legacy_caps_sl() {
+    legacy_caps("s10a_legacy_caps_sl", false);
+}
+
+#[cfg(not(feature = "opensim"))]
+#[test]
+fn o10a_legacy_caps() {
+    legacy_caps("o10a_legacy_caps", true);
+}
+
+/// o15b: a library owner other than ALEXANDRIA_LINDEN_ID over the legacy
+/// capabilities (another grid, FSUseAis3Api off).
+#[cfg(not(feature = "opensim"))]
+#[test]
+fn o15b_library_owner_legacy() {
+    let id = "o15b_library_owner_legacy";
+    let mut b = Builder::new(true);
+    b.w.libowner = pid(0x0b1b0000, 1);
+    b.w.folders.last_mut().unwrap().owner = b.w.libowner;
+    basic(&mut b, 2, false, 2);
+    let mut r = phased(id, &b, CAPS_LEGACY, true);
+    r.pool_size = 2;
+    r.pool_setting = 2;
+    r.fs_use_ais3_api = false;
+    r.refresh_env();
+    r.login();
+    r.walk();
+    r.fetch_descendents_of(b.ids.lib_folders[1]);
+    r.settle(true, true);
+    r.step("library_folder");
+    report(id, &mut r);
+}
