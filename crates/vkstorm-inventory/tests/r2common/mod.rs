@@ -6,12 +6,14 @@
 #![allow(dead_code)]
 
 pub mod gz;
+pub mod snapshot;
 
 use std::fmt::Write as _;
 use std::path::PathBuf;
 
 use vkstorm_inventory::category::ViewerCategory;
 use vkstorm_inventory::item::Item;
+use vkstorm_inventory::validate::ValidationInfo;
 use vkstorm_llsd::{Format, Value};
 
 use crate::common::sha256_hex;
@@ -236,6 +238,32 @@ pub fn llsd_hex(v: &Value) -> String {
 /// `llsd_notation`: one line, binary as `b16"..."`.
 pub fn llsd_notation(v: &Value) -> String {
     String::from_utf8(vkstorm_llsd::format(Format::Notation, v, Default::default()).0).unwrap()
+}
+
+/// `dump_validation`.
+pub fn dump_validation(info: &ValidationInfo) -> Vec<String> {
+    let sd = info.to_llsd();
+    let mut out = vec![
+        format!("validation llsd={}", llsd_hex(&sd)),
+        format!("validation notation={}", llsd_notation(&sd)),
+        format!(
+            "validation fatal={} warnings={} loops={} orphans={} fatal_system_duplicate={} no_root={} no_library_root={} qa={} initialized={}",
+            info.fatal_error_count,
+            info.warning_count,
+            info.loop_count,
+            info.orphaned_count,
+            info.fatal_system_duplicate,
+            u8::from(info.fatal_no_root_folder),
+            u8::from(info.fatal_no_library_root_folder),
+            u8::from(info.fatal_qa_debug_mode),
+            u8::from(info.initialized)
+        ),
+    ];
+    for (k, v) in &info.warnings {
+        out.push(format!("validation warning {k} {v}"));
+    }
+    out.push(format!("validation log={}", q(info.log.as_bytes())));
+    out
 }
 
 /// `digest_lines`: the SHA-256 of the lines, each followed by `\n`.

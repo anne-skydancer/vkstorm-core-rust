@@ -47,3 +47,4 @@ pub mod sale;
 pub mod shadow;
 pub mod text;
 pub mod types;
+pub mod validate;

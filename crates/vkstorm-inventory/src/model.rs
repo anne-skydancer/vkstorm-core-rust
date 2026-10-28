@@ -14,6 +14,9 @@ use crate::item::Item;
 use crate::perms::Uuid;
 use crate::types::AssetType;
 
+/// `LLViewerInventoryCategory::DESCENDENT_COUNT_UNKNOWN`.
+pub const DESCENDENT_COUNT_UNKNOWN: i32 = -1;
+
 /// A read-only view of the objects of the C++ model.
 pub trait ModelLookup {
     /// `gInventory.getItem(id)`'s stored type (`getActualType`), or `None`
