@@ -167,7 +167,7 @@ fn c1_realistic() {
         c.descendent_count = n;
     }
     let v_start = start + produced.len();
-    let validation = dump_validation(&validate::validate(&snap, Default::default()).info);
+    let validation = dump_validation(&validate::validate(&key_ordered(&snap), Default::default()).info);
     assert_case(file, "realistic_100k (populated)", &case.lines[v_start..v_start + validation.len()], &validation);
     tally.replayed("validation of the populated model (rebuilt)", validation.len());
 
@@ -202,7 +202,7 @@ fn c1_realistic() {
     let steps = [format!("step load_library rv={}", u8::from(lib_rv)), format!("step load_agent rv={}", u8::from(agent_rv))];
     let at = case.lines.iter().position(|l| l.starts_with("step load_library")).unwrap();
     assert_case(file, "realistic_100k (reload steps)", &case.lines[at..at + 2], &steps);
-    let mut info = validate::validate(&model.built_snapshot(), Default::default()).info;
+    let mut info = validate::validate(&key_ordered(&model.built_snapshot()), Default::default()).info;
     info.initialized = true;
     let reload_validation = dump_validation(&info);
     let at = at + 3; // after "step build_parent_child_map"

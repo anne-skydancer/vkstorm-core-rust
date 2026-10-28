@@ -269,7 +269,7 @@ impl TestModel {
     }
 
     pub fn validate(&self, qa: Option<&mut QaRandom>) -> Validation {
-        validate::validate(&self.snap, validate::Options { qa, in_open_sim: false })
+        validate::validate(&super::key_ordered(&self.snap), validate::Options { qa, in_open_sim: false })
     }
 
     /// `dump_model(out, false)` without the lock entry counts and the

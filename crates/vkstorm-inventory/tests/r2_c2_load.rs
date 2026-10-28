@@ -242,7 +242,7 @@ fn c2_load() {
             case.lines[first_v..].iter().take_while(|l| l.starts_with("validation ")).cloned().collect();
         let state = state_from_dumps(&[&case.lines[..first_v]]);
         let info = if state.root != NULL_ID && state.category_tree.contains_key(&state.root) {
-            let mut info = validate::validate(&state, Default::default()).info;
+            let mut info = validate::validate(&r2common::key_ordered(&state), Default::default()).info;
             info.initialized = true;
             info
         } else {

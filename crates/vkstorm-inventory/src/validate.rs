@@ -14,6 +14,16 @@
 //! even after the item left the map; `validate()` reads and moves it, so the
 //! snapshot carries it in and [`Validation::last_item`] carries it out.
 //!
+//! Iteration order: since upstream 28fee038e0, `mCategoryMap` and
+//! `mItemMap` are `std::unordered_map`s, so `validate()` walks them in the
+//! standard library's hash order, which differs between MSVC and libstdc++.
+//! The walk order shows in `mLastItem` (each item check moves it). The crate
+//! does not reproduce either library's hash table: the C++ wrapper passes
+//! the order it iterated ([`Snapshot::category_order`],
+//! [`Snapshot::item_order`]), and [`validate`] walks the maps in that order.
+//! [`Snapshot::use_key_order`] fills both with key order, which is what the
+//! viewer did while the maps were `std::map`.
+//!
 //! `QAModeFakeSystemFolderIssues` draws from a function-static
 //! `std::default_random_engine`, which is `mt19937` in MSVC's standard
 //! library and `minstd_rand0` in libstdc++, through
@@ -85,6 +95,12 @@ pub struct Snapshot {
     pub category_map: BTreeMap<Uuid, Option<usize>>,
     /// `mItemMap`: key to item.
     pub item_map: BTreeMap<Uuid, usize>,
+    /// The order in which the C++ iterates `mCategoryMap`: every key of
+    /// [`category_map`](Self::category_map), once each.
+    pub category_order: Vec<Uuid>,
+    /// The order in which the C++ iterates `mItemMap`: every key of
+    /// [`item_map`](Self::item_map), once each.
+    pub item_order: Vec<Uuid>,
     /// `mParentChildCategoryTree`: parent key to the child folder vector.
     pub category_tree: BTreeMap<Uuid, Vec<Option<usize>>>,
     /// `mParentChildItemTree`: parent key to the child item vector.
@@ -97,6 +113,25 @@ pub struct Snapshot {
     pub item_locks: BTreeSet<Uuid>,
     /// `mLastItem` (an item index), the `getItem` cache.
     pub last_item: Option<usize>,
+}
+
+impl Snapshot {
+    /// Sets [`category_order`](Self::category_order) and
+    /// [`item_order`](Self::item_order) to key order, the iteration order of
+    /// the `std::map`s the viewer had before upstream 28fee038e0.
+    pub fn use_key_order(&mut self) {
+        self.category_order = self.category_map.keys().copied().collect();
+        self.item_order = self.item_map.keys().copied().collect();
+    }
+
+    /// Whether the two orders name exactly the keys of their maps.
+    pub fn orders_match_maps(&self) -> bool {
+        fn same<V>(order: &[Uuid], map: &BTreeMap<Uuid, V>) -> bool {
+            order.len() == map.len() && order.iter().collect::<BTreeSet<_>>().len() == order.len()
+                && order.iter().all(|k| map.contains_key(k))
+        }
+        same(&self.category_order, &self.category_map) && same(&self.item_order, &self.item_map)
+    }
 }
 
 /// `LLInventoryValidationInfo`.
@@ -422,8 +457,16 @@ impl Model<'_> {
     }
 }
 
-/// `validate()` over a snapshot.
+/// `validate()` over a snapshot, walking the maps in the snapshot's
+/// [`category_order`](Snapshot::category_order) and
+/// [`item_order`](Snapshot::item_order).
+///
+/// # Panics
+///
+/// When an order does not name exactly the keys of its map
+/// ([`Snapshot::orders_match_maps`]).
 pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
+    assert!(snapshot.orders_match_maps(), "Snapshot iteration orders must name exactly the map keys");
     let Options { mut qa, in_open_sim } = options;
     let skip_suitcase = cfg!(feature = "opensim") && in_open_sim;
     let s = snapshot;
@@ -454,7 +497,8 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
     let mut under_root: BTreeMap<i32, i32> = BTreeMap::new();
     let mut elsewhere: BTreeMap<i32, i32> = BTreeMap::new();
 
-    for (cat_id, &slot) in &s.category_map {
+    for cat_id in &s.category_order {
+        let slot = s.category_map[cat_id];
         let Some(ci) = slot else {
             warn(&mut info, "null_cat", &mut warning_count);
             continue;
@@ -538,7 +582,8 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
     }
     let _ = skip_suitcase;
 
-    for (item_id, &ii) in &s.item_map {
+    for item_id in &s.item_order {
+        let ii = s.item_map[item_id];
         let item = m.item(ii).clone();
         if item.id != *item_id {
             warn(&mut info, "item_id_mismatch", &mut warning_count);
@@ -672,5 +717,50 @@ mod tests {
         assert!(v.info.log.starts_with("No library root folder id\nCannot create system folder of type texture(0)\n"));
         // The category map is empty and the tree lacks the null entry.
         assert_eq!(v.info.warnings.get("category_map_size"), Some(&1));
+    }
+
+    /// Two links to two items: the item walk looks each target up, so
+    /// `mLastItem` ends on the target of the link walked last.
+    #[test]
+    fn item_walk_order_reaches_last_item() {
+        let id = |n: u8| [n; 16];
+        let root = id(1);
+        let mut s = Snapshot { root, library_root: id(2), ..Snapshot::default() };
+        for (k, cid) in [root, id(2)].into_iter().enumerate() {
+            s.categories.push(SnapCategory {
+                id: cid,
+                parent: NULL_ID,
+                preferred_type: FolderType(-1),
+                version: 1,
+                descendent_count: crate::model::DESCENDENT_COUNT_UNKNOWN,
+            });
+            s.category_map.insert(cid, Some(k));
+            s.category_tree.insert(cid, Vec::new());
+            s.item_tree.insert(cid, Vec::new());
+        }
+        s.category_tree.insert(NULL_ID, vec![Some(0), Some(1)]);
+        let items = [
+            (id(10), AssetType::OBJECT, NULL_ID),
+            (id(11), AssetType::OBJECT, NULL_ID),
+            (id(20), AssetType::LINK, id(10)),
+            (id(21), AssetType::LINK, id(11)),
+        ];
+        for (k, (iid, ty, asset)) in items.into_iter().enumerate() {
+            s.items.push(SnapItem { id: iid, parent: root, asset_type: ty, asset: if asset == NULL_ID { iid } else { asset } });
+            s.item_map.insert(iid, k);
+            s.item_tree.get_mut(&root).unwrap().push(Some(k));
+        }
+        s.use_key_order();
+        assert_eq!(validate(&s, Options::default()).last_item, Some(1));
+        s.item_order = vec![id(21), id(20), id(11), id(10)];
+        assert_eq!(validate(&s, Options::default()).last_item, Some(0));
+    }
+
+    #[test]
+    #[should_panic(expected = "iteration orders")]
+    fn orders_must_name_the_keys() {
+        let mut s = Snapshot::default();
+        s.item_map.insert([7; 16], 0);
+        validate(&s, Options::default());
     }
 }

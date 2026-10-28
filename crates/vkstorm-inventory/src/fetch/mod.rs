@@ -21,6 +21,14 @@
 //! the legacy reply applier (`BGFolderHttpHandler::processData`'s model
 //! writes), and the UDP messages.
 //!
+//! Order: every list of folders the scheduler walks comes from
+//! [`scheduler::FetchModel::child_categories`], the C++
+//! `getDirectDescendentsOf` order, and the scheduler keeps it (queues,
+//! subset batches, `children=` lists). Since upstream 28fee038e0 that order
+//! follows the model's `std::unordered_map`s and so differs between MSVC
+//! and libstdc++; the scheduler never re-sorts it, and its replay tests take
+//! the recorded order of each platform.
+//!
 //! # Shape
 //!
 //! [`scheduler::BackgroundFetch`] is driven by explicit calls (the C++

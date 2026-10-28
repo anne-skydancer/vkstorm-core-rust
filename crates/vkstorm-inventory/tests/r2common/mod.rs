@@ -9,6 +9,19 @@ pub mod fixture_model;
 pub mod gz;
 pub mod snapshot;
 
+use vkstorm_inventory::validate::Snapshot;
+
+/// The snapshot with its map iteration orders set to key order. The R2
+/// fixtures were recorded while `mCategoryMap` and `mItemMap` were
+/// `std::map`s, so key order is the order they walked (see
+/// `vkstorm_inventory::validate`, "Iteration order").
+#[allow(dead_code)]
+pub fn key_ordered(s: &Snapshot) -> Snapshot {
+    let mut s = s.clone();
+    s.use_key_order();
+    s
+}
+
 use std::fmt::Write as _;
 use std::path::PathBuf;
 
