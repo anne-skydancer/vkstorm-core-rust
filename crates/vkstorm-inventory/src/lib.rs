@@ -13,7 +13,13 @@
 //!   obfuscation ([`item`], [`category`], [`object`], [`shadow`]);
 //! - their LLSD forms ([`llsd`]) and legacy text forms ([`legacy`]);
 //! - items, folders, aggregate permissions, `LLCategory` and sale info in
-//!   UDP message blocks ([`message`]).
+//!   UDP message blocks ([`message`]);
+//! - the offer and give decisions (sub-rung R4b, [`exchange`]): received
+//!   offers, their responses and LLSD form, the offer throttle and policy,
+//!   offline offers; item and folder gives, the give and drop predicates,
+//!   drop acceptance, the share dialog. They read the viewer through a
+//!   [`exchange::Host`] and tell it what to do as ordered
+//!   [`exchange::Action`]s.
 //!
 //! It is not the inventory model. In this rung the model containers stay C++:
 //! `LLInventoryItem`, `LLInventoryCategory` and `LLInventoryObject` keep their
@@ -34,6 +40,7 @@
 pub mod aggregate;
 pub mod category;
 pub mod category_obj;
+pub mod exchange;
 pub mod flags;
 pub mod item;
 pub mod legacy;
