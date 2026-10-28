@@ -264,6 +264,39 @@ pub unsafe extern "C" fn vks_texcache_read_fast(c: *mut VksTexCache, id: *const 
     }
 }
 
+/// `readFromFastCache` without waiting for the fast cache (upstream #5356:
+/// the texture list skips the frame while a worker writes it). Fills the
+/// head fields and copies the pixels into `data` (1024 bytes) as
+/// [`vks_texcache_read_fast`]. Returns 1 when the record was read, 0 when it
+/// is not cached or could not be read, and -1 when the fast cache is busy
+/// (nothing read, nothing waited).
+///
+/// # Safety
+/// `data` must be writable for 1024 bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn vks_texcache_try_read_fast(c: *mut VksTexCache, id: *const u8, width: *mut i32, height: *mut i32, components: *mut i32, discard_level: *mut i32, data: *mut u8) -> i32 {
+    if c.is_null() || data.is_null() {
+        return 0;
+    }
+    let cache = &unsafe { &*c }.inner;
+    let id = unsafe { uuid_arg(id) };
+    match catch_unwind(AssertUnwindSafe(|| cache.try_read_fast(&id))) {
+        Ok(texcache::FastRead::Hit(r)) => {
+            unsafe {
+                if !width.is_null() { *width = r.width; }
+                if !height.is_null() { *height = r.height; }
+                if !components.is_null() { *components = r.components; }
+                if !discard_level.is_null() { *discard_level = r.discard_level; }
+                let n = r.data.len().min(texcache::FAST_DATA_SIZE as usize);
+                std::ptr::copy_nonoverlapping(r.data.as_ptr(), data, n);
+            }
+            1
+        }
+        Ok(texcache::FastRead::Busy) => -1,
+        _ => 0,
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Plain file operations (LLAPRFile by name, LLFileSystem, LLLFSThread)
 

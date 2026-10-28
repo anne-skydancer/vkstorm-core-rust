@@ -801,6 +801,10 @@ int32_t      vks_texcache_fast_level(int32_t width, int32_t height, int32_t comp
 int32_t      vks_texcache_write(VksTexCache* c, const uint8_t* id, const uint8_t* data, size_t len, int32_t image_size, int32_t discard_level, const VksFastEntry* fast);
 /* readFromFastCache: `data` receives up to 1024 bytes. */
 int32_t      vks_texcache_read_fast(VksTexCache* c, const uint8_t* id, int32_t* width, int32_t* height, int32_t* components, int32_t* discard_level, uint8_t* data);
+/* readFromFastCache without waiting for the fast cache (upstream #5356):
+ * 1 read, 0 not cached or unreadable, -1 busy (another thread is writing the
+ * fast cache; skip and retry next frame). */
+int32_t      vks_texcache_try_read_fast(VksTexCache* c, const uint8_t* id, int32_t* width, int32_t* height, int32_t* components, int32_t* discard_level, uint8_t* data);
 
 /* Plain file operations: LLAPRFile by name, LLFileSystem, LLLFSThread. */
 int32_t vks_file_size(const char* path, size_t len);
