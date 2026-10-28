@@ -45,10 +45,6 @@ fn sync(host: &mut dyn Host, info: &OfferInfo) {
     host.act(Action::OfferUpdate(info.clone()));
 }
 
-fn starts_at(hay: &[u8], needle: &[u8]) -> Option<usize> {
-    find_bytes(hay, needle)
-}
-
 fn find_from(hay: &[u8], needle: &[u8], from: Option<usize>) -> Option<usize> {
     let from = from?;
     if from > hay.len() {
@@ -88,9 +84,9 @@ fn rlv_can_show_name(host: &dyn Host, id: &Uuid) -> bool {
 pub fn is_give_to_rlv_offer(host: &dyn Host, info: &OfferInfo) -> bool {
     if !host.rlv_forbid_give_to_rlv() && host.rlv_has_shared_root() {
         if info.from_object {
-            info.im == IM_TASK_INVENTORY_OFFERED && info.ty == AssetType::CATEGORY && starts_at(&info.desc, RLV_PUTINV_PREFIX) == Some(1)
+            info.im == IM_TASK_INVENTORY_OFFERED && info.ty == AssetType::CATEGORY && find_bytes(&info.desc, RLV_PUTINV_PREFIX) == Some(1)
         } else {
-            info.im == IM_INVENTORY_OFFERED && info.ty == AssetType::CATEGORY && starts_at(&info.desc, RLV_PUTINV_PREFIX) == Some(0)
+            info.im == IM_INVENTORY_OFFERED && info.ty == AssetType::CATEGORY && find_bytes(&info.desc, RLV_PUTINV_PREFIX) == Some(0)
         }
     } else {
         false
@@ -234,7 +230,7 @@ fn start_observer(host: &mut dyn Host, kind: ObserverKind) -> (super::host::Obse
 }
 
 fn give_to_rlv_agent_offer(host: &mut dyn Host, info: &OfferInfo) {
-    if host.rlv_enabled() && !host.rlv_forbid_give_to_rlv() && info.ty == AssetType::CATEGORY && starts_at(&info.desc, RLV_PUTINV_PREFIX) == Some(0) {
+    if host.rlv_enabled() && !host.rlv_forbid_give_to_rlv() && info.ty == AssetType::CATEGORY && find_bytes(&info.desc, RLV_PUTINV_PREFIX) == Some(0) {
         let (o, finished) = start_observer(host, ObserverKind::RlvGiveToRlvAgentOffer { folder: info.object_id });
         host.act(if finished { Action::ObserverDone(o) } else { Action::ObserverAdd(o) });
     }
@@ -389,7 +385,7 @@ pub fn inventory_task_offer_callback(host: &mut dyn Host, info: &mut OfferInfo, 
     };
 
     let give_to_rlv = |host: &dyn Host, info: &OfferInfo| {
-        host.rlv_enabled() && info.im == IM_TASK_INVENTORY_OFFERED && info.ty == AssetType::CATEGORY && starts_at(&info.desc, RLV_PUTINV_PREFIX) == Some(1)
+        host.rlv_enabled() && info.im == IM_TASK_INVENTORY_OFFERED && info.ty == AssetType::CATEGORY && find_bytes(&info.desc, RLV_PUTINV_PREFIX) == Some(1)
     };
     let rlv_object_name = |info: &OfferInfo| find_bytes(&info.desc, b"'  ( http://").map(|i| info.desc[1..i.max(1)].to_vec());
 

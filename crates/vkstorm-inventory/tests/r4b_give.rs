@@ -363,9 +363,10 @@ fn give_folder() {
             i.cat(b"D0", vec![d1, top], false)
         }),
     ];
-    let entries = |id: &str, n: usize, name: &'static [u8]| -> FolderCase {
-        let mut c = fc(id, |_| unreachable!());
-        c.tree = match n {
+    // two empty sub-folders in front of 39, 40 or 41 items (the items get
+    // their ids first, as the C++ builds the vector before inserting)
+    let entries = |id: &str, n: usize| -> FolderCase {
+        let tree: Tree = match n {
             39 => |i| {
                 let mut v = i.many(39, "item", true);
                 let s1 = i.cat(b"S1", vec![], false);
@@ -391,12 +392,11 @@ fn give_folder() {
                 i.cat(b"Forty Three", v, false)
             },
         };
-        let _ = name;
-        c
+        fc(id, tree)
     };
-    cases.push(entries("entries_41", 39, b""));
-    cases.push(entries("entries_42", 40, b""));
-    cases.push(entries("entries_43", 41, b""));
+    cases.push(entries("entries_41", 39));
+    cases.push(entries("entries_42", 40));
+    cases.push(entries("entries_43", 41));
     let big = |id: &str, tree: Tree| {
         let mut c = fc(id, tree);
         c.limit = 100;
