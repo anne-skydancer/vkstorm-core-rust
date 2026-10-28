@@ -35,6 +35,7 @@ use r2common::gz::gunzip_file;
 use r2common::*;
 use vkstorm_inventory::cache;
 use vkstorm_inventory::login::{self, CacheInput, Skeleton, SkeletonEntry};
+use vkstorm_inventory::model::{ModelLookup, ModelObjects};
 use vkstorm_inventory::perms::{Uuid, NULL_ID};
 use vkstorm_inventory::validate::{self, ValidationInfo};
 use vkstorm_llsd::{Format, Limits, Value};
@@ -159,7 +160,19 @@ impl Login<'_> {
             self.cache_dir.get(&plain).cloned()
         };
         let input = CacheInput { gz_present, gunzip_ok, file: file.as_deref(), second_instance: second };
-        let plan = skel.load(&input, false, &self.model);
+        // The C ABI path: the ids the load reads, resolved before the call
+        // into ModelObjects, give the same plan as the live model.
+        let mut resolved = ModelObjects::default();
+        for id in file.as_deref().map(|b| login::lookup_ids(b, false)).unwrap_or_default() {
+            if let Some(t) = self.model.item_type(&id) {
+                resolved.items.insert(id, t);
+            }
+            if let (Some(t), Some(v)) = (self.model.category_type(&id), self.model.category_version(&id)) {
+                resolved.categories.insert(id, (t, v));
+            }
+        }
+        let plan = skel.clone().load(&input, false, &self.model);
+        assert_eq!(plan, skel.load(&input, false, &resolved), "plan over pre-resolved lookups");
         let (rv, remove_plain, remove_gz) = (plan.rv, plan.remove_plain, plan.remove_gz);
         self.model.apply(plan);
         if remove_plain {

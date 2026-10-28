@@ -183,3 +183,49 @@ pub fn decode(bytes: &[u8], in_open_sim: bool, lookup: &dyn ModelLookup) -> Deco
     }
     out
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::EmptyModel;
+
+    #[test]
+    fn round_trip_and_header_rules() {
+        let mut cat = ViewerCategory { version: 3, ..ViewerCategory::default() };
+        cat.category.object.id = [1; 16];
+        let unknown = ViewerCategory::default();
+        let mut item = Item::default();
+        item.object.id = [2; 16];
+        item.object.parent = [1; 16];
+        item.object.asset_type = AssetType::NOTECARD;
+        let bytes = encode([&cat, &unknown], [&item]);
+        assert_eq!(&bytes[..4], &[0, 0, 0, 5]);
+        assert_eq!(bytes.last(), Some(&b'\n'));
+        let d = decode(&bytes, false, &EmptyModel);
+        assert!(d.rv());
+        assert_eq!(d.categories.len(), 1, "a folder of unknown version is not saved");
+        // fromLLSD normalises the item (inventory type, masks); from then on
+        // the bytes round-trip.
+        let again = encode(&d.categories, &d.items);
+        let d2 = decode(&again, false, &EmptyModel);
+        assert_eq!(d2, d);
+        assert_eq!(encode(&d2.categories, &d2.items), again);
+        // Another version, a short header, a cut body.
+        let mut v4 = bytes.clone();
+        v4[3] = 4;
+        assert!(decode(&v4, false, &EmptyModel).obsolete);
+        assert!(decode(&bytes[..3], false, &EmptyModel).obsolete);
+        assert!(decode(&bytes[..bytes.len() / 2], false, &EmptyModel).obsolete);
+        // A header alone: nothing parsed, not obsolete, nothing loaded.
+        let d = decode(&bytes[..4], false, &EmptyModel);
+        assert!(!d.obsolete && d.categories.is_empty() && d.items.is_empty());
+    }
+
+    #[test]
+    fn names() {
+        let id = [0xab; 16];
+        assert_eq!(cache_file_name(&id, None), b"abababab-abab-abab-abab-abababababab.inv.llsd".to_vec());
+        assert_eq!(cache_file_name(&id, Some(b"aditi")), b"abababab-abab-abab-abab-abababababab.aditi.inv.llsd".to_vec());
+        assert_eq!(delete_marker_name(&id), b"abababab-abab-abab-abab-abababababab_DELETE_INV_GZ".to_vec());
+    }
+}

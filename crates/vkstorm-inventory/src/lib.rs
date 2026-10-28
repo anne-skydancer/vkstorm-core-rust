@@ -25,6 +25,16 @@
 //! cache, fetch and messaging code keeps its containers. The crate works on
 //! flat records and views of those objects.
 //!
+//! The agent-inventory UDP message handlers of `LLInventoryModel`
+//! (`UpdateCreateInventoryItem`, `BulkUpdateInventory` in its UDP and
+//! GenericMessage forms, the remove messages, `SaveAssetIntoInventory`,
+//! `MoveInventoryItem`, `InventoryDescendents`, `FetchInventoryReply`) stay
+//! C++ as well: block by block they interleave model lookups with model
+//! calls (`accountForUpdate`, `updateItem`, `updateCategory`,
+//! `notifyObservers`, the callbacks, the fetch scheduler, the marketplace
+//! and RLVa hooks), so they are glue around the model. Their block decoding
+//! is [`message`].
+//!
 //! Type values are raw integer newtypes, never closed enums: the viewer
 //! carries any value it receives, including ones it has no name for, and so
 //! does this crate. UUID text is parsed with `vkstorm_llsd::text::uuid_set`

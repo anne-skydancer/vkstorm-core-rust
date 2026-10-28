@@ -630,3 +630,45 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
     info.orphaned_count = orphaned_count;
     Validation { info, last_item: m.last_item }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The standard's required values ([rand.predef]): the 10000th
+    /// invocation of a default-constructed engine.
+    #[test]
+    fn engines_match_the_standard() {
+        let mut mt = Mt19937::new(5489);
+        let mut x = 0;
+        for _ in 0..10000 {
+            x = mt.next();
+        }
+        assert_eq!(x, 4_123_659_995);
+        let mut q = QaRandom::new(QaLibrary::Libstdcxx);
+        for _ in 0..9999 {
+            q.minstd = ((u64::from(q.minstd) * 16807) % 2_147_483_647) as u32;
+        }
+        let tenth_thousand = ((u64::from(q.minstd) * 16807) % 2_147_483_647) as u32;
+        assert_eq!(tenth_thousand, 1_043_618_065);
+    }
+
+    #[test]
+    fn draws_are_bits() {
+        for lib in [QaLibrary::Msvc, QaLibrary::Libstdcxx] {
+            let mut q = QaRandom::new(lib);
+            let draws: Vec<i32> = (0..64).map(|_| q.draw()).collect();
+            assert!(draws.iter().all(|&d| d == 0 || d == 1));
+            assert!(draws.contains(&0) && draws.contains(&1));
+        }
+    }
+
+    #[test]
+    fn empty_model_is_fatal_without_roots() {
+        let v = validate(&Snapshot::default(), Options::default());
+        assert!(v.info.fatal_no_root_folder && v.info.fatal_no_library_root_folder);
+        assert!(v.info.log.starts_with("No library root folder id\nCannot create system folder of type texture(0)\n"));
+        // The category map is empty and the tree lacks the null entry.
+        assert_eq!(v.info.warnings.get("category_map_size"), Some(&1));
+    }
+}
