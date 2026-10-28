@@ -164,3 +164,107 @@ fn c07_pool_clamp() {
     }
     report(id, &mut r);
 }
+
+// ---- PHASED: the legacy capability scheduler ------------------------------------
+
+fn phased(id: &str, b: &Builder, caps: u32, other_grid: bool) -> Run {
+    let lines = scenario_lines(id);
+    let mut r = Run::new(id, b.w.clone(), &lines);
+    r.unordered(Mode::Phased, 20);
+    if other_grid {
+        r.in_second_life = false;
+    }
+    r.set_region(true, caps, true);
+    r
+}
+
+/// c11/oc11: batch 10 (9, 10, 11 folders: 1, 1, 2 POSTs), the threshold of
+/// 12 outstanding (one POST per frame up to 13), four POSTs per frame up to
+/// 16 (inventory and library folders and items).
+fn legacy_limits(id: &str, other_grid: bool) {
+    let mut b = Builder::new(true);
+    basic(&mut b, 50, false, 8);
+    let mut r = phased(id, &b, CAPS_LEGACY, other_grid);
+    r.login();
+    r.walk();
+    let d = b.ids.clone();
+    let pool: Vec<_> = d.user.iter().chain(&d.user_sub).chain(&d.user_leaf).copied().collect();
+    let mut next = 0;
+    r.legacy_delay = true;
+    r.step("held_replies");
+    for n in [9usize, 10, 11] {
+        for _ in 0..n {
+            r.fetch_descendents_of(pool[next]);
+            next += 1;
+        }
+        r.frame_note(&format!("batch_{n}_first"));
+        r.frame_note(&format!("batch_{n}_second"));
+        r.settle(true, true);
+        r.step(&format!("batch_{n}"));
+    }
+    for _ in 0..140 {
+        r.fetch_descendents_of(pool[next]);
+        next += 1;
+    }
+    for k in 1..=15 {
+        r.frame_note(&format!("threshold_{k:02}"));
+    }
+    r.settle(true, true);
+    r.step("threshold");
+    for i in 0..8 {
+        r.fetch_descendents_of(d.lib_folders[i * 3]);
+    }
+    r.settle(true, true);
+    r.step("library_loaded");
+    let mut inv_items = Vec::new();
+    for v in d.items_in.values() {
+        for id in v {
+            if r.model.items.contains_key(id) && inv_items.len() < 30 {
+                inv_items.push(*id);
+            }
+        }
+    }
+    let lib_items: Vec<_> = d.lib_items.iter().filter(|i| r.model.items.contains_key(*i)).take(30).copied().collect();
+    let lib_sub: Vec<_> = d.lib_folders.iter().enumerate().filter(|(i, _)| i % 3 != 0).map(|(_, f)| *f).collect();
+    let (mut ni, mut nl, mut nf) = (0, 0, 0);
+    for k in 1..=6 {
+        for _ in 0..2 {
+            r.fetch_descendents_of(pool[next]);
+            next += 1;
+        }
+        for _ in 0..2 {
+            r.fetch_descendents_of(lib_sub[nf]);
+            nf += 1;
+        }
+        for _ in 0..3 {
+            if ni < inv_items.len() {
+                r.set_complete(inv_items[ni], false);
+                r.schedule_item(inv_items[ni], false);
+                ni += 1;
+            }
+            if nl < lib_items.len() {
+                r.set_complete(lib_items[nl], false);
+                r.schedule_item(lib_items[nl], false);
+                nl += 1;
+            }
+        }
+        r.frame_note(&format!("four_posts_{k}"));
+    }
+    r.settle(true, true);
+    r.step("sixteen");
+    report(id, &mut r);
+}
+
+#[test]
+fn c11_legacy_limits() {
+    legacy_limits("c11_legacy_limits", false);
+}
+
+/// Recorded with `OPENSIM` off; with the `opensim` feature `bulkFetch()`
+/// descends on other grids, so the other-grid legacy scenarios differ by
+/// design.
+#[cfg(not(feature = "opensim"))]
+#[test]
+fn oc11_legacy_limits() {
+    legacy_limits("oc11_legacy_limits", true);
+}

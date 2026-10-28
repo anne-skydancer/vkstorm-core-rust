@@ -564,6 +564,44 @@ impl ReplayModel {
     }
 }
 
+impl ReplayModel {
+    pub fn update_category_pub(&mut self, c: MCat) {
+        self.update_category(c);
+    }
+
+    /// `isCategoryComplete`
+    pub fn is_category_complete(&self, id: &Uuid) -> bool {
+        self.cats.get(id).is_some_and(|c| c.version != -1 && c.count == self.viewer_count(id))
+    }
+
+    /// `accountForUpdate(LLCategoryUpdate(id, delta))`
+    pub fn account_for_update(&mut self, id: &Uuid, delta: i32) {
+        let actual = self.viewer_count(id);
+        if let Some(c) = self.cats.get_mut(id) {
+            if c.version != -1 && c.count == actual {
+                c.count = actual + delta;
+                c.version += 1;
+            }
+        }
+    }
+
+    /// An item of a legacy reply into the model (`unpackMessage`,
+    /// `updateItem`), optionally moved to `parent`.
+    pub fn legacy_item(&mut self, it: &Value, parent: Option<Uuid>) {
+        let id = as_uuid(get(it, "item_id"));
+        let mut i = self.items.get(&id).cloned().unwrap_or(MItem { id, parent: NULL_ID, owner: NULL_ID, complete: true });
+        i.parent = parent.unwrap_or_else(|| as_uuid(get(it, "parent_id")));
+        let perms = get(it, "permissions");
+        if has(perms, "owner_id") {
+            i.owner = as_uuid(get(perms, "owner_id"));
+        } else if has(it, "agent_id") {
+            i.owner = as_uuid(get(it, "agent_id"));
+        }
+        i.complete = true;
+        self.update_item(i);
+    }
+}
+
 fn vector_replace_with_last(v: &mut Vec<Uuid>, id: &Uuid) {
     if let Some(p) = v.iter().position(|x| x == id) {
         v.swap_remove(p);
@@ -1061,6 +1099,16 @@ struct WireRec {
     line: String,
 }
 
+/// A legacy capability request in flight (a `BGFolderHttpHandler` or
+/// `BGItemHttpHandler`).
+struct LegacyFlight {
+    handler: u64,
+    folder: bool,
+    sent_frame: u64,
+    status: i32,
+    value: Option<Value>,
+}
+
 /// Tickets of commands from callers other than the scheduler.
 const EXTERNAL_TICKETS: u64 = 1 << 62;
 
@@ -1158,6 +1206,11 @@ pub struct Run {
     /// callback tokens, by ticket.
     external: BTreeMap<u64, Option<u64>>,
     next_external: u64,
+    legacy: Vec<LegacyFlight>,
+    /// The mock delays legacy replies (c11's `delay_ms=3000`): they arrive
+    /// only while the test settles, never during a burst of frames.
+    pub legacy_delay: bool,
+    settling: bool,
 }
 
 impl Run {
@@ -1215,6 +1268,9 @@ impl Run {
             notices: AisNotices::default(),
             external: BTreeMap::new(),
             next_external: EXTERNAL_TICKETS,
+            legacy: Vec::new(),
+            legacy_delay: false,
+            settling: false,
         };
         // The process-wide 403 flag: s04 (index order) raises the alert; every
         // later scenario sees it spent.
@@ -1318,6 +1374,11 @@ impl Run {
     pub fn step(&mut self, name: &str) {
         let n = self.requests();
         self.note(&format!("step {name} requests={n}"));
+        if self.mode == Mode::Phased {
+            self.phases += 1;
+            let st = self.sched_text();
+            self.note(&format!("sch@step {st}"));
+        }
     }
 
     pub fn sched_text(&self) -> String {
@@ -1478,12 +1539,137 @@ impl Run {
                 }
                 Action::Notify { name } => self.note(&format!("notify {name}")),
                 Action::FetchCompleted => self.note("fetch.completed"),
-                Action::AddIdle => {}
-                other => {
-                    if self.error.is_none() {
-                        self.error = Some(format!("unexpected action in an AIS replay: {other:?}"));
+                Action::AddIdle | Action::NotifyObservers => {}
+                Action::LegacyPost { handler, folder, url, body, .. } => self.legacy_post(handler, folder, &url, body),
+                Action::LegacyPump { .. } => self.legacy_pump(),
+            }
+        }
+    }
+
+    // ---- the legacy capabilities ------------------------------------------
+
+    /// `requestPost`: the request on the wire and its generated reply.
+    fn legacy_post(&mut self, handler: u64, folder: bool, url: &str, body: Vec<u8>) {
+        let target = target_of(url).to_owned();
+        let head = legacy_head(&target, body.len());
+        let request = format!("head={} body={}", escape_text(head.as_bytes()), escape_text(&body));
+        let v = vkstorm_llsd::parse(vkstorm_llsd::Format::Xml, &body, Default::default()).1.unwrap_or(Value::map());
+        let m = self.mock.as_mut().expect("generated replies");
+        let (status, value) = if folder { m.legacy_folders(&v) } else { m.legacy_items(&v) };
+        let line = format!("POST {target} status={status} {request}");
+        self.wires.push(line.clone());
+        self.wire_targets.push(("POST".to_owned(), target, status));
+        let phase = self.phases;
+        self.unordered.push(WireRec { phase, line });
+        self.legacy.push(LegacyFlight { handler, folder, sent_frame: self.frame_no, status, value });
+    }
+
+    /// `gInventory.handleResponses(false)` inside `bulkFetch()`: every reply
+    /// that has come back, in order, through its handler; then the rest of
+    /// `bulkFetch()`.
+    fn legacy_pump(&mut self) {
+        let frame = self.frame_no;
+        let ready = !self.legacy_delay || self.settling;
+        let mut k = 0;
+        while k < self.legacy.len() {
+            if ready && self.legacy[k].sent_frame < frame {
+                let f = self.legacy.remove(k);
+                self.legacy_completed(f);
+            } else {
+                k += 1;
+            }
+        }
+        let env = self.env.clone();
+        {
+            let mut cx = Ctx::new(&mut self.model, &env);
+            self.sched.bulk_fetch_after_pump(&mut cx);
+        }
+        self.drain();
+    }
+
+    /// `BGFolderHttpHandler::onCompleted` / `BGItemHttpHandler`, then the
+    /// handler's destruction.
+    fn legacy_completed(&mut self, f: LegacyFlight) {
+        let env = self.env.clone();
+        if f.folder {
+            let is_map = matches!(f.value, Some(Value::Map(_)));
+            if f.status != 200 {
+                let mut cx = Ctx::new(&mut self.model, &env);
+                self.sched.legacy_http_failure(&mut cx, f.handler, f.status);
+            } else if !is_map || has(f.value.as_ref().unwrap(), "error") {
+                let mut cx = Ctx::new(&mut self.model, &env);
+                self.sched.legacy_reply_failure(&mut cx, f.handler);
+            } else {
+                self.legacy_process_data(f.handler, f.value.as_ref().unwrap());
+                let mut cx = Ctx::new(&mut self.model, &env);
+                self.sched.legacy_data_done(&mut cx);
+            }
+            self.drain();
+        } else if f.status == 200 {
+            // FetchItemHttpHandler::processData: the items into the model
+            if let Some(Value::Array(items)) = f.value.as_ref().map(|v| get(v, "items").clone()) {
+                for it in &items {
+                    self.model.legacy_item(it, None);
+                }
+            }
+        }
+        self.sched.legacy_handler_released(f.handler);
+    }
+
+    /// `processData()`'s model writes (scaffolding for the C++ applier) with
+    /// the scheduler's part: a recursive category goes back to the queue.
+    fn legacy_process_data(&mut self, handler: u64, v: &Value) {
+        let Value::Array(folders) = get(v, "folders").clone() else { return };
+        for f in &folders {
+            let parent_id = as_uuid(get(f, "folder_id"));
+            let owner_id = as_uuid(get(f, "owner_id"));
+            let version = as_integer(get(f, "version"));
+            let descendents = as_integer(get(f, "descendents"));
+            if parent_id == NULL_ID {
+                if let Value::Array(items) = get(f, "items") {
+                    for it in items {
+                        let lost = self.model.find_category_for_type(FT_LOST_AND_FOUND);
+                        if lost != NULL_ID {
+                            self.model.account_for_update(&lost, 1);
+                            self.model.legacy_item(it, Some(lost));
+                            self.note("msg MoveInventoryItem (not modelled)");
+                        }
                     }
                 }
+            }
+            if !self.model.cats.contains_key(&parent_id) {
+                continue;
+            }
+            if let Value::Array(cats) = get(f, "categories") {
+                // one category object, reused across the array
+                let mut t = MCat {
+                    id: NULL_ID,
+                    parent: NULL_ID,
+                    pref: -1,
+                    owner: owner_id,
+                    version: -1,
+                    count: -1,
+                    fetch: CategoryFetchState::new(self.model.now),
+                };
+                for c in cats {
+                    t.id = as_uuid(get(c, "category_id"));
+                    t.parent = as_uuid(get(c, "parent_id"));
+                    t.pref = as_integer(get(c, "type_default")) as i8;
+                    if self.sched.legacy_is_recursive(handler, &t.id) {
+                        self.sched.add_request_at_back(t.id, true, true);
+                    } else if !self.model.is_category_complete(&t.id) {
+                        self.model.update_category_pub(t.clone());
+                    }
+                }
+            }
+            if let Value::Array(items) = get(f, "items") {
+                for it in items {
+                    self.model.legacy_item(it, None);
+                }
+            }
+            if let Some(c) = self.model.cats.get_mut(&parent_id) {
+                c.version = version;
+                c.count = descendents;
             }
         }
     }
@@ -1795,6 +1981,12 @@ impl Run {
     }
 
     pub fn settle_ex(&mut self, idle: bool, queues_empty: bool, fetch_idle: bool) {
+        self.settling = true;
+        self.settle_inner(idle, queues_empty, fetch_idle);
+        self.settling = false;
+    }
+
+    fn settle_inner(&mut self, idle: bool, queues_empty: bool, fetch_idle: bool) {
         let mut stable = 0;
         let mut last = String::new();
         for _ in 0..100_000 {
@@ -2064,8 +2256,26 @@ impl Run {
             distinct.len(),
             if self.tids.len() == distinct.len() { "yes" } else { "NO" }
         ));
-        for l in &self.journal {
-            out.push(format!("jrn {l}"));
+        if self.mode == Mode::Phased {
+            let mut seg: Vec<String> = Vec::new();
+            for l in &self.journal {
+                if l.starts_with("sch ") {
+                    continue;
+                }
+                if l.starts_with("step ") || l.starts_with("sch@step ") {
+                    seg.sort();
+                    out.extend(seg.drain(..).map(|l| format!("jrn {l}")));
+                    out.push(format!("jrn {l}"));
+                } else {
+                    seg.push(l.clone());
+                }
+            }
+            seg.sort();
+            out.extend(seg.into_iter().map(|l| format!("jrn {l}")));
+        } else {
+            for l in &self.journal {
+                out.push(format!("jrn {l}"));
+            }
         }
         out.push(format!("pub {}", self.public_state()));
         out
@@ -2139,7 +2349,7 @@ pub fn compared(lines: &[String], skip: &dyn Fn(&str) -> bool) -> Vec<String> {
 pub fn check(id: &str, run: &mut Run, skip: &dyn Fn(&str) -> bool) -> (usize, usize) {
     let lines = scenario_lines(id);
     let expected = compared(&lines, skip);
-    let actual: Vec<String> = run.finish().into_iter().filter(|l| !skip(l)).collect();
+    let actual: Vec<String> = compared(&run.finish(), skip);
     let mut first = None;
     for i in 0..expected.len().max(actual.len()) {
         if expected.get(i) != actual.get(i) {
