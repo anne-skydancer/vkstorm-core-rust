@@ -66,7 +66,7 @@ use crate::item::Item;
 use crate::llsd::coerce::{as_boolean, as_integer, as_uuid, get, has};
 use crate::perms::{Permissions, Uuid, NULL_ID, PERM_NONE};
 use crate::sale::SaleInfo;
-use crate::types::FolderType;
+use crate::types::{AssetType, FolderType};
 
 /// `LLViewerInventoryCategory::DESCENDENT_COUNT_UNKNOWN`.
 pub const DESCENDENT_COUNT_UNKNOWN: i32 = -1;
@@ -491,10 +491,16 @@ impl<M: Model + ?Sized> Parser<'_, M> {
             self.delta(parent);
         } else {
             new_item.complete = true;
+            // Finding 9 (fixed): `addItem()` refuses an item of no asset type,
+            // so it is not counted; the delta entry is still made, with 0.
+            // The C++ tests `getActualType()`, the stored type.
+            let counted = new_item.item.object.asset_type.0 > AssetType::NONE.0;
             let h = self.push_item(new_item);
             self.out.items_created.insert(item_id, h);
             let d = self.delta(parent);
-            *d = d.wrapping_add(1);
+            if counted {
+                *d = d.wrapping_add(1);
+            }
         }
     }
 

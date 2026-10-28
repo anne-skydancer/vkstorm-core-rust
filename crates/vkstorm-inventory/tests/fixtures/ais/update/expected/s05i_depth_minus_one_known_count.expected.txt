@@ -1,6 +1,6 @@
 # case s05i_depth_minus_one_known_count; review rendering of s05i_depth_minus_one_known_count.expected.llsd, one op per line
 # generator: INTEGRATION_TEST_llaisupdate_parity (indra/newview/tests/llaisupdate_parity_test.cpp), dump mode
-# viewer commit: 497ff6a6e84b2714ea72ac58b53438322c60ffba (llaisapi.cpp blob 8d34822459c9c59ca7cd8ac8338cb76da6089c71)
+# viewer commit: d4e2324c722168da5c9b78c959d900cfa832d1a3 (llaisapi.cpp blob 154164212265d268b899b1c3f568f590fe75619e)
 # platform: windows
 case = 's05i_depth_minus_one_known_count'
 == never/final/categories (11)

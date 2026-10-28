@@ -27,7 +27,11 @@ refused") reaches what R3a emulates: `updateItem()` now returns at once,
 with the mask as it came, when `addItem()` refuses a new item of no asset
 type (type <= -1). The stub does the same (`model` `refused_bad_type`) and
 s15h records it; no earlier case sends such an item, so every other
-recording is unchanged but for the headers' commit. The fixtures are never
+recording is unchanged but for the headers' commit. Re-recorded again for
+the fix of finding 9 (approved 2026-10-28): `AISUpdate::parseItem()` no
+longer counts a created item of no asset type, which `addItem()` refuses,
+as a new descendant of its folder (the folder's delta entry is still made,
+with 0, as for an updated item). Only s15h reaches it. The fixtures are never
 edited by hand: change the recorder or `gen_cases.py` and regenerate.
 
 This directory is identical, byte for byte, in the viewer
@@ -447,7 +451,7 @@ applies unless a case sets a mismatch.
 
 | what | cases | fix |
 |---|---|---|
-| a write creating items of no asset type (-1), one in a known folder and one with a null parent, next to a notecard: the parse still counts the typeless item in Objects (`accountForUpdate` +2 there) and fires a callback for each of the three created ids; the model refuses both typeless items before any parent handling (no default-folder lookup or move, no accounting of its own, not stored, no changed id) and adds the notecard (one changed id) | s15h | bug 23 |
+| a write creating items of no asset type (-1), one in a known folder and one with a null parent, next to a notecard: the parse leaves the typeless item out of Objects' count (`accountForUpdate` +1 there, finding 9 fixed) and fires a callback for each of the three created ids; the model refuses both typeless items before any parent handling (no default-folder lookup or move, no accounting of its own, not stored, no changed id) and adds the notecard (one changed id) | s15h | bug 23, finding 9 |
 
 ### Limits, at limit-1, limit and limit+1
 
@@ -566,13 +570,12 @@ what the C++ does with such a reply, not that AIS sends it.
    `LLInventoryCategory::fromLLSD` always returns true, and
    `LLInventoryItem::fromLLSD` returns false only when
    `LLSaleInfo::fromLLSD` does, which it never does.
-9. A refused item is still counted (since bug 23). When a write creates an
-   item of no asset type, `updateItem()` refuses it (bug 23, PR #181), but
-   the AIS parse has already counted it: `accountForUpdate` raises the
-   folder's expected descendant count for it and its completion callback
-   fires, while the model never holds it (s15h: Objects +2 for one kept
-   notecard and one refused item). The folder then expects more
-   descendants than it has, which is the kind of count mismatch that
-   makes the viewer refetch a folder (compare ais/fetch finding 6).
-   Recorded as it is; a candidate for a future fix, to be decided like the
-   approved inventory fixes, and the port reproduces it until then.
+9. Fixed (approved 2026-10-28). Since bug 23, a created item of no asset
+   type was refused by `updateItem()` but already counted by the AIS parse:
+   `accountForUpdate` raised the folder's expected descendant count for it,
+   so the folder expected more descendants than it held, the kind of count
+   mismatch that makes the viewer refetch a folder (compare ais/fetch
+   finding 6). `parseItem()` now leaves such an item out of the count (s15h:
+   Objects +1, for the kept notecard). Its completion callback still fires:
+   the id comes from the server's `_created_items`, the server did create
+   the item, and callers look the id up in the model like any other.
