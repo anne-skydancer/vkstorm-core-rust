@@ -22,7 +22,7 @@ pub mod files;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Mutex, MutexGuard};
+use std::sync::{Mutex, MutexGuard, TryLockError};
 use std::time::Instant;
 
 use crate::host::ClockFn;
@@ -243,6 +243,19 @@ pub struct FastRecord {
     pub components: i32,
     pub discard_level: i32,
     pub data: Vec<u8>,
+}
+
+/// [`TextureCache::try_read_fast`]'s answer.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum FastRead {
+    /// Another thread holds the fast cache (a write is in progress); nothing
+    /// was read and nothing waited.
+    Busy,
+    /// Not in the cache, or the record could not be read (as
+    /// [`TextureCache::read_fast`] returning `None`).
+    Miss,
+    /// The record.
+    Hit(FastRecord),
 }
 
 /// `writeToFastCache`'s search for the level that fits the record: the
@@ -1321,15 +1334,43 @@ impl TextureCache {
         f.file = None;
     }
 
-    /// `readFromFastCache`: the small raw image of a cached texture.
+    /// `readFromFastCache`: the small raw image of a cached texture. Waits
+    /// for the fast cache when another thread is writing it.
     pub fn read_fast(&self, id: &Uuid) -> Option<FastRecord> {
-        let (offset, paths) = {
-            let s = self.lock();
-            let idx = *s.header_id_map.get(id)?;
-            (idx as i64 * FAST_ENTRY_SIZE as i64, s.paths.clone())
-        };
+        let (offset, paths) = self.fast_offset(id)?;
         let mut f = self.fast.lock().unwrap_or_else(|e| e.into_inner());
-        Self::open_fast_cache_locked(&mut f, &paths, false);
+        Self::read_fast_locked(&mut f, offset, &paths)
+    }
+
+    /// `readFromFastCache` without waiting for the fast cache: upstream
+    /// #5356 lets `LLViewerTextureList::updateImagesLoadingFastCache`
+    /// try-lock the fast cache mutex and skip the frame while a worker
+    /// writes it, instead of stalling the main thread. [`FastRead::Busy`] is
+    /// that case. The header lookup before it still waits, as in the C++,
+    /// which locks `mHeaderIDMapMutex` normally.
+    pub fn try_read_fast(&self, id: &Uuid) -> FastRead {
+        let Some((offset, paths)) = self.fast_offset(id) else {
+            return FastRead::Miss;
+        };
+        let mut f = match self.fast.try_lock() {
+            Ok(f) => f,
+            Err(TryLockError::Poisoned(e)) => e.into_inner(),
+            Err(TryLockError::WouldBlock) => return FastRead::Busy,
+        };
+        match Self::read_fast_locked(&mut f, offset, &paths) {
+            Some(r) => FastRead::Hit(r),
+            None => FastRead::Miss,
+        }
+    }
+
+    fn fast_offset(&self, id: &Uuid) -> Option<(i64, Paths)> {
+        let s = self.lock();
+        let idx = *s.header_id_map.get(id)?;
+        Some((idx as i64 * FAST_ENTRY_SIZE as i64, s.paths.clone()))
+    }
+
+    fn read_fast_locked(f: &mut FastState, offset: i64, paths: &Paths) -> Option<FastRecord> {
+        Self::open_fast_cache_locked(f, paths, false);
         let file = f.file.as_mut().and_then(|x| x.as_mut());
         let mut head = [0u8; FAST_ENTRY_OVERHEAD as usize];
         let read_ok = match file {
@@ -1337,7 +1378,7 @@ impl TextureCache {
             None => false,
         };
         if !read_ok {
-            Self::close_fast_cache_locked(&mut f, false);
+            Self::close_fast_cache_locked(f, false);
             return None;
         }
         let w = i32::from_le_bytes([head[0], head[1], head[2], head[3]]);
@@ -1346,7 +1387,7 @@ impl TextureCache {
         let level = i32::from_le_bytes([head[12], head[13], head[14], head[15]]);
         let image_size = w.wrapping_mul(h).wrapping_mul(c);
         if image_size <= 0 || image_size > FAST_DATA_SIZE || level < 0 {
-            Self::close_fast_cache_locked(&mut f, false);
+            Self::close_fast_cache_locked(f, false);
             return None;
         }
         let mut data = vec![0u8; image_size as usize];
@@ -1356,10 +1397,10 @@ impl TextureCache {
             None => false,
         };
         if !ok {
-            Self::close_fast_cache_locked(&mut f, false);
+            Self::close_fast_cache_locked(f, false);
             return None;
         }
-        Self::close_fast_cache_locked(&mut f, false);
+        Self::close_fast_cache_locked(f, false);
         Some(FastRecord { width: w, height: h, components: c, discard_level: level, data })
     }
 
@@ -1516,6 +1557,57 @@ mod tests {
         assert!(cache.remove(&id));
         assert!(!cache.is_in_cache(&id));
         assert_eq!(cache.read(&id, 0, 4096).data_size, 0);
+        cache.shutdown();
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Upstream #5356: while a worker holds the fast cache, the main
+    /// thread's non-blocking read answers Busy at once instead of waiting;
+    /// once released, the same read finds the record.
+    #[test]
+    fn try_read_fast_is_busy_while_the_fast_cache_is_held() {
+        use std::sync::mpsc;
+        use std::time::{Duration, Instant};
+        let dir = temp_dir("trylock");
+        let delim = std::path::MAIN_SEPARATOR.to_string();
+        let paths = Paths::for_location(&dir, &delim);
+        let mut cfg = Config::new("test-engine", 64);
+        cfg.clock = fixed_clock;
+        let cache = TextureCache::new(cfg);
+        cache.set_read_only(false);
+        cache.init_cache(&paths, 50 * 1024 * 1024, false, Some(0));
+        let id = [5u8; 16];
+        let fast = FastEntry { width: 8, height: 8, components: 3, discard_level: 2, data: vec![4; 192] };
+        assert!(cache.write(&id, &[1u8; 600], 1000, 2, &fast));
+        assert_eq!(cache.try_read_fast(&[6u8; 16]), FastRead::Miss);
+
+        let (held_tx, held_rx) = mpsc::channel();
+        let (release_tx, release_rx) = mpsc::channel::<()>();
+        std::thread::scope(|scope| {
+            let cache = &cache;
+            scope.spawn(move || {
+                let _guard = cache.fast.lock().unwrap();
+                held_tx.send(()).unwrap();
+                // Bounded, so a read that blocks (the regression) still
+                // returns and fails below instead of hanging the test.
+                let _ = release_rx.recv_timeout(Duration::from_secs(10));
+            });
+            held_rx.recv().unwrap();
+            let started = Instant::now();
+            let read = cache.try_read_fast(&id);
+            let waited = started.elapsed();
+            let _ = release_tx.send(());
+            assert_eq!(read, FastRead::Busy);
+            assert!(waited < Duration::from_secs(1), "try_read_fast waited {waited:?}");
+        });
+        match cache.try_read_fast(&id) {
+            FastRead::Hit(r) => {
+                assert_eq!((r.width, r.height, r.components, r.discard_level), (8, 8, 3, 2));
+                assert_eq!(r.data, vec![4; 192]);
+            }
+            other => panic!("expected the record, got {other:?}"),
+        }
+        assert_eq!(cache.read_fast(&id).map(|r| r.data.len()), Some(192));
         cache.shutdown();
         let _ = std::fs::remove_dir_all(&dir);
     }

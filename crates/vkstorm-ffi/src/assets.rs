@@ -264,6 +264,39 @@ pub unsafe extern "C" fn vks_texcache_read_fast(c: *mut VksTexCache, id: *const 
     }
 }
 
+/// `readFromFastCache` without waiting for the fast cache (upstream #5356:
+/// the texture list skips the frame while a worker writes it). Fills the
+/// head fields and copies the pixels into `data` (1024 bytes) as
+/// [`vks_texcache_read_fast`]. Returns 1 when the record was read, 0 when it
+/// is not cached or could not be read, and -1 when the fast cache is busy
+/// (nothing read, nothing waited).
+///
+/// # Safety
+/// `data` must be writable for 1024 bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn vks_texcache_try_read_fast(c: *mut VksTexCache, id: *const u8, width: *mut i32, height: *mut i32, components: *mut i32, discard_level: *mut i32, data: *mut u8) -> i32 {
+    if c.is_null() || data.is_null() {
+        return 0;
+    }
+    let cache = &unsafe { &*c }.inner;
+    let id = unsafe { uuid_arg(id) };
+    match catch_unwind(AssertUnwindSafe(|| cache.try_read_fast(&id))) {
+        Ok(texcache::FastRead::Hit(r)) => {
+            unsafe {
+                if !width.is_null() { *width = r.width; }
+                if !height.is_null() { *height = r.height; }
+                if !components.is_null() { *components = r.components; }
+                if !discard_level.is_null() { *discard_level = r.discard_level; }
+                let n = r.data.len().min(texcache::FAST_DATA_SIZE as usize);
+                std::ptr::copy_nonoverlapping(r.data.as_ptr(), data, n);
+            }
+            1
+        }
+        Ok(texcache::FastRead::Busy) => -1,
+        _ => 0,
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Plain file operations (LLAPRFile by name, LLFileSystem, LLLFSThread)
 
@@ -1296,6 +1329,34 @@ pub unsafe extern "C" fn vks_diskcache_purge(c: *mut VksDiskCache) -> i32 {
     let mut work = cache.lock().unwrap_or_else(|e| e.into_inner()).clone();
     if catch_unwind(AssertUnwindSafe(|| work.purge())).is_err() {
         return 0;
+    }
+    cache.lock().unwrap_or_else(|e| e.into_inner()).absorb_scan(&work);
+    1
+}
+/// `purge` with upstream d527adf68c's shutdown early-out: `is_running` is
+/// `LLApp::isRunning()` (returns non-zero while the application runs; null
+/// means always running), asked during the scan, the delete loop and the
+/// debug listing. Returns 1 when the purge ran to the end, 2 when it
+/// stopped because the application is shutting down (the scan result is
+/// then not recorded, as the C++ returns before `updateCacheSize`), and 0
+/// on failure.
+///
+/// # Safety
+/// `c` must come from `vks_diskcache_new` and be live; `is_running`, when
+/// not null, must be callable from the purge thread.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn vks_diskcache_purge_while(c: *mut VksDiskCache, is_running: Option<extern "C" fn() -> i32>) -> i32 {
+    if c.is_null() {
+        return 0;
+    }
+    let cache = &unsafe { &*c }.inner;
+    let mut work = cache.lock().unwrap_or_else(|e| e.into_inner()).clone();
+    let mut running = || is_running.map(|f| f() != 0).unwrap_or(true);
+    let Ok(report) = catch_unwind(AssertUnwindSafe(|| work.purge_while(&mut running))) else {
+        return 0;
+    };
+    if report.interrupted {
+        return 2;
     }
     cache.lock().unwrap_or_else(|e| e.into_inner()).absorb_scan(&work);
     1
