@@ -34,10 +34,6 @@ fn matches_the_standard_library() {
         return;
     };
     let library = Library::native();
-    if library == Library::Libstdcxx {
-        eprintln!("libstdc++ order is not reproduced yet; nothing to compare");
-        return;
-    }
     let dir = std::env::temp_dir();
     let exe = dir.join(if cfg!(windows) { "unordered_order_probe.exe" } else { "unordered_order_probe" });
     let src = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/cxx/unordered_order_probe.cpp");

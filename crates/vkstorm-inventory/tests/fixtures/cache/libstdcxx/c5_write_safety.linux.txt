@@ -1,0 +1,15 @@
+# vkstorm inventory model oracle (recorder R2): C5 cache write safety, Linux only (RLIMIT_FSIZE)
+# generator: INTEGRATION_TEST_llinventorymodel_parity with VKS_INVMODEL_DUMP (indra/newview/tests/llinventorymodel_parity_test.cpp)
+# viewer commit: 9564f23272
+# platform: linux-gcc15
+# seed: none
+# format: tests/fixtures/inventory/cache/README.md; lines starting with '#' are not compared
+== mid_write_file_size_limit
+old size=21847 sha256=17e8ba2638d5d82de5ea7e6e4fb75050c36e33d51c2e901570429127688d45ef
+files before_save [11b00000-0000-4000-8000-000000000001.inv.llsd.gz gz; a9e00000-0000-4000-8000-000000000001.inv.llsd.gz gz]
+step save
+old_gz_byte_identical=1
+after size=21847 sha256=17e8ba2638d5d82de5ea7e6e4fb75050c36e33d51c2e901570429127688d45ef
+gz_t_present=0
+files after_save [11b00000-0000-4000-8000-000000000001.inv.llsd.gz gz; a9e00000-0000-4000-8000-000000000001.inv.llsd.gz gz]
+files temp []

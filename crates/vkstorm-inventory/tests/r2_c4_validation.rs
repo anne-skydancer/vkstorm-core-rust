@@ -14,8 +14,8 @@
 //! The QA cases (`QAModeFakeSystemFolderIssues`) draw from one engine per
 //! process, in case order, two draws per checked folder type per call; each
 //! case calls `validate()` twice (in `populate`'s login and in the case).
-//! Both libraries' records are replayed: [`QaLibrary::Msvc`] (`mt19937`)
-//! and [`QaLibrary::Libstdcxx`] (`minstd_rand0`).
+//! Each library's record is replayed where it was recorded: [`QaLibrary::Msvc`] (`mt19937`)
+//! on MSVC, [`QaLibrary::Libstdcxx`] (`minstd_rand0`) elsewhere.
 
 mod common;
 mod r2common;
@@ -183,8 +183,7 @@ fn c4_validation_qa_libstdcxx() {
 }
 
 /// The default engine is the platform's own, and replays the recording of
-/// the platform's C++ standard library (both engines are also replayed
-/// explicitly above, on every platform).
+/// the platform's C++ standard library.
 #[test]
 fn c4_validation_qa_native() {
     let (file, library) = if cfg!(target_env = "msvc") {
