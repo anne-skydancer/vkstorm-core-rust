@@ -13,6 +13,28 @@ changed `update_create_inventory_item` and `bulk_update_udp`; see
 (`vkstorm-rust`) to add the case `create_and_copy_with_ais`; every other
 case is unchanged. They are never edited by hand. To change them, change the recorder and record them again.
 
+## Per standard library (Firestorm 7.2.5)
+
+Upstream 28fee038e0 (in Firestorm 7.2.5) made `LLInventoryModel`'s
+`mCategoryMap`, `mItemMap`, `mParentChildCategoryTree` and
+`mParentChildItemTree` `std::unordered_map`. The order the viewer walks them
+in is now the C++ standard library's: `buildParentChildMap()` fills the child
+vectors by walking `mCategoryMap` and `mItemMap`, `cache()` writes the cache
+file's records in the child vectors' order, and everything recorded after
+that (model dumps' child lists, notification batches, the journals, the
+cache bytes and their digests) follows. The hash itself (`std::hash<LLUUID>`)
+has no seed, so the order repeats from run to run on one library.
+
+Those records are therefore kept per library: `cache/msvc/` and `msgs/msvc/`
+(recorded on Windows), `cache/libstdcxx/` and `msgs/libstdcxx/` (recorded on
+Linux, through the Build workflow's `record_inventory_fixtures` input). The
+test picks its library's tree (`platform_rel()` in
+`llinventorymodel_parity_test.cpp`) and accepts the other one. Shared by both:
+the C2 inputs in `cache/c2/` (the harness writes their records in id order)
+and the QA-mode records, which already name their library. The harness's own
+walks (the model dump's folder and item lists, C3's random draws) are in key
+order and do not depend on the library.
+
 ## Files
 
 `set8_handlers.txt` (survey 4 section 7, set 8), made by

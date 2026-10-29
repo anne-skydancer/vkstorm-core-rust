@@ -206,6 +206,11 @@ pub struct TestModel {
     pub library_owner: Uuid,
     pub usable: bool,
     pub snap: Snapshot,
+    /// `mCategoryMap`'s and `mItemMap`'s iteration order (they are
+    /// `std::unordered_map`s since upstream 28fee038e0), after the inserts
+    /// and erases the C++ makes; see `support_unordered`.
+    pub cat_order: super::support_unordered::UnorderedOrder,
+    pub item_order: super::support_unordered::UnorderedOrder,
 }
 
 impl TestModel {
@@ -234,6 +239,7 @@ impl TestModel {
             descendent_count: -1,
         });
         self.snap.category_map.insert(id, Some(k));
+        self.cat_order.insert(id);
         self.snap.category_tree.entry(id).or_default();
         self.snap.item_tree.entry(id).or_default();
         if let Some(v) = self.snap.category_tree.get_mut(&parent) {
@@ -248,6 +254,7 @@ impl TestModel {
         let k = self.snap.items.len();
         self.snap.items.push(SnapItem { id: it.id, parent: it.parent, asset_type: it.atype, asset: it.asset });
         self.snap.item_map.insert(it.id, k);
+        self.item_order.insert(it.id);
         if let Some(v) = self.snap.item_tree.get_mut(&it.parent) {
             v.push(Some(k));
         }
@@ -269,7 +276,10 @@ impl TestModel {
     }
 
     pub fn validate(&self, qa: Option<&mut QaRandom>) -> Validation {
-        validate::validate(&self.snap, validate::Options { qa, in_open_sim: false })
+        let mut s = self.snap.clone();
+        s.category_order = synced(&self.cat_order, s.category_map.keys());
+        s.item_order = synced(&self.item_order, s.item_map.keys());
+        validate::validate(&s, validate::Options { qa, in_open_sim: false })
     }
 
     /// `dump_model(out, false)` without the lock entry counts and the
@@ -340,6 +350,23 @@ pub fn long_line(l: &str) -> String {
 /// `validate()` (drawing from `qa` when set) deciding whether the inventory
 /// is usable; then, when it is, `updateItem` of every item in world order;
 /// then the server's versions and the counts of the loaded children.
+/// The emulated order brought in line with the map's keys: a C4 case that
+/// writes a map directly (one change, then `validate()`) erased or inserted
+/// that key just before.
+fn synced<'a>(order: &super::support_unordered::UnorderedOrder, keys: impl Iterator<Item = &'a Uuid>) -> Vec<Uuid> {
+    let keys: BTreeSet<Uuid> = keys.copied().collect();
+    let mut o = order.clone();
+    for k in o.order() {
+        if !keys.contains(&k) {
+            o.erase(&k);
+        }
+    }
+    for k in &keys {
+        o.insert(*k);
+    }
+    o.order()
+}
+
 pub fn populate(w: &World, qa: Option<&mut QaRandom>) -> TestModel {
     let mut m = TestModel { library_owner: lib_owner(), ..TestModel::default() };
     m.snap.root = w.agent_root;
@@ -347,6 +374,16 @@ pub fn populate(w: &World, qa: Option<&mut QaRandom>) -> TestModel {
     let mut folders: BTreeMap<Uuid, &Folder> = BTreeMap::new();
     for fo in w.library.iter().chain(w.agent.iter()) {
         folders.entry(fo.id).or_insert(fo);
+    }
+    // `login`: `loadSkeleton` of the library, then of the agent, each adding
+    // its folders through the `temp_cats` set (by id); a folder already in
+    // the map keeps its place.
+    for list in [&w.library, &w.agent] {
+        let mut ids: Vec<Uuid> = list.iter().map(|fo| fo.id).collect();
+        ids.sort();
+        for id in ids {
+            m.cat_order.insert(id);
+        }
     }
     m.snap.category_tree.insert(NULL_ID, Vec::new());
     for fo in folders.values() {
@@ -365,8 +402,11 @@ pub fn populate(w: &World, qa: Option<&mut QaRandom>) -> TestModel {
     // Only the root folders may be children of null; the others, and those
     // whose parent is missing, are lost: an untyped one goes to Lost And
     // Found, a typed one to the root, after the first pass.
+    // `buildParentChildMap` walks `mCategoryMap` in its order.
     let mut lost = Vec::new();
-    for (k, fo) in folders.values().enumerate() {
+    for id in m.cat_order.order() {
+        let fo = folders[&id];
+        let k = m.cat_index(&id);
         match m.snap.category_tree.get_mut(&fo.parent) {
             Some(v) if fo.parent != NULL_ID || fo.ftype == 8 => v.push(Some(k)),
             _ => lost.push(k),

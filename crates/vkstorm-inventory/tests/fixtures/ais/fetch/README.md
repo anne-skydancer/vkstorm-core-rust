@@ -18,6 +18,19 @@ This directory is identical, byte for byte, in the viewer
 (`* -text`) keeps git from converting line ends. The files are never edited by
 hand: change the test or the mock and regenerate.
 
+## Per standard library (Firestorm 7.2.5)
+
+Upstream 28fee038e0 (in Firestorm 7.2.5) made `LLInventoryModel`'s maps
+`std::unordered_map`. The child vectors are built by walking them
+(`buildParentChildMap()`), and the scheduler and the request builders walk
+the child vectors (`getDirectDescendentsOf()`), so the fetch queue (`fq=` in
+the scheduler journal) and the `children=` lists of AIS requests follow the
+C++ standard library's order. The tree is therefore kept per library:
+`msvc/` (recorded on Windows) and `libstdcxx/` (recorded on Linux, through
+the Build workflow's `record_inventory_fixtures` input), each with its own
+`index.txt` and `manifest.txt`. This README and `.gitattributes` are shared.
+`VKS_INVFETCH_FIXTURES` names one library's tree.
+
 ## The code under test
 
 `INTEGRATION_TEST_llinvfetch_parity` (`indra/newview/tests/inventory/r3-fetch.cmake`)

@@ -18,6 +18,12 @@
 //! `collectDescendentsIf`) is a walk of the C++ model and stays C++; this
 //! module encodes what it is given, skipping the folders of unknown version
 //! as `saveToFile` does.
+//!
+//! Record order is the caller's. Since upstream 28fee038e0 the model's
+//! parent-to-children maps are `std::unordered_map`s, so the order
+//! `collectDescendentsIf` yields (and the file's record order with it)
+//! depends on the standard library's hash order. [`encode`] writes the
+//! records in the order it receives them and never sorts them.
 
 use std::collections::BTreeSet;
 

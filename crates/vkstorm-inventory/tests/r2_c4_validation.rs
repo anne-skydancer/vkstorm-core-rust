@@ -14,8 +14,8 @@
 //! The QA cases (`QAModeFakeSystemFolderIssues`) draw from one engine per
 //! process, in case order, two draws per checked folder type per call; each
 //! case calls `validate()` twice (in `populate`'s login and in the case).
-//! Both libraries' records are replayed: [`QaLibrary::Msvc`] (`mt19937`)
-//! and [`QaLibrary::Libstdcxx`] (`minstd_rand0`).
+//! Each library's record is replayed where it was recorded: [`QaLibrary::Msvc`] (`mt19937`)
+//! on MSVC, [`QaLibrary::Libstdcxx`] (`minstd_rand0`) elsewhere.
 
 mod common;
 mod r2common;
@@ -160,26 +160,30 @@ fn replay(file: &str, mut qa: Option<QaRandom>) -> Tally {
 
 #[test]
 fn c4_validation() {
-    let t = replay("cache/c4_validation.txt", None);
+    let t = replay(&r2common::cache_lib("c4_validation.txt"), None);
     assert_eq!(t.kinds["validation"], (205, 0));
     assert_eq!((t.replayed, t.left), (1595, 80));
 }
 
+// Each library's QA recording also follows that library's unordered_map
+// order (upstream 28fee038e0), which the harness reproduces for its own
+// library only: each file is replayed where it was recorded.
 #[test]
+#[cfg(target_env = "msvc")]
 fn c4_validation_qa_msvc() {
     let t = replay("cache/c4_validation_qa.msvc.txt", Some(QaRandom::new(QaLibrary::Msvc)));
     assert_eq!((t.replayed, t.left), (92, 8));
 }
 
 #[test]
+#[cfg(not(target_env = "msvc"))]
 fn c4_validation_qa_libstdcxx() {
     let t = replay("cache/c4_validation_qa.libstdcxx.txt", Some(QaRandom::new(QaLibrary::Libstdcxx)));
     assert_eq!((t.replayed, t.left), (92, 8));
 }
 
 /// The default engine is the platform's own, and replays the recording of
-/// the platform's C++ standard library (both engines are also replayed
-/// explicitly above, on every platform).
+/// the platform's C++ standard library.
 #[test]
 fn c4_validation_qa_native() {
     let (file, library) = if cfg!(target_env = "msvc") {

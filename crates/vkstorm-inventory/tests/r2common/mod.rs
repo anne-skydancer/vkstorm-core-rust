@@ -8,6 +8,35 @@
 pub mod fixture_model;
 pub mod gz;
 pub mod snapshot;
+#[path = "../support_unordered/mod.rs"]
+pub mod support_unordered;
+
+/// The standard library whose records this build replays: since upstream
+/// 28fee038e0 `LLInventoryModel`'s maps are `std::unordered_map`s, so the
+/// records that follow their order are kept per library
+/// (`fixtures/cache/README.md`): `cache/<library>/`, `msgs/<library>/`.
+/// The viewer beside the crate uses the same library, as for `RT(...)`.
+#[allow(dead_code)]
+pub const LIBRARY: &str = if cfg!(target_env = "msvc") { "msvc" } else { "libstdcxx" };
+
+/// `cache/<library>/<rest>`: a record that follows the model's map order.
+#[allow(dead_code)]
+pub fn cache_lib(rest: &str) -> String {
+    format!("cache/{LIBRARY}/{rest}")
+}
+
+use vkstorm_inventory::validate::Snapshot;
+
+/// The snapshot with its map iteration orders set to key order. The R2
+/// fixtures were recorded while `mCategoryMap` and `mItemMap` were
+/// `std::map`s, so key order is the order they walked (see
+/// `vkstorm_inventory::validate`, "Iteration order").
+#[allow(dead_code)]
+pub fn key_ordered(s: &Snapshot) -> Snapshot {
+    let mut s = s.clone();
+    s.use_key_order();
+    s
+}
 
 use std::fmt::Write as _;
 use std::path::PathBuf;

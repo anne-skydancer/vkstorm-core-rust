@@ -29,6 +29,28 @@ update, so the folder is refetched at the next login if that update fails.
 Only the `Chairs` folder's version changed (3 to 4, in case `server_helpers`,
 steps `update_server_item` and `change_type`); every other record is unchanged.
 
+## Per standard library (Firestorm 7.2.5)
+
+Upstream 28fee038e0 (in Firestorm 7.2.5) made `LLInventoryModel`'s
+`mCategoryMap`, `mItemMap`, `mParentChildCategoryTree` and
+`mParentChildItemTree` `std::unordered_map`. The order the viewer walks them
+in is now the C++ standard library's: `buildParentChildMap()` fills the child
+vectors by walking `mCategoryMap` and `mItemMap`, `cache()` writes the cache
+file's records in the child vectors' order, and everything recorded after
+that (model dumps' child lists, notification batches, the journals, the
+cache bytes and their digests) follows. The hash itself (`std::hash<LLUUID>`)
+has no seed, so the order repeats from run to run on one library.
+
+Those records are therefore kept per library: `cache/msvc/` and `msgs/msvc/`
+(recorded on Windows), `cache/libstdcxx/` and `msgs/libstdcxx/` (recorded on
+Linux, through the Build workflow's `record_inventory_fixtures` input). The
+test picks its library's tree (`platform_rel()` in
+`llinventorymodel_parity_test.cpp`) and accepts the other one. Shared by both:
+the C2 inputs in `cache/c2/` (the harness writes their records in id order)
+and the QA-mode records, which already name their library. The harness's own
+walks (the model dump's folder and item lists, C3's random draws) are in key
+order and do not depend on the library.
+
 ## How they are made
 
 `INTEGRATION_TEST_llinventorymodel_parity` (`indra/newview/tests/inventory/r2.cmake`)

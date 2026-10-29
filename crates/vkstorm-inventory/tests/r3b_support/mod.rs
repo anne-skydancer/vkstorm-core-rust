@@ -28,6 +28,8 @@
 #![allow(dead_code)]
 
 pub mod mock;
+#[path = "../support_unordered/mod.rs"]
+pub mod support_unordered;
 
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::path::PathBuf;
@@ -415,6 +417,12 @@ pub struct ReplayModel {
     pub cat_children: BTreeMap<Uuid, Vec<Uuid>>,
     pub items: BTreeMap<Uuid, MItem>,
     pub item_children: BTreeMap<Uuid, Vec<Uuid>>,
+    /// `mCategoryMap`'s and `mItemMap`'s iteration order: the C++ maps are
+    /// `std::unordered_map`s since upstream 28fee038e0, so
+    /// `buildParentChildMap` lists children in the standard library's hash
+    /// order (`support_unordered`), after the same inserts the C++ makes.
+    pub cat_order: support_unordered::UnorderedOrder,
+    pub item_order: support_unordered::UnorderedOrder,
 }
 
 /// An inventory cache file as the replay model needs it: the cached
@@ -472,7 +480,7 @@ impl ReplayModel {
     /// its loaded children.
     pub fn load_warm(&mut self, w: &World, cache: &CacheFile) {
         let mut counts: BTreeMap<Uuid, i32> = BTreeMap::new();
-        for f in &w.folders {
+        for f in skeleton_order(w) {
             let owner = if f.owner == w.libowner && w.libroot != NULL_ID { w.libowner } else { w.agent };
             let version = match cache.cats.get(&f.id) {
                 Some(v) if *v == f.version => f.version,
@@ -490,11 +498,13 @@ impl ReplayModel {
                     fetch: CategoryFetchState::new(self.now),
                 },
             );
+            self.cat_order.insert(f.id);
             *counts.entry(f.parent).or_default() += 1;
         }
         for it in &cache.items {
             if self.cats.get(&it.parent).is_some_and(|c| c.version != -1) {
                 self.items.insert(it.id, it.clone());
+                self.item_order.insert(it.id);
                 *counts.entry(it.parent).or_default() += 1;
             }
         }
@@ -521,7 +531,7 @@ impl ReplayModel {
     /// `loadSkeleton` of a cold login (no cache: every version unknown);
     /// `buildParentChildMap` then lists children in id order.
     pub fn load_cold(&mut self, w: &World) {
-        for f in &w.folders {
+        for f in skeleton_order(w) {
             let owner = if f.owner == w.libowner && w.libroot != NULL_ID { w.libowner } else { w.agent };
             self.cats.insert(
                 f.id,
@@ -535,6 +545,7 @@ impl ReplayModel {
                     fetch: CategoryFetchState::new(self.now),
                 },
             );
+            self.cat_order.insert(f.id);
         }
     }
 
@@ -546,13 +557,13 @@ impl ReplayModel {
             self.cat_children.entry(*id).or_default();
             self.item_children.entry(*id).or_default();
         }
-        let cats: Vec<(Uuid, Uuid)> = self.cats.values().map(|c| (c.id, c.parent)).collect();
+        let cats: Vec<(Uuid, Uuid)> = self.cat_order.order().iter().map(|id| (*id, self.cats[id].parent)).collect();
         for (id, parent) in cats {
             if let Some(v) = self.cat_children.get_mut(&parent) {
                 v.push(id);
             }
         }
-        let items: Vec<(Uuid, Uuid)> = self.items.values().map(|i| (i.id, i.parent)).collect();
+        let items: Vec<(Uuid, Uuid)> = self.item_order.order().iter().map(|id| (*id, self.items[id].parent)).collect();
         for (id, parent) in items {
             if let Some(v) = self.item_children.get_mut(&parent) {
                 v.push(id);
@@ -585,6 +596,7 @@ impl ReplayModel {
             let mut n = c;
             n.fetch.fetching = CategoryFetch::None;
             self.cats.insert(id, n);
+            self.cat_order.insert(id);
             if let Some(v) = self.cat_children.get_mut(&parent) {
                 v.push(id);
             }
@@ -610,6 +622,7 @@ impl ReplayModel {
         } else {
             let (id, parent) = (i.id, i.parent);
             self.items.insert(id, i);
+            self.item_order.insert(id);
             if let Some(v) = self.item_children.get_mut(&parent) {
                 v.push(id);
             }
@@ -653,6 +666,18 @@ impl ReplayModel {
         i.complete = true;
         self.update_item(i);
     }
+}
+
+/// The order `loadSkeleton` adds a world's folders to `mCategoryMap`: the
+/// login step (`LLStartUp`, `inventory_skel`) loads the library's skeleton,
+/// then the agent's, each through its `temp_cats` set (`std::set` by id).
+fn skeleton_order(w: &World) -> Vec<&WFolder> {
+    let library = |f: &WFolder| f.owner == w.libowner && w.libroot != NULL_ID;
+    let mut agent: Vec<&WFolder> = w.folders.iter().filter(|f| !library(f)).collect();
+    let mut lib: Vec<&WFolder> = w.folders.iter().filter(|f| library(f)).collect();
+    agent.sort_by_key(|f| f.id);
+    lib.sort_by_key(|f| f.id);
+    lib.into_iter().chain(agent).collect()
 }
 
 fn vector_replace_with_last(v: &mut Vec<Uuid>, id: &Uuid) {
@@ -1046,8 +1071,14 @@ pub fn ais_result(
 // The recording
 // ---------------------------------------------------------------------------
 
+/// The standard library whose fetch tree this build replays: the scheduler's
+/// queues and the `children=` lists follow `LLInventoryModel`'s
+/// `std::unordered_map` order since upstream 28fee038e0, so the tree is
+/// `ais/fetch/<library>/` (`fixtures/ais/fetch/README.md`).
+pub const FETCH_LIBRARY: &str = if cfg!(target_env = "msvc") { "msvc" } else { "libstdcxx" };
+
 pub fn fixture_dir() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/ais/fetch")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/ais/fetch").join(FETCH_LIBRARY)
 }
 
 /// A scenario's compared lines (after `== <id>`).
@@ -2691,7 +2722,19 @@ pub fn check(id: &str, run: &mut Run, skip: &dyn Fn(&str) -> bool) -> (usize, us
         }
     }
     if let Some(i) = first {
-        let cut = |s: Option<&String>| s.map_or("<none>".to_owned(), |s| s.chars().take(700).collect());
+        // Show the stretch around the first differing character.
+        let at = match (expected.get(i), actual.get(i)) {
+            (Some(e), Some(a)) => e.bytes().zip(a.bytes()).position(|(x, y)| x != y).unwrap_or(e.len().min(a.len())),
+            _ => 0,
+        };
+        let from = at.saturating_sub(200);
+        let cut = |s: Option<&String>| {
+            s.map_or("<none>".to_owned(), |s| {
+                let from = (0..=from.min(s.len())).rev().find(|&k| s.is_char_boundary(k)).unwrap_or(0);
+                let rest: String = s[from..].chars().take(500).collect();
+                if from > 0 { format!("[from byte {from}] {rest}") } else { rest }
+            })
+        };
         let ctx_from = i.saturating_sub(3);
         let mut msg = format!(
             "{id}: line {} of {} compared lines differs\n  expected: {}\n  actual:   {}\n",
