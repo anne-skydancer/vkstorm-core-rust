@@ -146,7 +146,9 @@ A reader's `ret` comes before the stream columns, as in `ret state pos rest`.
     beyond the same input without the corrupt line, then group ownership not
     newly set.
 - `RT(win=<x>;linux=<y>[;crate=<z>])`: the value depends on the C runtime.
-  `crate=` is the value the crate's own mapping must give (*Port rules*). The recorder
+  The crate's mapping must give the platform's value: `win=` with the MSVC
+  runtime, `linux=` with libstdc++ (*Port rules*); a `crate=` value, where
+  one is written, is no longer read. The recorder
   writes this form only when the platform's own value equals the stated one.
   Otherwise it writes `RT-MISMATCH(...)`, which fails the comparison.
 
@@ -578,8 +580,10 @@ Each is stated here, and none is chosen silently.
    coercions: the C++ walker extracts each key with them (survey 1 §6). The
    viewer test therefore keeps the per-platform values of runtime edge 1, 16
    with the MSVC runtime and 0 with libstdc++. The crate's own mapping over
-   `vkstorm_llsd::Value` follows vkstorm-llsd, which always gives 16. A
-   crate test reads the `crate=` value of `RT(...)`.
+   `vkstorm_llsd::Value` gives the same per-platform values (owner decision
+   of 2026-10-28): `vkstorm-llsd`'s `string_as_real_native` reproduces the
+   MSVC runtime in an MSVC build and libstdc++ otherwise, and the crate test
+   reads the `win=` or `linux=` value of `RT(...)` for its platform.
 2. **The legacy export of a sale type outside 0..3** writes `not`, as the
    fixed C++ does (bug 1, `913990ebe3`): the whole block, with the stream
    good. The earlier "prefix, then a failed and bad stream" rule is withdrawn,

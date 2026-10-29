@@ -6,13 +6,16 @@
 //! the null UUID, `false`, empty binary), as `LLSD::Impl`'s base members do.
 //!
 //! Port rule 1 (`fixtures/model/README.md`): a String converts to a number
-//! through vkstorm-llsd's `istringstream >> F64` model, which reads
-//! hexadecimal floating point as the MSVC runtime does (`"0x10"` is 16 on
-//! every platform here; the viewer's own C++ `LLSD` gives 0 with libstdc++).
+//! as the viewer's own C++ `LLSD` does on the same platform, through
+//! vkstorm-llsd's `string_as_real_native`: the MSVC runtime's
+//! `istringstream >> F64` under the MSVC target environment (hexadecimal
+//! floating point accepted, `"0x10"` is 16), libstdc++'s otherwise (no
+//! hexadecimal, `"0x10"` is 0; overflow stores `DBL_MAX`). The fixtures
+//! record both values as `RT(win=...;linux=...)`.
 
 use std::collections::BTreeMap;
 
-use vkstorm_llsd::text::{date_format, fmt_g, real_as_integer, string_as_real, uuid_set, uuid_to_hex};
+use vkstorm_llsd::text::{date_format, fmt_g, real_as_integer, string_as_real_native, uuid_set, uuid_to_hex};
 use vkstorm_llsd::Value;
 
 use crate::perms::{Uuid, NULL_ID};
@@ -69,7 +72,7 @@ pub fn as_integer(sd: &Value) -> i32 {
         Value::Integer(i) => *i,
         Value::Real(r) if r.is_nan() => 0,
         Value::Real(r) => real_as_integer(*r),
-        Value::String(s) => real_as_integer(string_as_real(s)),
+        Value::String(s) => real_as_integer(string_as_real_native(s)),
         Value::Date(d) => real_as_integer(*d),
         _ => 0,
     }
@@ -83,7 +86,7 @@ pub fn as_real(sd: &Value) -> f64 {
         Value::Boolean(b) => f64::from(u8::from(*b)),
         Value::Integer(i) => f64::from(*i),
         Value::Real(r) => *r,
-        Value::String(s) => string_as_real(s),
+        Value::String(s) => string_as_real_native(s),
         Value::Date(d) => *d,
         _ => 0.0,
     }
