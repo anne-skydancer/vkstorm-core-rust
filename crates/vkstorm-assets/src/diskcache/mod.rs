@@ -161,7 +161,11 @@ impl DiskCache {
     /// ([`PurgeReport::interrupted`]).
     pub fn purge_while(&mut self, running: &mut dyn FnMut() -> bool) -> PurgeReport {
         if self.enable_debug_info {
-            let size = self.dir_file_size(false);
+            // The C++ `dirFileSize` here cannot be stopped; this scan stops
+            // with the others, so a shutdown does not wait for it either.
+            let Some(size) = self.dir_file_size_while(false, running) else {
+                return PurgeReport { interrupted: true, ..Default::default() };
+            };
             ll_infos!("Total dir size before purge is {}", size);
         }
         let start = Instant::now();
@@ -359,18 +363,26 @@ impl DiskCache {
     /// `dirFileSize`: the total size of the cache files, from the scan
     /// cached within the last 120 seconds unless `force`.
     pub fn dir_file_size(&mut self, force: bool) -> u64 {
+        self.dir_file_size_while(force, &mut || true).unwrap_or(self.stored_cache_size)
+    }
+
+    /// [`dir_file_size`](Self::dir_file_size) whose scan stops when
+    /// `running` says no: `None`, and the stored size is left alone.
+    fn dir_file_size_while(&mut self, force: bool, running: &mut dyn FnMut() -> bool) -> Option<u64> {
         const CACHE_DURATION_SECS: u64 = 120;
         if !force {
             if let Some(last) = self.last_scan {
                 if last.elapsed().as_secs() < CACHE_DURATION_SECS {
                     ll_debugs!("Using cached result: {}", self.stored_cache_size);
-                    return self.stored_cache_size;
+                    return Some(self.stored_cache_size);
                 }
             }
         }
         let mut total: u64 = 0;
-        walk(Path::new(&self.cache_dir), CACHE_FILENAME_PREFIX, &mut |_, size, _| total += size);
-        self.update_cache_size(total)
+        if !walk_while(Path::new(&self.cache_dir), CACHE_FILENAME_PREFIX, running, &mut |_, size, _| total += size) {
+            return None;
+        }
+        Some(self.update_cache_size(total))
     }
 
     /// The current time in seconds, for callers that stamp files.
@@ -470,6 +482,11 @@ mod tests {
         // Running throughout: the ordinary purge.
         let r = cache.purge_while(&mut || true);
         assert!(!r.interrupted);
+        // With debug info, the scan before the purge stops too and records nothing.
+        let mut debug = DiskCache::new(&dirs, &delim, 1000, true, 90.0, 50.0);
+        let r = debug.purge_while(&mut || false);
+        assert!(r.interrupted && r.files == 0);
+        assert!(debug.last_scan.is_none() && debug.stored_cache_size == 0);
         let _ = fs::remove_dir_all(&dir);
     }
 
