@@ -317,6 +317,9 @@ enum Obj {
 struct Model<'a> {
     s: &'a Snapshot,
     last_item: Option<usize>,
+    /// `mBacklinkMMap` by target: each target's links in the snapshot's
+    /// order (`equal_range`), so a lookup is not a scan of every pair.
+    backlinks: BTreeMap<Uuid, Vec<Uuid>>,
 }
 
 impl Model<'_> {
@@ -393,7 +396,7 @@ impl Model<'_> {
     }
 
     fn has_backlink(&self, link: &Uuid, target: &Uuid) -> bool {
-        self.s.backlinks.iter().any(|(t, l)| t == target && l == link)
+        self.backlinks.get(target).is_some_and(|links| links.contains(link))
     }
 
     /// `isInSuitcase` (OpenSim only).
@@ -427,7 +430,11 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
     let Options { mut qa, in_open_sim } = options;
     let skip_suitcase = cfg!(feature = "opensim") && in_open_sim;
     let s = snapshot;
-    let mut m = Model { s, last_item: s.last_item };
+    let mut backlinks: BTreeMap<Uuid, Vec<Uuid>> = BTreeMap::new();
+    for (target, link) in &s.backlinks {
+        backlinks.entry(*target).or_default().push(*link);
+    }
+    let mut m = Model { s, last_item: s.last_item, backlinks };
     let mut info = ValidationInfo::default();
     let mut fatal_errs = 0;
     let mut warning_count = 0;
@@ -572,7 +579,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
             // The backlinks of a non-link item are only logged, but each
             // lookup moves mLastItem.
             let target_id = item.id;
-            let links: Vec<Uuid> = s.backlinks.iter().filter(|(t, _)| *t == target_id).map(|(_, l)| *l).collect();
+            let links: Vec<Uuid> = m.backlinks.get(&target_id).cloned().unwrap_or_default();
             for link_id in links {
                 m.get_item(&link_id);
             }
