@@ -20,8 +20,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use vkstorm_inventory::category::ViewerCategory;
 use vkstorm_inventory::item::Item;
 use vkstorm_inventory::login::LoadPlan;
-use vkstorm_inventory::model::{viewer_item_type, ModelLookup};
-use vkstorm_inventory::perms::{Uuid, NULL_ID};
+use vkstorm_inventory::model::{ModelLookup, viewer_item_type};
+use vkstorm_inventory::perms::{NULL_ID, Uuid};
 use vkstorm_inventory::types::{AssetType, FolderType};
 use vkstorm_inventory::validate::{SnapCategory, SnapItem, Snapshot};
 
@@ -83,7 +83,13 @@ impl HarnessModel {
             }
             let mut cat = f.folder;
             cat.category.object.name = localize(&cat.category.object.name);
-            self.cats.insert(cat.category.object.id, HCat { cat, count: f.descendent_count });
+            self.cats.insert(
+                cat.category.object.id,
+                HCat {
+                    cat,
+                    count: f.descendent_count,
+                },
+            );
         }
         for item in plan.items {
             if viewer_item_type(&item, self).0 <= AssetType::NONE.0 {
@@ -134,7 +140,11 @@ impl HarnessModel {
     /// parent's vector in folder-id order (the roots under null), every item
     /// in its parent's in item-id order, an item vector per folder.
     pub fn built_snapshot(&self) -> Snapshot {
-        let mut s = Snapshot { root: self.root, library_root: self.library_root, ..Snapshot::default() };
+        let mut s = Snapshot {
+            root: self.root,
+            library_root: self.library_root,
+            ..Snapshot::default()
+        };
         s.category_tree.insert(NULL_ID, Vec::new());
         for (k, (id, c)) in self.cats.iter().enumerate() {
             let o = &c.cat.category.object;
@@ -151,14 +161,28 @@ impl HarnessModel {
         }
         for k in 0..s.categories.len() {
             let c = &s.categories[k];
-            assert!(c.parent != NULL_ID || c.preferred_type == FolderType::ROOT_INVENTORY, "lost folder");
+            assert!(
+                c.parent != NULL_ID || c.preferred_type == FolderType::ROOT_INVENTORY,
+                "lost folder"
+            );
             let parent = c.parent;
-            s.category_tree.get_mut(&parent).expect("lost folder").push(Some(k));
+            s.category_tree
+                .get_mut(&parent)
+                .expect("lost folder")
+                .push(Some(k));
         }
         for (k, (id, it)) in self.items.iter().enumerate() {
-            s.items.push(SnapItem { id: *id, parent: it.object.parent, asset_type: it.object.asset_type, asset: it.asset });
+            s.items.push(SnapItem {
+                id: *id,
+                parent: it.object.parent,
+                asset_type: it.object.asset_type,
+                asset: it.asset,
+            });
             s.item_map.insert(*id, k);
-            s.item_tree.get_mut(&it.object.parent).expect("lost item").push(Some(k));
+            s.item_tree
+                .get_mut(&it.object.parent)
+                .expect("lost item")
+                .push(Some(k));
         }
         s.backlinks = self.backlinks.clone();
         s
@@ -167,7 +191,11 @@ impl HarnessModel {
 
 /// The key of a keyed dump line (`dump_model_delta`), if it has one.
 pub fn line_key(l: &str) -> Option<String> {
-    if l.starts_with("cat ") || l.starts_with("item ") || l.starts_with("children ") || l.starts_with("broken ") {
+    if l.starts_with("cat ")
+        || l.starts_with("item ")
+        || l.starts_with("children ")
+        || l.starts_with("broken ")
+    {
         let a = l.find(' ').unwrap() + 1;
         let end = l[a..].find(' ').map(|p| p + a).unwrap_or(l.len());
         Some(l[..end].to_owned())
@@ -211,7 +239,11 @@ impl Delta {
 }
 
 fn field<'a>(l: &'a str, name: &str) -> &'a str {
-    let p = l.rfind(&format!(" {name}=")).unwrap_or_else(|| panic!("no {name}= in {l}")) + name.len() + 2;
+    let p = l
+        .rfind(&format!(" {name}="))
+        .unwrap_or_else(|| panic!("no {name}= in {l}"))
+        + name.len()
+        + 2;
     let end = l[p..].find(' ').map(|e| e + p).unwrap_or(l.len());
     &l[p..end]
 }
@@ -231,7 +263,18 @@ fn id_list(s: &str) -> Option<Vec<Option<Uuid>>> {
     if inner.is_empty() {
         return Some(Vec::new());
     }
-    Some(inner.split(',').map(|e| if e == "null" { None } else { Some(parse_uuid(e)) }).collect())
+    Some(
+        inner
+            .split(',')
+            .map(|e| {
+                if e == "null" {
+                    None
+                } else {
+                    Some(parse_uuid(e))
+                }
+            })
+            .collect(),
+    )
 }
 
 /// Rebuilds the model of the latest of `dumps` (each a `dump_model_delta`
@@ -295,16 +338,27 @@ pub fn state_from_dumps(dumps: &[&[String]]) -> Snapshot {
         let parent = parse_uuid(&l[9..45]);
         mentioned.insert(parent);
         if let Some(v) = id_list(field(l, "cats")) {
-            s.category_tree.insert(parent, v.into_iter().map(|e| e.map(|id| cat_index[&id])).collect());
+            s.category_tree.insert(
+                parent,
+                v.into_iter().map(|e| e.map(|id| cat_index[&id])).collect(),
+            );
         }
         if let Some(v) = id_list(field(l, "items")) {
-            s.item_tree.insert(parent, v.into_iter().map(|e| e.map(|id| item_index[&id])).collect());
+            s.item_tree.insert(
+                parent,
+                v.into_iter().map(|e| e.map(|id| item_index[&id])).collect(),
+            );
         }
     }
     let cat_trees: usize = field(&header, "cat_trees").parse().unwrap();
     let item_trees: usize = field(&header, "item_trees").parse().unwrap();
     if cat_trees > 0 {
-        let keys: Vec<Uuid> = s.category_map.keys().copied().chain(std::iter::once(NULL_ID)).collect();
+        let keys: Vec<Uuid> = s
+            .category_map
+            .keys()
+            .copied()
+            .chain(std::iter::once(NULL_ID))
+            .collect();
         for k in keys {
             if !mentioned.contains(&k) {
                 s.category_tree.entry(k).or_default();
@@ -314,9 +368,14 @@ pub fn state_from_dumps(dumps: &[&[String]]) -> Snapshot {
             }
         }
     }
-    assert_eq!((s.category_tree.len(), s.item_tree.len()), (cat_trees, item_trees), "rebuilt child vectors: {header}");
+    assert_eq!(
+        (s.category_tree.len(), s.item_tree.len()),
+        (cat_trees, item_trees),
+        "rebuilt child vectors: {header}"
+    );
     for l in seen.values().filter(|l| l.starts_with("backlink ")) {
-        s.backlinks.push((parse_uuid(&l[9..45]), parse_uuid(&l[46..82])));
+        s.backlinks
+            .push((parse_uuid(&l[9..45]), parse_uuid(&l[46..82])));
     }
     for l in &locks {
         if let Some(id) = l.strip_prefix("lock cat ") {
@@ -334,7 +393,14 @@ pub fn files_line(label: &str, dir: &BTreeMap<String, Vec<u8>>) -> String {
         .iter()
         .map(|(n, b)| {
             let gz = n.len() > 3 && n.ends_with(".gz");
-            format!("{n} {}", if gz { "gz".to_owned() } else { b.len().to_string() })
+            format!(
+                "{n} {}",
+                if gz {
+                    "gz".to_owned()
+                } else {
+                    b.len().to_string()
+                }
+            )
         })
         .collect();
     names.sort();

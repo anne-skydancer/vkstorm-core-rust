@@ -21,9 +21,9 @@
 //! The entries are returned in file order; the loader pushes each to the
 //! front of the list, so the list ends up in reverse file order.
 
-use super::{Entry, ViewerItem, MAX_INV_FILE_READ_FAILS, MAX_STRING};
+use super::{Entry, MAX_INV_FILE_READ_FAILS, MAX_STRING, ViewerItem};
 use crate::legacy::reader::Stream;
-use crate::legacy::scanf::{sscanf, EOF};
+use crate::legacy::scanf::{EOF, sscanf};
 use crate::object::Object;
 
 /// The entries of a task inventory file, in file order.

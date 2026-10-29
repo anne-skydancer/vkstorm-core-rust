@@ -21,7 +21,7 @@ use vkstorm_llsd::text::{uuid_set, uuid_to_hex};
 
 use super::reader::Stream;
 use super::scanf::{scan_hex, scan_int, sscanf};
-use crate::perms::{PermissionMask, Permissions, Uuid, NULL_ID, PERM_NONE};
+use crate::perms::{NULL_ID, PERM_NONE, PermissionMask, Permissions, Uuid};
 
 /// `BUFSIZE` of the permissions reader: lines of up to 16383 bytes.
 pub const PERMISSIONS_LINE_BUFFER: usize = 16384;
@@ -31,7 +31,12 @@ pub const PERMISSIONS_LINE_BUFFER: usize = 16384;
 fn is_mask_keyword(keyword: &[u8]) -> bool {
     matches!(
         keyword,
-        b"creator_mask" | b"base_mask" | b"owner_mask" | b"group_mask" | b"everyone_mask" | b"next_owner_mask"
+        b"creator_mask"
+            | b"base_mask"
+            | b"owner_mask"
+            | b"group_mask"
+            | b"everyone_mask"
+            | b"next_owner_mask"
     )
 }
 

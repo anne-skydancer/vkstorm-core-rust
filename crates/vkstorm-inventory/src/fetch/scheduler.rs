@@ -20,7 +20,9 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use super::ais::AisFetch;
 use super::legacy::{FolderBody, FolderRequest, ItemBody, ItemRequest};
-use super::{CategoryFetch, FetchType, NULL_ID, QueueEntry, Uuid, VERSION_UNKNOWN, FT_MARKETPLACE_LISTINGS};
+use super::{
+    CategoryFetch, FT_MARKETPLACE_LISTINGS, FetchType, NULL_ID, QueueEntry, Uuid, VERSION_UNKNOWN,
+};
 
 /// `ALEXANDRIA_LINDEN_ID`: the owner whose folders AIS fetches through
 /// `LibraryAPIv3`.
@@ -131,7 +133,12 @@ pub struct Env {
 
 /// `AISAPI::isAvailable()`: a region, `FSUseAis3Api` or Second Life (the
 /// setting matters only off Second Life), and the region's `InventoryAPIv3`.
-pub fn ais_available(region: bool, fs_use_ais3_api: bool, in_second_life: bool, has_inventory_cap: bool) -> bool {
+pub fn ais_available(
+    region: bool,
+    fs_use_ais3_api: bool,
+    in_second_life: bool,
+    has_inventory_cap: bool,
+) -> bool {
     region && (fs_use_ais3_api || in_second_life) && has_inventory_cap
 }
 
@@ -149,7 +156,11 @@ pub enum FetchPath {
 /// `fetch()` after its gate: the background fetch when the region has
 /// `FetchInventoryDescendents2` or AIS is available, else UDP.
 pub fn fetch_path(region_cap_fid2: &str, ais_available: bool) -> FetchPath {
-    if !region_cap_fid2.is_empty() || ais_available { FetchPath::Start } else { FetchPath::Udp }
+    if !region_cap_fid2.is_empty() || ais_available {
+        FetchPath::Start
+    } else {
+        FetchPath::Udp
+    }
 }
 
 /// Everything the scheduler asks the outside to do, in order.
@@ -173,7 +184,13 @@ pub enum Action {
     AddIdle,
     /// `gInventory.requestPost(false, url, body, handler, label)` with a new
     /// `BGFolderHttpHandler` (`folder` true) or `BGItemHttpHandler`.
-    LegacyPost { handler: u64, folder: bool, url: String, body: Vec<u8>, label: &'static str },
+    LegacyPost {
+        handler: u64,
+        folder: bool,
+        url: String,
+        body: Vec<u8>,
+        label: &'static str,
+    },
     /// `gInventory.handleResponses(false)` (then `notifyObservers()` when
     /// `notify_observers`): pump the legacy handlers, then call
     /// [`BackgroundFetch::bulk_fetch_after_pump`].
@@ -187,7 +204,10 @@ pub enum Action {
 enum Completion {
     /// `onAISFolderCalback(request, response, fetch_type)`; the null request
     /// is the orphans fetch.
-    Folder { request: Uuid, fetch_type: FetchType },
+    Folder {
+        request: Uuid,
+        fetch_type: FetchType,
+    },
     /// `onAISContentCalback(category, children, response, fetch_type)`
     Content { children: Vec<Uuid> },
     /// `ais_simple_item_callback`
@@ -195,7 +215,10 @@ enum Completion {
     /// `fetchCOF`'s lambda.
     Cof { callback: Option<CallerToken> },
     /// `fetchFolderAndLinks`'s lambda.
-    FolderAndLinks { category: Uuid, callback: Option<CallerToken> },
+    FolderAndLinks {
+        category: Uuid,
+        callback: Option<CallerToken>,
+    },
 }
 
 #[derive(Clone, Debug)]
@@ -269,7 +292,11 @@ impl<'a> Ctx<'a> {
 }
 
 fn entry(id: Uuid, fetch_type: FetchType, is_category: bool) -> QueueEntry {
-    QueueEntry { id, is_category, fetch_type }
+    QueueEntry {
+        id,
+        is_category,
+        fetch_type,
+    }
 }
 
 impl BackgroundFetch {
@@ -298,7 +325,9 @@ impl BackgroundFetch {
 
     /// `isBulkFetchProcessingComplete()`
     pub fn is_bulk_fetch_processing_complete(&self) -> bool {
-        self.fetch_folder_queue.is_empty() && self.fetch_item_queue.is_empty() && self.fetch_count <= 0
+        self.fetch_folder_queue.is_empty()
+            && self.fetch_item_queue.is_empty()
+            && self.fetch_count <= 0
     }
 
     /// `isFolderFetchProcessingComplete()`
@@ -311,7 +340,8 @@ impl BackgroundFetch {
     }
 
     pub fn library_fetch_completed(&self, model: &dyn FetchModel) -> bool {
-        self.library_fetch_started() && self.fetch_queue_contains_no_descendents_of(model, &model.library_root_folder_id())
+        self.library_fetch_started()
+            && self.fetch_queue_contains_no_descendents_of(model, &model.library_root_folder_id())
     }
 
     pub fn library_fetch_in_progress(&self, model: &dyn FetchModel) -> bool {
@@ -323,7 +353,8 @@ impl BackgroundFetch {
     }
 
     pub fn inventory_fetch_completed(&self, model: &dyn FetchModel) -> bool {
-        self.inventory_fetch_started() && self.fetch_queue_contains_no_descendents_of(model, &model.root_folder_id())
+        self.inventory_fetch_started()
+            && self.fetch_queue_contains_no_descendents_of(model, &model.root_folder_id())
     }
 
     pub fn inventory_fetch_in_progress(&self, model: &dyn FetchModel) -> bool {
@@ -341,7 +372,11 @@ impl BackgroundFetch {
     }
 
     /// `fetchQueueContainsNoDescendentsOf()`
-    pub fn fetch_queue_contains_no_descendents_of(&self, model: &dyn FetchModel, cat_id: &Uuid) -> bool {
+    pub fn fetch_queue_contains_no_descendents_of(
+        &self,
+        model: &dyn FetchModel,
+        cat_id: &Uuid,
+    ) -> bool {
         !self
             .fetch_folder_queue
             .iter()
@@ -391,7 +426,11 @@ impl BackgroundFetch {
 
     /// `addRequestAtFront()`
     pub fn add_request_at_front(&mut self, id: Uuid, recursive: bool, is_category: bool) {
-        let t = if recursive { FetchType::Recursive } else { FetchType::Default };
+        let t = if recursive {
+            FetchType::Recursive
+        } else {
+            FetchType::Default
+        };
         if is_category {
             self.fetch_folder_queue.push_front(entry(id, t, true));
         } else {
@@ -401,7 +440,11 @@ impl BackgroundFetch {
 
     /// `addRequestAtBack()`
     pub fn add_request_at_back(&mut self, id: Uuid, recursive: bool, is_category: bool) {
-        let t = if recursive { FetchType::Recursive } else { FetchType::Default };
+        let t = if recursive {
+            FetchType::Recursive
+        } else {
+            FetchType::Default
+        };
         if is_category {
             self.fetch_folder_queue.push_back(entry(id, t, true));
         } else {
@@ -416,7 +459,11 @@ impl BackgroundFetch {
         if cat.is_some() || (id == NULL_ID && !self.is_everything_fetched()) {
             self.background_fetch_active = true;
             self.folder_fetch_active = true;
-            let recursion_type = if recursive { FetchType::Recursive } else { FetchType::Default };
+            let recursion_type = if recursive {
+                FetchType::Recursive
+            } else {
+                FetchType::Default
+            };
             if id == NULL_ID {
                 if !self.recursive_inventory_fetch_started {
                     self.recursive_inventory_fetch_started |= recursive;
@@ -424,24 +471,36 @@ impl BackgroundFetch {
                     if recursive && ais {
                         // root and content separately: most system folders
                         // are requested independently
-                        self.fetch_folder_queue.push_front(entry(root, FetchType::FolderAndContent, true));
+                        self.fetch_folder_queue.push_front(entry(
+                            root,
+                            FetchType::FolderAndContent,
+                            true,
+                        ));
                     } else {
-                        self.fetch_folder_queue.push_back(entry(root, recursion_type, true));
+                        self.fetch_folder_queue
+                            .push_back(entry(root, recursion_type, true));
                     }
                     self.add_idle();
                 }
                 if !self.recursive_library_fetch_started {
                     self.recursive_library_fetch_started |= recursive;
                     let lib = cx.model.library_root_folder_id();
-                    self.fetch_folder_queue.push_back(entry(lib, recursion_type, true));
+                    self.fetch_folder_queue
+                        .push_back(entry(lib, recursion_type, true));
                     self.add_idle();
                 }
-            } else if recursive && cat.is_some_and(|c| c.preferred_type == FT_MARKETPLACE_LISTINGS) {
+            } else if recursive && cat.is_some_and(|c| c.preferred_type == FT_MARKETPLACE_LISTINGS)
+            {
                 if self.fetch_folder_queue.back().is_none_or(|b| b.id != id) {
                     if recursive && ais {
-                        self.fetch_folder_queue.push_front(entry(id, FetchType::FolderAndContent, true));
+                        self.fetch_folder_queue.push_front(entry(
+                            id,
+                            FetchType::FolderAndContent,
+                            true,
+                        ));
                     } else {
-                        self.fetch_folder_queue.push_front(entry(id, recursion_type, true));
+                        self.fetch_folder_queue
+                            .push_front(entry(id, recursion_type, true));
                     }
                     self.add_idle();
                     self.recursive_marketplace_fetch_started = true;
@@ -450,12 +509,14 @@ impl BackgroundFetch {
                 if ais {
                     if self.fetch_folder_queue.back().is_none_or(|b| b.id != id) {
                         // On AIS the root goes to the top; follow-ups go back
-                        self.fetch_folder_queue.push_back(entry(id, recursion_type, true));
+                        self.fetch_folder_queue
+                            .push_back(entry(id, recursion_type, true));
                         self.add_idle();
                     }
                 } else if self.fetch_folder_queue.front().is_none_or(|f| f.id != id) {
                     // Specific folder requests go to front of queue.
-                    self.fetch_folder_queue.push_front(entry(id, recursion_type, true));
+                    self.fetch_folder_queue
+                        .push_front(entry(id, recursion_type, true));
                     self.add_idle();
                 }
                 if id == cx.model.library_root_folder_id() {
@@ -474,17 +535,23 @@ impl BackgroundFetch {
 
     /// `scheduleFolderFetch()`
     pub fn schedule_folder_fetch(&mut self, cat_id: Uuid, forced: bool) {
-        if self.fetch_folder_queue.front().is_none_or(|f| f.id != cat_id) {
+        if self
+            .fetch_folder_queue
+            .front()
+            .is_none_or(|f| f.id != cat_id)
+        {
             self.background_fetch_active = true;
             self.folder_fetch_active = true;
             if forced {
                 // check if already requested
                 if self.force_fetch_set.insert(cat_id) {
-                    self.fetch_folder_queue.push_front(entry(cat_id, FetchType::Forced, true));
+                    self.fetch_folder_queue
+                        .push_front(entry(cat_id, FetchType::Forced, true));
                 }
             } else {
                 // version presence acts as duplicate prevention for normal fetches
-                self.fetch_folder_queue.push_front(entry(cat_id, FetchType::Default, true));
+                self.fetch_folder_queue
+                    .push_front(entry(cat_id, FetchType::Default, true));
             }
             self.add_idle();
         }
@@ -492,22 +559,33 @@ impl BackgroundFetch {
 
     /// `scheduleItemFetch()`
     pub fn schedule_item_fetch(&mut self, item_id: Uuid, forced: bool) {
-        if self.fetch_item_queue.front().is_none_or(|f| f.id != item_id) {
+        if self
+            .fetch_item_queue
+            .front()
+            .is_none_or(|f| f.id != item_id)
+        {
             self.background_fetch_active = true;
             if forced {
                 if self.force_fetch_set.insert(item_id) {
-                    self.fetch_item_queue.push_front(entry(item_id, FetchType::Forced, false));
+                    self.fetch_item_queue
+                        .push_front(entry(item_id, FetchType::Forced, false));
                 }
             } else {
                 // 'isFinished' being set acts as duplicate prevention
-                self.fetch_item_queue.push_front(entry(item_id, FetchType::Default, false));
+                self.fetch_item_queue
+                    .push_front(entry(item_id, FetchType::Default, false));
             }
             self.add_idle();
         }
     }
 
     /// `fetchFolderAndLinks(cat_id, callback)` (AIS only); `None` is `no_op`.
-    pub fn fetch_folder_and_links(&mut self, cx: &mut Ctx<'_>, cat_id: Uuid, callback: Option<CallerToken>) {
+    pub fn fetch_folder_and_links(
+        &mut self,
+        cx: &mut Ctx<'_>,
+        cat_id: Uuid,
+        callback: Option<CallerToken>,
+    ) {
         if cx.model.category(&cat_id).is_some() {
             // Mark folder (update timer) so that background fetch won't request it
             cx.model.set_fetching(&cat_id, CategoryFetch::Recursive);
@@ -516,8 +594,13 @@ impl BackgroundFetch {
         self.expected_folder_ids.push(cat_id);
         self.ais_call(
             cx,
-            AisFetch::FetchCategoryLinks { category_id: cat_id },
-            Completion::FolderAndLinks { category: cat_id, callback },
+            AisFetch::FetchCategoryLinks {
+                category_id: cat_id,
+            },
+            Completion::FolderAndLinks {
+                category: cat_id,
+                callback,
+            },
         );
         // start idle loop to track completion
         self.background_fetch_active = true;
@@ -543,7 +626,8 @@ impl BackgroundFetch {
     pub fn find_lost_items(&mut self) {
         self.background_fetch_active = true;
         self.folder_fetch_active = true;
-        self.fetch_folder_queue.push_back(entry(NULL_ID, FetchType::Recursive, true));
+        self.fetch_folder_queue
+            .push_back(entry(NULL_ID, FetchType::Recursive, true));
         self.add_idle();
     }
 
@@ -563,7 +647,10 @@ impl BackgroundFetch {
     // ---- AIS commands ----------------------------------------------------
 
     fn ais_call(&mut self, cx: &mut Ctx<'_>, command: AisFetch, completion: Completion) -> bool {
-        if command.refusal(cx.env.inventory_cap, cx.env.library_cap).is_some() {
+        if command
+            .refusal(cx.env.inventory_cap, cx.env.library_cap)
+            .is_some()
+        {
             // No capability, or an empty subset: the completion with null,
             // at once, inside this call (the re-entrancy of s17).
             self.complete(cx, completion, NULL_ID);
@@ -571,7 +658,13 @@ impl BackgroundFetch {
         }
         let ticket = self.next_ticket;
         self.next_ticket += 1;
-        self.pending.insert(ticket, Pending { completion, command: command.clone() });
+        self.pending.insert(
+            ticket,
+            Pending {
+                completion,
+                command: command.clone(),
+            },
+        );
         self.actions.push(Action::IssueAis { ticket, command });
         true
     }
@@ -582,7 +675,9 @@ impl BackgroundFetch {
     /// `CommandResult::callbacks`); the scheduler's completions are
     /// single-id, so the first one counts, null when there is none.
     pub fn ais_complete(&mut self, cx: &mut Ctx<'_>, ticket: u64, callback_ids: &[Uuid]) {
-        let Some(p) = self.pending.remove(&ticket) else { return };
+        let Some(p) = self.pending.remove(&ticket) else {
+            return;
+        };
         let id = callback_ids.first().copied().unwrap_or(NULL_ID);
         self.complete(cx, p.completion, id);
     }
@@ -600,8 +695,13 @@ impl BackgroundFetch {
 
     fn complete(&mut self, cx: &mut Ctx<'_>, completion: Completion, response_id: Uuid) {
         match completion {
-            Completion::Folder { request, fetch_type } => self.on_ais_folder_callback(cx, request, response_id, fetch_type),
-            Completion::Content { children } => self.on_ais_content_callback(cx, &children, response_id),
+            Completion::Folder {
+                request,
+                fetch_type,
+            } => self.on_ais_folder_callback(cx, request, response_id, fetch_type),
+            Completion::Content { children } => {
+                self.on_ais_content_callback(cx, &children, response_id)
+            }
             Completion::Item => {
                 // ais_simple_item_callback
                 self.incr_fetch_count(-1);
@@ -634,7 +734,12 @@ impl BackgroundFetch {
     }
 
     /// `onAISContentCalback()`
-    fn on_ais_content_callback(&mut self, cx: &mut Ctx<'_>, content_ids: &[Uuid], response_id: Uuid) {
+    fn on_ais_content_callback(
+        &mut self,
+        cx: &mut Ctx<'_>,
+        content_ids: &[Uuid],
+        response_id: Uuid,
+    ) {
         // Don't emplace_front on failure - this may run inside bulkFetchViaAis
         self.incr_fetch_folder_count(-1);
         for folder in content_ids {
@@ -646,11 +751,13 @@ impl BackgroundFetch {
             }
             if response_id == NULL_ID {
                 // Failed to fetch, get it individually
-                self.fetch_folder_queue.push_back(entry(*folder, FetchType::Recursive, true));
+                self.fetch_folder_queue
+                    .push_back(entry(*folder, FetchType::Recursive, true));
             } else if let Some(children) = cx.model.child_categories(folder) {
                 // verify the descendants are fetched fully (depth limit)
                 for c in children {
-                    self.fetch_folder_queue.push_back(entry(c, FetchType::Recursive, true));
+                    self.fetch_folder_queue
+                        .push_back(entry(c, FetchType::Recursive, true));
                 }
             }
         }
@@ -662,9 +769,19 @@ impl BackgroundFetch {
     }
 
     /// `onAISFolderCalback()`
-    fn on_ais_folder_callback(&mut self, cx: &mut Ctx<'_>, request_id: Uuid, response_id: Uuid, fetch_type: FetchType) {
+    fn on_ais_folder_callback(
+        &mut self,
+        cx: &mut Ctx<'_>,
+        request_id: Uuid,
+        response_id: Uuid,
+        fetch_type: FetchType,
+    ) {
         self.incr_fetch_folder_count(-1);
-        if let Some(pos) = self.expected_folder_ids.iter().position(|e| *e == request_id) {
+        if let Some(pos) = self
+            .expected_folder_ids
+            .iter()
+            .position(|e| *e == request_id)
+        {
             self.expected_folder_ids.remove(pos);
         }
         // else: "ais shouldn't respond twice" (llassert, a warning)
@@ -680,12 +797,24 @@ impl BackgroundFetch {
             // Failure
             if fetch_type == FetchType::Recursive {
                 // A full recursive request failed: folder and content separately
-                self.fetch_folder_queue.push_back(entry(request_id, FetchType::FolderAndContent, true));
+                self.fetch_folder_queue.push_back(entry(
+                    request_id,
+                    FetchType::FolderAndContent,
+                    true,
+                ));
             } else if fetch_type == FetchType::FolderAndContent {
                 // "Failed to download folder ... Requesting known content separately"
-                self.fetch_folder_queue.push_back(entry(request_id, FetchType::ContentRecursive, true));
+                self.fetch_folder_queue.push_back(entry(
+                    request_id,
+                    FetchType::ContentRecursive,
+                    true,
+                ));
                 // the version stops the viewer requesting the folder forever
-                if cx.model.category(&request_id).is_some_and(|c| c.version == VERSION_UNKNOWN) {
+                if cx
+                    .model
+                    .category(&request_id)
+                    .is_some_and(|c| c.version == VERSION_UNKNOWN)
+                {
                     cx.model.set_version(&request_id, 0);
                 }
                 // back off for a bit in case something force-requests at once
@@ -696,13 +825,18 @@ impl BackgroundFetch {
             request_descendants = true;
         } else if fetch_type == FetchType::FolderAndContent {
             // read folder for content request
-            self.fetch_folder_queue.push_front(entry(request_id, FetchType::ContentRecursive, true));
+            self.fetch_folder_queue.push_front(entry(
+                request_id,
+                FetchType::ContentRecursive,
+                true,
+            ));
         }
 
         if request_descendants {
             if let Some(children) = cx.model.child_categories(&request_id) {
                 for c in children {
-                    self.fetch_folder_queue.push_back(entry(c, FetchType::Recursive, true));
+                    self.fetch_folder_queue
+                        .push_back(entry(c, FetchType::Recursive, true));
                 }
             }
         }
@@ -755,7 +889,11 @@ impl BackgroundFetch {
 
         // Don't loop for too long (in case of large, fully loaded inventory)
         let mut curent_time = clock.total_seconds();
-        let max_time: f64 = if cx.env.past_wearables_wait { 0.006f32 as f64 } else { 1.0 };
+        let max_time: f64 = if cx.env.past_wearables_wait {
+            0.006f32 as f64
+        } else {
+            1.0
+        };
         let end_time = curent_time + max_time;
         let last_fetch_count = self.fetch_count;
 
@@ -793,7 +931,11 @@ impl BackgroundFetch {
                 self.recursive_marketplace_fetch_started = true;
                 let mkt = cx.model.marketplace_listings_id();
                 if mkt != NULL_ID {
-                    self.fetch_folder_queue.push_front(entry(mkt, FetchType::FolderAndContent, true));
+                    self.fetch_folder_queue.push_front(entry(
+                        mkt,
+                        FetchType::FolderAndContent,
+                        true,
+                    ));
                 } else {
                     self.set_all_folders_fetched();
                 }
@@ -816,7 +958,10 @@ impl BackgroundFetch {
                 self.ais_call(
                     cx,
                     AisFetch::FetchOrphans,
-                    Completion::Folder { request: NULL_ID, fetch_type: FetchType::Default },
+                    Completion::Folder {
+                        request: NULL_ID,
+                        fetch_type: FetchType::Default,
+                    },
                 );
             } else if let Some(cat) = cx.model.category(&cat_id) {
                 let library = cat.owner_id == ALEXANDRIA_LINDEN_ID;
@@ -830,8 +975,12 @@ impl BackgroundFetch {
                     let mut children = Vec::new();
                     if let Some(cats) = &categories {
                         for child in cats {
-                            let Some(c) = cx.model.category(child) else { continue };
-                            if c.version != VERSION_UNKNOWN || cx.model.get_fetching(child) >= target_state {
+                            let Some(c) = cx.model.category(child) else {
+                                continue;
+                            };
+                            if c.version != VERSION_UNKNOWN
+                                || cx.model.get_fetching(child) >= target_state
+                            {
                                 continue;
                             }
                             if c.preferred_type == FT_MARKETPLACE_LISTINGS {
@@ -869,14 +1018,26 @@ impl BackgroundFetch {
                         // every complete child has its children done as well
                         if let Some(cats) = &categories {
                             for child in cats {
-                                if cx.model.category(child).is_some_and(|c| c.version != VERSION_UNKNOWN) {
-                                    self.fetch_folder_queue.push_back(entry(*child, FetchType::Recursive, true));
+                                if cx
+                                    .model
+                                    .category(child)
+                                    .is_some_and(|c| c.version != VERSION_UNKNOWN)
+                                {
+                                    self.fetch_folder_queue.push_back(entry(
+                                        *child,
+                                        FetchType::Recursive,
+                                        true,
+                                    ));
                                 }
                             }
                         }
                     } else {
                         // send it back to get the rest
-                        self.fetch_folder_queue.push_back(entry(cat_id, FetchType::ContentRecursive, true));
+                        self.fetch_folder_queue.push_back(entry(
+                            cat_id,
+                            FetchType::ContentRecursive,
+                            true,
+                        ));
                     }
                 } else if cat.version == VERSION_UNKNOWN || info.fetch_type == FetchType::Forced {
                     let target_state = if info.fetch_type > FetchType::ContentRecursive {
@@ -897,15 +1058,21 @@ impl BackgroundFetch {
                                 recursive: info.fetch_type == FetchType::Recursive,
                                 depth: 0,
                             },
-                            Completion::Folder { request: cat_id, fetch_type: info.fetch_type },
+                            Completion::Folder {
+                                request: cat_id,
+                                fetch_type: info.fetch_type,
+                            },
                         );
                     }
-                } else if info.fetch_type == FetchType::Recursive || info.fetch_type == FetchType::FolderAndContent {
+                } else if info.fetch_type == FetchType::Recursive
+                    || info.fetch_type == FetchType::FolderAndContent
+                {
                     // Already fetched, check if anything inside needs fetching
                     if let Some(cats) = cx.model.child_categories(&cat_id) {
                         for c in cats {
                             // not push_front, to not cause an infinite loop
-                            self.fetch_folder_queue.push_back(entry(c, FetchType::Recursive, true));
+                            self.fetch_folder_queue
+                                .push_back(entry(c, FetchType::Recursive, true));
                         }
                     }
                 }
@@ -917,13 +1084,27 @@ impl BackgroundFetch {
                     if !item.complete || info.fetch_type == FetchType::Forced {
                         self.fetch_count += 1;
                         let library = item.owner_id != cx.env.agent_id;
-                        self.ais_call(cx, AisFetch::FetchItem { item_id: info.id, library }, Completion::Item);
+                        self.ais_call(
+                            cx,
+                            AisFetch::FetchItem {
+                                item_id: info.id,
+                                library,
+                            },
+                            Completion::Item,
+                        );
                     }
                 }
                 None => {
                     // unknown: assume the agent's inventory
                     self.fetch_count += 1;
-                    self.ais_call(cx, AisFetch::FetchItem { item_id: info.id, library: false }, Completion::Item);
+                    self.ais_call(
+                        cx,
+                        AisFetch::FetchItem {
+                            item_id: info.id,
+                            library: false,
+                        },
+                        Completion::Item,
+                    );
                 }
             }
         }
@@ -943,7 +1124,9 @@ impl BackgroundFetch {
         if self.fetch_count != 0 {
             // Process completed background HTTP requests first.
             self.pump_pending = true;
-            self.actions.push(Action::LegacyPump { notify_observers: cx.env.in_second_life });
+            self.actions.push(Action::LegacyPump {
+                notify_observers: cx.env.in_second_life,
+            });
             return;
         }
         self.bulk_fetch_batches(cx);
@@ -1013,7 +1196,8 @@ impl BackgroundFetch {
                     if descend && info.fetch_type >= FetchType::ContentRecursive {
                         // May already have this folder, but append child folders
                         for c in cx.model.child_categories(&cat_id).unwrap_or_default() {
-                            self.fetch_folder_queue.push_back(entry(c, info.fetch_type, true));
+                            self.fetch_folder_queue
+                                .push_back(entry(c, info.fetch_type, true));
                         }
                     }
                 }
@@ -1030,7 +1214,10 @@ impl BackgroundFetch {
                 break;
             }
             if let Some(item) = cx.model.item(&info.id) {
-                let r = ItemRequest { item_id: info.id, owner_id: item.owner_id };
+                let r = ItemRequest {
+                    item_id: info.id,
+                    owner_id: item.owner_id,
+                };
                 if item.owner_id == agent {
                     items.push(r);
                 } else {
@@ -1044,21 +1231,41 @@ impl BackgroundFetch {
         if item_count + folder_count > 0 {
             if folder_count > 0 {
                 if !folders.is_empty() && !cx.env.cap_fid2.is_empty() {
-                    let body = FolderBody { folders: Some(folders) };
-                    self.legacy_folder_post(cx.env.cap_fid2.clone(), body, recursive_cats.clone(), "Inventory Folder");
+                    let body = FolderBody {
+                        folders: Some(folders),
+                    };
+                    self.legacy_folder_post(
+                        cx.env.cap_fid2.clone(),
+                        body,
+                        recursive_cats.clone(),
+                        "Inventory Folder",
+                    );
                 }
                 if !folders_lib.is_empty() && !cx.env.cap_fld2.is_empty() {
-                    let body = FolderBody { folders: Some(folders_lib) };
-                    self.legacy_folder_post(cx.env.cap_fld2.clone(), body, recursive_cats.clone(), "Library Folder");
+                    let body = FolderBody {
+                        folders: Some(folders_lib),
+                    };
+                    self.legacy_folder_post(
+                        cx.env.cap_fld2.clone(),
+                        body,
+                        recursive_cats.clone(),
+                        "Library Folder",
+                    );
                 }
             }
             if item_count > 0 {
                 if !items.is_empty() && !cx.env.cap_fi2.is_empty() {
-                    let body = ItemBody { agent_id: None, items };
+                    let body = ItemBody {
+                        agent_id: None,
+                        items,
+                    };
                     self.legacy_item_post(cx.env.cap_fi2.clone(), body.to_xml(), "Inventory Item");
                 }
                 if !items_lib.is_empty() && !cx.env.cap_fl2.is_empty() {
-                    let body = ItemBody { agent_id: None, items: items_lib };
+                    let body = ItemBody {
+                        agent_id: None,
+                        items: items_lib,
+                    };
                     self.legacy_item_post(cx.env.cap_fl2.clone(), body.to_xml(), "Library Item");
                 }
             }
@@ -1068,14 +1275,27 @@ impl BackgroundFetch {
         }
     }
 
-    fn legacy_folder_post(&mut self, url: String, body: FolderBody, recursive: Vec<Uuid>, label: &'static str) {
+    fn legacy_folder_post(
+        &mut self,
+        url: String,
+        body: FolderBody,
+        recursive: Vec<Uuid>,
+        label: &'static str,
+    ) {
         let handler = self.next_handler;
         self.next_handler += 1;
         // BGFolderHttpHandler's constructor
         self.incr_fetch_count(1);
         let xml = body.to_xml();
-        self.legacy.insert(handler, LegacyHandler { body, recursive });
-        self.actions.push(Action::LegacyPost { handler, folder: true, url, body: xml, label });
+        self.legacy
+            .insert(handler, LegacyHandler { body, recursive });
+        self.actions.push(Action::LegacyPost {
+            handler,
+            folder: true,
+            url,
+            body: xml,
+            label,
+        });
     }
 
     fn legacy_item_post(&mut self, url: String, body: Vec<u8>, label: &'static str) {
@@ -1084,7 +1304,13 @@ impl BackgroundFetch {
         // BGItemHttpHandler's constructor
         self.incr_fetch_count(1);
         self.legacy_item_handlers.insert(handler);
-        self.actions.push(Action::LegacyPost { handler, folder: false, url, body, label });
+        self.actions.push(Action::LegacyPost {
+            handler,
+            folder: false,
+            url,
+            body,
+            label,
+        });
     }
 
     /// `BGFolderHttpHandler::getIsRecursive()`: the reply's applier asks it
@@ -1094,7 +1320,9 @@ impl BackgroundFetch {
     ///
     /// [`add_request_at_back`]: BackgroundFetch::add_request_at_back
     pub fn legacy_is_recursive(&self, handler: u64, cat_id: &Uuid) -> bool {
-        self.legacy.get(&handler).is_some_and(|h| h.recursive.contains(cat_id))
+        self.legacy
+            .get(&handler)
+            .is_some_and(|h| h.recursive.contains(cat_id))
     }
 
     /// The end of `processData()`, after the applier wrote the folders,
@@ -1120,7 +1348,9 @@ impl BackgroundFetch {
                 // "Failed to get AIS2 cap"
                 return;
             }
-            let Some(h) = self.legacy.get(&handler).cloned() else { return };
+            let Some(h) = self.legacy.get(&handler).cloned() else {
+                return;
+            };
             if h.body.len() > 1 {
                 // Can split, assume that this isn't the library
                 for (body, rec) in super::legacy::split_403(&h.body, &h.recursive) {
@@ -1129,7 +1359,9 @@ impl BackgroundFetch {
                 return;
             }
             // Can't split
-            self.actions.push(Action::Notify { name: "InventoryLimitReachedAIS" });
+            self.actions.push(Action::Notify {
+                name: "InventoryLimitReachedAIS",
+            });
         }
         if self.is_bulk_fetch_processing_complete() {
             self.set_all_folders_fetched();

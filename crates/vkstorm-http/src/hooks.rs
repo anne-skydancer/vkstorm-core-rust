@@ -6,7 +6,7 @@
 
 use std::ffi::c_void;
 
-use crate::sys::{SslInfo, UserPtr, CURL};
+use crate::sys::{CURL, SslInfo, UserPtr};
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum LogLevel {

@@ -15,10 +15,12 @@
 
 use std::collections::BTreeMap;
 
-use vkstorm_llsd::text::{date_format, fmt_g, real_as_integer, string_as_real_native, uuid_set, uuid_to_hex};
 use vkstorm_llsd::Value;
+use vkstorm_llsd::text::{
+    date_format, fmt_g, real_as_integer, string_as_real_native, uuid_set, uuid_to_hex,
+};
 
-use crate::perms::{Uuid, NULL_ID};
+use crate::perms::{NULL_ID, Uuid};
 
 static UNDEF: Value = Value::Undefined;
 
@@ -112,7 +114,13 @@ pub fn as_boolean(sd: &Value) -> bool {
 /// `ImplDate` ISO 8601; `ImplURI`; else empty (binary, maps, arrays).
 pub fn as_string(sd: &Value) -> Vec<u8> {
     match sd {
-        Value::Boolean(b) => if *b { b"true".to_vec() } else { Vec::new() },
+        Value::Boolean(b) => {
+            if *b {
+                b"true".to_vec()
+            } else {
+                Vec::new()
+            }
+        }
         Value::Integer(i) => i.to_string().into_bytes(),
         Value::Real(r) => {
             let mut out = Vec::new();

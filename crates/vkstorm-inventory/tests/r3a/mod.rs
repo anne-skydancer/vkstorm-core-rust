@@ -10,14 +10,17 @@ pub mod harness;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
-use harness::{map, to_binary, Harness, Mode};
+use harness::{Harness, Mode, map, to_binary};
 use vkstorm_inventory::llsd::coerce::{as_boolean, as_integer, as_string, get, has};
 use vkstorm_llsd::{Format, Limits, Options, Value};
 
 use crate::common::sha256_hex;
 
 pub fn fixtures_dir() -> PathBuf {
-    PathBuf::from(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures/ais/update"))
+    PathBuf::from(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/fixtures/ais/update"
+    ))
 }
 
 fn read(path: &PathBuf) -> Vec<u8> {
@@ -66,8 +69,12 @@ pub fn load_case(id: &str) -> Case {
     let mut def = parse_xml_file(&name);
     assert_eq!(str_of(get(&def, "id")), id, "case file names another id");
     let mut responses = Vec::new();
-    let Value::Map(dm) = &mut def else { panic!("case not a map") };
-    let Some(Value::Array(steps)) = dm.get_mut(b"steps".as_slice()) else { panic!("no steps") };
+    let Value::Map(dm) = &mut def else {
+        panic!("case not a map")
+    };
+    let Some(Value::Array(steps)) = dm.get_mut(b"steps".as_slice()) else {
+        panic!("no steps")
+    };
     for step in steps.iter_mut() {
         let mut result = Value::Undefined;
         if has(step, "response") {
@@ -82,7 +89,9 @@ pub fn load_case(id: &str) -> Case {
         {
             for hook in hooks.iter_mut() {
                 let Value::Map(hm) = hook else { continue };
-                let Some(Value::Array(actions)) = hm.get_mut(b"actions".as_slice()) else { continue };
+                let Some(Value::Array(actions)) = hm.get_mut(b"actions".as_slice()) else {
+                    continue;
+                };
                 for a in actions.iter_mut() {
                     if has(a, "run_step") {
                         let r = str_of(get(get(a, "run_step"), "response"));
@@ -97,7 +106,12 @@ pub fn load_case(id: &str) -> Case {
         }
         responses.push(result);
     }
-    Case { id: id.to_string(), def, responses, files }
+    Case {
+        id: id.to_string(),
+        def,
+        responses,
+        files,
+    }
 }
 
 fn u64_list(v: &Value) -> Vec<u64> {
@@ -110,24 +124,47 @@ fn u64_list(v: &Value) -> Vec<u64> {
 /// `run_mode`: one run of a case, `{ops, final}`.
 pub fn run_mode(h: &mut Harness, c: &Case, mode: Mode) -> Value {
     let sched = get(&c.def, "sched");
-    let call_us = if has(sched, "call_us") { as_integer(get(sched, "call_us")) as u64 } else { 100 };
-    let frame_us = if has(sched, "frame_us") { as_integer(get(sched, "frame_us")) as u64 } else { 16667 };
+    let call_us = if has(sched, "call_us") {
+        as_integer(get(sched, "call_us")) as u64
+    } else {
+        100
+    };
+    let frame_us = if has(sched, "frame_us") {
+        as_integer(get(sched, "frame_us")) as u64
+    } else {
+        16667
+    };
     h.set_case(&c.id);
     h.skeleton_load(&c.def);
-    h.begin_run(mode, call_us, frame_us, u64_list(get(sched, "others_us")), u64_list(get(sched, "yield_extra_us")));
-    let Value::Array(steps) = get(&c.def, "steps") else { panic!("no steps") };
+    h.begin_run(
+        mode,
+        call_us,
+        frame_us,
+        u64_list(get(sched, "others_us")),
+        u64_list(get(sched, "yield_extra_us")),
+    );
+    let Value::Array(steps) = get(&c.def, "steps") else {
+        panic!("no steps")
+    };
     for (i, step) in steps.iter().enumerate() {
         if i > 0 && !as_boolean(get(step, "same_frame")) {
             h.next_frame();
         }
-        let ty = if has(step, "call") { get(step, "call") } else { get(step, "type") };
+        let ty = if has(step, "call") {
+            get(step, "call")
+        } else {
+            get(step, "type")
+        };
         h.step_marker(i as i32, &str_of(ty));
         h.set_disconnected(as_boolean(get(step, "disconnected")));
         h.run_step(step, &c.responses[i]);
         h.set_disconnected(false);
     }
     let ops = h.take_ops();
-    map(vec![("ops", Value::Array(ops)), ("final", h.skeleton_dump())])
+    map(vec![
+        ("ops", Value::Array(ops)),
+        ("final", h.skeleton_dump()),
+    ])
 }
 
 // ---------------------------------------------------------------------------
@@ -141,16 +178,22 @@ fn sha(v: &Value) -> Value {
 }
 
 fn is_event(op: &[u8]) -> bool {
-    !matches!(op, b"updateItem" | b"updateCategory" | b"q.getItem" | b"q.getCategory" | b"q.getVersion")
+    !matches!(
+        op,
+        b"updateItem" | b"updateCategory" | b"q.getItem" | b"q.getCategory" | b"q.getVersion"
+    )
 }
 
 /// `digest_of_run`.
 pub fn digest_of_run(run: &Value) -> Value {
-    let Value::Array(ops) = get(run, "ops") else { panic!("no ops") };
+    let Value::Array(ops) = get(run, "ops") else {
+        panic!("no ops")
+    };
     let fin = get(run, "final");
     let n = ops.len();
     let mut counts: BTreeMap<Vec<u8>, Value> = BTreeMap::new();
-    let (mut head, mut tail, mut events, mut chunks) = (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+    let (mut head, mut tail, mut events, mut chunks) =
+        (Vec::new(), Vec::new(), Vec::new(), Vec::new());
     for (i, op) in ops.iter().enumerate() {
         let kind = as_string(get(op, "op"));
         let c = counts.entry(kind.clone()).or_insert(Value::Integer(0));
@@ -184,8 +227,14 @@ pub fn digest_of_run(run: &Value) -> Value {
         ("ops_sha256", sha(get(run, "ops"))),
         ("final_sha256", sha(fin)),
         ("op_count", Value::Integer(n as i32)),
-        ("final_categories", Value::Integer(get(fin, "categories").len() as i32)),
-        ("final_items", Value::Integer(get(fin, "items").len() as i32)),
+        (
+            "final_categories",
+            Value::Integer(get(fin, "categories").len() as i32),
+        ),
+        (
+            "final_items",
+            Value::Integer(get(fin, "items").len() as i32),
+        ),
         ("counts", Value::Map(counts)),
         ("head", Value::Array(head)),
         ("tail", Value::Array(tail)),
@@ -199,8 +248,14 @@ pub fn digest_of_run(run: &Value) -> Value {
 // ---------------------------------------------------------------------------
 
 pub fn short(v: &Value) -> String {
-    let t = String::from_utf8_lossy(&vkstorm_llsd::format(Format::Notation, v, Options::default()).0).into_owned();
-    if t.len() > 400 { format!("{}...", &t[..400]) } else { t }
+    let t =
+        String::from_utf8_lossy(&vkstorm_llsd::format(Format::Notation, v, Options::default()).0)
+            .into_owned();
+    if t.len() > 400 {
+        format!("{}...", &t[..400])
+    } else {
+        t
+    }
 }
 
 fn same_kind(a: &Value, b: &Value) -> bool {
@@ -228,7 +283,10 @@ pub fn first_diff(e: &Value, a: &Value, path: &str) -> Option<String> {
             for (k, av) in am {
                 if !em.contains_key(k) {
                     let k = String::from_utf8_lossy(k);
-                    return Some(format!("{path}/{k}: expected (missing) actual {}", short(av)));
+                    return Some(format!(
+                        "{path}/{k}: expected (missing) actual {}",
+                        short(av)
+                    ));
                 }
             }
             None
@@ -250,7 +308,11 @@ pub fn first_diff(e: &Value, a: &Value, path: &str) -> Option<String> {
                 } else {
                     format!("first extra: {}", short(&aa[n]))
                 };
-                return Some(format!("{path}: expected {} entries, actual {}; {more}", ea.len(), aa.len()));
+                return Some(format!(
+                    "{path}: expected {} entries, actual {}; {more}",
+                    ea.len(),
+                    aa.len()
+                ));
             }
             None
         }
@@ -306,7 +368,11 @@ pub fn run_corpus() -> Corpus {
         sched_ms += t1.elapsed().as_secs_f64() * 1000.0;
         let large = as_boolean(get(&c.def, "large"));
         let actual = if large {
-            let full = map(vec![("case", Value::String(id.clone().into_bytes())), ("never", never), ("sched", sched)]);
+            let full = map(vec![
+                ("case", Value::String(id.clone().into_bytes())),
+                ("never", never),
+                ("sched", sched),
+            ]);
             map(vec![
                 ("case", Value::String(id.clone().into_bytes())),
                 ("sha256", sha(&full)),
@@ -314,12 +380,26 @@ pub fn run_corpus() -> Corpus {
                 ("sched", digest_of_run(get(&full, "sched"))),
             ])
         } else {
-            map(vec![("case", Value::String(id.clone().into_bytes())), ("never", never), ("sched", sched)])
+            map(vec![
+                ("case", Value::String(id.clone().into_bytes())),
+                ("never", never),
+                ("sched", sched),
+            ])
         };
-        let Value::Array(steps) = get(&c.def, "steps") else { panic!() };
+        let Value::Array(steps) = get(&c.def, "steps") else {
+            panic!()
+        };
         let calls = steps.iter().filter(|s| has(s, "call")).count();
         let hooks = steps.iter().map(|s| get(s, "hooks").len()).sum();
-        records.push(Record { id, large, actual, files: c.files, steps: steps.len(), calls, hooks });
+        records.push(Record {
+            id,
+            large,
+            actual,
+            files: c.files,
+            steps: steps.len(),
+            calls,
+            hooks,
+        });
     }
     Corpus {
         records,
@@ -334,7 +414,9 @@ pub fn run_corpus() -> Corpus {
 /// The expected file of a record, parsed.
 pub fn expected_of(r: &Record) -> Value {
     let suffix = if r.large { "digest" } else { "expected" };
-    let path = fixtures_dir().join("expected").join(format!("{}.{suffix}.llsd", r.id));
+    let path = fixtures_dir()
+        .join("expected")
+        .join(format!("{}.{suffix}.llsd", r.id));
     let bytes = read(&path);
     let (n, v) = vkstorm_llsd::parse(Format::Binary, &bytes, Limits::for_len(bytes.len()));
     assert!(n > 0, "{}: not binary LLSD", path.display());
@@ -349,7 +431,11 @@ pub fn op_total(corpus: &Corpus, mode: &str) -> usize {
         .iter()
         .map(|r| {
             let run = get(&r.actual, mode);
-            if r.large { as_integer(get(run, "op_count")) as usize } else { get(run, "ops").len() }
+            if r.large {
+                as_integer(get(run, "op_count")) as usize
+            } else {
+                get(run, "ops").len()
+            }
         })
         .sum()
 }
@@ -361,7 +447,11 @@ pub fn compare_runs(corpus: &Corpus, mode: &str) -> Vec<String> {
         let expected = expected_of(r);
         let (e, a) = (get(&expected, mode), get(&r.actual, mode));
         let key = if r.large { "ops_sha256" } else { "ops" };
-        assert!(has(e, key) && has(e, "final") == !r.large, "{}: the expected file has no {mode} run", r.id);
+        assert!(
+            has(e, key) && has(e, "final") == !r.large,
+            "{}: the expected file has no {mode} run",
+            r.id
+        );
         if to_binary(e) == to_binary(a) && str_of(get(&expected, "case")) == r.id {
             continue;
         }
@@ -372,7 +462,11 @@ pub fn compare_runs(corpus: &Corpus, mode: &str) -> Vec<String> {
                 .or_else(|| first_diff(get(e, "final"), get(a, "final"), &format!("{mode} final")))
                 .or_else(|| first_diff(e, a, mode))
         };
-        failures.push(format!("case {}: {}", r.id, detail.unwrap_or_else(|| "binary bytes differ".into())));
+        failures.push(format!(
+            "case {}: {}",
+            r.id,
+            detail.unwrap_or_else(|| "binary bytes differ".into())
+        ));
     }
     failures
 }
@@ -389,9 +483,15 @@ fn list_dir(p: &PathBuf) -> BTreeSet<String> {
 pub fn check_tree(corpus: &Corpus) -> Vec<String> {
     let root = fixtures_dir();
     let mut out = Vec::new();
-    let want_top: BTreeSet<String> =
-        [".gitattributes", "README.md", "cases", "expected"].iter().map(|s| s.to_string()).collect();
-    let mut want_cases: BTreeSet<String> = corpus.records.iter().flat_map(|r| r.files.iter().cloned()).collect();
+    let want_top: BTreeSet<String> = [".gitattributes", "README.md", "cases", "expected"]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+    let mut want_cases: BTreeSet<String> = corpus
+        .records
+        .iter()
+        .flat_map(|r| r.files.iter().cloned())
+        .collect();
     want_cases.insert("index.txt".into());
     let mut want_expected: BTreeSet<String> = BTreeSet::from(["manifest.txt".to_string()]);
     for r in &corpus.records {
@@ -399,7 +499,11 @@ pub fn check_tree(corpus: &Corpus) -> Vec<String> {
         want_expected.insert(format!("{}.{suffix}.llsd", r.id));
         want_expected.insert(format!("{}.{suffix}.txt", r.id));
     }
-    for (dir, want) in [("", &want_top), ("cases/", &want_cases), ("expected/", &want_expected)] {
+    for (dir, want) in [
+        ("", &want_top),
+        ("cases/", &want_cases),
+        ("expected/", &want_expected),
+    ] {
         let have = list_dir(&root.join(dir));
         for f in want.difference(&have) {
             out.push(format!("missing fixture file {dir}{f}"));
@@ -410,7 +514,10 @@ pub fn check_tree(corpus: &Corpus) -> Vec<String> {
     }
     let manifest = String::from_utf8(read(&root.join("expected/manifest.txt"))).unwrap();
     let mut listed = 0;
-    for line in manifest.lines().filter(|l| !l.starts_with('#') && !l.trim().is_empty()) {
+    for line in manifest
+        .lines()
+        .filter(|l| !l.starts_with('#') && !l.trim().is_empty())
+    {
         let cols: Vec<&str> = line.split(' ').collect();
         assert_eq!(cols.len(), 3, "manifest line {line}");
         let bytes = read(&root.join("expected").join(cols[1]));
@@ -420,7 +527,10 @@ pub fn check_tree(corpus: &Corpus) -> Vec<String> {
         listed += 1;
     }
     if listed != corpus.records.len() {
-        out.push(format!("manifest lists {listed} files for {} cases", corpus.records.len()));
+        out.push(format!(
+            "manifest lists {listed} files for {} cases",
+            corpus.records.len()
+        ));
     }
     out
 }

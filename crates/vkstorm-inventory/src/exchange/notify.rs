@@ -29,7 +29,12 @@ fn elements(form: &Value) -> &[Value] {
 /// in `response`, else -1.
 pub fn selected_option(notification: &Value, response: &Value) -> i32 {
     for e in elements(get(notification, "form")) {
-        if as_string(get(e, "type")) == b"button" && as_boolean(get(response, std::str::from_utf8(&as_string(get(e, "name"))).unwrap_or(""))) {
+        if as_string(get(e, "type")) == b"button"
+            && as_boolean(get(
+                response,
+                std::str::from_utf8(&as_string(get(e, "name"))).unwrap_or(""),
+            ))
+        {
             return as_integer(get(e, "index"));
         }
     }
@@ -67,7 +72,10 @@ pub fn force_response(host: &mut dyn Host, name: &str, option: i32) -> Option<(V
     }
     let key = String::from_utf8_lossy(&as_string(get(selected, "name"))).into_owned();
     insert(&mut response, &key, Value::Boolean(true));
-    host.act(Action::ForceRespond { name: name.to_owned(), response: response.clone() });
+    host.act(Action::ForceRespond {
+        name: name.to_owned(),
+        response: response.clone(),
+    });
     let mut notification = Value::Undefined;
     insert(&mut notification, "name", Value::string(name));
     insert(&mut notification, "form", form);

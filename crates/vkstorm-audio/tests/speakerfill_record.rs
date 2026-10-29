@@ -27,14 +27,14 @@
 //! expected set, so a change in either direction fails the test.
 
 use vkstorm_audio::mixer::music::{
-    FormFactor, MASK_5POINT1, MASK_5POINT1_SURROUND, MASK_7POINT1_SURROUND, MASK_QUAD, OutputLayout,
-    TransitionState, fill_mask,
+    FormFactor, MASK_5POINT1, MASK_5POINT1_SURROUND, MASK_7POINT1_SURROUND, MASK_QUAD,
+    OutputLayout, TransitionState, fill_mask,
 };
 use vkstorm_audio::mixer::{Mixer, MixerConfig};
 use vkstorm_audio::music::{
-    ChannelLayout, MusicSource, Pulled, SPEAKER_BACK_LEFT, SPEAKER_BACK_RIGHT, SPEAKER_FRONT_CENTER,
-    SPEAKER_FRONT_LEFT, SPEAKER_FRONT_RIGHT, SPEAKER_LOW_FREQUENCY, SPEAKER_SIDE_LEFT,
-    SPEAKER_SIDE_RIGHT,
+    ChannelLayout, MusicSource, Pulled, SPEAKER_BACK_LEFT, SPEAKER_BACK_RIGHT,
+    SPEAKER_FRONT_CENTER, SPEAKER_FRONT_LEFT, SPEAKER_FRONT_RIGHT, SPEAKER_LOW_FREQUENCY,
+    SPEAKER_SIDE_LEFT, SPEAKER_SIDE_RIGHT,
 };
 
 const FL: u32 = SPEAKER_FRONT_LEFT;
@@ -68,7 +68,11 @@ impl MusicSource for Source {
             }
         }
         self.produced += n;
-        Pulled { frames: n, layout: self.layout, ended: self.produced == self.total }
+        Pulled {
+            frames: n,
+            layout: self.layout,
+            ended: self.produced == self.total,
+        }
     }
 }
 
@@ -76,7 +80,11 @@ fn mixer(rate: u32, mask: u32, form_factor: FormFactor) -> Mixer {
     let channels = mask.count_ones();
     let mut m = Mixer::new(MixerConfig::viewer(rate, channels)).unwrap();
     m.set_global_volume(0.0); // effects silent: the output is the music bus
-    m.music.set_output(OutputLayout { channels, mask, form_factor });
+    m.music.set_output(OutputLayout {
+        channels,
+        mask,
+        form_factor,
+    });
     m
 }
 
@@ -118,8 +126,14 @@ fn mask_of(names: &str) -> u32 {
 fn bracketed(field: &str) -> (Vec<String>, Vec<f32>) {
     let open = field.find('[').unwrap();
     let close = field.find(']').unwrap();
-    let names = field[open + 1..close].split(',').map(str::to_owned).collect();
-    let values = field[close + 2..].split_whitespace().map(|v| v.parse::<f32>().unwrap()).collect();
+    let names = field[open + 1..close]
+        .split(',')
+        .map(str::to_owned)
+        .collect();
+    let values = field[close + 2..]
+        .split_whitespace()
+        .map(|v| v.parse::<f32>().unwrap())
+        .collect();
     (names, values)
 }
 
@@ -154,15 +168,19 @@ fn input(source: &str, name: &str) -> (u16, u32, usize) {
     match source {
         "stereo" => (2, FL | FR, if name == "L" { 0 } else { 1 }),
         // VLC L R RL RR C LFE -> FL FR FC LFE BL BR
-        "5.1" => (6, MASK_5POINT1, match name {
-            "L" => 0,
-            "R" => 1,
-            "C" => 2,
-            "LFE" => 3,
-            "RL" => 4,
-            "RR" => 5,
-            other => panic!("{other}"),
-        }),
+        "5.1" => (
+            6,
+            MASK_5POINT1,
+            match name {
+                "L" => 0,
+                "R" => 1,
+                "C" => 2,
+                "LFE" => 3,
+                "RL" => 4,
+                "RR" => 5,
+                other => panic!("{other}"),
+            },
+        ),
         "mono" => (1, FC, 0),
         other => panic!("source {other}"),
     }
@@ -191,12 +209,19 @@ fn fill_matrices() {
         let (sch, smask, sidx) = input(source, inch);
         // VLC always opened a 5.1 stream for a 5.1 source (negotiate
         // source-5.1 rows): the bus passes it through on a 5.1 device
-        let dev_mask = if source == "5.1" { MASK_5POINT1 } else { dev_mask };
+        let dev_mask = if source == "5.1" {
+            MASK_5POINT1
+        } else {
+            dev_mask
+        };
         let mut m = mixer(48000, dev_mask, FormFactor::Speakers);
         m.music.set_spatial_layout(setting);
         m.music.set_volume(1.0);
         m.music.attach(Box::new(Source {
-            layout: ChannelLayout { channels: sch, mask: smask },
+            layout: ChannelLayout {
+                channels: sch,
+                mask: smask,
+            },
             produced: 0,
             total: 1,
             channel: Some(sidx),
@@ -230,7 +255,9 @@ fn fill_matrices() {
         assert_eq!(out, expected, "{line}");
         identical += 1;
     }
-    eprintln!("fill: {rows} rows: {identical} identical, {unreachable} unreachable targets (4.0, 2.0+sides), {mono_documented} mono rows documented");
+    eprintln!(
+        "fill: {rows} rows: {identical} identical, {unreachable} unreachable targets (4.0, 2.0+sides), {mono_documented} mono rows documented"
+    );
     assert_eq!(rows, 108);
     assert_eq!(unreachable, 4);
     assert_eq!(mono_documented, 12);
@@ -316,7 +343,10 @@ fn samples(line: &str) -> Vec<(usize, f32)> {
         .filter(|f| f.starts_with('['))
         .map(|f| {
             let close = f.find(']').unwrap();
-            (f[1..close].parse().unwrap(), f[close + 2..].parse().unwrap())
+            (
+                f[1..close].parse().unwrap(),
+                f[close + 2..].parse().unwrap(),
+            )
         })
         .collect()
 }
@@ -334,7 +364,10 @@ fn gain_ramp() {
         let mut m = mixer(rate, FL | FR, FormFactor::Speakers);
         m.music.set_volume(1.0);
         m.music.attach(Box::new(Source {
-            layout: ChannelLayout { channels: 2, mask: FL | FR },
+            layout: ChannelLayout {
+                channels: 2,
+                mask: FL | FR,
+            },
             produced: 0,
             total: usize::MAX / 2,
             channel: None,
@@ -361,21 +394,29 @@ fn gain_ramp() {
         let mut m = mixer(rate, FL | FR, FormFactor::Speakers);
         m.music.set_volume(0.5);
         m.music.attach(Box::new(Source {
-            layout: ChannelLayout { channels: 2, mask: FL | FR },
+            layout: ChannelLayout {
+                channels: 2,
+                mask: FL | FR,
+            },
             produced: 0,
             total: 1,
             channel: None,
         }));
         assert_eq!(render(&mut m, 1, 1)[0], 0.125);
     }
-    eprintln!("ramp: {checked} recorded samples within 2e-5 (max |diff| {max_err:e}; both accumulate a per-sample step in float, from a target cbrt(0.25)^3 that is not exactly 0.25 here)");
+    eprintln!(
+        "ramp: {checked} recorded samples within 2e-5 (max |diff| {max_err:e}; both accumulate a per-sample step in float, from a target cbrt(0.25)^3 that is not exactly 0.25 here)"
+    );
 }
 
 #[test]
 fn fades() {
     let mut max_err = 0.0f32;
     let mut checked = 0;
-    for line in RECORD.lines().filter(|l| l.starts_with("fade rate=") && l.contains(" samples=")) {
+    for line in RECORD
+        .lines()
+        .filter(|l| l.starts_with("fade rate=") && l.contains(" samples="))
+    {
         let t: Vec<&str> = line.split_whitespace().collect();
         let rate: u32 = t[1]["rate=".len()..].parse().unwrap();
         let seconds: f32 = t[3].trim_end_matches('s').parse().unwrap();
@@ -384,16 +425,25 @@ fn fades() {
         let count: usize = t[6]["samples=".len()..].parse().unwrap();
         let info = RECORD
             .lines()
-            .find(|l| l.starts_with(&format!("fade rate={rate} {} {} initial", t[2], t[3])) && l.contains("duration_samples="))
+            .find(|l| {
+                l.starts_with(&format!("fade rate={rate} {} {} initial", t[2], t[3]))
+                    && l.contains("duration_samples=")
+            })
             .unwrap();
-        let duration: u64 = info.split_whitespace().find(|f| f.starts_with("duration_samples=")).unwrap()["duration_samples=".len()..]
+        let duration: u64 = info
+            .split_whitespace()
+            .find(|f| f.starts_with("duration_samples="))
+            .unwrap()["duration_samples=".len()..]
             .parse()
             .unwrap();
         let mut m = mixer(rate, FL | FR, FormFactor::Headphones);
         m.music.set_volume(1.0);
         m.music.set_envelope(initial);
         m.music.attach(Box::new(Source {
-            layout: ChannelLayout { channels: 2, mask: FL | FR },
+            layout: ChannelLayout {
+                channels: 2,
+                mask: FL | FR,
+            },
             produced: 0,
             total: usize::MAX / 2,
             channel: None,
@@ -409,8 +459,16 @@ fn fades() {
         // Completion at the final target sample (the record's duration),
         // once the device clock has passed it
         assert_eq!(m.music.transition_fence(), Some(duration), "{line}");
-        assert_eq!(m.music.transition_state(1, duration), TransitionState::Pending);
-        assert_eq!(m.music.transition_state(1, duration + 1), TransitionState::Complete);
+        assert_eq!(
+            m.music.transition_state(1, duration),
+            TransitionState::Pending
+        );
+        assert_eq!(
+            m.music.transition_state(1, duration + 1),
+            TransitionState::Complete
+        );
     }
-    eprintln!("fade: {checked} recorded envelope samples within 1e-6 (max |diff| {max_err:e}), 4 durations and completion frames identical");
+    eprintln!(
+        "fade: {checked} recorded envelope samples within 1e-6 (max |diff| {max_err:e}), 4 durations and completion frames identical"
+    );
 }

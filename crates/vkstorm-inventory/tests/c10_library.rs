@@ -33,7 +33,12 @@ struct Bits<'a> {
 
 impl<'a> Bits<'a> {
     fn new(data: &'a [u8]) -> Self {
-        Bits { data, pos: 0, bit: 0, nbits: 0 }
+        Bits {
+            data,
+            pos: 0,
+            bit: 0,
+            nbits: 0,
+        }
     }
 
     fn need(&mut self, n: u32) -> Result<(), String> {
@@ -109,16 +114,28 @@ impl Huffman {
     }
 }
 
-const LEN_BASE: [u16; 29] =
-    [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258];
-const LEN_EXTRA: [u8; 29] = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0];
-const DIST_BASE: [u16; 30] = [
-    1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
-    8193, 12289, 16385, 24577,
+const LEN_BASE: [u16; 29] = [
+    3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131,
+    163, 195, 227, 258,
 ];
-const DIST_EXTRA: [u8; 30] = [0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13];
+const LEN_EXTRA: [u8; 29] = [
+    0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0,
+];
+const DIST_BASE: [u16; 30] = [
+    1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537,
+    2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577,
+];
+const DIST_EXTRA: [u8; 30] = [
+    0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13,
+    13,
+];
 
-fn inflate_codes(b: &mut Bits<'_>, out: &mut Vec<u8>, lit: &Huffman, dist: &Huffman) -> Result<(), String> {
+fn inflate_codes(
+    b: &mut Bits<'_>,
+    out: &mut Vec<u8>,
+    lit: &Huffman,
+    dist: &Huffman,
+) -> Result<(), String> {
     loop {
         let sym = lit.decode(b)? as usize;
         if sym < 256 {
@@ -163,7 +180,10 @@ fn inflate(data: &[u8]) -> Result<(Vec<u8>, usize), String> {
                 if len != usize::from(!u16::from_le_bytes([hdr[2], hdr[3]])) {
                     return Err("stored block length check".into());
                 }
-                out.extend_from_slice(data.get(p + 4..p + 4 + len).ok_or("stored block truncated")?);
+                out.extend_from_slice(
+                    data.get(p + 4..p + 4 + len)
+                        .ok_or("stored block truncated")?,
+                );
                 b.pos = p + 4 + len;
             }
             1 => {
@@ -172,13 +192,20 @@ fn inflate(data: &[u8]) -> Result<(Vec<u8>, usize), String> {
                 l[144..256].fill(9);
                 l[256..280].fill(7);
                 l[280..].fill(8);
-                inflate_codes(&mut b, &mut out, &Huffman::new(&l), &Huffman::new(&[5u8; 30]))?;
+                inflate_codes(
+                    &mut b,
+                    &mut out,
+                    &Huffman::new(&l),
+                    &Huffman::new(&[5u8; 30]),
+                )?;
             }
             2 => {
                 let nlen = b.bits(5)? as usize + 257;
                 let ndist = b.bits(5)? as usize + 1;
                 let ncode = b.bits(4)? as usize + 4;
-                const ORDER: [usize; 19] = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
+                const ORDER: [usize; 19] = [
+                    16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15,
+                ];
                 let mut cl = [0u8; 19];
                 for &o in ORDER.iter().take(ncode) {
                     cl[o] = b.bits(3)? as u8;
@@ -191,7 +218,9 @@ fn inflate(data: &[u8]) -> Result<(Vec<u8>, usize), String> {
                     let (val, rep) = match sym {
                         0..=15 => (sym as u8, 1),
                         16 => {
-                            let prev = *lengths[..i].last().ok_or("repeat with no previous length")?;
+                            let prev = *lengths[..i]
+                                .last()
+                                .ok_or("repeat with no previous length")?;
                             (prev, 3 + b.bits(2)? as usize)
                         }
                         17 => (0, 3 + b.bits(3)? as usize),
@@ -220,7 +249,11 @@ fn crc32(data: &[u8]) -> u32 {
     for (n, t) in table.iter_mut().enumerate() {
         let mut c = n as u32;
         for _ in 0..8 {
-            c = if c & 1 != 0 { 0xedb8_8320 ^ (c >> 1) } else { c >> 1 };
+            c = if c & 1 != 0 {
+                0xedb8_8320 ^ (c >> 1)
+            } else {
+                c >> 1
+            };
         }
         *t = c;
     }
@@ -247,7 +280,11 @@ fn gunzip(mut data: &[u8]) -> Result<Vec<u8>, String> {
         }
         for bit in [8u8, 16] {
             if flags & bit != 0 {
-                p += data[p..].iter().position(|&c| c == 0).ok_or("unterminated header string")? + 1;
+                p += data[p..]
+                    .iter()
+                    .position(|&c| c == 0)
+                    .ok_or("unterminated header string")?
+                    + 1;
             }
         }
         if flags & 2 != 0 {
@@ -274,19 +311,36 @@ fn read_gz(name: &str) -> Vec<u8> {
 }
 
 fn unhex(h: &str) -> Vec<u8> {
-    (0..h.len()).step_by(2).map(|i| u8::from_str_radix(&h[i..i + 2], 16).unwrap()).collect()
+    (0..h.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&h[i..i + 2], 16).unwrap())
+        .collect()
 }
 
 #[test]
 fn gunzip_reads_stored_and_fixed_blocks() {
     // zlib (wbits 31) at level 0 and 9; the library files use dynamic blocks.
-    assert_eq!(gunzip(&unhex("1f8b080000000000040a010300fcff616263c241243503000000")).unwrap(), b"abc");
     assert_eq!(
-        gunzip(&unhex("1f8b080000000000020acb48cdc9c957c840905c003b7c8adf12000000")).unwrap(),
+        gunzip(&unhex(
+            "1f8b080000000000040a010300fcff616263c241243503000000"
+        ))
+        .unwrap(),
+        b"abc"
+    );
+    assert_eq!(
+        gunzip(&unhex(
+            "1f8b080000000000020acb48cdc9c957c840905c003b7c8adf12000000"
+        ))
+        .unwrap(),
         b"hello hello hello
 "
     );
-    assert!(gunzip(&unhex("1f8b080000000000020acb48cdc9c957c840905c003b7c8adf13000000")).is_err());
+    assert!(
+        gunzip(&unhex(
+            "1f8b080000000000020acb48cdc9c957c840905c003b7c8adf13000000"
+        ))
+        .is_err()
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -295,7 +349,15 @@ fn gunzip_reads_stored_and_fixed_blocks() {
 
 fn item_cols(it: &Item) -> Vec<String> {
     let o = &it.object;
-    let mut v = vec![uuid(&o.id), uuid(&o.parent), uuid(&it.asset), uuid(&o.thumbnail), d(o.asset_type.0), d(it.inv_type.0), x8(it.flags)];
+    let mut v = vec![
+        uuid(&o.id),
+        uuid(&o.parent),
+        uuid(&it.asset),
+        uuid(&o.thumbnail),
+        d(o.asset_type.0),
+        d(it.inv_type.0),
+        x8(it.flags),
+    ];
     v.extend(perm_cols(&it.permissions));
     v.extend([
         d(it.sale_info.sale_type.0),
@@ -354,7 +416,10 @@ fn elements(v: &Value) -> &[Value] {
 fn default_vcat() -> ViewerCategory {
     ViewerCategory {
         category: Category {
-            object: Object { asset_type: AssetType(8), ..Object::default() },
+            object: Object {
+                asset_type: AssetType(8),
+                ..Object::default()
+            },
             preferred_type: FolderType(-1),
         },
         owner: [0; 16],
@@ -389,14 +454,22 @@ fn c10_lines(inventory: &Value) -> Lines {
         cols.insert(0, bl(ok));
         s.emit(&format!("c10.item.{k}"), "ret+same+item", &cols);
     }
-    s.emit("c10.summary", "counts", &[d(cats), d(cats_same), d(items), d(items_same)]);
+    s.emit(
+        "c10.summary",
+        "counts",
+        &[d(cats), d(cats_same), d(items), d(items_same)],
+    );
     s
 }
 
 /// The data lines of the gzip fixture, as `read_fixture` reads a plain one.
 fn read_gz_fixture(name: &str) -> Vec<String> {
     let text = String::from_utf8(read_gz(name)).expect("fixture lines are escaped ASCII");
-    let mut body: Vec<String> = text.split('\n').filter(|l| !l.starts_with('#')).map(str::to_owned).collect();
+    let mut body: Vec<String> = text
+        .split('\n')
+        .filter(|l| !l.starts_with('#'))
+        .map(str::to_owned)
+        .collect();
     if text.ends_with('\n') || text.is_empty() {
         body.pop();
     }

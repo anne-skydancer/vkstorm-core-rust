@@ -26,7 +26,9 @@ pub fn item_by_id(entries: &[Entry], id: &Uuid) -> Option<usize> {
 
 /// `getInventoryContents`: every entry not of type `AT_CATEGORY`.
 pub fn contents(entries: &[Entry]) -> Vec<usize> {
-    (0..entries.len()).filter(|&i| entries[i].asset_type() != AssetType::CATEGORY).collect()
+    (0..entries.len())
+        .filter(|&i| entries[i].asset_type() != AssetType::CATEGORY)
+        .collect()
 }
 
 /// `getInventoryRoot`: the last entry.
@@ -39,30 +41,45 @@ pub fn root(entries: &[Entry]) -> Option<usize> {
 pub fn item_by_asset(entries: &[Entry], asset: &Uuid) -> Option<usize> {
     entries.iter().position(|e| {
         let t = e.asset_type();
-        t != AssetType::CATEGORY && t != AssetType::NONE && e.as_item().is_some_and(|v| v.item.asset == *asset)
+        t != AssetType::CATEGORY
+            && t != AssetType::NONE
+            && e.as_item().is_some_and(|v| v.item.asset == *asset)
     })
 }
 
 /// `getInventoryItemByAsset(asset, type)`: the first item of the type with
 /// the asset; none for `AT_CATEGORY` (the C++ asserts).
-pub fn item_by_asset_and_type(entries: &[Entry], asset: &Uuid, asset_type: AssetType) -> Option<usize> {
+pub fn item_by_asset_and_type(
+    entries: &[Entry],
+    asset: &Uuid,
+    asset_type: AssetType,
+) -> Option<usize> {
     if asset_type == AssetType::CATEGORY {
         return None;
     }
-    entries
-        .iter()
-        .position(|e| e.asset_type() == asset_type && e.as_item().is_some_and(|v| v.item.asset == *asset))
+    entries.iter().position(|e| {
+        e.asset_type() == asset_type && e.as_item().is_some_and(|v| v.item.asset == *asset)
+    })
 }
 
 /// `countInventoryContents(type)`.
 pub fn count_of_type(entries: &[Entry], asset_type: AssetType) -> usize {
-    entries.iter().filter(|e| e.asset_type() == asset_type).count()
+    entries
+        .iter()
+        .filter(|e| e.asset_type() == asset_type)
+        .count()
 }
 
 /// `isAssetInInventory(item, type)` for an item with `asset`: the asset is
 /// pending, or an item of the type has it.
-pub fn is_asset_in_inventory(entries: Option<&[Entry]>, pending: &[Uuid], asset: &Uuid, asset_type: AssetType) -> bool {
+pub fn is_asset_in_inventory(
+    entries: Option<&[Entry]>,
+    pending: &[Uuid],
+    asset: &Uuid,
+    asset_type: AssetType,
+) -> bool {
     let is_fetching = pending.contains(asset);
-    let is_fetched = entries.is_some_and(|e| item_by_asset_and_type(e, asset, asset_type).is_some());
+    let is_fetched =
+        entries.is_some_and(|e| item_by_asset_and_type(e, asset, asset_type).is_some());
     is_fetched || is_fetching
 }

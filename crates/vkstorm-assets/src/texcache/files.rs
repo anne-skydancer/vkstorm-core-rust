@@ -23,7 +23,9 @@ pub fn exists(path: &str) -> bool {
 /// `LLAPRFile::readEx`: reads up to `len` bytes at `offset` into `buf`;
 /// returns the count read, 0 when the file cannot be opened.
 pub fn read_at(path: &str, offset: i64, buf: &mut [u8]) -> i32 {
-    let Ok(mut f) = File::open(path) else { return 0 };
+    let Ok(mut f) = File::open(path) else {
+        return 0;
+    };
     if offset > 0 && f.seek(SeekFrom::Start(offset as u64)).is_err() {
         return 0;
     }
@@ -93,7 +95,9 @@ pub fn delete_files_in_dir(dir: &str) -> u32 {
     let mut n = 0;
     if let Ok(rd) = fs::read_dir(dir) {
         for e in rd.flatten() {
-            if e.file_type().map(|t| t.is_file()).unwrap_or(false) && fs::remove_file(e.path()).is_ok() {
+            if e.file_type().map(|t| t.is_file()).unwrap_or(false)
+                && fs::remove_file(e.path()).is_ok()
+            {
                 n += 1;
             }
         }

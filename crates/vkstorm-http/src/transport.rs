@@ -10,16 +10,25 @@
 //! libcurl's user-data pointer.
 
 use std::collections::HashMap;
-use std::ffi::{c_char, c_int, c_long, c_void, CStr, CString};
+use std::ffi::{CStr, CString, c_char, c_int, c_long, c_void};
 use std::sync::Arc;
 
-use crate::headers::{escape_debug, header_line, parse_content_range, parse_retry_after, range_line, split_header, ContentRange};
+use crate::headers::{
+    ContentRange, escape_debug, header_line, parse_content_range, parse_retry_after, range_line,
+    split_header,
+};
 use crate::hooks::{Hooks, LogLevel, Stat};
-use crate::options::{PolicyOption, REDIRECTS_DEFAULT, REQUEST_TIMEOUT_DEFAULT, REQUEST_TIMEOUT_MAX, REQUEST_TIMEOUT_MIN, REQUEST_XFER_TIMEOUT_DEFAULT, TRACE_CURL_BODIES, TRACE_CURL_HEADERS, TRACE_OFF};
-use crate::policy::{LoopSpeed, Policy, CANCELED};
-use crate::request::{Method, RequestOp, PF_SAVE_HEADERS, PF_SCAN_RANGE_HEADER, PF_USE_RETRY_AFTER};
-use crate::status::{he, Status};
-use crate::sys::{self, SendPtr, CURL, CURLM};
+use crate::options::{
+    PolicyOption, REDIRECTS_DEFAULT, REQUEST_TIMEOUT_DEFAULT, REQUEST_TIMEOUT_MAX,
+    REQUEST_TIMEOUT_MIN, REQUEST_XFER_TIMEOUT_DEFAULT, TRACE_CURL_BODIES, TRACE_CURL_HEADERS,
+    TRACE_OFF,
+};
+use crate::policy::{CANCELED, LoopSpeed, Policy};
+use crate::request::{
+    Method, PF_SAVE_HEADERS, PF_SCAN_RANGE_HEADER, PF_USE_RETRY_AFTER, RequestOp,
+};
+use crate::status::{Status, he};
+use crate::sys::{self, CURL, CURLM, SendPtr};
 
 /// `HttpLibcurl::HandleCache`.
 struct HandleCache {
@@ -29,7 +38,10 @@ struct HandleCache {
 
 impl HandleCache {
     fn new() -> HandleCache {
-        HandleCache { template: std::ptr::null_mut(), cache: Vec::with_capacity(50) }
+        HandleCache {
+            template: std::ptr::null_mut(),
+            cache: Vec::with_capacity(50),
+        }
     }
 
     fn get(&mut self) -> *mut CURL {
@@ -84,15 +96,35 @@ unsafe impl Send for Transport {}
 
 fn check_easy(code: sys::CURLcode, option: sys::CURLoption, hooks: &dyn Hooks) {
     if code != sys::CURLE_OK {
-        hooks.log(LogLevel::Warn, &format!("libcurl error detected:  {}, curl_easy_setopt option:  {}", sys::easy_strerror(code), option));
+        hooks.log(
+            LogLevel::Warn,
+            &format!(
+                "libcurl error detected:  {}, curl_easy_setopt option:  {}",
+                sys::easy_strerror(code),
+                option
+            ),
+        );
     }
 }
 
 fn check_multi(code: sys::CURLMcode, option: Option<sys::CURLMoption>, hooks: &dyn Hooks) {
     if code != sys::CURLM_OK {
         match option {
-            Some(o) => hooks.log(LogLevel::Warn, &format!("libcurl multi error detected:  {}, curl_multi_setopt option:  {}", sys::multi_strerror(code), o)),
-            None => hooks.log(LogLevel::Warn, &format!("libcurl multi error detected:  {}", sys::multi_strerror(code))),
+            Some(o) => hooks.log(
+                LogLevel::Warn,
+                &format!(
+                    "libcurl multi error detected:  {}, curl_multi_setopt option:  {}",
+                    sys::multi_strerror(code),
+                    o
+                ),
+            ),
+            None => hooks.log(
+                LogLevel::Warn,
+                &format!(
+                    "libcurl multi error detected:  {}",
+                    sys::multi_strerror(code)
+                ),
+            ),
         }
     }
 }
@@ -106,11 +138,19 @@ unsafe fn setopt_ptr(h: *mut CURL, opt: sys::CURLoption, v: *const c_void, hooks
 }
 
 unsafe fn setopt_str(h: *mut CURL, opt: sys::CURLoption, v: &CStr, hooks: &dyn Hooks) {
-    check_easy(unsafe { sys::easy_setopt_str(h, opt, v.as_ptr()) }, opt, hooks);
+    check_easy(
+        unsafe { sys::easy_setopt_str(h, opt, v.as_ptr()) },
+        opt,
+        hooks,
+    );
 }
 
 unsafe fn msetopt_long(m: *mut CURLM, opt: sys::CURLMoption, v: c_long, hooks: &dyn Hooks) {
-    check_multi(unsafe { sys::multi_setopt_long(m, opt, v) }, Some(opt), hooks);
+    check_multi(
+        unsafe { sys::multi_setopt_long(m, opt, v) },
+        Some(opt),
+        hooks,
+    );
 }
 
 fn slist_append(list: *mut sys::curl_slist, line: &str) -> *mut sys::curl_slist {
@@ -150,7 +190,10 @@ impl Transport {
         for pclass in 0..policy_count {
             let m = unsafe { sys::curl_multi_init() };
             if m.is_null() {
-                self.hooks.log(LogLevel::Warn, "Failed to allocate multi handle in libcurl.");
+                self.hooks.log(
+                    LogLevel::Warn,
+                    "Failed to allocate multi handle in libcurl.",
+                );
             }
             self.multis.push(m);
             self.policy_updated(pclass as u32, policy);
@@ -185,13 +228,17 @@ impl Transport {
                 if msg.is_null() {
                     break;
                 }
-                let (kind, easy, result) = unsafe { ((*msg).msg, (*msg).easy_handle, (*msg).data.result) };
+                let (kind, easy, result) =
+                    unsafe { ((*msg).msg, (*msg).easy_handle, (*msg).data.result) };
                 if kind == sys::CURLMSG_DONE {
                     self.complete_request(multi, easy, result, policy, now);
                     ret = LoopSpeed::Normal;
                 } else if !self.warned_unexpected_msg {
                     self.warned_unexpected_msg = true;
-                    self.hooks.log(LogLevel::Warn, &format!("Unexpected message from libcurl.  Msg code:  {kind}"));
+                    self.hooks.log(
+                        LogLevel::Warn,
+                        &format!("Unexpected message from libcurl.  Msg code:  {kind}"),
+                    );
                 }
             }
         }
@@ -271,7 +318,10 @@ impl Transport {
         let class = policy.class_options(op.policy());
         let h = self.cache.get();
         if h.is_null() {
-            hooks.log(LogLevel::Warn, "Failed to allocate libcurl easy handle.  Continuing.");
+            hooks.log(
+                LogLevel::Warn,
+                "Failed to allocate libcurl easy handle.  Continuing.",
+            );
             return Status::llcore(he::BAD_ALLOC);
         }
         op.curl = SendPtr(h);
@@ -287,17 +337,42 @@ impl Transport {
             // supported content encoding, as the C++ did for that version.
             setopt_str(h, sys::CURLOPT_ACCEPT_ENCODING, c"", hooks);
             setopt_long(h, sys::CURLOPT_AUTOREFERER, 1, hooks);
-            setopt_long(h, sys::CURLOPT_MAXREDIRS, REDIRECTS_DEFAULT as c_long, hooks);
-            setopt_ptr(h, sys::CURLOPT_WRITEFUNCTION, write_callback as *const c_void, hooks);
+            setopt_long(
+                h,
+                sys::CURLOPT_MAXREDIRS,
+                REDIRECTS_DEFAULT as c_long,
+                hooks,
+            );
+            setopt_ptr(
+                h,
+                sys::CURLOPT_WRITEFUNCTION,
+                write_callback as *const c_void,
+                hooks,
+            );
             setopt_ptr(h, sys::CURLOPT_WRITEDATA, op_ptr, hooks);
-            setopt_ptr(h, sys::CURLOPT_READFUNCTION, read_callback as *const c_void, hooks);
+            setopt_ptr(
+                h,
+                sys::CURLOPT_READFUNCTION,
+                read_callback as *const c_void,
+                hooks,
+            );
             setopt_ptr(h, sys::CURLOPT_READDATA, op_ptr, hooks);
-            setopt_ptr(h, sys::CURLOPT_SEEKFUNCTION, seek_callback as *const c_void, hooks);
+            setopt_ptr(
+                h,
+                sys::CURLOPT_SEEKFUNCTION,
+                seek_callback as *const c_void,
+                hooks,
+            );
             setopt_ptr(h, sys::CURLOPT_SEEKDATA, op_ptr, hooks);
             setopt_str(h, sys::CURLOPT_COOKIEFILE, c"", hooks);
             setopt_str(h, sys::CURLOPT_USERAGENT, &self.user_agent, hooks);
             if global.ssl_ctx_callback {
-                setopt_ptr(h, sys::CURLOPT_SSL_CTX_FUNCTION, ssl_ctx_callback as *const c_void, hooks);
+                setopt_ptr(
+                    h,
+                    sys::CURLOPT_SSL_CTX_FUNCTION,
+                    ssl_ctx_callback as *const c_void,
+                    hooks,
+                );
                 setopt_ptr(h, sys::CURLOPT_SSL_CTX_DATA, op_ptr, hooks);
             }
         }
@@ -321,7 +396,12 @@ impl Transport {
             setopt_long(h, sys::CURLOPT_SSL_VERIFYHOST, ssl_host, hooks);
             setopt_long(h, sys::CURLOPT_NOBODY, nobody, hooks);
             if last_modified != 0 {
-                setopt_long(h, sys::CURLOPT_TIMECONDITION, sys::CURL_TIMECOND_IFMODSINCE, hooks);
+                setopt_long(
+                    h,
+                    sys::CURLOPT_TIMECONDITION,
+                    sys::CURL_TIMECOND_IFMODSINCE,
+                    hooks,
+                );
                 setopt_long(h, sys::CURLOPT_TIMEVALUE, last_modified as c_long, hooks);
             }
             setopt_long(h, sys::CURLOPT_DNS_CACHE_TIMEOUT, dns_cache_timeout, hooks);
@@ -363,7 +443,9 @@ impl Transport {
                 setopt_long(h, sys::CURLOPT_INFILESIZE, body_size, hooks);
                 slist = slist_append(slist, "Expect:");
             },
-            Method::Delete => unsafe { setopt_str(h, sys::CURLOPT_CUSTOMREQUEST, c"DELETE", hooks) },
+            Method::Delete => unsafe {
+                setopt_str(h, sys::CURLOPT_CUSTOMREQUEST, c"DELETE", hooks)
+            },
             Method::Copy => unsafe { setopt_str(h, sys::CURLOPT_CUSTOMREQUEST, c"COPY", hooks) },
             Method::Move => unsafe { setopt_str(h, sys::CURLOPT_CUSTOMREQUEST, c"MOVE", hooks) },
         }
@@ -373,7 +455,12 @@ impl Transport {
             unsafe {
                 setopt_long(h, sys::CURLOPT_VERBOSE, 1, hooks);
                 setopt_ptr(h, sys::CURLOPT_DEBUGDATA, op_ptr, hooks);
-                setopt_ptr(h, sys::CURLOPT_DEBUGFUNCTION, debug_callback as *const c_void, hooks);
+                setopt_ptr(
+                    h,
+                    sys::CURLOPT_DEBUGFUNCTION,
+                    debug_callback as *const c_void,
+                    hooks,
+                );
             }
         }
         if (op.req.offset != 0 || op.req.length != 0) && op.req.method == Method::Get {
@@ -384,7 +471,9 @@ impl Transport {
         let mut xfer_timeout = REQUEST_XFER_TIMEOUT_DEFAULT;
         if let Some(o) = &op.req.options {
             timeout = o.timeout.clamp(REQUEST_TIMEOUT_MIN, REQUEST_TIMEOUT_MAX);
-            xfer_timeout = o.transfer_timeout.clamp(REQUEST_TIMEOUT_MIN, REQUEST_TIMEOUT_MAX);
+            xfer_timeout = o
+                .transfer_timeout
+                .clamp(REQUEST_TIMEOUT_MIN, REQUEST_TIMEOUT_MAX);
         }
         if xfer_timeout == 0 {
             xfer_timeout = timeout;
@@ -394,7 +483,14 @@ impl Transport {
             // timeout. HTTP/2 only under the VIEWERASSET override, as before.
             xfer_timeout *= 2;
             if std::env::var_os("VIEWERASSET").is_some() {
-                unsafe { setopt_long(h, sys::CURLOPT_HTTP_VERSION, sys::CURL_HTTP_VERSION_2_0, hooks) };
+                unsafe {
+                    setopt_long(
+                        h,
+                        sys::CURLOPT_HTTP_VERSION,
+                        sys::CURL_HTTP_VERSION_2_0,
+                        hooks,
+                    )
+                };
             }
         }
         unsafe {
@@ -408,7 +504,12 @@ impl Transport {
         unsafe { setopt_ptr(h, sys::CURLOPT_HTTPHEADER, slist as *const c_void, hooks) };
         if op.proc_flags & (PF_SCAN_RANGE_HEADER | PF_SAVE_HEADERS | PF_USE_RETRY_AFTER) != 0 {
             unsafe {
-                setopt_ptr(h, sys::CURLOPT_HEADERFUNCTION, header_callback as *const c_void, hooks);
+                setopt_ptr(
+                    h,
+                    sys::CURLOPT_HEADERFUNCTION,
+                    header_callback as *const c_void,
+                    hooks,
+                );
                 setopt_ptr(h, sys::CURLOPT_HEADERDATA, op_ptr, hooks);
             }
         }
@@ -434,19 +535,38 @@ impl Transport {
         self.cache.free(op.curl.0);
         op.curl = SendPtr::null();
         if op.common.tracing > TRACE_OFF {
-            self.hooks.log(LogLevel::Info, &format!("TRACE, RequestCanceled, Handle:  {}, Status:  {}", op.handle(), op.status.terse()));
+            self.hooks.log(
+                LogLevel::Info,
+                &format!(
+                    "TRACE, RequestCanceled, Handle:  {}, Status:  {}",
+                    op.handle(),
+                    op.status.terse()
+                ),
+            );
         }
         op.status = CANCELED;
         deliver_cancelled(op);
     }
 
     /// `HttpLibcurl::completeRequest`.
-    fn complete_request(&mut self, multi: *mut CURLM, handle: *mut CURL, result: sys::CURLcode, policy: &mut Policy, now: u64) {
+    fn complete_request(
+        &mut self,
+        multi: *mut CURLM,
+        handle: *mut CURL,
+        result: sys::CURLcode,
+        policy: &mut Policy,
+        now: u64,
+    ) {
         let hooks = self.hooks.clone();
         let mut priv_ptr: *mut c_void = std::ptr::null_mut();
         let ccode = unsafe { sys::easy_getinfo_ptr(handle, sys::CURLINFO_PRIVATE, &mut priv_ptr) };
         if ccode != sys::CURLE_OK || priv_ptr.is_null() {
-            hooks.log(LogLevel::Warn, &format!("libcurl error: {ccode} Unable to retrieve operation handle from CURL handle"));
+            hooks.log(
+                LogLevel::Warn,
+                &format!(
+                    "libcurl error: {ccode} Unable to retrieve operation handle from CURL handle"
+                ),
+            );
             return;
         }
         // SAFETY: the pointer is the request record we gave libcurl, kept
@@ -467,28 +587,45 @@ impl Transport {
 
         // The verification callback's decision, when it failed the request.
         if op.ssl.result_code != 0 {
-            op.status = Status { kind: op.ssl.result_type, code: op.ssl.result_code };
+            op.status = Status {
+                kind: op.ssl.result_type,
+                code: op.ssl.result_code,
+            };
         }
         if op.status.is_ok() {
             op.status = Status::easy(result);
         }
         if op.status.is_ok() {
             let mut http_status: c_long = 200;
-            let ccode = unsafe { sys::easy_getinfo_long(handle, sys::CURLINFO_RESPONSE_CODE, &mut http_status) };
+            let ccode = unsafe {
+                sys::easy_getinfo_long(handle, sys::CURLINFO_RESPONSE_CODE, &mut http_status)
+            };
             if ccode == sys::CURLE_OK {
                 if (100..=999).contains(&http_status) {
                     let mut cont_type: *const c_char = std::ptr::null();
-                    let ccode = unsafe { sys::easy_getinfo_str(handle, sys::CURLINFO_CONTENT_TYPE, &mut cont_type) };
+                    let ccode = unsafe {
+                        sys::easy_getinfo_str(handle, sys::CURLINFO_CONTENT_TYPE, &mut cont_type)
+                    };
                     if ccode == sys::CURLE_OK {
                         if !cont_type.is_null() {
-                            op.content_type = unsafe { CStr::from_ptr(cont_type) }.to_string_lossy().into_owned();
+                            op.content_type = unsafe { CStr::from_ptr(cont_type) }
+                                .to_string_lossy()
+                                .into_owned();
                         }
                     } else {
-                        hooks.log(LogLevel::Warn, &format!("CURL error:{ccode} Attempting to get content type."));
+                        hooks.log(
+                            LogLevel::Warn,
+                            &format!("CURL error:{ccode} Attempting to get content type."),
+                        );
                     }
                     op.status = Status::http(http_status as i32);
                 } else {
-                    hooks.log(LogLevel::Warn, &format!("Invalid HTTP response code ({http_status}) received from server."));
+                    hooks.log(
+                        LogLevel::Warn,
+                        &format!(
+                            "Invalid HTTP response code ({http_status}) received from server."
+                        ),
+                    );
                     op.status = Status::llcore(he::INVALID_HTTP_STATUS);
                 }
             } else {
@@ -497,9 +634,17 @@ impl Transport {
         }
         // The transfer statistics, read while the handle still holds them.
         unsafe {
-            sys::easy_getinfo_double(handle, sys::CURLINFO_SIZE_DOWNLOAD, &mut op.stats.size_download);
+            sys::easy_getinfo_double(
+                handle,
+                sys::CURLINFO_SIZE_DOWNLOAD,
+                &mut op.stats.size_download,
+            );
             sys::easy_getinfo_double(handle, sys::CURLINFO_TOTAL_TIME, &mut op.stats.total_time);
-            sys::easy_getinfo_double(handle, sys::CURLINFO_SPEED_DOWNLOAD, &mut op.stats.speed_download);
+            sys::easy_getinfo_double(
+                handle,
+                sys::CURLINFO_SPEED_DOWNLOAD,
+                &mut op.stats.speed_download,
+            );
         }
 
         // Pipelining sanity checks: an X-LL-URL header naming another
@@ -510,19 +655,34 @@ impl Transport {
         if !op.xll_url.is_empty() {
             let mut uri = op.req.url.clone();
             if let Some(i) = uri.find("://")
-                && let Some(j) = uri[i + 3..].find('/') {
-                    uri = uri[i + 3 + j..].to_owned();
-                }
+                && let Some(j) = uri[i + 3..].find('/')
+            {
+                uri = uri[i + 3 + j..].to_owned();
+            }
             if uri != op.xll_url {
-                hooks.log(LogLevel::Warn, &format!("HTTP pipelining out of sync! Asked for: {} got {}", uri, op.xll_url));
+                hooks.log(
+                    LogLevel::Warn,
+                    &format!(
+                        "HTTP pipelining out of sync! Asked for: {} got {}",
+                        uri, op.xll_url
+                    ),
+                );
                 op.status = Status::http(503);
                 failed = true;
             }
         }
-        if !failed && (op.req.offset != 0 || op.req.length != 0)
-            && op.status == Status::http(206) && (op.req.offset != op.reply_offset || (op.req.length != 0 && op.req.length < op.reply_length)) {
-                let wanted_end = if op.req.length != 0 { format!("{}", op.req.offset + op.req.length - 1) } else { String::new() };
-                hooks.log(
+        if !failed
+            && (op.req.offset != 0 || op.req.length != 0)
+            && op.status == Status::http(206)
+            && (op.req.offset != op.reply_offset
+                || (op.req.length != 0 && op.req.length < op.reply_length))
+        {
+            let wanted_end = if op.req.length != 0 {
+                format!("{}", op.req.offset + op.req.length - 1)
+            } else {
+                String::new()
+            };
+            hooks.log(
                     LogLevel::Warn,
                     &format!(
                         "HTTP pipelining possibly out of sync, request wanted: {}-{} got: {}-{} url: {}",
@@ -533,9 +693,9 @@ impl Transport {
                         op.req.url
                     ),
                 );
-                op.status = Status::http(503);
-                failed = true;
-            }
+            op.status = Status::http(503);
+            failed = true;
+        }
         if failed {
             for i in 0..self.multis.len() {
                 let options = policy.class_options_mut(i as u32);
@@ -550,11 +710,23 @@ impl Transport {
             unsafe { sys::curl_multi_remove_handle(multi, handle) };
             self.cache.free(op.curl.0);
         } else {
-            hooks.log(LogLevel::Warn, &format!("Curl multi_handle or handle is NULL on remove! multi:{multi:?} h:{handle:?}"));
+            hooks.log(
+                LogLevel::Warn,
+                &format!(
+                    "Curl multi_handle or handle is NULL on remove! multi:{multi:?} h:{handle:?}"
+                ),
+            );
         }
         op.curl = SendPtr::null();
         if op.common.tracing > TRACE_OFF {
-            hooks.log(LogLevel::Info, &format!("TRACE, RequestComplete, Handle:  {}, Status:  {}", op.handle(), op.status.terse()));
+            hooks.log(
+                LogLevel::Info,
+                &format!(
+                    "TRACE, RequestComplete, Handle:  {}, Status:  {}",
+                    op.handle(),
+                    op.status.terse()
+                ),
+            );
         }
         if let Some(op) = policy.stage_after_completion(op, now, &*hooks) {
             deliver(op, &*hooks);
@@ -567,7 +739,10 @@ impl Transport {
 
     /// `HttpLibcurl::getActiveCountInClass`.
     pub fn active_count_in_class(&self, pclass: u32) -> i32 {
-        self.active_counts.get(pclass as usize).copied().unwrap_or(0)
+        self.active_counts
+            .get(pclass as usize)
+            .copied()
+            .unwrap_or(0)
     }
 
     /// `HttpLibcurl::policyUpdated`: applies the class's connection and
@@ -589,13 +764,33 @@ impl Transport {
             unsafe {
                 if options.pipelining > 1 {
                     msetopt_long(multi, sys::CURLMOPT_PIPELINING, 1, &*hooks);
-                    msetopt_long(multi, sys::CURLMOPT_MAX_PIPELINE_LENGTH, options.pipelining as c_long, &*hooks);
-                    msetopt_long(multi, sys::CURLMOPT_MAX_HOST_CONNECTIONS, options.per_host_connection_limit as c_long, &*hooks);
-                    msetopt_long(multi, sys::CURLMOPT_MAX_TOTAL_CONNECTIONS, options.connection_limit as c_long, &*hooks);
+                    msetopt_long(
+                        multi,
+                        sys::CURLMOPT_MAX_PIPELINE_LENGTH,
+                        options.pipelining as c_long,
+                        &*hooks,
+                    );
+                    msetopt_long(
+                        multi,
+                        sys::CURLMOPT_MAX_HOST_CONNECTIONS,
+                        options.per_host_connection_limit as c_long,
+                        &*hooks,
+                    );
+                    msetopt_long(
+                        multi,
+                        sys::CURLMOPT_MAX_TOTAL_CONNECTIONS,
+                        options.connection_limit as c_long,
+                        &*hooks,
+                    );
                 } else {
                     msetopt_long(multi, sys::CURLMOPT_PIPELINING, 0, &*hooks);
                     msetopt_long(multi, sys::CURLMOPT_MAX_HOST_CONNECTIONS, 0, &*hooks);
-                    msetopt_long(multi, sys::CURLMOPT_MAX_TOTAL_CONNECTIONS, options.connection_limit as c_long, &*hooks);
+                    msetopt_long(
+                        multi,
+                        sys::CURLMOPT_MAX_TOTAL_CONNECTIONS,
+                        options.connection_limit as c_long,
+                        &*hooks,
+                    );
                 }
             }
         } else if !self.dirty[i] {
@@ -635,7 +830,10 @@ impl Drop for Transport {
 /// finished request, after the check that a `Content-Range` reply carried
 /// as many bytes as it declared.
 pub fn deliver(mut op: Box<RequestOp>, _hooks: &dyn Hooks) {
-    if op.reply_length != 0 && !op.reply_body.is_empty() && op.reply_length != op.reply_body.len() as u64 {
+    if op.reply_length != 0
+        && !op.reply_body.is_empty()
+        && op.reply_length != op.reply_body.len() as u64
+    {
         op.status = Status::llcore(he::INV_CONTENT_RANGE_HDR);
     }
     if !op.slist.is_null() {
@@ -643,9 +841,13 @@ pub fn deliver(mut op: Box<RequestOp>, _hooks: &dyn Hooks) {
         op.slist = SendPtr::null();
     }
     if op.common.tracing > TRACE_OFF
-        && let Some(h) = &op.hooks {
-            h.log(LogLevel::Info, &format!("TRACE, ToReplyQueue, Handle:  {}", op.handle()));
-        }
+        && let Some(h) = &op.hooks
+    {
+        h.log(
+            LogLevel::Info,
+            &format!("TRACE, ToReplyQueue, Handle:  {}", op.handle()),
+        );
+    }
     push_reply(op);
 }
 
@@ -694,7 +896,12 @@ unsafe fn op_from<'a>(userdata: *mut c_void) -> &'a mut RequestOp {
     unsafe { &mut *(userdata as *mut RequestOp) }
 }
 
-unsafe extern "C" fn write_callback(data: *mut c_char, size: usize, nmemb: usize, userdata: *mut c_void) -> usize {
+unsafe extern "C" fn write_callback(
+    data: *mut c_char,
+    size: usize,
+    nmemb: usize,
+    userdata: *mut c_void,
+) -> usize {
     let op = unsafe { op_from(userdata) };
     let n = size * nmemb;
     let bytes = unsafe { std::slice::from_raw_parts(data as *const u8, n) };
@@ -705,7 +912,12 @@ unsafe extern "C" fn write_callback(data: *mut c_char, size: usize, nmemb: usize
     n
 }
 
-unsafe extern "C" fn read_callback(data: *mut c_char, size: usize, nmemb: usize, userdata: *mut c_void) -> usize {
+unsafe extern "C" fn read_callback(
+    data: *mut c_char,
+    size: usize,
+    nmemb: usize,
+    userdata: *mut c_void,
+) -> usize {
     let op = unsafe { op_from(userdata) };
     let Some(body) = &op.req.body else {
         return 0;
@@ -713,13 +925,19 @@ unsafe extern "C" fn read_callback(data: *mut c_char, size: usize, nmemb: usize,
     let req_size = size * nmemb;
     if body.len() <= op.body_pos {
         if body.len() < op.body_pos
-            && let Some(h) = &op.hooks {
-                h.log(LogLevel::Warn, "Request body position beyond body size.  Truncating request body.");
-            }
+            && let Some(h) = &op.hooks
+        {
+            h.log(
+                LogLevel::Warn,
+                "Request body position beyond body size.  Truncating request body.",
+            );
+        }
         return 0;
     }
     let do_size = req_size.min(body.len() - op.body_pos);
-    unsafe { std::ptr::copy_nonoverlapping(body.as_ptr().add(op.body_pos), data as *mut u8, do_size) };
+    unsafe {
+        std::ptr::copy_nonoverlapping(body.as_ptr().add(op.body_pos), data as *mut u8, do_size)
+    };
     if let Some(h) = &op.hooks {
         h.stat(Stat::DataUp, do_size as u64);
     }
@@ -727,7 +945,11 @@ unsafe extern "C" fn read_callback(data: *mut c_char, size: usize, nmemb: usize,
     do_size
 }
 
-unsafe extern "C" fn seek_callback(userdata: *mut c_void, offset: sys::curl_off_t, origin: c_int) -> c_int {
+unsafe extern "C" fn seek_callback(
+    userdata: *mut c_void,
+    offset: sys::curl_off_t,
+    origin: c_int,
+) -> c_int {
     let op = unsafe { op_from(userdata) };
     let Some(body) = &op.req.body else {
         return sys::CURL_SEEKFUNC_OK;
@@ -744,7 +966,10 @@ unsafe extern "C" fn seek_callback(userdata: *mut c_void, offset: sys::curl_off_
     // The C++ compared through size_t, so a negative position is huge.
     if new_pos as u64 as usize >= body.len() {
         if let Some(h) = &op.hooks {
-            h.log(LogLevel::Warn, "Attempt to seek to position outside post body.");
+            h.log(
+                LogLevel::Warn,
+                "Attempt to seek to position outside post body.",
+            );
         }
         return sys::CURL_SEEKFUNC_CANTSEEK;
     }
@@ -752,7 +977,12 @@ unsafe extern "C" fn seek_callback(userdata: *mut c_void, offset: sys::curl_off_
     sys::CURL_SEEKFUNC_OK
 }
 
-unsafe extern "C" fn header_callback(data: *mut c_char, size: usize, nmemb: usize, userdata: *mut c_void) -> usize {
+unsafe extern "C" fn header_callback(
+    data: *mut c_char,
+    size: usize,
+    nmemb: usize,
+    userdata: *mut c_void,
+) -> usize {
     let op = unsafe { op_from(userdata) };
     let hdr_size = size * nmemb;
     let hdr = unsafe { std::slice::from_raw_parts(data as *const u8, hdr_size) };
@@ -776,37 +1006,60 @@ unsafe extern "C" fn header_callback(data: *mut c_char, size: usize, nmemb: usiz
         return hdr_size;
     };
     if let Some(v) = &value
-        && name == "x-ll-url" {
-            op.xll_url = v.clone();
-        }
-    if is_header && op.proc_flags & PF_SAVE_HEADERS != 0 {
-        op.reply_headers.get_or_insert_with(Vec::new).push((name.clone(), value.clone().unwrap_or_default()));
+        && name == "x-ll-url"
+    {
+        op.xll_url = v.clone();
     }
-    if is_header && op.proc_flags & PF_SCAN_RANGE_HEADER != 0 && name == "content-range"
-        && let Some(v) = value.as_deref().filter(|v| !v.is_empty()) {
-            match parse_content_range(v) {
-                ContentRange::Valid { first, last, length } => {
-                    op.reply_offset = first as u64;
-                    op.reply_length = (last - first + 1) as u64;
-                    op.reply_full_length = length as u64;
-                }
-                ContentRange::Invalid => op.status = Status::llcore(he::INV_CONTENT_RANGE_HDR),
-                ContentRange::Unparsed => {
-                    if let Some(h) = &op.hooks {
-                        h.log(LogLevel::Info, &format!("Problem parsing odd Content-Range header:  '{}'.  Ignoring.", String::from_utf8_lossy(hdr).trim_end()));
-                    }
+    if is_header && op.proc_flags & PF_SAVE_HEADERS != 0 {
+        op.reply_headers
+            .get_or_insert_with(Vec::new)
+            .push((name.clone(), value.clone().unwrap_or_default()));
+    }
+    if is_header
+        && op.proc_flags & PF_SCAN_RANGE_HEADER != 0
+        && name == "content-range"
+        && let Some(v) = value.as_deref().filter(|v| !v.is_empty())
+    {
+        match parse_content_range(v) {
+            ContentRange::Valid {
+                first,
+                last,
+                length,
+            } => {
+                op.reply_offset = first as u64;
+                op.reply_length = (last - first + 1) as u64;
+                op.reply_full_length = length as u64;
+            }
+            ContentRange::Invalid => op.status = Status::llcore(he::INV_CONTENT_RANGE_HDR),
+            ContentRange::Unparsed => {
+                if let Some(h) = &op.hooks {
+                    h.log(
+                        LogLevel::Info,
+                        &format!(
+                            "Problem parsing odd Content-Range header:  '{}'.  Ignoring.",
+                            String::from_utf8_lossy(hdr).trim_end()
+                        ),
+                    );
                 }
             }
         }
-    if is_header && op.proc_flags & PF_USE_RETRY_AFTER != 0 && name == "retry-after"
+    }
+    if is_header
+        && op.proc_flags & PF_USE_RETRY_AFTER != 0
+        && name == "retry-after"
         && let Some(v) = value.as_deref().filter(|v| !v.is_empty())
-            && let Some(t) = parse_retry_after(v) {
-                op.retry_after = t;
-            }
+        && let Some(t) = parse_retry_after(v)
+    {
+        op.retry_after = t;
+    }
     hdr_size
 }
 
-unsafe extern "C" fn ssl_ctx_callback(_curl: *mut CURL, ssl_ctx: *mut c_void, userdata: *mut c_void) -> sys::CURLcode {
+unsafe extern "C" fn ssl_ctx_callback(
+    _curl: *mut CURL,
+    ssl_ctx: *mut c_void,
+    userdata: *mut c_void,
+) -> sys::CURLcode {
     let op = unsafe { op_from(userdata) };
     if let Some(h) = op.hooks.clone() {
         h.ssl_ctx(ssl_ctx, &mut op.ssl);
@@ -814,7 +1067,13 @@ unsafe extern "C" fn ssl_ctx_callback(_curl: *mut CURL, ssl_ctx: *mut c_void, us
     sys::CURLE_OK
 }
 
-unsafe extern "C" fn debug_callback(_curl: *mut CURL, info: sys::curl_infotype, buffer: *mut c_char, len: usize, userdata: *mut c_void) -> c_int {
+unsafe extern "C" fn debug_callback(
+    _curl: *mut CURL,
+    info: sys::curl_infotype,
+    buffer: *mut c_char,
+    len: usize,
+    userdata: *mut c_void,
+) -> c_int {
     let op = unsafe { op_from(userdata) };
     let Some(hooks) = op.hooks.clone() else {
         return 0;
@@ -824,16 +1083,38 @@ unsafe extern "C" fn debug_callback(_curl: *mut CURL, info: sys::curl_infotype, 
     let tracing = op.common.tracing;
     let (tag, line) = match info {
         sys::CURLINFO_TEXT if tracing >= TRACE_CURL_HEADERS => ("TEXT", escape_debug(data, true)),
-        sys::CURLINFO_HEADER_IN if tracing >= TRACE_CURL_HEADERS => ("HEADERIN", escape_debug(data, true)),
-        sys::CURLINFO_HEADER_OUT if tracing >= TRACE_CURL_HEADERS => ("HEADEROUT", escape_debug(data, true)),
-        sys::CURLINFO_DATA_IN if tracing >= TRACE_CURL_HEADERS => {
-            ("DATAIN", if tracing >= TRACE_CURL_BODIES { escape_debug(data, false) } else { format!("{len} Bytes") })
+        sys::CURLINFO_HEADER_IN if tracing >= TRACE_CURL_HEADERS => {
+            ("HEADERIN", escape_debug(data, true))
         }
-        sys::CURLINFO_DATA_OUT if tracing >= TRACE_CURL_HEADERS => {
-            ("DATAOUT", if tracing >= TRACE_CURL_BODIES { escape_debug(data, false) } else { format!("{len} Bytes") })
+        sys::CURLINFO_HEADER_OUT if tracing >= TRACE_CURL_HEADERS => {
+            ("HEADEROUT", escape_debug(data, true))
         }
+        sys::CURLINFO_DATA_IN if tracing >= TRACE_CURL_HEADERS => (
+            "DATAIN",
+            if tracing >= TRACE_CURL_BODIES {
+                escape_debug(data, false)
+            } else {
+                format!("{len} Bytes")
+            },
+        ),
+        sys::CURLINFO_DATA_OUT if tracing >= TRACE_CURL_HEADERS => (
+            "DATAOUT",
+            if tracing >= TRACE_CURL_BODIES {
+                escape_debug(data, false)
+            } else {
+                format!("{len} Bytes")
+            },
+        ),
         _ => return 0,
     };
-    hooks.log(LogLevel::Info, &format!("TRACE, LibcurlDebug, Handle:  {}, Type:  {}, Data:  {}", op.handle(), tag, line));
+    hooks.log(
+        LogLevel::Info,
+        &format!(
+            "TRACE, LibcurlDebug, Handle:  {}, Type:  {}, Data:  {}",
+            op.handle(),
+            tag,
+            line
+        ),
+    );
     0
 }

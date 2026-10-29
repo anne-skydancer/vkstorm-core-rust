@@ -27,19 +27,21 @@ use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 
 use common::*;
-use vkstorm_inventory::item::Item;
-use vkstorm_inventory::perms::PERM_ALL;
 use vkstorm_inventory::aggregate::AggregatePermissions;
 use vkstorm_inventory::category::Category;
 use vkstorm_inventory::category_obj::Category as LLCategory;
+use vkstorm_inventory::item::Item;
 use vkstorm_inventory::message::{
-    pack_aggregate, pack_category, pack_item, pack_item_block, pack_llcategory, pack_sale, pack_viewer_category, pack_viewer_item,
-    unpack_aggregate, unpack_category, unpack_item, unpack_llcategory, unpack_sale, FolderBlockKeys, ItemBlock, ItemBlockKeys,
-    SaleKeys,
+    FolderBlockKeys, ItemBlock, ItemBlockKeys, SaleKeys, pack_aggregate, pack_category, pack_item,
+    pack_item_block, pack_llcategory, pack_sale, pack_viewer_category, pack_viewer_item,
+    unpack_aggregate, unpack_category, unpack_item, unpack_llcategory, unpack_sale,
 };
+use vkstorm_inventory::perms::PERM_ALL;
 use vkstorm_inventory::perms::{PERM_COPY, PERM_MODIFY, PERM_TRANSFER};
 use vkstorm_inventory::sale::{SaleInfo, SaleType};
-use vkstorm_messages::{parse_template, Builder, Reader, Template, Tokenizer, VarType, MAX_BUFFER_SIZE, PACKET_ID_SIZE};
+use vkstorm_messages::{
+    Builder, MAX_BUFFER_SIZE, PACKET_ID_SIZE, Reader, Template, Tokenizer, VarType, parse_template,
+};
 
 // ---------------------------------------------------------------------------
 // The message system (the tool's built_bytes, packet_hex, dispatch)
@@ -61,15 +63,29 @@ const TASK_INVENTORY_ITEM_KEY: u8 = 0;
 
 impl Messages {
     fn load() -> Messages {
-        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../vkstorm-messages/tests/fixtures/message_template.msg");
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../vkstorm-messages/tests/fixtures/message_template.msg"
+        );
         let text = std::fs::read_to_string(path).unwrap_or_else(|e| panic!("{path}: {e}"));
         let file = parse_template(&mut Tokenizer::new(&text)).expect("message template parses");
-        let by_name = file.messages.into_iter().map(|t| (t.name.clone(), Arc::new(t.with_index_keys()))).collect();
-        Messages { by_name, builder: Builder::new(), reader: Reader::new() }
+        let by_name = file
+            .messages
+            .into_iter()
+            .map(|t| (t.name.clone(), Arc::new(t.with_index_keys())))
+            .collect();
+        Messages {
+            by_name,
+            builder: Builder::new(),
+            reader: Reader::new(),
+        }
     }
 
     fn template(&self, name: &str) -> Arc<Template> {
-        self.by_name.get(name).unwrap_or_else(|| panic!("no message {name}")).clone()
+        self.by_name
+            .get(name)
+            .unwrap_or_else(|| panic!("no message {name}"))
+            .clone()
     }
 
     /// `newMessageFast`: the message's template.
@@ -86,14 +102,22 @@ impl Messages {
 
     /// `add*Fast` of a fixed-size variable by name.
     fn add(&mut self, t: &Template, block: &str, var: &str, data: &[u8], ty: VarType) {
-        let key = t.block_by_name(block).unwrap().variable_by_name(var).unwrap().key;
+        let key = t
+            .block_by_name(block)
+            .unwrap()
+            .variable_by_name(var)
+            .unwrap()
+            .key;
         self.builder.add_data(key, data, ty).unwrap();
     }
 
     /// `built_bytes`: the built message, its header zeroed.
     fn built_bytes(&mut self) -> Vec<u8> {
         let mut buf = vec![0u8; MAX_BUFFER_SIZE];
-        let n = self.builder.build_message(&mut buf, 0).expect("message builds");
+        let n = self
+            .builder
+            .build_message(&mut buf, 0)
+            .expect("message builds");
         buf.truncate(n);
         self.builder.clear_message();
         for b in buf.iter_mut().take(PACKET_ID_SIZE) {
@@ -107,13 +131,19 @@ impl Messages {
         let t = self.template(name);
         self.reader.set_message(t.clone(), bytes.len() as i32);
         let outcome = self.reader.decode_data(bytes);
-        assert!(outcome.ran_off_end.is_empty(), "{name}: {:?}", outcome.ran_off_end);
+        assert!(
+            outcome.ran_off_end.is_empty(),
+            "{name}: {:?}",
+            outcome.ran_off_end
+        );
         t
     }
 }
 
 fn block_key(t: &Template, block: &str) -> u64 {
-    t.block_by_name(block).unwrap_or_else(|| panic!("no block {block} in {}", t.name)).key
+    t.block_by_name(block)
+        .unwrap_or_else(|| panic!("no block {block} in {}", t.name))
+        .key
 }
 
 fn item_keys(t: &Template, block: &str) -> ItemBlockKeys {
@@ -122,7 +152,11 @@ fn item_keys(t: &Template, block: &str) -> ItemBlockKeys {
 
 /// `packet_hex`.
 fn packet_hex(b: &[u8]) -> String {
-    if b.len() > PACKET_ID_SIZE { hex(&b[PACKET_ID_SIZE..]) } else { String::new() }
+    if b.len() > PACKET_ID_SIZE {
+        hex(&b[PACKET_ID_SIZE..])
+    } else {
+        String::new()
+    }
 }
 
 fn pack_update_inventory_item(m: &mut Messages, item: &Item) -> Vec<u8> {
@@ -130,10 +164,28 @@ fn pack_update_inventory_item(m: &mut Messages, item: &Item) -> Vec<u8> {
     m.next_block(&t, "AgentData");
     m.add(&t, "AgentData", "AgentID", &u(AGENT), VarType::LLUUID);
     m.add(&t, "AgentData", "SessionID", &u(SESSION), VarType::LLUUID);
-    m.add(&t, "AgentData", "TransactionID", &u(TRANSACTION), VarType::LLUUID);
+    m.add(
+        &t,
+        "AgentData",
+        "TransactionID",
+        &u(TRANSACTION),
+        VarType::LLUUID,
+    );
     m.next_block(&t, "InventoryData");
-    m.add(&t, "InventoryData", "CallbackID", &0u32.to_le_bytes(), VarType::U32);
-    pack_viewer_item(&mut m.builder, &item_keys(&t, "InventoryData"), item, &u(TRANSACTION)).unwrap();
+    m.add(
+        &t,
+        "InventoryData",
+        "CallbackID",
+        &0u32.to_le_bytes(),
+        VarType::U32,
+    );
+    pack_viewer_item(
+        &mut m.builder,
+        &item_keys(&t, "InventoryData"),
+        item,
+        &u(TRANSACTION),
+    )
+    .unwrap();
     m.built_bytes()
 }
 
@@ -143,10 +195,28 @@ fn pack_update_task_inventory(m: &mut Messages, item: &Item) -> Vec<u8> {
     m.add(&t, "AgentData", "AgentID", &u(AGENT), VarType::LLUUID);
     m.add(&t, "AgentData", "SessionID", &u(SESSION), VarType::LLUUID);
     m.next_block(&t, "UpdateData");
-    m.add(&t, "UpdateData", "LocalID", &0x0102_0304u32.to_le_bytes(), VarType::U32);
-    m.add(&t, "UpdateData", "Key", &[TASK_INVENTORY_ITEM_KEY], VarType::U8);
+    m.add(
+        &t,
+        "UpdateData",
+        "LocalID",
+        &0x0102_0304u32.to_le_bytes(),
+        VarType::U32,
+    );
+    m.add(
+        &t,
+        "UpdateData",
+        "Key",
+        &[TASK_INVENTORY_ITEM_KEY],
+        VarType::U8,
+    );
     m.next_block(&t, "InventoryData");
-    pack_viewer_item(&mut m.builder, &item_keys(&t, "InventoryData"), item, &u(TRANSACTION)).unwrap();
+    pack_viewer_item(
+        &mut m.builder,
+        &item_keys(&t, "InventoryData"),
+        item,
+        &u(TRANSACTION),
+    )
+    .unwrap();
     m.built_bytes()
 }
 
@@ -154,14 +224,26 @@ fn bulk_header(m: &mut Messages) -> Arc<Template> {
     let t = m.new_message("BulkUpdateInventory");
     m.next_block(&t, "AgentData");
     m.add(&t, "AgentData", "AgentID", &u(AGENT), VarType::LLUUID);
-    m.add(&t, "AgentData", "TransactionID", &u(TRANSACTION), VarType::LLUUID);
+    m.add(
+        &t,
+        "AgentData",
+        "TransactionID",
+        &u(TRANSACTION),
+        VarType::LLUUID,
+    );
     t
 }
 
 fn pack_bulk_update(m: &mut Messages, item: &Item) -> Vec<u8> {
     let t = bulk_header(m);
     m.next_block(&t, "ItemData");
-    m.add(&t, "ItemData", "CallbackID", &7u32.to_le_bytes(), VarType::U32);
+    m.add(
+        &t,
+        "ItemData",
+        "CallbackID",
+        &7u32.to_le_bytes(),
+        VarType::U32,
+    );
     pack_item(&mut m.builder, &item_keys(&t, "ItemData"), item).unwrap();
     m.built_bytes()
 }
@@ -176,7 +258,13 @@ fn pack_bulk_raw(m: &mut Messages, items: &[ItemBlock], folders: &[Category]) ->
     let keys = item_keys(&t, "ItemData");
     for b in items {
         m.next_block(&t, "ItemData");
-        m.add(&t, "ItemData", "CallbackID", &0u32.to_le_bytes(), VarType::U32);
+        m.add(
+            &t,
+            "ItemData",
+            "CallbackID",
+            &0u32.to_le_bytes(),
+            VarType::U32,
+        );
         pack_item_block(&mut m.builder, &keys, b).unwrap();
     }
     m.built_bytes()
@@ -184,7 +272,14 @@ fn pack_bulk_raw(m: &mut Messages, items: &[ItemBlock], folders: &[Category]) ->
 
 /// `unpackMessage` of `ItemData` repeat `n` into `item`, as `ret` + record.
 fn unpack_cols(m: &Messages, t: &Template, n: i32, item: &mut Item) -> Vec<String> {
-    let r = unpack_item(&m.reader, block_key(t, "ItemData"), n, &item_keys(t, "ItemData"), item).unwrap();
+    let r = unpack_item(
+        &m.reader,
+        block_key(t, "ItemData"),
+        n,
+        &item_keys(t, "ItemData"),
+        item,
+    )
+    .unwrap();
     with_ret(r, item_cols(item))
 }
 
@@ -216,30 +311,80 @@ fn c9_udp_variants() -> Vec<(String, ItemBlock)> {
     x.crc = x.crc.wrapping_add(1);
     v.push(("badcrc".to_owned(), x));
     for t in [-2i8, 127, -128, 26, 24] {
-        v.push((format!("type.{t}"), udp_from(&ItemF { ty: i32::from(t), ..b.clone() })));
+        v.push((
+            format!("type.{t}"),
+            udp_from(&ItemF {
+                ty: i32::from(t),
+                ..b.clone()
+            }),
+        ));
     }
     for t in [100i8, -100, 29, 2, 3, -1] {
-        v.push((format!("invtype.{t}"), udp_from(&ItemF { inv_type: i32::from(t), ..b.clone() })));
+        v.push((
+            format!("invtype.{t}"),
+            udp_from(&ItemF {
+                inv_type: i32::from(t),
+                ..b.clone()
+            }),
+        ));
     }
     for st in [4u8, 200, 255, 3] {
-        v.push((format!("saletype.{st}"), udp_from(&ItemF { sale_type: i32::from(st), ..b.clone() })));
+        v.push((
+            format!("saletype.{st}"),
+            udp_from(&ItemF {
+                sale_type: i32::from(st),
+                ..b.clone()
+            }),
+        ));
     }
     for p in [-5, i32::MIN, i32::MAX] {
-        v.push((format!("price.{p}"), udp_from(&ItemF { sale_price: p, ..b.clone() })));
+        v.push((
+            format!("price.{p}"),
+            udp_from(&ItemF {
+                sale_price: p,
+                ..b.clone()
+            }),
+        ));
     }
     for (i, (n, ds)) in c5_names().into_iter().enumerate() {
-        v.push((format!("name.{i}"), udp_from(&ItemF { name: n, desc: ds, ..b.clone() })));
+        v.push((
+            format!("name.{i}"),
+            udp_from(&ItemF {
+                name: n,
+                desc: ds,
+                ..b.clone()
+            }),
+        ));
     }
     for len in [254usize, 255, 256] {
-        v.push((format!("strlen.{len}"), udp_from(&ItemF { name: vec![b'n'; len], desc: vec![b'd'; len], ..b.clone() })));
+        v.push((
+            format!("strlen.{len}"),
+            udp_from(&ItemF {
+                name: vec![b'n'; len],
+                desc: vec![b'd'; len],
+                ..b.clone()
+            }),
+        ));
     }
     let mut f = b.clone();
     f.perm.group_owned = true;
     f.perm.group_mask = PERM_ALL;
     f.perm.everyone = PERM_ALL;
     v.push(("rawperm".to_owned(), udp_from(&f)));
-    v.push(("date.-1".to_owned(), udp_from(&ItemF { date: -1, ..b.clone() })));
-    v.push(("flags.ffffffff".to_owned(), udp_from(&ItemF { flags: 0xffff_ffff, ..b.clone() })));
+    v.push((
+        "date.-1".to_owned(),
+        udp_from(&ItemF {
+            date: -1,
+            ..b.clone()
+        }),
+    ));
+    v.push((
+        "flags.ffffffff".to_owned(),
+        udp_from(&ItemF {
+            flags: 0xffff_ffff,
+            ..b.clone()
+        }),
+    ));
     v
 }
 
@@ -267,11 +412,16 @@ fn c9_item_lines() -> Lines {
         emit_unpacks(&mut m, &mut s, &cs, &bytes);
     }
     {
-        let four: Vec<ItemBlock> = (0..4).map(|k| variants[(k * 5) % variants.len()].1.clone()).collect();
+        let four: Vec<ItemBlock> = (0..4)
+            .map(|k| variants[(k * 5) % variants.len()].1.clone())
+            .collect();
         let bytes = pack_bulk_raw(&mut m, &four, &[]);
         s.emit("c9.udp.multi", "packet", &[packet_hex(&bytes)]);
         let t = m.dispatch("BulkUpdateInventory", &bytes);
-        let n = m.reader.number_of_blocks(block_key(&t, "ItemData")).unwrap();
+        let n = m
+            .reader
+            .number_of_blocks(block_key(&t, "ItemData"))
+            .unwrap();
         s.emit("c9.udp.multi", "blocks", &[d(n)]);
         let mut reused = make_item(&prev_item());
         for k in 0..n {
@@ -292,7 +442,14 @@ fn kind(case: &str, field: &str) -> String {
     } else if case.starts_with("c5c.") {
         format!("c5c {field}")
     } else if case.starts_with("c9.udp.") {
-        let f = if field.starts_with("unpack.") && field != "unpack.fresh" && field != "unpack.reused" { "unpack.n" } else { field };
+        let f = if field.starts_with("unpack.")
+            && field != "unpack.fresh"
+            && field != "unpack.reused"
+        {
+            "unpack.n"
+        } else {
+            field
+        };
         format!("c9.udp {f}")
     } else {
         field.to_owned()
@@ -313,7 +470,10 @@ fn c9_messages() {
             t.0 += 1;
         }
     }
-    let parts: Vec<String> = by.iter().map(|(k, (m, t))| format!("{k} {m}/{t}")).collect();
+    let parts: Vec<String> = by
+        .iter()
+        .map(|(k, (m, t))| format!("{k} {m}/{t}"))
+        .collect();
     println!("c9_messages.txt: by kind: {}", parts.join(", "));
     assert_replay("c9_messages.txt", &expected, &actual);
 }
@@ -340,15 +500,35 @@ fn c9_folder_lines(m: &mut Messages, s: &mut Lines) {
         s.emit(&cs, "UpdateInventoryFolder", &[packet_hex(&bytes)]);
         let t = m.dispatch("UpdateInventoryFolder", &bytes);
         let mut back = make_cat(&prev_cat());
-        unpack_category(&m.reader, block_key(&t, "FolderData"), 0, &folder_keys(&t), &mut back).unwrap();
+        unpack_category(
+            &m.reader,
+            block_key(&t, "FolderData"),
+            0,
+            &folder_keys(&t),
+            &mut back,
+        )
+        .unwrap();
         s.emit(&cs, "unpack", &cat_cols(&back));
     }
-    let raw = CatF { id: u(0xd5), parent: u(0xd6), pref: -100, name: b"raw|name\xc3\xa9\x01".to_vec(), ..CatF::default() };
+    let raw = CatF {
+        id: u(0xd5),
+        parent: u(0xd6),
+        pref: -100,
+        name: b"raw|name\xc3\xa9\x01".to_vec(),
+        ..CatF::default()
+    };
     let bytes = pack_bulk_raw(m, &[], &[make_cat(&raw)]);
     s.emit("c9.folder.raw", "packet", &[packet_hex(&bytes)]);
     let t = m.dispatch("BulkUpdateInventory", &bytes);
     let mut back = make_cat(&prev_cat());
-    unpack_category(&m.reader, block_key(&t, "FolderData"), 0, &folder_keys(&t), &mut back).unwrap();
+    unpack_category(
+        &m.reader,
+        block_key(&t, "FolderData"),
+        0,
+        &folder_keys(&t),
+        &mut back,
+    )
+    .unwrap();
     s.emit("c9.folder.raw", "unpack", &cat_cols(&back));
 }
 
@@ -362,7 +542,12 @@ fn add_cstr(m: &mut Messages, t: &Template, var: &str, s: &[u8]) {
 /// The middle of an `ObjectProperties` block (sale type, sale price,
 /// aggregate permissions, category): raw values, or added by a closure.
 enum Middle<'a> {
-    Raw { agg: u8, category: u32, sale_type: u8, price: i32 },
+    Raw {
+        agg: u8,
+        category: u32,
+        sale_type: u8,
+        price: i32,
+    },
     Custom(&'a dyn Fn(&mut Messages, &Template)),
 }
 
@@ -370,7 +555,9 @@ enum Middle<'a> {
 fn object_properties(m: &mut Messages, middle: Middle<'_>) -> Vec<u8> {
     let t = m.new_message("ObjectProperties");
     m.next_block(&t, "ObjectData");
-    let od = |m: &mut Messages, var: &str, data: &[u8], ty: VarType| m.add(&t, "ObjectData", var, data, ty);
+    let od = |m: &mut Messages, var: &str, data: &[u8], ty: VarType| {
+        m.add(&t, "ObjectData", var, data, ty)
+    };
     od(m, "ObjectID", &u(0x91), VarType::LLUUID);
     od(m, "CreatorID", &u(0x92), VarType::LLUUID);
     od(m, "OwnerID", &u(0x93), VarType::LLUUID);
@@ -383,7 +570,12 @@ fn object_properties(m: &mut Messages, middle: Middle<'_>) -> Vec<u8> {
     od(m, "NextOwnerMask", &PERM_ALL.to_le_bytes(), VarType::U32);
     od(m, "OwnershipCost", &0i32.to_le_bytes(), VarType::S32);
     match middle {
-        Middle::Raw { agg, category, sale_type, price } => {
+        Middle::Raw {
+            agg,
+            category,
+            sale_type,
+            price,
+        } => {
             od(m, "SaleType", &[sale_type], VarType::U8);
             od(m, "SalePrice", &price.to_le_bytes(), VarType::S32);
             od(m, "AggregatePerms", &[agg], VarType::U8);
@@ -407,7 +599,11 @@ fn object_properties(m: &mut Messages, middle: Middle<'_>) -> Vec<u8> {
 }
 
 fn var_key(t: &Template, var: &str) -> u64 {
-    t.block_by_name("ObjectData").unwrap().variable_by_name(var).unwrap().key
+    t.block_by_name("ObjectData")
+        .unwrap()
+        .variable_by_name(var)
+        .unwrap()
+        .key
 }
 
 /// `c9.agg.*`, `c9.aggagg.*`, `c9.category.*` and `c9.sale.*`.
@@ -418,19 +614,42 @@ fn c9_object_properties_lines(m: &mut Messages, s: &mut Lines) {
     // Aggregate permissions: unpacked, then packed again and read back.
     let mut states = Vec::with_capacity(256);
     for a in 0..=255u8 {
-        let bytes = object_properties(m, Middle::Raw { agg: a, category: 0, sale_type: 0, price: 0 });
+        let bytes = object_properties(
+            m,
+            Middle::Raw {
+                agg: a,
+                category: 0,
+                sale_type: 0,
+                price: 0,
+            },
+        );
         m.dispatch("ObjectProperties", &bytes);
         let ag = unpack_aggregate(&m.reader, od, 0, var_key(&op, "AggregatePerms")).unwrap();
         states.push(ag);
         let repack = |m: &mut Messages, t: &Template| {
             m.add(t, "ObjectData", "SaleType", &[0], VarType::U8);
-            m.add(t, "ObjectData", "SalePrice", &0i32.to_le_bytes(), VarType::S32);
+            m.add(
+                t,
+                "ObjectData",
+                "SalePrice",
+                &0i32.to_le_bytes(),
+                VarType::S32,
+            );
             pack_aggregate(&mut m.builder, var_key(t, "AggregatePerms"), &ag).unwrap();
-            m.add(t, "ObjectData", "Category", &0u32.to_le_bytes(), VarType::U32);
+            m.add(
+                t,
+                "ObjectData",
+                "Category",
+                &0u32.to_le_bytes(),
+                VarType::U32,
+            );
         };
         let repacked = object_properties(m, Middle::Custom(&repack));
         m.dispatch("ObjectProperties", &repacked);
-        let back = m.reader.get(od, 0, var_key(&op, "AggregatePerms"), 1).unwrap()[0];
+        let back = m
+            .reader
+            .get(od, 0, var_key(&op, "AggregatePerms"), 1)
+            .unwrap()[0];
         s.emit(
             &format!("c9.agg.{}", x2(u32::from(a))),
             "agg",
@@ -456,11 +675,26 @@ fn c9_object_properties_lines(m: &mut Messages, s: &mut Lines) {
         s.emit(&format!("c9.aggagg.{}", x2(a as u32)), "b0..63", &[row]);
     }
     // LLCategory: unpackMessage and unpackMultiMessage (repeat 0).
-    for value in [0x00000000u32, 0x01000000, 0x06000000, 0x01010000, 0x06ff01ff, 0xffffffff, 0x12345678, 0x00000001] {
+    for value in [
+        0x00000000u32,
+        0x01000000,
+        0x06000000,
+        0x01010000,
+        0x06ff01ff,
+        0xffffffff,
+        0x12345678,
+        0x00000001,
+    ] {
         let cat = LLCategory::new(value);
         let custom = |m: &mut Messages, t: &Template| {
             m.add(t, "ObjectData", "SaleType", &[0], VarType::U8);
-            m.add(t, "ObjectData", "SalePrice", &0i32.to_le_bytes(), VarType::S32);
+            m.add(
+                t,
+                "ObjectData",
+                "SalePrice",
+                &0i32.to_le_bytes(),
+                VarType::S32,
+            );
             m.add(t, "ObjectData", "AggregatePerms", &[0], VarType::U8);
             pack_llcategory(&mut m.builder, var_key(t, "Category"), cat).unwrap();
         };
@@ -469,27 +703,51 @@ fn c9_object_properties_lines(m: &mut Messages, s: &mut Lines) {
         let key = var_key(&op, "Category");
         let c1 = unpack_llcategory(&m.reader, od, 0, key).unwrap();
         let c2 = unpack_llcategory(&m.reader, od, 0, key).unwrap();
-        s.emit(&format!("c9.category.{}", x8(value)), "category", &[packet_hex(&bytes), x8(c1.as_u32()), x8(c2.as_u32())]);
+        s.emit(
+            &format!("c9.category.{}", x8(value)),
+            "category",
+            &[packet_hex(&bytes), x8(c1.as_u32()), x8(c2.as_u32())],
+        );
     }
     // Sale info: unpackMessage and unpackMultiMessage over (1, 77), then
     // packMessage of the raw values.
     for st in [0u8, 1, 2, 3, 4, 200, 255] {
         for p in [-5, 0, 10, i32::MAX, i32::MIN] {
             let cs = format!("c9.sale.{st}.{p}");
-            let bytes = object_properties(m, Middle::Raw { agg: 0, category: 0, sale_type: st, price: p });
+            let bytes = object_properties(
+                m,
+                Middle::Raw {
+                    agg: 0,
+                    category: 0,
+                    sale_type: st,
+                    price: p,
+                },
+            );
             m.dispatch("ObjectProperties", &bytes);
-            let mut s1 = SaleInfo { sale_type: SaleType(1), price: 77 };
+            let mut s1 = SaleInfo {
+                sale_type: SaleType(1),
+                price: 77,
+            };
             let mut s2 = s1;
             unpack_sale(&m.reader, od, 0, &sale_keys, &mut s1).unwrap();
             unpack_sale(&m.reader, od, 0, &sale_keys, &mut s2).unwrap();
             let mut cols = sale_cols(&s1);
             cols.extend(sale_cols(&s2));
             s.emit(&cs, "sale", &cols);
-            let raw = SaleInfo { sale_type: SaleType(i32::from(st)), price: p };
+            let raw = SaleInfo {
+                sale_type: SaleType(i32::from(st)),
+                price: p,
+            };
             let custom = |m: &mut Messages, t: &Template| {
                 pack_sale(&mut m.builder, &sale_keys, &raw).unwrap();
                 m.add(t, "ObjectData", "AggregatePerms", &[0], VarType::U8);
-                m.add(t, "ObjectData", "Category", &0u32.to_le_bytes(), VarType::U32);
+                m.add(
+                    t,
+                    "ObjectData",
+                    "Category",
+                    &0u32.to_le_bytes(),
+                    VarType::U32,
+                );
             };
             let packed = object_properties(m, Middle::Custom(&custom));
             s.emit(&cs, "packed", &[packet_hex(&packed)]);

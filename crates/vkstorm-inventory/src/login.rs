@@ -50,11 +50,11 @@ use std::collections::{BTreeMap, BTreeSet};
 use vkstorm_llsd::Value;
 
 use crate::cache::{self, Decoded};
-use crate::category::{ViewerCategory, VERSION_UNKNOWN};
+use crate::category::{VERSION_UNKNOWN, ViewerCategory};
 use crate::item::Item;
 use crate::llsd::coerce::{as_integer, as_string, as_uuid, get};
-use crate::model::{is_broken_link, viewer_item_type, ModelLookup, DESCENDENT_COUNT_UNKNOWN};
-use crate::perms::{Uuid, NULL_ID};
+use crate::model::{DESCENDENT_COUNT_UNKNOWN, ModelLookup, is_broken_link, viewer_item_type};
+use crate::perms::{NULL_ID, Uuid};
 use crate::types::{AssetType, FolderType};
 
 /// The cache files the clear-cache marker purges, in the C++ order, and the
@@ -76,7 +76,10 @@ pub fn purge_names(agent: &Uuid, library_owner: &Uuid, grid: Option<&[u8]>) -> P
     };
     let a = cache::cache_file_name(agent, grid);
     let l = cache::cache_file_name(library_owner, grid);
-    PurgeNames { files: [a.clone(), gz(a), l.clone(), gz(l)], marker: cache::delete_marker_name(agent) }
+    PurgeNames {
+        files: [a.clone(), gz(a), l.clone(), gz(l)],
+        marker: cache::delete_marker_name(agent),
+    }
 }
 
 /// One entry of the login response's skeleton (`inventory-skeleton` or
@@ -100,7 +103,11 @@ impl SkeletonEntry {
     pub fn from_llsd(sd: &Value) -> SkeletonEntry {
         let defined = |k: &str| {
             let v = get(sd, k);
-            if matches!(v, Value::Undefined) { None } else { Some(v) }
+            if matches!(v, Value::Undefined) {
+                None
+            } else {
+                Some(v)
+            }
         };
         SkeletonEntry {
             name: defined("name").map(as_string),
@@ -146,18 +153,26 @@ impl Skeleton {
         for e in entries {
             match (&e.name, e.folder_id, e.parent_id, e.version) {
                 (Some(name), Some(id), Some(parent), Some(version)) if id != NULL_ID => {
-                    let mut cat = ViewerCategory { owner: *owner, ..ViewerCategory::default() };
+                    let mut cat = ViewerCategory {
+                        owner: *owner,
+                        ..ViewerCategory::default()
+                    };
                     cat.category.object.rename(name);
                     cat.category.object.id = id;
                     cat.category.object.parent = parent;
-                    cat.category.preferred_type = FolderType(e.type_default.unwrap_or(FolderType::NONE.0));
+                    cat.category.preferred_type =
+                        FolderType(e.type_default.unwrap_or(FolderType::NONE.0));
                     cat.version = version;
                     folders.entry(id).or_insert(cat);
                 }
                 _ => rv = false,
             }
         }
-        Skeleton { owner: *owner, folders, rv }
+        Skeleton {
+            owner: *owner,
+            folders,
+            rv,
+        }
     }
 
     /// Whether `loadSkeleton` reads the cache: only when the skeleton has a
@@ -170,8 +185,16 @@ impl Skeleton {
     /// The reconciliation, over the cache as the C++ found it and the model
     /// as it is before this call (the library's folders and items, when the
     /// agent's skeleton loads second).
-    pub fn load(self, cache: &CacheInput<'_>, in_open_sim: bool, lookup: &dyn ModelLookup) -> LoadPlan {
-        let mut plan = LoadPlan { rv: self.rv, ..LoadPlan::default() };
+    pub fn load(
+        self,
+        cache: &CacheInput<'_>,
+        in_open_sim: bool,
+        lookup: &dyn ModelLookup,
+    ) -> LoadPlan {
+        let mut plan = LoadPlan {
+            rv: self.rv,
+            ..LoadPlan::default()
+        };
         if self.folders.is_empty() {
             return plan;
         }
@@ -182,7 +205,9 @@ impl Skeleton {
         let decoded: Option<Decoded> = if is_cache_obsolete {
             None
         } else {
-            cache.file.map(|bytes| cache::decode(bytes, in_open_sim, lookup))
+            cache
+                .file
+                .map(|bytes| cache::decode(bytes, in_open_sim, lookup))
         };
         let loaded = match &decoded {
             Some(d) => {
@@ -200,7 +225,10 @@ impl Skeleton {
                 .into_values()
                 .map(|mut folder| {
                     folder.version = VERSION_UNKNOWN;
-                    LoginFolder { folder, descendent_count: DESCENDENT_COUNT_UNKNOWN }
+                    LoginFolder {
+                        folder,
+                        descendent_count: DESCENDENT_COUNT_UNKNOWN,
+                    }
                 })
                 .collect();
             return plan;
@@ -294,7 +322,10 @@ impl Skeleton {
                 } else {
                     DESCENDENT_COUNT_UNKNOWN
                 };
-                LoginFolder { folder, descendent_count }
+                LoginFolder {
+                    folder,
+                    descendent_count,
+                }
             })
             .collect();
         let mut slots: Vec<Option<Item>> = items.into_iter().map(Some).collect();
@@ -381,7 +412,11 @@ struct Overlay<'a> {
 
 impl<'a> Overlay<'a> {
     fn new(base: &'a dyn ModelLookup) -> Self {
-        Overlay { base, categories: BTreeSet::new(), items: BTreeMap::new() }
+        Overlay {
+            base,
+            categories: BTreeSet::new(),
+            items: BTreeMap::new(),
+        }
     }
 
     fn version(&self, id: &Uuid, temp: &BTreeMap<Uuid, ViewerCategory>) -> Option<i32> {
@@ -402,7 +437,10 @@ impl<'a> Overlay<'a> {
     }
 
     fn view<'b>(&'b self, temp: &'b BTreeMap<Uuid, ViewerCategory>) -> OverlayView<'b> {
-        OverlayView { overlay: self, temp }
+        OverlayView {
+            overlay: self,
+            temp,
+        }
     }
 }
 
@@ -413,7 +451,11 @@ struct OverlayView<'b> {
 
 impl ModelLookup for OverlayView<'_> {
     fn item_type(&self, id: &Uuid) -> Option<AssetType> {
-        self.overlay.items.get(id).copied().or_else(|| self.overlay.base.item_type(id))
+        self.overlay
+            .items
+            .get(id)
+            .copied()
+            .or_else(|| self.overlay.base.item_type(id))
     }
     fn category_type(&self, id: &Uuid) -> Option<AssetType> {
         if self.overlay.categories.contains(id) {

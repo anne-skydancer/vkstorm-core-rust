@@ -36,7 +36,12 @@ pub struct SettingsEntry {
     pub icon_name: IconName,
 }
 
-const fn e(v: i32, name: &'static str, default_new_name: &'static str, icon_name: IconName) -> SettingsEntry {
+const fn e(
+    v: i32,
+    name: &'static str,
+    default_new_name: &'static str,
+    icon_name: IconName,
+) -> SettingsEntry {
     SettingsEntry {
         settings_type: SettingsType(v),
         name,
@@ -93,6 +98,10 @@ impl SettingsType {
     pub fn default_name_translated(self, translate: impl FnOnce(&str) -> String) -> String {
         let name = self.default_name();
         let translated = translate(name);
-        if translated.is_empty() { name.to_owned() } else { translated }
+        if translated.is_empty() {
+            name.to_owned()
+        } else {
+            translated
+        }
     }
 }

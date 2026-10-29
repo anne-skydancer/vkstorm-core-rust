@@ -96,9 +96,17 @@ impl Filter {
                 // Tap t multiplies input sample (pos - half + 1 + t).
                 let x = (t as f64 - (half as f64 - 1.0)) - frac;
                 let r = x / half as f64;
-                let w = if r.abs() >= 1.0 { 0.0 } else { bessel_i0(KAISER_BETA * (1.0 - r * r).sqrt()) / i0b };
+                let w = if r.abs() >= 1.0 {
+                    0.0
+                } else {
+                    bessel_i0(KAISER_BETA * (1.0 - r * r).sqrt()) / i0b
+                };
                 let arg = 2.0 * fc * x;
-                let sinc = if arg.abs() < 1e-12 { 1.0 } else { (std::f64::consts::PI * arg).sin() / (std::f64::consts::PI * arg) };
+                let sinc = if arg.abs() < 1e-12 {
+                    1.0
+                } else {
+                    (std::f64::consts::PI * arg).sin() / (std::f64::consts::PI * arg)
+                };
                 *c = 2.0 * fc * sinc * w;
                 sum += *c;
             }
@@ -106,7 +114,15 @@ impl Filter {
                 table[p * taps + t] = (*c / sum) as f32;
             }
         }
-        Filter { l, m, half, taps, phases, exact, table }
+        Filter {
+            l,
+            m,
+            half,
+            taps,
+            phases,
+            exact,
+            table,
+        }
     }
 
     fn row(&self, p: usize) -> &[f32] {
@@ -192,7 +208,11 @@ impl Resampler {
     }
 
     fn configure(&mut self) {
-        self.filter = if self.in_rate == self.out_rate { None } else { Some(Filter::new(self.in_rate, self.out_rate)) };
+        self.filter = if self.in_rate == self.out_rate {
+            None
+        } else {
+            Some(Filter::new(self.in_rate, self.out_rate))
+        };
         if let Some(f) = &self.filter {
             self.scratch.resize(f.taps, 0.0);
         }
@@ -359,7 +379,9 @@ mod tests {
 
     fn sine(rate: u32, freq: f64, frames: usize, amp: f32) -> Vec<f32> {
         (0..frames)
-            .map(|i| amp * (2.0 * std::f64::consts::PI * freq * i as f64 / rate as f64).sin() as f32)
+            .map(|i| {
+                amp * (2.0 * std::f64::consts::PI * freq * i as f64 / rate as f64).sin() as f32
+            })
             .collect()
     }
 
@@ -370,13 +392,29 @@ mod tests {
             r.process(&[c], c.len(), &mut out);
         }
         r.flush(&mut out);
-        assert_eq!(out.len() as u64, expected_out_frames(input.len() as u64, in_rate, out_rate));
+        assert_eq!(
+            out.len() as u64,
+            expected_out_frames(input.len() as u64, in_rate, out_rate)
+        );
         out
     }
 
     #[test]
     fn exact_counts() {
-        for &(a, b) in &[(44100, 48000), (48000, 44100), (22050, 48000), (8000, 44100), (96000, 48000), (32000, 48000), (44100, 44100), (11025, 48000), (7350, 48000), (37800, 48000), (44100, 192000), (12345, 48000)] {
+        for &(a, b) in &[
+            (44100, 48000),
+            (48000, 44100),
+            (22050, 48000),
+            (8000, 44100),
+            (96000, 48000),
+            (32000, 48000),
+            (44100, 44100),
+            (11025, 48000),
+            (7350, 48000),
+            (37800, 48000),
+            (44100, 192000),
+            (12345, 48000),
+        ] {
             for &n in &[0usize, 1, 2, 100, 1151, 4410, 10007] {
                 let input = sine(a, 440.0, n, 0.5);
                 for &chunk in &[1usize, 7, 1152, 100000] {
@@ -412,7 +450,12 @@ mod tests {
 
     #[test]
     fn passband_quality() {
-        for &(a, b) in &[(44100, 48000), (48000, 44100), (22050, 48000), (32000, 48000)] {
+        for &(a, b) in &[
+            (44100, 48000),
+            (48000, 44100),
+            (22050, 48000),
+            (32000, 48000),
+        ] {
             for &f in &[100.0, 1000.0, 5000.0] {
                 let q = snr(a, b, f);
                 assert!(q > 70.0, "{a}->{b} at {f} Hz: {q:.1} dB");
@@ -428,7 +471,10 @@ mod tests {
         let input = sine(48000, 23000.0, 48000, 0.5);
         let out = run(48000, 44100, &input, 4096);
         let skip = 4410;
-        let rms = (out[skip..out.len() - skip].iter().map(|x| f64::from(*x).powi(2)).sum::<f64>()
+        let rms = (out[skip..out.len() - skip]
+            .iter()
+            .map(|x| f64::from(*x).powi(2))
+            .sum::<f64>()
             / (out.len() - 2 * skip) as f64)
             .sqrt();
         let db = 20.0 * (rms / (0.5 / 2f64.sqrt())).log10();
@@ -441,7 +487,13 @@ mod tests {
     #[test]
     #[ignore = "report"]
     fn quality_report() {
-        for &(a, b) in &[(44100u32, 48000u32), (48000, 44100), (22050, 48000), (32000, 48000), (16000, 48000)] {
+        for &(a, b) in &[
+            (44100u32, 48000u32),
+            (48000, 44100),
+            (22050, 48000),
+            (32000, 48000),
+            (16000, 48000),
+        ] {
             let fs: Vec<String> = [100.0, 1000.0, 5000.0, 10000.0, 15000.0]
                 .iter()
                 .filter(|&&f| f < 0.42 * f64::from(a.min(b)))
@@ -453,16 +505,25 @@ mod tests {
             let input = sine(a, f, a as usize, 0.5);
             let out = run(a, b, &input, 4096);
             let skip = b as usize / 10;
-            let rms = (out[skip..out.len() - skip].iter().map(|x| f64::from(*x).powi(2)).sum::<f64>()
+            let rms = (out[skip..out.len() - skip]
+                .iter()
+                .map(|x| f64::from(*x).powi(2))
+                .sum::<f64>()
                 / (out.len() - 2 * skip) as f64)
                 .sqrt();
             20.0 * (rms / (0.5 / 2f64.sqrt())).log10()
         };
         for f in [1000.0, 10000.0, 16000.0, 18000.0, 19000.0, 20000.0, 21000.0] {
-            println!("44100->48000 gain at {f} Hz: {:.3} dB", gain(44100, 48000, f));
+            println!(
+                "44100->48000 gain at {f} Hz: {:.3} dB",
+                gain(44100, 48000, f)
+            );
         }
         for f in [22500.0, 23000.0, 23500.0] {
-            println!("48000->44100 residue of {f} Hz: {:.1} dB", gain(48000, 44100, f));
+            println!(
+                "48000->44100 residue of {f} Hz: {:.1} dB",
+                gain(48000, 44100, f)
+            );
         }
     }
 

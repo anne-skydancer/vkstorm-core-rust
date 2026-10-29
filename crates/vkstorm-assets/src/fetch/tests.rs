@@ -2,8 +2,8 @@
 //! viewer's integration test compares against its recording, here for the
 //! crate's own regression coverage.
 
-use super::*;
 use super::budget::MAX_IMAGE_DATA_SIZE;
+use super::*;
 
 #[derive(Debug, Clone, PartialEq)]
 enum Call {
@@ -32,8 +32,16 @@ struct MockHost {
 impl MockHost {
     fn new() -> MockHost {
         MockHost {
-            env: Env { can_load_from_cache: true, use_http_textures: true, ..Default::default() },
-            region: Some(Region { id: [1; 16], viewer_asset_url: "http://asset.example".into(), http_url: String::new() }),
+            env: Env {
+                can_load_from_cache: true,
+                use_http_textures: true,
+                ..Default::default()
+            },
+            region: Some(Region {
+                id: [1; 16],
+                viewer_asset_url: "http://asset.example".into(),
+                http_url: String::new(),
+            }),
             calls: Vec::new(),
             http_ok: true,
             decode_ok: true,
@@ -59,7 +67,11 @@ impl Host for MockHost {
         self.region.clone()
     }
     fn read_cache(&mut self, local_file: Option<&str>, offset: i32, size: i32) {
-        self.calls.push(Call::ReadCache(local_file.map(|s| s.to_string()), offset, size));
+        self.calls.push(Call::ReadCache(
+            local_file.map(|s| s.to_string()),
+            offset,
+            size,
+        ));
     }
     fn cache_read_complete(&mut self) -> bool {
         true
@@ -79,7 +91,8 @@ impl Host for MockHost {
         }
     }
     fn write_cache(&mut self, file_size: i32, decoded_discard: i32) {
-        self.calls.push(Call::WriteCache(file_size, decoded_discard));
+        self.calls
+            .push(Call::WriteCache(file_size, decoded_discard));
     }
     fn cache_write_complete(&mut self) -> bool {
         true
@@ -101,10 +114,19 @@ impl Host for MockHost {
     fn release_http_buffer(&mut self) {
         self.http_body.clear();
     }
-    fn assemble_http_reply(&mut self, _url: &str, src_offset: i32, cur_size: i32, append_size: i32, total_size: i32) -> bool {
+    fn assemble_http_reply(
+        &mut self,
+        _url: &str,
+        src_offset: i32,
+        cur_size: i32,
+        append_size: i32,
+        total_size: i32,
+    ) -> bool {
         let mut out = Vec::with_capacity(total_size as usize);
         out.extend_from_slice(&self.formatted[..cur_size as usize]);
-        out.extend_from_slice(&self.http_body[src_offset as usize..(src_offset + append_size) as usize]);
+        out.extend_from_slice(
+            &self.http_body[src_offset as usize..(src_offset + append_size) as usize],
+        );
         assert_eq!(out.len(), total_size as usize);
         self.formatted = out;
         self.formatted_discard = 0;
@@ -151,14 +173,33 @@ fn cache_miss_then_http_then_decode_then_write() {
     assert!(!w.do_work(&mut f, &mut h));
     assert_eq!(w.state, State::WaitHttpReq);
     assert_eq!(f.http_semaphore, 1);
-    assert_eq!(w.url, "http://asset.example/?texture_id=09090909-0909-0909-0909-090909090909");
+    assert_eq!(
+        w.url,
+        "http://asset.example/?texture_id=09090909-0909-0909-0909-090909090909"
+    );
     assert_eq!(
         h.calls[1],
-        Call::SendHttp(HttpGet { url: w.url.clone(), offset: 0, size: 5000, no_range: false, with_headers: false })
+        Call::SendHttp(HttpGet {
+            url: w.url.clone(),
+            offset: 0,
+            size: 5000,
+            no_range: false,
+            with_headers: false
+        })
     );
     // A 206 with 5000 bytes.
     h.http_body = vec![7; 5000];
-    let n = w.http_completed(&mut f, &mut h, true, 206, "Partial Content", true, 5000, Some((0, 5000, 100000)), None);
+    let n = w.http_completed(
+        &mut f,
+        &mut h,
+        true,
+        206,
+        "Partial Content",
+        true,
+        5000,
+        Some((0, 5000, 100000)),
+        None,
+    );
     assert_eq!(n, Some(5000));
     assert!(!w.have_all_data);
     assert!(!w.do_work(&mut f, &mut h));
@@ -192,7 +233,10 @@ fn cache_hit_decodes_without_http() {
     assert!(w.in_cache);
     assert!(w.have_all_data);
     assert_eq!(w.write_to_cache_state, WriteToCacheState::NotWrite);
-    assert_eq!(h.calls, vec![Call::ReadCache(None, 0, 2000), Call::Decode(3, false)]);
+    assert_eq!(
+        h.calls,
+        vec![Call::ReadCache(None, 0, 2000), Call::Decode(3, false)]
+    );
     let handle = w.decode_handle;
     assert!(w.decode_done(true, 3, handle, &mut h));
     assert!(w.do_work(&mut f, &mut h));
@@ -215,10 +259,26 @@ fn partial_cache_then_range_from_cached_bytes() {
     // The range starts one byte before the data held (offset - 1, size + 1).
     assert_eq!(
         h.calls.last(),
-        Some(&Call::SendHttp(HttpGet { url: w.url.clone(), offset: 2999, size: 17001, no_range: false, with_headers: false }))
+        Some(&Call::SendHttp(HttpGet {
+            url: w.url.clone(),
+            offset: 2999,
+            size: 17001,
+            no_range: false,
+            with_headers: false
+        }))
     );
     h.http_body = vec![2; 17001];
-    w.http_completed(&mut f, &mut h, true, 206, "", true, 17001, Some((2999, 17001, 100000)), None);
+    w.http_completed(
+        &mut f,
+        &mut h,
+        true,
+        206,
+        "",
+        true,
+        17001,
+        Some((2999, 17001, 100000)),
+        None,
+    );
     assert!(!w.do_work(&mut f, &mut h));
     assert_eq!(h.formatted.len(), 20000);
     assert_eq!(w.requested_offset, 3000);
@@ -237,10 +297,26 @@ fn short_reply_means_all_data() {
     // The range would end past the 20 MB cap: ask for the rest.
     assert_eq!(
         h.calls.last(),
-        Some(&Call::SendHttp(HttpGet { url: w.url.clone(), offset: 0, size: 0, no_range: false, with_headers: false }))
+        Some(&Call::SendHttp(HttpGet {
+            url: w.url.clone(),
+            offset: 0,
+            size: 0,
+            no_range: false,
+            with_headers: false
+        }))
     );
     h.http_body = vec![3; 4321];
-    w.http_completed(&mut f, &mut h, true, 206, "", true, 4321, Some((0, 4321, 4321)), None);
+    w.http_completed(
+        &mut f,
+        &mut h,
+        true,
+        206,
+        "",
+        true,
+        4321,
+        Some((0, 4321, 4321)),
+        None,
+    );
     assert!(w.have_all_data);
     assert!(!w.do_work(&mut f, &mut h));
     assert_eq!(w.file_size, 4321);
@@ -256,7 +332,17 @@ fn not_found_retries_once_on_region_change_then_fails() {
     w.cache_read_done(false, 0, 0, -1, false);
     assert!(!w.do_work(&mut f, &mut h));
     let url1 = w.url.clone();
-    w.http_completed(&mut f, &mut h, false, 404, "Not Found", false, 0, None, None);
+    w.http_completed(
+        &mut f,
+        &mut h,
+        false,
+        404,
+        "Not Found",
+        false,
+        0,
+        None,
+        None,
+    );
     // Same region: no retry; the URL is cleared, the fetch fails harder.
     assert!(w.do_work(&mut f, &mut h));
     assert_eq!(w.state, State::Done);
@@ -272,8 +358,22 @@ fn not_found_retries_once_on_region_change_then_fails() {
     w.cache_read_done(false, 0, 0, -1, false);
     assert!(!w.do_work(&mut f, &mut h));
     assert_eq!(w.url, url1);
-    h.region = Some(Region { id: [2; 16], viewer_asset_url: "http://asset2.example".into(), http_url: String::new() });
-    w.http_completed(&mut f, &mut h, false, 404, "Not Found", false, 0, None, None);
+    h.region = Some(Region {
+        id: [2; 16],
+        viewer_asset_url: "http://asset2.example".into(),
+        http_url: String::new(),
+    });
+    w.http_completed(
+        &mut f,
+        &mut h,
+        false,
+        404,
+        "Not Found",
+        false,
+        0,
+        None,
+        None,
+    );
     assert!(!w.do_work(&mut f, &mut h));
     assert_eq!(w.state, State::Init);
     assert_eq!(w.retry_attempt, 1);
@@ -301,7 +401,17 @@ fn range_not_satisfiable_with_data_decodes() {
     w.cache_read_done(true, 4001, 4000, 0, false);
     assert!(!w.do_work(&mut f, &mut h));
     assert_eq!(w.state, State::WaitHttpReq);
-    w.http_completed(&mut f, &mut h, false, 416, "Requested Range Not Satisfiable", false, 0, None, None);
+    w.http_completed(
+        &mut f,
+        &mut h,
+        false,
+        416,
+        "Requested Range Not Satisfiable",
+        false,
+        0,
+        None,
+        None,
+    );
     assert!(!w.do_work(&mut f, &mut h));
     assert!(w.have_all_data);
     assert_eq!(w.loaded_discard, 2);
@@ -317,7 +427,17 @@ fn server_busy_without_region_change_fails_harder() {
     assert!(!w.do_work(&mut f, &mut h));
     w.cache_read_done(false, 0, 0, -1, false);
     assert!(!w.do_work(&mut f, &mut h));
-    w.http_completed(&mut f, &mut h, false, 503, "Service Unavailable", false, 0, None, None);
+    w.http_completed(
+        &mut f,
+        &mut h,
+        false,
+        503,
+        "Service Unavailable",
+        false,
+        0,
+        None,
+        None,
+    );
     assert!(w.do_work(&mut f, &mut h));
     assert_eq!(w.state, State::Done);
 }
@@ -370,7 +490,14 @@ fn resource_waiters_release_by_priority() {
     let mut hosts: Vec<MockHost> = (0..3).map(|_| MockHost::new()).collect();
     let mut workers: Vec<Worker> = (0..3u8)
         .map(|i| {
-            let mut w = Worker::new(FetchType::Default, "", [i + 1; 16], false, (i as f32 + 1.0) * 100.0, true);
+            let mut w = Worker::new(
+                FetchType::Default,
+                "",
+                [i + 1; 16],
+                false,
+                (i as f32 + 1.0) * 100.0,
+                true,
+            );
             w.set_desired_discard(2, 5000, false);
             w
         })
@@ -389,14 +516,27 @@ fn resource_waiters_release_by_priority() {
     // Nothing to release while the semaphore is at the low water.
     assert_eq!(f.waiters_to_release().0, 0);
     hosts[0].http_body = vec![1; 5000];
-    workers[0].http_completed(&mut f, &mut hosts[0], true, 206, "", true, 5000, Some((0, 5000, 9000)), None);
+    workers[0].http_completed(
+        &mut f,
+        &mut hosts[0],
+        true,
+        206,
+        "",
+        true,
+        5000,
+        Some((0, 5000, 9000)),
+        None,
+    );
     assert!(!workers[0].do_work(&mut f, &mut hosts[0]));
     assert_eq!(f.http_semaphore, 0);
     let (needed, ids) = f.waiters_to_release();
     assert_eq!(needed, 1);
     assert_eq!(ids.len(), 2);
     // The highest priority waiter is released first; the next finds no slot.
-    let prios: Vec<f32> = ids.iter().map(|id| workers.iter().find(|w| &w.id == id).unwrap().image_priority).collect();
+    let prios: Vec<f32> = ids
+        .iter()
+        .map(|id| workers.iter().find(|w| &w.id == id).unwrap().image_priority)
+        .collect();
     let order = Fetcher::release_order(&prios, needed);
     assert_eq!(prios[order[0]], 300.0);
     let mut released = Vec::new();
@@ -421,12 +561,24 @@ fn resource_waiters_release_by_priority() {
 
 #[test]
 fn desired_size_planning() {
-    assert_eq!(plan::desired_size(FetchType::Default, false, false, 0, 0, 0, 5), (FIRST_PACKET_SIZE, MAX_DISCARD_LEVEL));
-    assert_eq!(plan::desired_size(FetchType::Default, false, false, 512, 512, 3, 0), (MAX_IMAGE_DATA_SIZE, 0));
-    assert_eq!(plan::desired_size(FetchType::Default, true, true, 512, 512, 3, 3), (MAX_IMAGE_DATA_SIZE, 0));
+    assert_eq!(
+        plan::desired_size(FetchType::Default, false, false, 0, 0, 0, 5),
+        (FIRST_PACKET_SIZE, MAX_DISCARD_LEVEL)
+    );
+    assert_eq!(
+        plan::desired_size(FetchType::Default, false, false, 512, 512, 3, 0),
+        (MAX_IMAGE_DATA_SIZE, 0)
+    );
+    assert_eq!(
+        plan::desired_size(FetchType::Default, true, true, 512, 512, 3, 3),
+        (MAX_IMAGE_DATA_SIZE, 0)
+    );
     let (size, d) = plan::desired_size(FetchType::Default, false, false, 512, 512, 3, 3);
     assert_eq!(d, 3);
-    assert_eq!(size, budget::calc_data_size_j2c(512, 512, 3, 3, budget::DEFAULT_RATE));
+    assert_eq!(
+        size,
+        budget::calc_data_size_j2c(512, 512, 3, 3, budget::DEFAULT_RATE)
+    );
 }
 
 #[test]

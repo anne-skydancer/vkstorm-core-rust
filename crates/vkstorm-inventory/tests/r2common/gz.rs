@@ -51,7 +51,13 @@ fn member(data: &[u8], out: &mut Vec<u8>) -> Result<usize, String> {
     }
     for bit in [8u8, 16] {
         if flags & bit != 0 {
-            p += data.get(p..).ok_or("header truncated")?.iter().position(|&c| c == 0).ok_or("header truncated")? + 1;
+            p += data
+                .get(p..)
+                .ok_or("header truncated")?
+                .iter()
+                .position(|&c| c == 0)
+                .ok_or("header truncated")?
+                + 1;
         }
     }
     if flags & 2 != 0 {
@@ -106,7 +112,11 @@ impl<'a> Bits<'a> {
         self.n -= k;
         // Bits past the end are only an error once consumed.
         let real = (self.data.len() as u64 * 8) as i64 - (self.pos as i64 * 8 - i64::from(self.n));
-        if real < 0 { Err("unexpected end of file".into()) } else { Ok(()) }
+        if real < 0 {
+            Err("unexpected end of file".into())
+        } else {
+            Ok(())
+        }
     }
 
     fn bits(&mut self, k: u32) -> Result<u32, String> {
@@ -191,7 +201,11 @@ impl Huffman {
             }
             code <<= 1;
         }
-        Huffman { table, counts, symbols }
+        Huffman {
+            table,
+            counts,
+            symbols,
+        }
     }
 
     fn decode(&self, b: &mut Bits<'_>) -> Result<u16, String> {
@@ -216,16 +230,29 @@ impl Huffman {
     }
 }
 
-const LEN_BASE: [u16; 29] =
-    [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258];
-const LEN_EXTRA: [u8; 29] = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0];
-const DIST_BASE: [u16; 30] = [
-    1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
-    8193, 12289, 16385, 24577,
+const LEN_BASE: [u16; 29] = [
+    3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131,
+    163, 195, 227, 258,
 ];
-const DIST_EXTRA: [u8; 30] = [0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13];
+const LEN_EXTRA: [u8; 29] = [
+    0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0,
+];
+const DIST_BASE: [u16; 30] = [
+    1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537,
+    2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577,
+];
+const DIST_EXTRA: [u8; 30] = [
+    0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13,
+    13,
+];
 
-fn codes(b: &mut Bits<'_>, out: &mut Vec<u8>, start: usize, lit: &Huffman, dist: &Huffman) -> Result<(), String> {
+fn codes(
+    b: &mut Bits<'_>,
+    out: &mut Vec<u8>,
+    start: usize,
+    lit: &Huffman,
+    dist: &Huffman,
+) -> Result<(), String> {
     loop {
         let sym = lit.decode(b)? as usize;
         if sym < 256 {
@@ -258,7 +285,13 @@ fn codes(b: &mut Bits<'_>, out: &mut Vec<u8>, start: usize, lit: &Huffman, dist:
 /// A raw deflate stream appended to `out`; the bytes it used.
 fn inflate(data: &[u8], out: &mut Vec<u8>) -> Result<usize, String> {
     let start = out.len();
-    let mut b = Bits { data, pos: 0, buf: 0, n: 0, over: 0 };
+    let mut b = Bits {
+        data,
+        pos: 0,
+        buf: 0,
+        n: 0,
+        over: 0,
+    };
     loop {
         let last = b.bits(1)?;
         match b.bits(2)? {
@@ -269,7 +302,10 @@ fn inflate(data: &[u8], out: &mut Vec<u8>) -> Result<usize, String> {
                 if len != usize::from(!u16::from_le_bytes([hdr[2], hdr[3]])) {
                     return Err("invalid stored block lengths".into());
                 }
-                out.extend_from_slice(data.get(p + 4..p + 4 + len).ok_or("unexpected end of file")?);
+                out.extend_from_slice(
+                    data.get(p + 4..p + 4 + len)
+                        .ok_or("unexpected end of file")?,
+                );
                 b.reset_at(p + 4 + len);
             }
             1 => {
@@ -278,13 +314,21 @@ fn inflate(data: &[u8], out: &mut Vec<u8>) -> Result<usize, String> {
                 l[144..256].fill(9);
                 l[256..280].fill(7);
                 l[280..].fill(8);
-                codes(&mut b, out, start, &Huffman::new(&l), &Huffman::new(&[5u8; 30]))?;
+                codes(
+                    &mut b,
+                    out,
+                    start,
+                    &Huffman::new(&l),
+                    &Huffman::new(&[5u8; 30]),
+                )?;
             }
             2 => {
                 let nlen = b.bits(5)? as usize + 257;
                 let ndist = b.bits(5)? as usize + 1;
                 let ncode = b.bits(4)? as usize + 4;
-                const ORDER: [usize; 19] = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
+                const ORDER: [usize; 19] = [
+                    16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15,
+                ];
                 let mut cl = [0u8; 19];
                 for &o in ORDER.iter().take(ncode) {
                     cl[o] = b.bits(3)? as u8;
@@ -296,7 +340,10 @@ fn inflate(data: &[u8], out: &mut Vec<u8>) -> Result<usize, String> {
                     let sym = clh.decode(&mut b)?;
                     let (val, rep) = match sym {
                         0..=15 => (sym as u8, 1),
-                        16 => (*lengths[..i].last().ok_or("invalid bit length repeat")?, 3 + b.bits(2)? as usize),
+                        16 => (
+                            *lengths[..i].last().ok_or("invalid bit length repeat")?,
+                            3 + b.bits(2)? as usize,
+                        ),
                         17 => (0, 3 + b.bits(3)? as usize),
                         _ => (0, 11 + b.bits(7)? as usize),
                     };
@@ -306,7 +353,13 @@ fn inflate(data: &[u8], out: &mut Vec<u8>) -> Result<usize, String> {
                     lengths[i..i + rep].fill(val);
                     i += rep;
                 }
-                codes(&mut b, out, start, &Huffman::new(&lengths[..nlen]), &Huffman::new(&lengths[nlen..]))?;
+                codes(
+                    &mut b,
+                    out,
+                    start,
+                    &Huffman::new(&lengths[..nlen]),
+                    &Huffman::new(&lengths[nlen..]),
+                )?;
             }
             _ => return Err("invalid block type".into()),
         }
@@ -325,7 +378,11 @@ pub fn crc32(data: &[u8]) -> u32 {
         for (n, e) in t.iter_mut().enumerate() {
             let mut c = n as u32;
             for _ in 0..8 {
-                c = if c & 1 != 0 { 0xedb8_8320 ^ (c >> 1) } else { c >> 1 };
+                c = if c & 1 != 0 {
+                    0xedb8_8320 ^ (c >> 1)
+                } else {
+                    c >> 1
+                };
             }
             *e = c;
         }

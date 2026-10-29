@@ -28,11 +28,23 @@ pub struct CreateRequest<'a> {
 pub fn create_body(object_id: &Uuid, req: &CreateRequest<'_>) -> Value {
     let mut body = Value::map();
     insert(&mut body, "object_id", Value::Uuid(*object_id));
-    insert(&mut body, "inventory_type", Value::Integer(req.inventory_type.0));
+    insert(
+        &mut body,
+        "inventory_type",
+        Value::Integer(req.inventory_type.0),
+    );
     insert(&mut body, "asset_type", Value::Integer(req.asset_type.0));
-    insert(&mut body, "sub_type", Value::Integer(i32::from(req.sub_type)));
+    insert(
+        &mut body,
+        "sub_type",
+        Value::Integer(i32::from(req.sub_type)),
+    );
     insert(&mut body, "name", Value::String(req.name.to_vec()));
-    insert(&mut body, "description", Value::String(req.description.to_vec()));
+    insert(
+        &mut body,
+        "description",
+        Value::String(req.description.to_vec()),
+    );
     let p = req.permissions;
     let mut perm = Value::map();
     insert(&mut perm, "base", Value::Integer(p.base as i32));

@@ -9,7 +9,7 @@
 //! [`crate::legacy::category`].
 
 use crate::object::Object;
-use crate::perms::{Uuid, NULL_ID};
+use crate::perms::{NULL_ID, Uuid};
 use crate::types::{AssetType, FolderType};
 
 /// `LLInventoryCategory` as a flat record.
@@ -26,7 +26,10 @@ impl Default for Category {
     /// type `AT_CATEGORY`, preferred type `FT_NONE`.
     fn default() -> Self {
         Category {
-            object: Object { asset_type: AssetType::CATEGORY, ..Object::default() },
+            object: Object {
+                asset_type: AssetType::CATEGORY,
+                ..Object::default()
+            },
             preferred_type: FolderType::NONE,
         }
     }
@@ -37,7 +40,10 @@ impl Category {
     /// object constructor with `AT_CATEGORY` (the name through
     /// `correctInventoryName`), and the preferred type.
     pub fn new(id: &Uuid, parent: &Uuid, preferred_type: FolderType, name: &[u8]) -> Category {
-        Category { object: Object::new(id, parent, AssetType::CATEGORY, name), preferred_type }
+        Category {
+            object: Object::new(id, parent, AssetType::CATEGORY, name),
+            preferred_type,
+        }
     }
 
     /// `copyCategory`: `copyObject` (not the date) and the preferred type.
@@ -49,7 +55,10 @@ impl Category {
     /// The copy constructor `LLInventoryCategory(const LLInventoryCategory*)`:
     /// a default object (date 0), then [`copy_category`](Self::copy_category).
     pub fn copy_from(other: &Category) -> Category {
-        let mut c = Category { object: Object::default(), preferred_type: FolderType::NONE };
+        let mut c = Category {
+            object: Object::default(),
+            preferred_type: FolderType::NONE,
+        };
         c.copy_category(other);
         c
     }
@@ -74,6 +83,10 @@ pub struct ViewerCategory {
 impl Default for ViewerCategory {
     /// A default category, null owner, [`VERSION_UNKNOWN`].
     fn default() -> Self {
-        ViewerCategory { category: Category::default(), owner: NULL_ID, version: VERSION_UNKNOWN }
+        ViewerCategory {
+            category: Category::default(),
+            owner: NULL_ID,
+            version: VERSION_UNKNOWN,
+        }
     }
 }

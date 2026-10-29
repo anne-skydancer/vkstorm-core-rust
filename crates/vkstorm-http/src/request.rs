@@ -8,7 +8,10 @@ use std::ffi::CString;
 use std::sync::{Arc, Mutex};
 
 use crate::hooks::Hooks;
-use crate::options::{PolicyOption, RequestOptions, RETRY_BACKOFF_MAX, RETRY_BACKOFF_MAX_DEFAULT, RETRY_BACKOFF_MIN_DEFAULT, RETRY_COUNT_DEFAULT, RETRY_COUNT_MAX, RETRY_COUNT_MIN, TRACE_MAX, TRACE_MIN};
+use crate::options::{
+    PolicyOption, RETRY_BACKOFF_MAX, RETRY_BACKOFF_MAX_DEFAULT, RETRY_BACKOFF_MIN_DEFAULT,
+    RETRY_COUNT_DEFAULT, RETRY_COUNT_MAX, RETRY_COUNT_MIN, RequestOptions, TRACE_MAX, TRACE_MIN,
+};
 use crate::status::Status;
 use crate::sys::{SendPtr, SslInfo, UserPtr};
 
@@ -56,7 +59,16 @@ pub struct Request {
 
 impl Request {
     pub fn new(policy: u32, method: Method, url: impl Into<String>) -> Request {
-        Request { policy, method, url: url.into(), body: None, offset: 0, length: 0, headers: Vec::new(), options: None }
+        Request {
+            policy,
+            method,
+            url: url.into(),
+            body: None,
+            offset: 0,
+            length: 0,
+            headers: Vec::new(),
+            options: None,
+        }
     }
 
     pub fn body(mut self, body: Vec<u8>) -> Request {
@@ -248,14 +260,20 @@ pub struct SetGetOp {
 /// The operations the service thread processes (`HttpOperation` subclasses).
 pub enum Op {
     Request(Box<RequestOp>),
-    Cancel { common: OpCommon, target: u64 },
+    Cancel {
+        common: OpCommon,
+        target: u64,
+    },
     SetGet(SetGetOp),
     /// `HttpOpStop`.
     Stop(OpCommon),
     /// `HttpOpNull`.
     NoOp(OpCommon),
     /// `HttpOpSpin`: 0 spins forever, 1 requeues itself.
-    Spin { common: OpCommon, mode: i32 },
+    Spin {
+        common: OpCommon,
+        mode: i32,
+    },
 }
 
 impl Op {
@@ -346,15 +364,25 @@ impl ReplyQueue {
     }
 
     pub fn push(&self, reply: Reply) {
-        self.queue.lock().unwrap_or_else(|e| e.into_inner()).push_back(reply);
+        self.queue
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .push_back(reply);
     }
 
     pub fn fetch(&self) -> Option<Reply> {
-        self.queue.lock().unwrap_or_else(|e| e.into_inner()).pop_front()
+        self.queue
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .pop_front()
     }
 
     pub fn fetch_all(&self) -> Vec<Reply> {
-        self.queue.lock().unwrap_or_else(|e| e.into_inner()).drain(..).collect()
+        self.queue
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .drain(..)
+            .collect()
     }
 
     pub fn len(&self) -> usize {

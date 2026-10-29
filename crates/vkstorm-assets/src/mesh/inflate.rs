@@ -30,8 +30,12 @@ const DEPRECATED_HEADER: &[u8] = b"<? LLSD/Binary ?>";
 /// present, and the header size the C++ reported (one more than the header
 /// is long, as it counted).
 pub fn strip_deprecated_header(data: &[u8]) -> (&[u8], usize) {
-    if data.len() > DEPRECATED_HEADER.len() && &data[..DEPRECATED_HEADER.len()] == DEPRECATED_HEADER {
-        (&data[DEPRECATED_HEADER.len()..], DEPRECATED_HEADER.len() + 1)
+    if data.len() > DEPRECATED_HEADER.len() && &data[..DEPRECATED_HEADER.len()] == DEPRECATED_HEADER
+    {
+        (
+            &data[DEPRECATED_HEADER.len()..],
+            DEPRECATED_HEADER.len() + 1,
+        )
     } else {
         (data, 0)
     }
@@ -54,7 +58,9 @@ pub fn inflate_all(input: &[u8]) -> Result<Vec<u8>, ZipResult> {
         consumed += (inflate.total_in() - before_in) as usize;
         let have = (inflate.total_out() - before_out) as usize;
         match status {
-            Err(InflateError::NeedDict { .. }) | Err(InflateError::DataError) => return Err(ZipResult::DataError),
+            Err(InflateError::NeedDict { .. }) | Err(InflateError::DataError) => {
+                return Err(ZipResult::DataError);
+            }
             Err(InflateError::StreamError) => return Err(ZipResult::BufferError),
             Ok(Status::BufError) => return Err(ZipResult::BufferError),
             Err(InflateError::MemError) => return Err(ZipResult::MemError),
@@ -92,7 +98,9 @@ pub fn zip_bytes(bytes: &[u8]) -> Vec<u8> {
     loop {
         let before_in = deflate.total_in();
         let before_out = deflate.total_out();
-        let status = deflate.compress(&bytes[consumed..], &mut chunk, DeflateFlush::Finish).expect("deflate");
+        let status = deflate
+            .compress(&bytes[consumed..], &mut chunk, DeflateFlush::Finish)
+            .expect("deflate");
         consumed += (deflate.total_in() - before_in) as usize;
         let have = (deflate.total_out() - before_out) as usize;
         out.extend_from_slice(&chunk[..have]);
@@ -109,8 +117,16 @@ mod tests {
 
     #[test]
     fn round_trip_and_errors() {
-        let value = Value::Map([(b"a".to_vec(), Value::Integer(5)), (b"b".to_vec(), Value::Binary(vec![1, 2, 3]))].into_iter().collect());
-        let (bytes, _) = vkstorm_llsd::format(vkstorm_llsd::Format::Binary, &value, Default::default());
+        let value = Value::Map(
+            [
+                (b"a".to_vec(), Value::Integer(5)),
+                (b"b".to_vec(), Value::Binary(vec![1, 2, 3])),
+            ]
+            .into_iter()
+            .collect(),
+        );
+        let (bytes, _) =
+            vkstorm_llsd::format(vkstorm_llsd::Format::Binary, &value, Default::default());
         let zipped = zip_bytes(&bytes);
         let back = unzip_llsd(&zipped).unwrap();
         assert_eq!(back, value);
@@ -124,7 +140,10 @@ mod tests {
         with_header.extend_from_slice(&bytes);
         assert_eq!(unzip_llsd(&zip_bytes(&with_header)).unwrap(), value);
         // Valid zlib, not LLSD.
-        assert_eq!(unzip_llsd(&zip_bytes(b"\xffnot llsd")), Err(ZipResult::ParseError));
+        assert_eq!(
+            unzip_llsd(&zip_bytes(b"\xffnot llsd")),
+            Err(ZipResult::ParseError)
+        );
     }
 
     #[test]

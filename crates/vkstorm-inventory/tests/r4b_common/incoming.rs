@@ -1,10 +1,10 @@
 //! Received offers (`Incoming`, `run_incoming`) and the offer policy runs
 //! (`PolicyCase`, `run_policy_case`) of `llinventory_offer_oracle.cpp`.
 
+use vkstorm_inventory::exchange::NetHost;
 use vkstorm_inventory::exchange::names::stream_read_s32;
 use vkstorm_inventory::exchange::offer::{self, ImArgs};
-use vkstorm_inventory::exchange::NetHost;
-use vkstorm_inventory::perms::{Uuid, NULL_ID, PERM_ALL};
+use vkstorm_inventory::perms::{NULL_ID, PERM_ALL, Uuid};
 use vkstorm_llsd::Value;
 
 use super::*;
@@ -87,7 +87,11 @@ pub fn run_incoming(f: &mut Fake, c: &Incoming, record_probe: bool) {
     }
     let n = c.bucket.len().min(MTU);
     buffer[..n].copy_from_slice(&c.bucket[..n]);
-    let size = if c.declared_size >= 0 { c.declared_size } else { c.bucket.len() as i32 };
+    let size = if c.declared_size >= 0 {
+        c.declared_size
+    } else {
+        c.bucket.len() as i32
+    };
     if record_probe && c.dialog == 9 && size != 1 {
         let p = legacy_type_probe(&buffer);
         f.add(p);
@@ -153,7 +157,16 @@ impl PolicyCase {
         const MUTES: [&str; 4] = ["none", "id", "name", "id_textchat_exempt"];
         const GRLV: [&str; 3] = ["no", "root", "noroot"];
         const TYPES: [&str; 3] = ["cat", "note", "bad"];
-        const BUTTONS: [&str; 8] = ["accept", "decline", "mute", "show", "accept_silent", "decline_silent", "show_silent", "closed"];
+        const BUTTONS: [&str; 8] = [
+            "accept",
+            "decline",
+            "mute",
+            "show",
+            "accept_silent",
+            "decline_silent",
+            "show_silent",
+            "closed",
+        ];
         let mut s = format!(
             "d{}.self{}.mute_{}.dnd{}.aa{}.legacy{}.rlv{}.grlv_{}.forbid{}.type_{}.{}.{}.dismiss{}.logdecl{}{}",
             self.dialog,
@@ -174,7 +187,11 @@ impl PolicyCase {
         );
         if self.response_table {
             let late = ["none", "id", "name"][self.late_mute as usize];
-            let _ = write!(s, ".fg{}.late_{}.linden{}.defer{}", self.from_group as i32, late, self.linden as i32, self.defer as i32);
+            let _ = write!(
+                s,
+                ".fg{}.late_{}.linden{}.defer{}",
+                self.from_group as i32, late, self.linden as i32, self.defer as i32
+            );
         }
         s
     }
@@ -263,18 +280,38 @@ pub fn run_policy_case(pc: &PolicyCase, named: Option<&str>) -> Vec<String> {
     let mut f = setup();
     f.snapshots = true;
     f.defer = pc.defer;
-    f.settings_b.insert("AutoAcceptNewInventory".into(), pc.auto_accept);
-    f.settings_b.insert("FSUseLegacyInventoryAcceptMessages".into(), pc.legacy);
-    f.settings_b.insert("FSDismissGroupNoticeAttachmentsToTrash".into(), pc.dismiss);
-    f.settings_b.insert("LogInventoryDecline".into(), pc.log_decline);
+    f.settings_b
+        .insert("AutoAcceptNewInventory".into(), pc.auto_accept);
+    f.settings_b
+        .insert("FSUseLegacyInventoryAcceptMessages".into(), pc.legacy);
+    f.settings_b
+        .insert("FSDismissGroupNoticeAttachmentsToTrash".into(), pc.dismiss);
+    f.settings_b
+        .insert("LogInventoryDecline".into(), pc.log_decline);
     f.dnd = pc.dnd;
     f.rlv_enabled = pc.rlv;
     f.rlv_forbid = pc.forbid;
-    f.rlv_shared_root = if pc.give_rlv == 1 { rlv_root() } else { NULL_ID };
+    f.rlv_shared_root = if pc.give_rlv == 1 {
+        rlv_root()
+    } else {
+        NULL_ID
+    };
     let agent_offer = pc.dialog == 4;
     let task = pc.dialog == 9;
-    let from = if task && pc.from_group { group() } else if pc.self_ { agent() } else { other() };
-    let name: &[u8] = if pc.linden { b"Grid Linden" } else if task { b"Gadget" } else { b"Sender" };
+    let from = if task && pc.from_group {
+        group()
+    } else if pc.self_ {
+        agent()
+    } else {
+        other()
+    };
+    let name: &[u8] = if pc.linden {
+        b"Grid Linden"
+    } else if task {
+        b"Gadget"
+    } else {
+        b"Sender"
+    };
     match pc.mute {
         1 => f.mute_insert(from, name, 1, 0),
         2 => {
@@ -292,7 +329,14 @@ pub fn run_policy_case(pc: &PolicyCase, named: Option<&str>) -> Vec<String> {
         if ty == 8 {
             f.add_cat(offered(), root(), b"Offered", -1);
         } else {
-            f.add_item(offered(), root(), ty, &perms_simple(&agent(), PERM_ALL), b"Offered", None);
+            f.add_item(
+                offered(),
+                root(),
+                ty,
+                &perms_simple(&agent(), PERM_ALL),
+                b"Offered",
+                None,
+            );
         }
     }
     let mut c = Incoming::new("", pc.dialog, Vec::new());
@@ -302,7 +346,11 @@ pub fn run_policy_case(pc: &PolicyCase, named: Option<&str>) -> Vec<String> {
     c.session = txn();
     if agent_offer {
         c.bucket = agent_bucket(ty as i8, &offered());
-        c.message = if pc.give_rlv != 0 { b"#RLV/~kit".to_vec() } else { b"Gift".to_vec() };
+        c.message = if pc.give_rlv != 0 {
+            b"#RLV/~kit".to_vec()
+        } else {
+            b"Gift".to_vec()
+        };
     } else if task {
         c.bucket = vec![ty as u8];
         c.message = if pc.give_rlv != 0 {
@@ -311,7 +359,11 @@ pub fn run_policy_case(pc: &PolicyCase, named: Option<&str>) -> Vec<String> {
             b"'Gadget Item'  ( http://slurl.com/secondlife/Region/1/2/3 )".to_vec()
         };
     } else {
-        let nm: &[u8] = if pc.give_rlv != 0 { b"#RLV/~kit" } else { b"Notice Item" };
+        let nm: &[u8] = if pc.give_rlv != 0 {
+            b"#RLV/~kit"
+        } else {
+            b"Notice Item"
+        };
         c.bucket = notice_bucket(1, ty as u8, &group(), nm, true);
         c.message = b"Subject|Body".to_vec();
     }
@@ -319,14 +371,25 @@ pub fn run_policy_case(pc: &PolicyCase, named: Option<&str>) -> Vec<String> {
     f.add("stage arrival");
     run_incoming(&mut f, &c, false);
     if pc.late_mute != 0 {
-        f.add(format!("stage late_mute {}", if pc.late_mute == 1 { "by_id" } else { "by_name" }));
+        f.add(format!(
+            "stage late_mute {}",
+            if pc.late_mute == 1 {
+                "by_id"
+            } else {
+                "by_name"
+            }
+        ));
         if pc.late_mute == 1 {
             f.mute_insert(from, name, 1, 0);
         } else {
             f.legacy_mutes.insert(name.to_vec());
         }
     }
-    f.add(format!("stage response {} button={}", if pc.forced { "forced" } else { "interactive" }, pc.button));
+    f.add(format!(
+        "stage response {} button={}",
+        if pc.forced { "forced" } else { "interactive" },
+        pc.button
+    ));
     if pc.button == 7 && pc.forced {
         f.add("stage unreachable (no forced close)");
     } else if agent_offer || task {
@@ -334,7 +397,10 @@ pub fn run_policy_case(pc: &PolicyCase, named: Option<&str>) -> Vec<String> {
             None => f.add("stage none (no notification posted)"),
             Some(nid) => {
                 let n = f.live.get(&nid).cloned();
-                let info = n.as_ref().and_then(|n| n.responder).filter(|h| f.offers.contains_key(h));
+                let info = n
+                    .as_ref()
+                    .and_then(|n| n.responder)
+                    .filter(|h| f.offers.contains_key(h));
                 match (n, info) {
                     (Some(n), Some(h)) => {
                         if pc.forced {
@@ -342,13 +408,20 @@ pub fn run_policy_case(pc: &PolicyCase, named: Option<&str>) -> Vec<String> {
                         } else {
                             let mut found = pc.button == 7;
                             let response = if pc.button == 7 {
-                                vkstorm_inventory::exchange::notify::response_template(n.form.as_ref().unwrap_or(&Value::Undefined))
+                                vkstorm_inventory::exchange::notify::response_template(
+                                    n.form.as_ref().unwrap_or(&Value::Undefined),
+                                )
                             } else {
                                 let mut r = Value::Undefined;
                                 if let Some(Value::Array(a)) = &n.form {
                                     for e in a {
-                                        if vkstorm_inventory::llsd::coerce::as_integer(get(e, "index")) == pc.button {
-                                            let k = String::from_utf8_lossy(&as_string(get(e, "name"))).into_owned();
+                                        if vkstorm_inventory::llsd::coerce::as_integer(get(
+                                            e, "index",
+                                        )) == pc.button
+                                        {
+                                            let k =
+                                                String::from_utf8_lossy(&as_string(get(e, "name")))
+                                                    .into_owned();
                                             insert(&mut r, &k, Value::Boolean(true));
                                             found = true;
                                         }
@@ -369,7 +442,9 @@ pub fn run_policy_case(pc: &PolicyCase, named: Option<&str>) -> Vec<String> {
         }
     } else {
         let mut info: Option<u32> = None;
-        if pc.dialog == 32 && vkstorm_inventory::llsd::coerce::has(&f.group_notice_payload, "inventory_offer") {
+        if pc.dialog == 32
+            && vkstorm_inventory::llsd::coerce::has(&f.group_notice_payload, "inventory_offer")
+        {
             let o = OfferInfo::from_llsd(get(&f.group_notice_payload, "inventory_offer"));
             info = Some(f.new_offer(o));
         } else if pc.dialog == 37 {
@@ -453,8 +528,19 @@ pub fn for_each_policy_case(mut f: impl FnMut(&PolicyCase)) {
 
 /// `for_each_response_case`.
 pub fn for_each_response_case(mut f: impl FnMut(&PolicyCase)) {
-    let mut pc = PolicyCase { response_table: true, ..PolicyCase::default() };
-    for (d, fg) in [(4, false), (9, false), (9, true), (32, false), (32, true), (37, false), (37, true)] {
+    let mut pc = PolicyCase {
+        response_table: true,
+        ..PolicyCase::default()
+    };
+    for (d, fg) in [
+        (4, false),
+        (9, false),
+        (9, true),
+        (32, false),
+        (32, true),
+        (37, false),
+        (37, true),
+    ] {
         for self_ in [false, true] {
             for linden in [false, true] {
                 for late in 0..3 {
@@ -493,7 +579,11 @@ pub fn for_each_response_case(mut f: impl FnMut(&PolicyCase)) {
 
 /// `for` the present table.
 pub fn for_each_present_case(mut f: impl FnMut(&PolicyCase)) {
-    let mut pc = PolicyCase { present: true, log_decline: true, ..PolicyCase::default() };
+    let mut pc = PolicyCase {
+        present: true,
+        log_decline: true,
+        ..PolicyCase::default()
+    };
     for d in [4, 9, 32, 37] {
         for ty in 0..2 {
             for aa in [false, true] {

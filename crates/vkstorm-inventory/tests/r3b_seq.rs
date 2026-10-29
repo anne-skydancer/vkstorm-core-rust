@@ -11,8 +11,8 @@
 mod r3b_support;
 
 use r3b_support::*;
-use vkstorm_inventory::fetch::{NULL_ID, Uuid};
 use vkstorm_inventory::ais::command::Command;
+use vkstorm_inventory::fetch::{NULL_ID, Uuid};
 use vkstorm_llsd::Value;
 
 thread_local! {
@@ -47,10 +47,19 @@ fn report_lines(id: &str, r: &mut Run, skip: &dyn Fn(&str) -> bool) {
 fn report(id: &str, r: &mut Run, skip: &dyn Fn(&str) -> bool) {
     let (n, total) = check(id, r, skip);
     let (m, bad) = check_model_fetch_state(id, r);
-    eprintln!("{id}: {n} of {total} lines compared; folder fetch state {}/{m}", m - bad.len());
-    assert!(bad.is_empty(), "{id}: folder fetch state differs from the model dump:
-  {}", bad.join("
-  "));
+    eprintln!(
+        "{id}: {n} of {total} lines compared; folder fetch state {}/{m}",
+        m - bad.len()
+    );
+    assert!(
+        bad.is_empty(),
+        "{id}: folder fetch state differs from the model dump:
+  {}",
+        bad.join(
+            "
+  "
+        )
+    );
 }
 
 fn std_world(user: usize, orphan: bool, lib: usize) -> Builder {
@@ -365,7 +374,14 @@ fn s05_transient_5xx_body() {
     r.step("busy_at_depth");
     // update_inventory_item: AISAPI::UpdateItem with the caller's LLSD body
     let body = recorded_body(id, "PATCH");
-    r.ais(Command::UpdateItem { item_id: w53, updates: Value::Undefined }, Some("w53"), body);
+    r.ais(
+        Command::UpdateItem {
+            item_id: w53,
+            updates: Value::Undefined,
+        },
+        Some("w53"),
+        body,
+    );
     r.settle(true, true);
     r.step("write_retry");
     report(id, &mut r, &none);
@@ -565,7 +581,10 @@ fn s15_batch_boundaries_body() {
         r.start(tops[i], true);
         r.settle(true, true);
         let n = r.requests() - n0;
-        r.fact(&format!("BatchSizeAIS3={setting} children={} requests={n}", kids[i].len()));
+        r.fact(&format!(
+            "BatchSizeAIS3={setting} children={} requests={n}",
+            kids[i].len()
+        ));
         r.step(&format!("batch_setting_{setting}"));
     }
     r.set_batch_size(20);
@@ -621,7 +640,14 @@ fn s17_no_library_cap_disconnected_body() {
     r.clock_advance(181.0);
     r.set_disconnected(true);
     r.fetch_descendents_of(b.ids.user[0]);
-    r.ais(Command::UpdateItem { item_id: b.ids.note1, updates: Value::Undefined }, Some("disconnected_update"), Vec::new());
+    r.ais(
+        Command::UpdateItem {
+            item_id: b.ids.note1,
+            updates: Value::Undefined,
+        },
+        Some("disconnected_update"),
+        Vec::new(),
+    );
     r.frames(10, true);
     r.settle_ex(true, false, true);
     r.step("disconnected");
@@ -677,23 +703,47 @@ fn s19_frame_budget_body() {
     let mut r = run_world(id, &b);
     r.login();
     r.walk();
-    let mut known: Vec<Uuid> = b.ids.user_sub.iter().chain(&b.ids.user_leaf).chain(&b.ids.user).copied().collect();
+    let mut known: Vec<Uuid> = b
+        .ids
+        .user_sub
+        .iter()
+        .chain(&b.ids.user_leaf)
+        .chain(&b.ids.user)
+        .copied()
+        .collect();
     known.truncate(500);
     for phase in 0..2 {
         let during_login = phase == 1;
-        r.set_startup(if during_login { Startup::WearablesWait } else { Startup::Started });
+        r.set_startup(if during_login {
+            Startup::WearablesWait
+        } else {
+            Startup::Started
+        });
         for k in &known {
             r.schedule_folder(*k, false);
         }
-        r.clock = ScriptedClock { now: 2000.0, step: 0.0013 };
+        r.clock = ScriptedClock {
+            now: 2000.0,
+            step: 0.0013,
+        };
         let mut sizes = Vec::new();
         for _ in 0..6 {
             r.frame(true);
             sizes.push(r.sched.state().folder_queue.len().to_string());
         }
-        let label = if during_login { "during_login" } else { "after_login" };
-        r.fact(&format!("budget {label} step_ms=1.3 queued=500 queue_after_frames=[{}]", sizes.join(",")));
-        r.clock = ScriptedClock { now: 3000.0, step: 0.0 };
+        let label = if during_login {
+            "during_login"
+        } else {
+            "after_login"
+        };
+        r.fact(&format!(
+            "budget {label} step_ms=1.3 queued=500 queue_after_frames=[{}]",
+            sizes.join(",")
+        ));
+        r.clock = ScriptedClock {
+            now: 3000.0,
+            step: 0.0,
+        };
         r.settle(true, true);
         r.step(label);
     }
@@ -722,24 +772,71 @@ fn s20_callback_ids_body() {
     };
     let inv = false;
     let lib = true;
-    r.ais(Command::FetchItem { item_id: d.cof_shirt_link, library: inv }, Some("fetch_item_link"), vec![]);
+    r.ais(
+        Command::FetchItem {
+            item_id: d.cof_shirt_link,
+            library: inv,
+        },
+        Some("fetch_item_link"),
+        vec![],
+    );
     done(&mut r, "fetch_item_link");
-    r.ais(Command::FetchItem { item_id: d.note1, library: inv }, Some("fetch_item"), vec![]);
+    r.ais(
+        Command::FetchItem {
+            item_id: d.note1,
+            library: inv,
+        },
+        Some("fetch_item"),
+        vec![],
+    );
     done(&mut r, "fetch_item");
-    r.ais(Command::FetchItem { item_id: d.lib_items[0], library: lib }, Some("fetch_item_library"), vec![]);
+    r.ais(
+        Command::FetchItem {
+            item_id: d.lib_items[0],
+            library: lib,
+        },
+        Some("fetch_item_library"),
+        vec![],
+    );
     done(&mut r, "fetch_item_library");
-    r.ais(Command::FetchItem { item_id: pid(0xa0e00000, 9), library: inv }, Some("fetch_item_unknown"), vec![]);
+    r.ais(
+        Command::FetchItem {
+            item_id: pid(0xa0e00000, 9),
+            library: inv,
+        },
+        Some("fetch_item_unknown"),
+        vec![],
+    );
     done(&mut r, "fetch_item_unknown");
-    let c = Command::FetchCategoryChildren { category_id: d.user[0], library: inv, recursive: false, depth: 1 };
+    let c = Command::FetchCategoryChildren {
+        category_id: d.user[0],
+        library: inv,
+        recursive: false,
+        depth: 1,
+    };
     r.ais(c, Some("children_depth1"), vec![]);
     done(&mut r, "children_depth1");
-    let c = Command::FetchCategoryChildren { category_id: d.lib_folders[0], library: lib, recursive: true, depth: 0 };
+    let c = Command::FetchCategoryChildren {
+        category_id: d.lib_folders[0],
+        library: lib,
+        recursive: true,
+        depth: 0,
+    };
     r.ais(c, Some("children_library_recursive"), vec![]);
     done(&mut r, "children_library_recursive");
-    let c = Command::FetchCategoryChildrenByName { identifier: "current".into(), recursive: false, depth: 0 };
+    let c = Command::FetchCategoryChildrenByName {
+        identifier: "current".into(),
+        recursive: false,
+        depth: 0,
+    };
     r.ais(c, Some("children_by_name"), vec![]);
     done(&mut r, "children_by_name");
-    let c = Command::FetchCategoryCategories { category_id: d.user[1], library: inv, recursive: false, depth: 2 };
+    let c = Command::FetchCategoryCategories {
+        category_id: d.user[1],
+        library: inv,
+        recursive: false,
+        depth: 2,
+    };
     r.ais(c, Some("categories"), vec![]);
     done(&mut r, "categories");
     let c = Command::FetchCategorySubset {
@@ -750,18 +847,37 @@ fn s20_callback_ids_body() {
         depth: 3,
     };
     r.ais(c, Some("subset_depth3"), vec![]);
-    let c = Command::FetchCategorySubset { category_id: root(), children: vec![], library: inv, recursive: false, depth: 3 };
+    let c = Command::FetchCategorySubset {
+        category_id: root(),
+        children: vec![],
+        library: inv,
+        recursive: false,
+        depth: 3,
+    };
     r.ais(c, Some("subset_empty"), vec![]);
     done(&mut r, "subset");
     r.ais(Command::FetchCof, Some("cof"), vec![]);
     done(&mut r, "cof");
-    r.ais(Command::FetchCategoryLinks { category_id: d.outfit_b }, Some("links"), vec![]);
+    r.ais(
+        Command::FetchCategoryLinks {
+            category_id: d.outfit_b,
+        },
+        Some("links"),
+        vec![],
+    );
     done(&mut r, "links");
     r.ais(Command::FetchOrphans, Some("orphans"), vec![]);
     done(&mut r, "orphans");
     r.library_cap = false;
     r.refresh_env();
-    r.ais(Command::FetchItem { item_id: d.lib_items[1], library: lib }, Some("library_without_cap"), vec![]);
+    r.ais(
+        Command::FetchItem {
+            item_id: d.lib_items[1],
+            library: lib,
+        },
+        Some("library_without_cap"),
+        vec![],
+    );
     done(&mut r, "library_without_cap");
     report(id, &mut r, &none);
 }
@@ -873,7 +989,9 @@ fn s24_shutdown_abort_body() {
     // the scaffolding's (one call; the lost coroutine still counted)
     let pool = r.pool_count();
     let thrown = r.stops_thrown;
-    r.fact(&format!("abort thrown={thrown} checkstop_calls=1 ais_pool={pool} version={v}"));
+    r.fact(&format!(
+        "abort thrown={thrown} checkstop_calls=1 ais_pool={pool} version={v}"
+    ));
     r.step("aborted");
     report(id, &mut r, &none);
 }
@@ -933,45 +1051,201 @@ fn s09_writes_body() {
     let mut write = |r: &mut Run, cmd: Command, tag: Option<&str>, step: &str| {
         let body = recorded_body_n(id, n);
         n += 1;
-        let t = if cmd.uses_tid() { r.last_tid() } else { NULL_ID };
+        let t = if cmd.uses_tid() {
+            r.last_tid()
+        } else {
+            NULL_ID
+        };
         r.ais_tid(cmd, t, tag, body);
         r.settle(true, true);
         r.step(step);
     };
     r.fresh_tid();
-    write(&mut r, Command::CreateInventory { parent_id: d.user[0], new_inventory: Value::Undefined }, Some("create_folder"), "create_folder");
+    write(
+        &mut r,
+        Command::CreateInventory {
+            parent_id: d.user[0],
+            new_inventory: Value::Undefined,
+        },
+        Some("create_folder"),
+        "create_folder",
+    );
     r.fresh_tid();
-    write(&mut r, Command::CreateInventory { parent_id: sys(FT_MY_OUTFITS), new_inventory: Value::Undefined }, Some("create_outfit"), "create_outfit");
+    write(
+        &mut r,
+        Command::CreateInventory {
+            parent_id: sys(FT_MY_OUTFITS),
+            new_inventory: Value::Undefined,
+        },
+        Some("create_outfit"),
+        "create_outfit",
+    );
     r.fresh_tid();
-    write(&mut r, Command::CreateInventory { parent_id: outfit_c, new_inventory: Value::Undefined }, Some("link_array"), "link_array");
+    write(
+        &mut r,
+        Command::CreateInventory {
+            parent_id: outfit_c,
+            new_inventory: Value::Undefined,
+        },
+        Some("link_array"),
+        "link_array",
+    );
     r.fresh_tid();
-    write(&mut r, Command::CreateInventory { parent_id: outfit_c, new_inventory: Value::Undefined }, Some("link_array_2"), "link_array_2");
+    write(
+        &mut r,
+        Command::CreateInventory {
+            parent_id: outfit_c,
+            new_inventory: Value::Undefined,
+        },
+        Some("link_array_2"),
+        "link_array_2",
+    );
     let cof = sys(FT_CURRENT_OUTFIT);
     r.fresh_tid();
-    write(&mut r, Command::SlamFolder { folder_id: cof, new_inventory: Value::Undefined }, Some("slam_cof"), "slam_cof");
+    write(
+        &mut r,
+        Command::SlamFolder {
+            folder_id: cof,
+            new_inventory: Value::Undefined,
+        },
+        Some("slam_cof"),
+        "slam_cof",
+    );
     r.fresh_tid();
-    write(&mut r, Command::SlamFolder { folder_id: cof, new_inventory: Value::Undefined }, Some("slam_cof_2"), "slam_cof_2");
-    write(&mut r, Command::UpdateItem { item_id: first_note, updates: Value::Undefined }, Some("update_item_llsd"), "update_item_llsd");
-    write(&mut r, Command::UpdateItem { item_id: second, updates: Value::Undefined }, Some("update_item_object"), "update_item_object");
-    write(&mut r, Command::UpdateCategory { category_id: d.user[1], updates: Value::Undefined }, Some("update_category"), "update_category");
-    write(&mut r, Command::UpdateCategory { category_id: d.user[2], updates: Value::Undefined }, None, "category_update_server");
-    write(&mut r, Command::UpdateCategory { category_id: d.outfit_b, updates: Value::Undefined }, None, "change_type");
-    write(&mut r, Command::UpdateItem { item_id: d.note1, updates: Value::Undefined }, None, "item_update_server");
-    write(&mut r, Command::RemoveItem { item_id: d.obj2 }, Some("remove_item"), "remove_item");
-    write(&mut r, Command::RemoveItem { item_id: d.trash1 }, Some("remove_item_immediate"), "remove_item_immediate");
-    write(&mut r, Command::RemoveItem { item_id: gone_item }, Some("remove_item_410"), "remove_item_410");
-    write(&mut r, Command::RemoveCategory { category_id: d.user_sub[2] }, Some("remove_category"), "remove_category");
-    write(&mut r, Command::RemoveCategory { category_id: gone_folder }, Some("remove_category_410"), "remove_category_410");
+    write(
+        &mut r,
+        Command::SlamFolder {
+            folder_id: cof,
+            new_inventory: Value::Undefined,
+        },
+        Some("slam_cof_2"),
+        "slam_cof_2",
+    );
+    write(
+        &mut r,
+        Command::UpdateItem {
+            item_id: first_note,
+            updates: Value::Undefined,
+        },
+        Some("update_item_llsd"),
+        "update_item_llsd",
+    );
+    write(
+        &mut r,
+        Command::UpdateItem {
+            item_id: second,
+            updates: Value::Undefined,
+        },
+        Some("update_item_object"),
+        "update_item_object",
+    );
+    write(
+        &mut r,
+        Command::UpdateCategory {
+            category_id: d.user[1],
+            updates: Value::Undefined,
+        },
+        Some("update_category"),
+        "update_category",
+    );
+    write(
+        &mut r,
+        Command::UpdateCategory {
+            category_id: d.user[2],
+            updates: Value::Undefined,
+        },
+        None,
+        "category_update_server",
+    );
+    write(
+        &mut r,
+        Command::UpdateCategory {
+            category_id: d.outfit_b,
+            updates: Value::Undefined,
+        },
+        None,
+        "change_type",
+    );
+    write(
+        &mut r,
+        Command::UpdateItem {
+            item_id: d.note1,
+            updates: Value::Undefined,
+        },
+        None,
+        "item_update_server",
+    );
+    write(
+        &mut r,
+        Command::RemoveItem { item_id: d.obj2 },
+        Some("remove_item"),
+        "remove_item",
+    );
+    write(
+        &mut r,
+        Command::RemoveItem { item_id: d.trash1 },
+        Some("remove_item_immediate"),
+        "remove_item_immediate",
+    );
+    write(
+        &mut r,
+        Command::RemoveItem { item_id: gone_item },
+        Some("remove_item_410"),
+        "remove_item_410",
+    );
+    write(
+        &mut r,
+        Command::RemoveCategory {
+            category_id: d.user_sub[2],
+        },
+        Some("remove_category"),
+        "remove_category",
+    );
+    write(
+        &mut r,
+        Command::RemoveCategory {
+            category_id: gone_folder,
+        },
+        Some("remove_category_410"),
+        "remove_category_410",
+    );
     r.settle(true, true);
     r.step("remove_protected");
-    write(&mut r, Command::PurgeDescendents { category_id: sys(FT_TRASH) }, Some("purge_trash"), "purge_trash");
+    write(
+        &mut r,
+        Command::PurgeDescendents {
+            category_id: sys(FT_TRASH),
+        },
+        Some("purge_trash"),
+        "purge_trash",
+    );
     r.fresh_tid();
-    let c = Command::CopyLibraryCategory { source_id: d.lib_folders[0], dest_id: d.user[0], copy_subfolders: false };
-    write(&mut r, c, Some("copy_library_depth0"), "copy_library_depth0");
+    let c = Command::CopyLibraryCategory {
+        source_id: d.lib_folders[0],
+        dest_id: d.user[0],
+        copy_subfolders: false,
+    };
+    write(
+        &mut r,
+        c,
+        Some("copy_library_depth0"),
+        "copy_library_depth0",
+    );
     r.fresh_tid();
-    let c = Command::CopyLibraryCategory { source_id: d.lib_folders[3], dest_id: d.user[0], copy_subfolders: true };
-    write(&mut r, c, Some("copy_library_recursive"), "copy_library_recursive");
-    report_lines(id, &mut r, &|l| l == "jrn notify CannotRemoveProtectedCategories");
+    let c = Command::CopyLibraryCategory {
+        source_id: d.lib_folders[3],
+        dest_id: d.user[0],
+        copy_subfolders: true,
+    };
+    write(
+        &mut r,
+        c,
+        Some("copy_library_recursive"),
+        "copy_library_recursive",
+    );
+    report_lines(id, &mut r, &|l| {
+        l == "jrn notify CannotRemoveProtectedCategories"
+    });
 }
 
 // ---- 14: Second Life write fallbacks (no AIS) -------------------------------------------
@@ -1012,7 +1286,9 @@ fn write_fallbacks(id: &str, other_grid: bool) {
         r.settle(true, true);
         r.step(step);
     }
-    report_lines(id, &mut r, &|l| l.starts_with("jrn callback ") || l.starts_with("wire 7 "));
+    report_lines(id, &mut r, &|l| {
+        l.starts_with("jrn callback ") || l.starts_with("wire 7 ")
+    });
 }
 
 #[test]

@@ -19,7 +19,11 @@ pub(crate) enum Playlist {
 pub(crate) fn parse(body: &[u8], pls: bool, base: &str) -> Playlist {
     let text = super::icy::decode_text(body);
     let text = text.strip_prefix('\u{feff}').unwrap_or(&text);
-    if pls { parse_pls(text, base) } else { parse_m3u(text, base) }
+    if pls {
+        parse_pls(text, base)
+    } else {
+        parse_m3u(text, base)
+    }
 }
 
 fn parse_m3u(text: &str, base: &str) -> Playlist {
@@ -52,7 +56,9 @@ fn parse_pls(text: &str, base: &str) -> Playlist {
     let mut files: Vec<(u32, String)> = Vec::new();
     for line in text.lines() {
         let line = line.trim();
-        let Some((key, value)) = line.split_once('=') else { continue };
+        let Some((key, value)) = line.split_once('=') else {
+            continue;
+        };
         let key = key.trim();
         if key.len() > 4
             && key[..4].eq_ignore_ascii_case("file")
@@ -74,7 +80,9 @@ pub(crate) fn resolve(base: &str, entry: &str) -> String {
     if entry.contains("://") {
         return entry.to_owned();
     }
-    let Some(scheme_end) = base.find("://") else { return entry.to_owned() };
+    let Some(scheme_end) = base.find("://") else {
+        return entry.to_owned();
+    };
     let scheme = &base[..scheme_end];
     let after = &base[scheme_end + 3..];
     let host_end = after.find(['/', '?', '#']).unwrap_or(after.len());
@@ -98,8 +106,13 @@ pub(crate) fn resolve(base: &str, entry: &str) -> String {
 pub(crate) fn content_type_kind(ct: &str) -> Option<bool> {
     match ct {
         "audio/x-scpls" | "audio/scpls" | "application/pls+xml" | "application/pls" => Some(true),
-        "audio/x-mpegurl" | "audio/mpegurl" | "application/x-mpegurl" | "application/vnd.apple.mpegurl"
-        | "application/mpegurl" | "audio/m3u" | "audio/x-m3u" => Some(false),
+        "audio/x-mpegurl"
+        | "audio/mpegurl"
+        | "application/x-mpegurl"
+        | "application/vnd.apple.mpegurl"
+        | "application/mpegurl"
+        | "audio/m3u"
+        | "audio/x-m3u" => Some(false),
         _ => None,
     }
 }
@@ -111,18 +124,40 @@ mod tests {
     #[test]
     fn pls() {
         let body = b"[playlist]\nNumberOfEntries=2\nFile2=http://b/2\nTitle1=x\nfile1=http://a/1\nLength1=-1\nVersion=2\n";
-        assert_eq!(parse(body, true, "http://h/p.pls"), Playlist::Entries(vec!["http://a/1".into(), "http://b/2".into()]));
+        assert_eq!(
+            parse(body, true, "http://h/p.pls"),
+            Playlist::Entries(vec!["http://a/1".into(), "http://b/2".into()])
+        );
     }
 
     #[test]
     fn m3u() {
-        let body = b"#EXTM3U\r\n#EXTINF:-1,Radio\r\nhttp://a:8000/live\r\n\r\nrel.mp3\r\n/abs.ogg\r\n";
+        let body =
+            b"#EXTM3U\r\n#EXTINF:-1,Radio\r\nhttp://a:8000/live\r\n\r\nrel.mp3\r\n/abs.ogg\r\n";
         assert_eq!(
             parse(body, false, "https://h:1/dir/list.m3u?x=1"),
-            Playlist::Entries(vec!["http://a:8000/live".into(), "https://h:1/dir/rel.mp3".into(), "https://h:1/abs.ogg".into()])
+            Playlist::Entries(vec![
+                "http://a:8000/live".into(),
+                "https://h:1/dir/rel.mp3".into(),
+                "https://h:1/abs.ogg".into()
+            ])
         );
-        assert_eq!(parse(b"#EXTM3U\n#EXT-X-TARGETDURATION:10\nseg0.ts\n", false, "http://h/"), Playlist::Hls);
-        assert_eq!(parse(b"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nv.m3u8\n", false, "http://h/"), Playlist::Hls);
+        assert_eq!(
+            parse(
+                b"#EXTM3U\n#EXT-X-TARGETDURATION:10\nseg0.ts\n",
+                false,
+                "http://h/"
+            ),
+            Playlist::Hls
+        );
+        assert_eq!(
+            parse(
+                b"#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1\nv.m3u8\n",
+                false,
+                "http://h/"
+            ),
+            Playlist::Hls
+        );
     }
 
     #[test]

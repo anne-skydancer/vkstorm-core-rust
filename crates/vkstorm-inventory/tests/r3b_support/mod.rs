@@ -35,12 +35,15 @@ use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::path::PathBuf;
 
 use vkstorm_inventory::ais::command::{
-    CapKind, Command, CommandType, Refusal, Request as AisRequest, MAX_FOLDER_DEPTH_REQUEST,
+    CapKind, Command, CommandType, MAX_FOLDER_DEPTH_REQUEST, Refusal, Request as AisRequest,
 };
-use vkstorm_inventory::ais::result::{begin, callback_ids, error_branch, AlertState, CommandContext, HttpStatus};
+use vkstorm_inventory::ais::result::{
+    AlertState, CommandContext, HttpStatus, begin, callback_ids, error_branch,
+};
 use vkstorm_inventory::ais::update::{ItemRecord, Model, ModelCategory, ModelRef};
 use vkstorm_inventory::fetch::scheduler::{
-    self, Action, BackgroundFetch, BudgetClock, CategoryInfo, Ctx, Env, FetchModel, FetchPath, ItemInfo,
+    self, Action, BackgroundFetch, BudgetClock, CategoryInfo, Ctx, Env, FetchModel, FetchPath,
+    ItemInfo,
 };
 use vkstorm_inventory::fetch::timer::{CategoryFetchState, FETCH_DEFAULT_EXPIRY};
 use vkstorm_inventory::fetch::{CategoryFetch, NULL_ID, Uuid, uuid_string};
@@ -122,7 +125,9 @@ pub const FT_MARKETPLACE_LISTINGS: i32 = 53;
 pub const LANDMARK: i32 = 3;
 
 /// The 21 system folders, in the order the Builder creates them.
-pub const SYSTEM: [i32; 21] = [0, 1, 2, 3, 5, 6, 7, 10, 13, 14, 15, 16, 20, 21, 23, 46, 48, 50, 53, 56, 57];
+pub const SYSTEM: [i32; 21] = [
+    0, 1, 2, 3, 5, 6, 7, 10, 13, 14, 15, 16, 20, 21, 23, 46, 48, 50, 53, 56, 57,
+];
 
 // ---------------------------------------------------------------------------
 // The synthetic inventories (Builder, basic)
@@ -161,11 +166,22 @@ pub struct World {
 impl World {
     pub fn add_folder(&mut self, id: Uuid, parent: Uuid, ftype: i32, version: i32, library: bool) {
         let owner = if library { self.libowner } else { self.agent };
-        self.folders.push(WFolder { id, parent, owner, ftype, version });
+        self.folders.push(WFolder {
+            id,
+            parent,
+            owner,
+            ftype,
+            version,
+        });
     }
     pub fn add_item(&mut self, id: Uuid, parent: Uuid, library: bool) {
         let owner = if library { self.libowner } else { self.agent };
-        self.items.push(WItem { id, parent, owner, linked: None });
+        self.items.push(WItem {
+            id,
+            parent,
+            owner,
+            linked: None,
+        });
     }
 }
 
@@ -219,7 +235,15 @@ impl Builder {
         if library {
             w.add_folder(libroot(), NULL_ID, FT_ROOT_INVENTORY, 12, true);
         }
-        Builder { w, ids: Ids::default(), n_user: 1, n_item: 1, n_link: 1, n_lib: 2, n_libitem: 1 }
+        Builder {
+            w,
+            ids: Ids::default(),
+            n_user: 1,
+            n_item: 1,
+            n_link: 1,
+            n_lib: 2,
+            n_libitem: 1,
+        }
     }
     pub fn item(&mut self, parent: Uuid) -> Uuid {
         let id = itm(self.n_item);
@@ -237,13 +261,15 @@ impl Builder {
     }
     pub fn folder(&mut self, parent: Uuid, ftype: i32) -> Uuid {
         let id = usr(self.n_user);
-        self.w.add_folder(id, parent, ftype, ver(self.n_user), false);
+        self.w
+            .add_folder(id, parent, ftype, ver(self.n_user), false);
         self.n_user += 1;
         id
     }
     pub fn libfolder(&mut self, parent: Uuid) -> Uuid {
         let id = libf(self.n_lib);
-        self.w.add_folder(id, parent, FT_NONE, ver(self.n_lib), true);
+        self.w
+            .add_folder(id, parent, FT_NONE, ver(self.n_lib), true);
         self.n_lib += 1;
         self.ids.lib_folders.push(id);
         id
@@ -251,7 +277,12 @@ impl Builder {
     pub fn link(&mut self, parent: Uuid, target: Uuid) -> Uuid {
         let id = lnk(self.n_link);
         self.n_link += 1;
-        self.w.items.push(WItem { id, parent, owner: self.w.agent, linked: Some(target) });
+        self.w.items.push(WItem {
+            id,
+            parent,
+            owner: self.w.agent,
+            linked: Some(target),
+        });
         id
     }
 }
@@ -330,7 +361,12 @@ pub fn basic(b: &mut Builder, user_folders: usize, orphan: bool, lib_folders: us
     if orphan {
         let o = pid(0xa0f00000, 1);
         let agent = b.w.agent;
-        b.w.items.push(WItem { id: o, parent: NULL_ID, owner: agent, linked: None });
+        b.w.items.push(WItem {
+            id: o,
+            parent: NULL_ID,
+            owner: agent,
+            linked: None,
+        });
     }
 }
 
@@ -435,7 +471,8 @@ pub struct CacheFile {
 
 impl ReplayModel {
     fn viewer_count(&self, id: &Uuid) -> i32 {
-        (self.cat_children.get(id).map_or(0, Vec::len) + self.item_children.get(id).map_or(0, Vec::len)) as i32
+        (self.cat_children.get(id).map_or(0, Vec::len)
+            + self.item_children.get(id).map_or(0, Vec::len)) as i32
     }
 
     /// `cache(root)` and `cache(library root)` at logout: a folder is saved
@@ -444,7 +481,9 @@ impl ReplayModel {
     pub fn save_cache(&self) -> CacheFile {
         let mut f = CacheFile::default();
         for top in [self.root, self.libroot] {
-            let Some(c) = self.cats.get(&top) else { continue };
+            let Some(c) = self.cats.get(&top) else {
+                continue;
+            };
             let mut cached: BTreeSet<Uuid> = BTreeSet::new();
             let can = |c: &MCat| c.version != -1 && c.count == self.viewer_count(&c.id);
             if can(c) {
@@ -481,7 +520,11 @@ impl ReplayModel {
     pub fn load_warm(&mut self, w: &World, cache: &CacheFile) {
         let mut counts: BTreeMap<Uuid, i32> = BTreeMap::new();
         for f in skeleton_order(w) {
-            let owner = if f.owner == w.libowner && w.libroot != NULL_ID { w.libowner } else { w.agent };
+            let owner = if f.owner == w.libowner && w.libroot != NULL_ID {
+                w.libowner
+            } else {
+                w.agent
+            };
             let version = match cache.cats.get(&f.id) {
                 Some(v) if *v == f.version => f.version,
                 _ => -1,
@@ -532,7 +575,11 @@ impl ReplayModel {
     /// `buildParentChildMap` then lists children in id order.
     pub fn load_cold(&mut self, w: &World) {
         for f in skeleton_order(w) {
-            let owner = if f.owner == w.libowner && w.libroot != NULL_ID { w.libowner } else { w.agent };
+            let owner = if f.owner == w.libowner && w.libroot != NULL_ID {
+                w.libowner
+            } else {
+                w.agent
+            };
             self.cats.insert(
                 f.id,
                 MCat {
@@ -557,13 +604,23 @@ impl ReplayModel {
             self.cat_children.entry(*id).or_default();
             self.item_children.entry(*id).or_default();
         }
-        let cats: Vec<(Uuid, Uuid)> = self.cat_order.order().iter().map(|id| (*id, self.cats[id].parent)).collect();
+        let cats: Vec<(Uuid, Uuid)> = self
+            .cat_order
+            .order()
+            .iter()
+            .map(|id| (*id, self.cats[id].parent))
+            .collect();
         for (id, parent) in cats {
             if let Some(v) = self.cat_children.get_mut(&parent) {
                 v.push(id);
             }
         }
-        let items: Vec<(Uuid, Uuid)> = self.item_order.order().iter().map(|id| (*id, self.items[id].parent)).collect();
+        let items: Vec<(Uuid, Uuid)> = self
+            .item_order
+            .order()
+            .iter()
+            .map(|id| (*id, self.items[id].parent))
+            .collect();
         for (id, parent) in items {
             if let Some(v) = self.item_children.get_mut(&parent) {
                 v.push(id);
@@ -637,7 +694,9 @@ impl ReplayModel {
 
     /// `isCategoryComplete`
     pub fn is_category_complete(&self, id: &Uuid) -> bool {
-        self.cats.get(id).is_some_and(|c| c.version != -1 && c.count == self.viewer_count(id))
+        self.cats
+            .get(id)
+            .is_some_and(|c| c.version != -1 && c.count == self.viewer_count(id))
     }
 
     /// `accountForUpdate(LLCategoryUpdate(id, delta))`
@@ -655,7 +714,12 @@ impl ReplayModel {
     /// `updateItem`), optionally moved to `parent`.
     pub fn legacy_item(&mut self, it: &Value, parent: Option<Uuid>) {
         let id = as_uuid(get(it, "item_id"));
-        let mut i = self.items.get(&id).cloned().unwrap_or(MItem { id, parent: NULL_ID, owner: NULL_ID, complete: true });
+        let mut i = self.items.get(&id).cloned().unwrap_or(MItem {
+            id,
+            parent: NULL_ID,
+            owner: NULL_ID,
+            complete: true,
+        });
         i.parent = parent.unwrap_or_else(|| as_uuid(get(it, "parent_id")));
         let perms = get(it, "permissions");
         if has(perms, "owner_id") {
@@ -706,15 +770,20 @@ impl FetchModel for ReplayModel {
         self.base_outfit
     }
     fn category(&self, id: &Uuid) -> Option<CategoryInfo> {
-        self.cats
-            .get(id)
-            .map(|c| CategoryInfo { version: c.version, preferred_type: c.pref, owner_id: c.owner })
+        self.cats.get(id).map(|c| CategoryInfo {
+            version: c.version,
+            preferred_type: c.pref,
+            owner_id: c.owner,
+        })
     }
     fn child_categories(&self, id: &Uuid) -> Option<Vec<Uuid>> {
         self.cat_children.get(id).cloned()
     }
     fn item(&self, id: &Uuid) -> Option<ItemInfo> {
-        self.items.get(id).map(|i| ItemInfo { complete: i.complete, owner_id: i.owner })
+        self.items.get(id).map(|i| ItemInfo {
+            complete: i.complete,
+            owner_id: i.owner,
+        })
     }
     fn is_object_descendent_of(&self, obj: &Uuid, cat: &Uuid) -> bool {
         if obj == cat {
@@ -749,7 +818,9 @@ impl FetchModel for ReplayModel {
     }
     fn get_fetching(&mut self, id: &Uuid) -> CategoryFetch {
         let now = self.now;
-        self.cats.get_mut(id).map_or(CategoryFetch::None, |c| c.fetch.get_fetching(now))
+        self.cats
+            .get_mut(id)
+            .map_or(CategoryFetch::None, |c| c.fetch.get_fetching(now))
     }
     fn set_fetching(&mut self, id: &Uuid, state: CategoryFetch) {
         let (now, ais) = (self.now, self.ais_available);
@@ -793,7 +864,11 @@ impl ReplayModel {
     /// does for the scheduler's view; returns the `fetch(expiry)` calls the
     /// update made, in order.
     pub fn apply_fetch_reply(&mut self, subset: bool, depth: i32, v: &Value) -> Vec<(Uuid, i32)> {
-        let mut u = Upd { depth0: depth, subset, ..Default::default() };
+        let mut u = Upd {
+            depth0: depth,
+            subset,
+            ..Default::default()
+        };
         // parseContent
         if has(v, "linked_id") && has(v, "parent_id") {
             self.parse_link(&mut u, v, depth);
@@ -835,20 +910,25 @@ impl ReplayModel {
     /// `parseMeta`'s `_updated_category_versions` and `doUpdate`'s last loop
     /// (FIRE-33455: versions only rise; a -1 refetches with 360 s).
     fn apply_version_updates(&mut self, u: &mut Upd, v: &Value) {
-        let Value::Map(m) = get(v, "_updated_category_versions") else { return };
+        let Value::Map(m) = get(v, "_updated_category_versions") else {
+            return;
+        };
         let mut ucv: BTreeMap<Uuid, i32> = BTreeMap::new();
         for (k, val) in m {
             ucv.insert(vkstorm_llsd::text::uuid_set(k), as_integer(val));
         }
         for (id, version) in ucv {
-            let Some(c) = self.cats.get_mut(&id) else { continue };
+            let Some(c) = self.cats.get_mut(&id) else {
+                continue;
+            };
             if c.version != version {
                 if version != -1 {
                     if c.version == -1 || version > c.version {
                         c.version = version;
                     }
                 } else {
-                    u.fetches.push((id, vkstorm_inventory::fetch::timer::FETCH_LONG_EXPIRY));
+                    u.fetches
+                        .push((id, vkstorm_inventory::fetch::timer::FETCH_LONG_EXPIRY));
                 }
             }
         }
@@ -892,7 +972,12 @@ impl ReplayModel {
         let id = as_uuid(get(m, "item_id"));
         let mut it = match self.items.get(&id) {
             Some(c) => c.clone(),
-            None => MItem { id, parent: NULL_ID, owner: NULL_ID, complete: false },
+            None => MItem {
+                id,
+                parent: NULL_ID,
+                owner: NULL_ID,
+                complete: false,
+            },
         };
         it.id = id;
         it.parent = as_uuid(get(m, "parent_id"));
@@ -911,7 +996,12 @@ impl ReplayModel {
         let id = as_uuid(get(m, "item_id"));
         let mut it = match self.items.get(&id) {
             Some(c) => c.clone(),
-            None => MItem { id, parent: NULL_ID, owner: NULL_ID, complete: false },
+            None => MItem {
+                id,
+                parent: NULL_ID,
+                owner: NULL_ID,
+                complete: false,
+            },
         };
         it.id = id;
         it.parent = as_uuid(get(m, "parent_id"));
@@ -929,7 +1019,11 @@ impl ReplayModel {
 
     fn parse_category(&mut self, u: &mut Upd, m: &Value, depth: i32) {
         let id = as_uuid(get(m, "category_id"));
-        let version = if has(m, "version") { as_integer(get(m, "version")) } else { -1 };
+        let version = if has(m, "version") {
+            as_integer(get(m, "version"))
+        } else {
+            -1
+        };
         if let Some(curr) = self.cats.get_mut(&id) {
             if curr.version > -1 && curr.count != -1 && version > -1 && version < curr.version {
                 // stale folder (FIRE-33337): unknown again, fetch()
@@ -948,7 +1042,11 @@ impl ReplayModel {
                 id,
                 parent: NULL_ID,
                 pref: -1,
-                owner: if has(m, "agent_id") { as_uuid(get(m, "agent_id")) } else { NULL_ID },
+                owner: if has(m, "agent_id") {
+                    as_uuid(get(m, "agent_id"))
+                } else {
+                    NULL_ID
+                },
                 version: -1,
                 count: -1,
                 fetch: CategoryFetchState::new(self.now),
@@ -962,9 +1060,13 @@ impl ReplayModel {
         if has(m, "_embedded") {
             let emb = get(m, "_embedded");
             if has(emb, "categories") && has(emb, "links") && has(emb, "items") {
-                let n = map_len(get(emb, "categories")) + map_len(get(emb, "links")) + map_len(get(emb, "items"));
+                let n = map_len(get(emb, "categories"))
+                    + map_len(get(emb, "links"))
+                    + map_len(get(emb, "items"));
                 u.known.insert(id, n as i32);
-            } else if has(emb, "links") && (c.pref as i32 == FT_CURRENT_OUTFIT || c.pref as i32 == FT_OUTFIT) {
+            } else if has(emb, "links")
+                && (c.pref as i32 == FT_CURRENT_OUTFIT || c.pref as i32 == FT_OUTFIT)
+            {
                 u.known.insert(id, map_len(get(emb, "links")) as i32);
             }
         }
@@ -1007,7 +1109,11 @@ pub fn build_ais(cmd: &Command, tid: &Uuid, caps: &AisCaps) -> Result<AisRequest
 /// The depth `AISUpdate` parses a reply with: the request body's `depth`,
 /// else `MAX_FOLDER_DEPTH_REQUEST`.
 pub fn request_depth(req: &AisRequest) -> i32 {
-    if has(&req.body, "depth") { as_integer(get(&req.body, "depth")) } else { MAX_FOLDER_DEPTH_REQUEST }
+    if has(&req.body, "depth") {
+        as_integer(get(&req.body, "depth"))
+    } else {
+        MAX_FOLDER_DEPTH_REQUEST
+    }
 }
 
 /// The model as R3a's error branch sees it in this replay: only its
@@ -1062,7 +1168,13 @@ pub fn ais_result(
             agent_id: NULL_ID,
             in_open_sim: false,
         };
-        error_branch(&ctx, &result, HttpStatus::http(status as u16), alert, &mut notes);
+        error_branch(
+            &ctx,
+            &result,
+            HttpStatus::http(status as u16),
+            alert,
+            &mut notes,
+        );
     }
     (notes.notified, callback_ids(&result, req.command))
 }
@@ -1075,10 +1187,16 @@ pub fn ais_result(
 /// queues and the `children=` lists follow `LLInventoryModel`'s
 /// `std::unordered_map` order since upstream 28fee038e0, so the tree is
 /// `ais/fetch/<library>/` (`fixtures/ais/fetch/README.md`).
-pub const FETCH_LIBRARY: &str = if cfg!(target_env = "msvc") { "msvc" } else { "libstdcxx" };
+pub const FETCH_LIBRARY: &str = if cfg!(target_env = "msvc") {
+    "msvc"
+} else {
+    "libstdcxx"
+};
 
 pub fn fixture_dir() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/ais/fetch").join(FETCH_LIBRARY)
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/ais/fetch")
+        .join(FETCH_LIBRARY)
 }
 
 /// A scenario's compared lines (after `== <id>`).
@@ -1122,7 +1240,10 @@ pub fn recorded_wires(id: &str, lines: &[String]) -> Vec<RecWire> {
         let mut heads = Vec::new();
         let mut pos = 0;
         while pos < data.len() {
-            let end = data[pos..].iter().position(|&b| b == b'\n').map_or(data.len(), |e| pos + e);
+            let end = data[pos..]
+                .iter()
+                .position(|&b| b == b'\n')
+                .map_or(data.len(), |e| pos + e);
             let line = &data[pos..end];
             if line.starts_with(b"--- ") {
                 heads.push((pos, end + 1, String::from_utf8_lossy(line).into_owned()));
@@ -1130,7 +1251,11 @@ pub fn recorded_wires(id: &str, lines: &[String]) -> Vec<RecWire> {
             pos = end + 1;
         }
         for (k, (_, body_start, head)) in heads.iter().enumerate() {
-            let body_end = if k + 1 < heads.len() { heads[k + 1].0 } else { data.len() };
+            let body_end = if k + 1 < heads.len() {
+                heads[k + 1].0
+            } else {
+                data.len()
+            };
             let n: usize = head.split(' ').nth(2).unwrap().parse().unwrap();
             let mut body = data[*body_start..body_end].to_vec();
             if body.ends_with(b"\n") {
@@ -1141,7 +1266,9 @@ pub fn recorded_wires(id: &str, lines: &[String]) -> Vec<RecWire> {
     }
     let mut out = Vec::new();
     for l in lines {
-        let Some(rest) = l.strip_prefix("wire ") else { continue };
+        let Some(rest) = l.strip_prefix("wire ") else {
+            continue;
+        };
         let (n, rest) = rest.split_once(' ').unwrap();
         let n: usize = n.parse().unwrap();
         let mut f = rest.splitn(3, ' ');
@@ -1157,9 +1284,9 @@ pub fn recorded_wires(id: &str, lines: &[String]) -> Vec<RecWire> {
             status,
             request: rest[..k].to_owned(),
             tail: rest[k + 1..].to_owned(),
-            value: bodies
-                .remove(&n)
-                .and_then(|b| vkstorm_llsd::parse(vkstorm_llsd::Format::Xml, &b, Default::default()).1),
+            value: bodies.remove(&n).and_then(|b| {
+                vkstorm_llsd::parse(vkstorm_llsd::Format::Xml, &b, Default::default()).1
+            }),
         });
     }
     out
@@ -1383,7 +1510,10 @@ impl Run {
             model,
             sched: BackgroundFetch::new(),
             env: Env::default(),
-            clock: ScriptedClock { now: 1000.0, step: 0.0 },
+            clock: ScriptedClock {
+                now: 1000.0,
+                step: 0.0,
+            },
             startup: Startup::None,
             region: true,
             caps: CAPS_ALL,
@@ -1437,7 +1567,10 @@ impl Run {
         // The process-wide 403 flag: s04 (index order) raises the alert; every
         // later scenario sees it spent.
         let order = index_order();
-        let me = order.iter().position(|s| s == id).expect("scenario in index.txt");
+        let me = order
+            .iter()
+            .position(|s| s == id)
+            .expect("scenario in index.txt");
         let s04 = order.iter().position(|s| s == "s04_forbidden").unwrap();
         r.notices.first_call = me <= s04;
         r.refresh_env();
@@ -1463,13 +1596,23 @@ impl Run {
         let ais_caps = if self.region && self.caps & CAPS_AIS != 0 {
             AisCaps {
                 inventory: format!("{BASE}/cap/inv"),
-                library: if self.library_cap { format!("{BASE}/cap/lib") } else { String::new() },
+                library: if self.library_cap {
+                    format!("{BASE}/cap/lib")
+                } else {
+                    String::new()
+                },
             }
         } else {
             AisCaps::default()
         };
         let legacy = self.region && self.caps & CAPS_LEGACY != 0;
-        let cap = |c: &str| if legacy { format!("{BASE}/cap/{c}") } else { String::new() };
+        let cap = |c: &str| {
+            if legacy {
+                format!("{BASE}/cap/{c}")
+            } else {
+                String::new()
+            }
+        };
         self.env = Env {
             use_http_inventory: true,
             ais_available: scheduler::ais_available(
@@ -1546,7 +1689,10 @@ impl Run {
     pub fn sched_text(&self) -> String {
         let s = self.sched.state();
         let q = |v: &[vkstorm_inventory::fetch::QueueEntry]| {
-            v.iter().map(|e| format!("{}:{}", uuid_string(&e.id), e.fetch_type as i32)).collect::<Vec<_>>().join(",")
+            v.iter()
+                .map(|e| format!("{}:{}", uuid_string(&e.id), e.fetch_type as i32))
+                .collect::<Vec<_>>()
+                .join(",")
         };
         let ids = |v: &[Uuid]| v.iter().map(uuid_string).collect::<Vec<_>>().join(",");
         let b = |x: bool| if x { "1" } else { "0" };
@@ -1679,7 +1825,9 @@ impl Run {
     /// `LLViewerInventoryCategory::fetch(expiry)`
     pub fn cat_fetch(&mut self, id: Uuid, expiry: i32) -> bool {
         let now = self.model.now;
-        let Some(c) = self.model.cats.get_mut(&id) else { return false };
+        let Some(c) = self.model.cats.get_mut(&id) else {
+            return false;
+        };
         let version = c.version;
         if !c.fetch.fetch_gate(version, expiry, now) {
             return false;
@@ -1716,7 +1864,9 @@ impl Run {
                 Action::IssueAis { ticket, command } => {
                     match build_ais(&command.to_command(), &NULL_ID, &self.ais_caps) {
                         Ok(req) => self.enqueue_ais((ticket, req, Vec::new())),
-                        Err(e) => self.fail(format!("the scheduler issued a refused command ({e:?}): {command:?}")),
+                        Err(e) => self.fail(format!(
+                            "the scheduler issued a refused command ({e:?}): {command:?}"
+                        )),
                     }
                 }
                 Action::Callback { token } => {
@@ -1726,7 +1876,13 @@ impl Run {
                 Action::Notify { name } => self.note(&format!("notify {name}")),
                 Action::FetchCompleted => self.note("fetch.completed"),
                 Action::AddIdle | Action::NotifyObservers => {}
-                Action::LegacyPost { handler, folder, url, body, .. } => self.legacy_post(handler, folder, &url, body),
+                Action::LegacyPost {
+                    handler,
+                    folder,
+                    url,
+                    body,
+                    ..
+                } => self.legacy_post(handler, folder, &url, body),
                 Action::LegacyPump { .. } => self.legacy_pump(),
             }
         }
@@ -1738,16 +1894,33 @@ impl Run {
     fn legacy_post(&mut self, handler: u64, folder: bool, url: &str, body: Vec<u8>) {
         let target = target_of(url).to_owned();
         let head = legacy_head(&target, body.len());
-        let request = format!("head={} body={}", escape_text(head.as_bytes()), escape_text(&body));
-        let v = vkstorm_llsd::parse(vkstorm_llsd::Format::Xml, &body, Default::default()).1.unwrap_or(Value::map());
+        let request = format!(
+            "head={} body={}",
+            escape_text(head.as_bytes()),
+            escape_text(&body)
+        );
+        let v = vkstorm_llsd::parse(vkstorm_llsd::Format::Xml, &body, Default::default())
+            .1
+            .unwrap_or(Value::map());
         let m = self.mock.as_mut().expect("generated replies");
-        let (status, value) = if folder { m.legacy_folders(&v) } else { m.legacy_items(&v) };
+        let (status, value) = if folder {
+            m.legacy_folders(&v)
+        } else {
+            m.legacy_items(&v)
+        };
         let line = format!("POST {target} status={status} {request}");
         self.wires.push(line.clone());
         self.wire_targets.push(("POST".to_owned(), target, status));
         let phase = self.phases;
         self.unordered.push(WireRec { phase, line });
-        self.legacy.push(LegacyFlight { handler, foreground: false, folder, sent_frame: self.frame_no, status, value });
+        self.legacy.push(LegacyFlight {
+            handler,
+            foreground: false,
+            folder,
+            sent_frame: self.frame_no,
+            status,
+            value,
+        });
     }
 
     /// A foreground `requestPost` of item bodies (`fetchFromServer`, the item
@@ -1756,15 +1929,32 @@ impl Run {
     fn foreground_post(&mut self, cap: &str, body: Vec<u8>) {
         let target = format!("/cap/{cap}");
         let head = legacy_head(&target, body.len());
-        let request = format!("head={} body={}", escape_text(head.as_bytes()), escape_text(&body));
-        let v = vkstorm_llsd::parse(vkstorm_llsd::Format::Xml, &body, Default::default()).1.unwrap_or(Value::map());
-        let (status, value) = self.mock.as_mut().expect("generated replies").legacy_items(&v);
+        let request = format!(
+            "head={} body={}",
+            escape_text(head.as_bytes()),
+            escape_text(&body)
+        );
+        let v = vkstorm_llsd::parse(vkstorm_llsd::Format::Xml, &body, Default::default())
+            .1
+            .unwrap_or(Value::map());
+        let (status, value) = self
+            .mock
+            .as_mut()
+            .expect("generated replies")
+            .legacy_items(&v);
         let line = format!("POST {target} status={status} {request}");
         self.wires.push(line.clone());
         self.wire_targets.push(("POST".to_owned(), target, status));
         let phase = self.phases;
         self.unordered.push(WireRec { phase, line });
-        self.legacy.push(LegacyFlight { handler: 0, foreground: true, folder: false, sent_frame: self.frame_no, status, value });
+        self.legacy.push(LegacyFlight {
+            handler: 0,
+            foreground: true,
+            folder: false,
+            sent_frame: self.frame_no,
+            status,
+            value,
+        });
     }
 
     fn legacy_cap(&self, cap: &str) -> bool {
@@ -1777,15 +1967,24 @@ impl Run {
 
     /// `LLViewerInventoryItem::fetchFromServer()` without AIS.
     pub fn fetch_from_server(&mut self, item: Uuid) {
-        let Some(it) = self.model.items.get(&item).cloned() else { return };
+        let Some(it) = self.model.items.get(&item).cloned() else {
+            return;
+        };
         if it.complete {
             return;
         }
-        let cap = if self.world.agent != it.owner { "fl2" } else { "fi2" };
+        let cap = if self.world.agent != it.owner {
+            "fl2"
+        } else {
+            "fi2"
+        };
         if self.legacy_cap(cap) {
             let body = vkstorm_inventory::fetch::legacy::ItemBody {
                 agent_id: Some(self.world.agent),
-                items: vec![vkstorm_inventory::fetch::legacy::ItemRequest { item_id: item, owner_id: it.owner }],
+                items: vec![vkstorm_inventory::fetch::legacy::ItemRequest {
+                    item_id: item,
+                    owner_id: it.owner,
+                }],
             };
             self.foreground_post(cap, body.to_xml());
         }
@@ -1797,12 +1996,24 @@ impl Run {
         let mut inv = Vec::new();
         let mut lib = Vec::new();
         for id in ids {
-            if self.model.items.get(id).is_some_and(|i| i.complete) || self.model.cats.contains_key(id) || *id == NULL_ID {
+            if self.model.items.get(id).is_some_and(|i| i.complete)
+                || self.model.cats.contains_key(id)
+                || *id == NULL_ID
+            {
                 continue;
             }
-            let owner = self.model.items.get(id).map_or(self.world.agent, |i| i.owner);
+            let owner = self
+                .model
+                .items
+                .get(id)
+                .map_or(self.world.agent, |i| i.owner);
             let e = Value::Map(
-                [(b"item_id".to_vec(), Value::Uuid(*id)), (b"owner_id".to_vec(), Value::Uuid(owner))].into_iter().collect(),
+                [
+                    (b"item_id".to_vec(), Value::Uuid(*id)),
+                    (b"owner_id".to_vec(), Value::Uuid(owner)),
+                ]
+                .into_iter()
+                .collect(),
             );
             if owner == self.world.agent {
                 inv.push(e);
@@ -1818,7 +2029,10 @@ impl Run {
                 let body = Value::Map(
                     [
                         (b"agent_id".to_vec(), Value::Uuid(self.world.agent)),
-                        (b"cap_name".to_vec(), Value::String(name.as_bytes().to_vec())),
+                        (
+                            b"cap_name".to_vec(),
+                            Value::String(name.as_bytes().to_vec()),
+                        ),
                         (b"items".to_vec(), Value::Array(items)),
                     ]
                     .into_iter()
@@ -1839,7 +2053,10 @@ impl Run {
         let ready = !self.legacy_delay || self.settling;
         let mut k = 0;
         while k < self.legacy.len() {
-            if ready && !self.legacy[k].foreground && self.legacy[k].sent_frame + self.reply_delay < frame {
+            if ready
+                && !self.legacy[k].foreground
+                && self.legacy[k].sent_frame + self.reply_delay < frame
+            {
                 let f = self.legacy.remove(k);
                 self.legacy_completed(f);
             } else {
@@ -1895,7 +2112,9 @@ impl Run {
     /// `processData()`'s model writes (scaffolding for the C++ applier) with
     /// the scheduler's part: a recursive category goes back to the queue.
     fn legacy_process_data(&mut self, handler: u64, v: &Value) {
-        let Value::Array(folders) = get(v, "folders") else { return };
+        let Value::Array(folders) = get(v, "folders") else {
+            return;
+        };
         for f in folders {
             let parent_id = as_uuid(get(f, "folder_id"));
             let owner_id = as_uuid(get(f, "owner_id"));
@@ -1990,7 +2209,9 @@ impl Run {
         let mut k = 0;
         while k < self.stage1.len() {
             let model = &self.model;
-            self.stage1[k].0.retain(|c| model.cats.contains_key(c) && !model.is_category_complete(c));
+            self.stage1[k]
+                .0
+                .retain(|c| model.cats.contains_key(c) && !model.is_category_complete(c));
             // LLInventoryFetchDescendentsObserver::changed: also done when
             // the fetcher is done with folders
             if self.stage1[k].0.is_empty() || fetcher_done {
@@ -2049,7 +2270,10 @@ impl Run {
 
     /// The held request whose target contains `needle`.
     pub fn held_matching(&self, needle: &str) -> Option<usize> {
-        self.active.iter().find(|f| !f.released && f.key.contains(needle)).map(|f| f.seq)
+        self.active
+            .iter()
+            .find(|f| !f.released && f.key.contains(needle))
+            .map(|f| f.seq)
     }
 
     /// LOCKSTEP `release_one`: the reply processed, then four more frames
@@ -2084,7 +2308,12 @@ impl Run {
         for _ in 0..1000 {
             let any = self.round(label);
             let s = self.sched.state();
-            if self.error.is_some() || (!any && s.folder_queue.is_empty() && s.item_queue.is_empty() && s.fetch_count == 0) {
+            if self.error.is_some()
+                || (!any
+                    && s.folder_queue.is_empty()
+                    && s.item_queue.is_empty()
+                    && s.fetch_count == 0)
+            {
                 return;
             }
         }
@@ -2092,7 +2321,10 @@ impl Run {
     }
 
     pub fn journal_count(&self, prefix: &str) -> usize {
-        self.journal.iter().filter(|l| l.starts_with(prefix)).count()
+        self.journal
+            .iter()
+            .filter(|l| l.starts_with(prefix))
+            .count()
     }
 
     pub fn frames(&mut self, n: usize, idle: bool) {
@@ -2116,7 +2348,10 @@ impl Run {
         let mut k = 0;
         while k < self.active.len() {
             let f = &self.active[k];
-            if f.sent_frame + self.reply_delay < frame && f.sent_frame != u64::MAX && (!self.hold || f.released) {
+            if f.sent_frame + self.reply_delay < frame
+                && f.sent_frame != u64::MAX
+                && (!self.hold || f.released)
+            {
                 let f = self.active.remove(k);
                 self.process_reply(f);
                 // the freed coroutine takes the next queued command
@@ -2130,7 +2365,9 @@ impl Run {
 
     fn start_queued(&mut self) {
         while self.active.len() < self.pool_size {
-            let Some((ticket, req, body)) = self.queue.pop_front() else { break };
+            let Some((ticket, req, body)) = self.queue.pop_front() else {
+                break;
+            };
             self.send(ticket, req, body);
         }
     }
@@ -2148,20 +2385,33 @@ impl Run {
             self.tids.push(t);
         }
         let head = ais_head(method, &norm_target, req.destination.as_deref(), body.len());
-        let request = format!("head={} body={}", escape_text(head.as_bytes()), escape_text(&body));
+        let request = format!(
+            "head={} body={}",
+            escape_text(head.as_bytes()),
+            escape_text(&body)
+        );
         let subset = req.command == CommandType::FetchCategorySubset;
         let depth = request_depth(&req);
         if self.mode != Mode::Seq {
             // replies from the generator; the transport's 503 retries
             let mut attempts = 0;
             let (status, value) = loop {
-                let (st, v) = self.mock.as_mut().expect("generated replies").ais(method, &norm_target);
+                let (st, v) = self
+                    .mock
+                    .as_mut()
+                    .expect("generated replies")
+                    .ais(method, &norm_target);
                 attempts += 1;
                 let seq = self.wires.len() + 1;
-                self.wires.push(format!("{method} {norm_target} status={st} {request}"));
-                self.wire_targets.push((method.to_owned(), norm_target.clone(), st));
+                self.wires
+                    .push(format!("{method} {norm_target} status={st} {request}"));
+                self.wire_targets
+                    .push((method.to_owned(), norm_target.clone(), st));
                 let phase = self.phases;
-                self.unordered.push(WireRec { phase, line: format!("{method} {norm_target} status={st} {request}") });
+                self.unordered.push(WireRec {
+                    phase,
+                    line: format!("{method} {norm_target} status={st} {request}"),
+                });
                 let _ = seq;
                 if !(st == 503 && attempts < 6) {
                     break (st, v);
@@ -2187,7 +2437,10 @@ impl Run {
         loop {
             let Some(w) = self.rec_wires.get(self.next_wire).cloned() else {
                 if last.is_none() {
-                    self.fail(format!("request {} not recorded: {method} {norm_target}", self.wires.len() + 1));
+                    self.fail(format!(
+                        "request {} not recorded: {method} {norm_target}",
+                        self.wires.len() + 1
+                    ));
                 }
                 break;
             };
@@ -2213,14 +2466,18 @@ impl Run {
                 w.status,
                 w.tail
             ));
-            self.wire_targets.push((method.to_owned(), norm_target.clone(), w.status));
+            self.wire_targets
+                .push((method.to_owned(), norm_target.clone(), w.status));
             let mut w = w;
             if method == "GET" {
                 if let Some(m) = self.mock.as_mut() {
                     let (st, v) = m.ais(method, &norm_target);
                     if st != w.status {
                         let n = self.wires.len();
-                        self.fail(format!("request {n}: generated status {st}, recorded {}", w.status));
+                        self.fail(format!(
+                            "request {n}: generated status {st}, recorded {}",
+                            w.status
+                        ));
                     }
                     w.value = v;
                 }
@@ -2267,7 +2524,10 @@ impl Run {
                 self.stops_thrown += 1;
                 self.sched.ais_abandoned(f.ticket);
                 // the pool coroutine is gone for good: its slot stays taken
-                self.active.push(InFlight { sent_frame: u64::MAX, ..f });
+                self.active.push(InFlight {
+                    sent_frame: u64::MAX,
+                    ..f
+                });
                 return;
             }
         }
@@ -2302,7 +2562,8 @@ impl Run {
             w.request,
             w.tail
         ));
-        self.wire_targets.push((w.method.clone(), w.target.clone(), w.status));
+        self.wire_targets
+            .push((w.method.clone(), w.target.clone(), w.status));
     }
 
     pub fn pool_count(&self) -> usize {
@@ -2333,12 +2594,18 @@ impl Run {
             if self.error.is_some() {
                 return;
             }
-            let mut ok = self.pool_count() == 0 && (!fetch_idle || self.sched.state().fetch_count == 0);
+            let mut ok =
+                self.pool_count() == 0 && (!fetch_idle || self.sched.state().fetch_count == 0);
             if ok && queues_empty {
                 let s = self.sched.state();
                 ok = s.folder_queue.is_empty() && s.item_queue.is_empty();
             }
-            let now = format!("{}|{}|{}", self.last_snap, self.wires.len(), self.journal.len());
+            let now = format!(
+                "{}|{}|{}",
+                self.last_snap,
+                self.wires.len(),
+                self.journal.len()
+            );
             if ok && now == last {
                 stable += 1;
                 if stable >= 8 {
@@ -2367,12 +2634,18 @@ impl Run {
     }
 
     pub fn msg_count(&self) -> usize {
-        self.journal.iter().filter(|l| l.starts_with("msg ")).count()
+        self.journal
+            .iter()
+            .filter(|l| l.starts_with("msg "))
+            .count()
     }
 
     /// The request lines without their `wire <n> ` prefix.
     pub fn wire_bodies(&self) -> Vec<String> {
-        self.wires.iter().map(|l| l.splitn(3, ' ').nth(2).unwrap().to_owned()).collect()
+        self.wires
+            .iter()
+            .map(|l| l.splitn(3, ' ').nth(2).unwrap().to_owned())
+            .collect()
     }
 
     /// `d2_wait`: frames without capabilities; nothing may be sent.
@@ -2393,7 +2666,10 @@ impl Run {
     pub fn same_as_s01(&mut self) {
         let s01: Vec<String> = scenario_lines("s01_login_cold")
             .into_iter()
-            .filter_map(|l| l.strip_prefix("wire ").map(|r| r.splitn(2, ' ').nth(1).unwrap().to_owned()))
+            .filter_map(|l| {
+                l.strip_prefix("wire ")
+                    .map(|r| r.splitn(2, ' ').nth(1).unwrap().to_owned())
+            })
             .collect();
         let w = self.wire_bodies();
         let verdict = if w.len() != s01.len() {
@@ -2431,7 +2707,8 @@ impl Run {
                         self.cat_fetch(folder, FETCH_DEFAULT_EXPIRY);
                     } else if items.len() > 7 {
                         self.schedule_folder(folder, true);
-                    } else if viewer_count <= items.len() || (c.count as i64) <= items.len() as i64 {
+                    } else if viewer_count <= items.len() || (c.count as i64) <= items.len() as i64
+                    {
                         self.schedule_folder(folder, true);
                     } else {
                         for i in items {
@@ -2548,7 +2825,12 @@ impl Run {
                 s503 += 1;
             }
         }
-        let j = |m: &BTreeMap<String, usize>| m.iter().map(|(k, v)| format!("{k}:{v}")).collect::<Vec<_>>().join(",");
+        let j = |m: &BTreeMap<String, usize>| {
+            m.iter()
+                .map(|(k, v)| format!("{k}:{v}"))
+                .collect::<Vec<_>>()
+                .join(",")
+        };
         out.push(format!(
             "count requests={} caps={} methods={} status503={}",
             self.wires.len(),
@@ -2571,7 +2853,8 @@ impl Run {
                         .unwrap_or_else(|| "resp=?".to_owned());
                     r.line = format!("{} {tail}", r.line);
                 }
-                let mut lines: Vec<(usize, String)> = recs.into_iter().map(|r| (r.phase, r.line)).collect();
+                let mut lines: Vec<(usize, String)> =
+                    recs.into_iter().map(|r| (r.phase, r.line)).collect();
                 lines.sort();
                 out.extend(lines.into_iter().map(|(p, l)| format!("wire@{p} {l}")));
             }
@@ -2593,7 +2876,11 @@ impl Run {
             "tids requests={} distinct={} fresh={}",
             self.tids.len(),
             distinct.len(),
-            if self.tids.len() == distinct.len() { "yes" } else { "NO" }
+            if self.tids.len() == distinct.len() {
+                "yes"
+            } else {
+                "NO"
+            }
         ));
         if self.mode == Mode::Conc {
             let mut ms: BTreeMap<&String, usize> = BTreeMap::new();
@@ -2627,9 +2914,15 @@ impl Run {
         out.push(format!("pub {}", self.public_state()));
         if self.mode == Mode::Conc {
             let yn = |b: bool| if b { "yes" } else { "NO" };
-            out.push(format!("bound viewer_in_flight<=19 {}", yn(self.max_in_flight <= 19)));
+            out.push(format!(
+                "bound viewer_in_flight<=19 {}",
+                yn(self.max_in_flight <= 19)
+            ));
             if !caps.contains_key("inv") && !caps.contains_key("lib") {
-                out.push(format!("bound legacy_in_flight<=16 {}", yn(self.max_in_flight <= 16)));
+                out.push(format!(
+                    "bound legacy_in_flight<=16 {}",
+                    yn(self.max_in_flight <= 16)
+                ));
             }
             out.push(format!("bound ais_pool<=20 {}", yn(self.max_pool <= 20)));
         }
@@ -2651,7 +2944,9 @@ fn recorded_tails(id: &str) -> BTreeMap<(Option<usize>, String), Vec<String>> {
             continue;
         };
         let k = rest.rfind(" resp=").unwrap();
-        out.entry((phase, rest[..k].to_owned())).or_default().push(rest[k + 1..].to_owned());
+        out.entry((phase, rest[..k].to_owned()))
+            .or_default()
+            .push(rest[k + 1..].to_owned());
     }
     out
 }
@@ -2659,7 +2954,10 @@ fn recorded_tails(id: &str) -> BTreeMap<(Option<usize>, String), Vec<String>> {
 fn normalise_tid(target: &str) -> (String, Option<String>) {
     if let Some(k) = target.find("tid=") {
         let v = target[k + 4..k + 4 + 36].to_owned();
-        (format!("{}tid={{tid}}{}", &target[..k], &target[k + 4 + 36..]), Some(v))
+        (
+            format!("{}tid={{tid}}{}", &target[..k], &target[k + 4 + 36..]),
+            Some(v),
+        )
     } else {
         (target.to_owned(), None)
     }
@@ -2667,7 +2965,10 @@ fn normalise_tid(target: &str) -> (String, Option<String>) {
 
 pub fn index_order() -> Vec<String> {
     let t = std::fs::read_to_string(fixture_dir().join("index.txt")).unwrap();
-    t.lines().filter(|l| !l.starts_with('#') && !l.is_empty()).map(str::to_owned).collect()
+    t.lines()
+        .filter(|l| !l.starts_with('#') && !l.is_empty())
+        .map(str::to_owned)
+        .collect()
 }
 
 /// The recorded lines a replay compares: everything but the C++ model's own
@@ -2724,15 +3025,26 @@ pub fn check(id: &str, run: &mut Run, skip: &dyn Fn(&str) -> bool) -> (usize, us
     if let Some(i) = first {
         // Show the stretch around the first differing character.
         let at = match (expected.get(i), actual.get(i)) {
-            (Some(e), Some(a)) => e.bytes().zip(a.bytes()).position(|(x, y)| x != y).unwrap_or(e.len().min(a.len())),
+            (Some(e), Some(a)) => e
+                .bytes()
+                .zip(a.bytes())
+                .position(|(x, y)| x != y)
+                .unwrap_or(e.len().min(a.len())),
             _ => 0,
         };
         let from = at.saturating_sub(200);
         let cut = |s: Option<&String>| {
             s.map_or("<none>".to_owned(), |s| {
-                let from = (0..=from.min(s.len())).rev().find(|&k| s.is_char_boundary(k)).unwrap_or(0);
+                let from = (0..=from.min(s.len()))
+                    .rev()
+                    .find(|&k| s.is_char_boundary(k))
+                    .unwrap_or(0);
                 let rest: String = s[from..].chars().take(500).collect();
-                if from > 0 { format!("[from byte {from}] {rest}") } else { rest }
+                if from > 0 {
+                    format!("[from byte {from}] {rest}")
+                } else {
+                    rest
+                }
             })
         };
         let ctx_from = i.saturating_sub(3);
@@ -2766,7 +3078,9 @@ pub fn check_model_fetch_state(id: &str, run: &Run) -> (usize, Vec<String>) {
     let mut checked = 0;
     let mut bad = Vec::new();
     for l in scenario_lines(id) {
-        let Some(rest) = l.strip_prefix("mdl cat ") else { continue };
+        let Some(rest) = l.strip_prefix("mdl cat ") else {
+            continue;
+        };
         let cid = parse_uuid(&rest[..36]);
         let field = |k: &str| -> String {
             let a = rest.find(&format!(" {k}=")).unwrap() + k.len() + 2;
@@ -2777,8 +3091,15 @@ pub fn check_model_fetch_state(id: &str, run: &Run) -> (usize, Vec<String>) {
         // CONC dumps leave out the fetch state and timer (which reply touched
         // a folder last depends on timing)
         let has_state = rest.contains(" fetching=");
-        let fetching: i32 = if has_state { field("fetching").parse().unwrap() } else { -1 };
-        let t = rest.find("timer{").map(|a| rest[a..].to_owned()).unwrap_or_default();
+        let fetching: i32 = if has_state {
+            field("fetching").parse().unwrap()
+        } else {
+            -1
+        };
+        let t = rest
+            .find("timer{")
+            .map(|a| rest[a..].to_owned())
+            .unwrap_or_default();
         checked += 1;
         let Some(c) = run.model.cats.get(&cid) else {
             bad.push(format!("{}: not in the replay model", uuid_string(&cid)));

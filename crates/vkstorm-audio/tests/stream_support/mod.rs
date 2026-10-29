@@ -22,7 +22,10 @@ use vkstorm_audio::music::{ChannelLayout, MusicSource};
 use vkstorm_audio::stream::{MusicPlayer, MusicReader, PlayerEvent, PlayerState, StreamConfig};
 
 pub fn fixtures() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests").join("fixtures").join("music")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests")
+        .join("fixtures")
+        .join("music")
 }
 
 pub fn fixture(name: &str) -> Vec<u8> {
@@ -104,19 +107,31 @@ fn http_get(port: u16, path: &str) -> (u32, String) {
             break;
         }
         buf.extend_from_slice(&chunk[..n]);
-        let Some(end) = buf.windows(4).position(|w| w == b"\r\n\r\n") else { continue };
+        let Some(end) = buf.windows(4).position(|w| w == b"\r\n\r\n") else {
+            continue;
+        };
         let head = String::from_utf8_lossy(&buf[..end]).to_ascii_lowercase();
         let len = head
             .lines()
-            .find_map(|l| l.strip_prefix("content-length:").map(|v| v.trim().to_owned()))
+            .find_map(|l| {
+                l.strip_prefix("content-length:")
+                    .map(|v| v.trim().to_owned())
+            })
             .and_then(|v| v.parse::<usize>().ok());
         if len.is_some_and(|l| buf.len() - end - 4 >= l) {
             break;
         }
     }
     let text = String::from_utf8_lossy(&buf).into_owned();
-    let status = text.split(' ').nth(1).and_then(|c| c.parse().ok()).unwrap_or(0);
-    let body = text.split_once("\r\n\r\n").map(|(_, b)| b.to_owned()).unwrap_or_default();
+    let status = text
+        .split(' ')
+        .nth(1)
+        .and_then(|c| c.parse().ok())
+        .unwrap_or(0);
+    let body = text
+        .split_once("\r\n\r\n")
+        .map(|(_, b)| b.to_owned())
+        .unwrap_or_default();
     (status, body)
 }
 
@@ -176,7 +191,12 @@ impl Pulled {
 /// Pulls like a mixer: `block` frames per call, every `period` (None: as
 /// fast as possible, sleeping 1 ms while there is nothing), until the
 /// reader ends or `limit` passes.
-pub fn pull(reader: &mut MusicReader, block: usize, period: Option<Duration>, limit: Duration) -> Pulled {
+pub fn pull(
+    reader: &mut MusicReader,
+    block: usize,
+    period: Option<Duration>,
+    limit: Duration,
+) -> Pulled {
     let mut out = vec![0f32; block * 8];
     let mut p = Pulled::default();
     let t0 = Instant::now();
@@ -213,7 +233,11 @@ pub fn pull(reader: &mut MusicReader, block: usize, period: Option<Duration>, li
 }
 
 /// Waits for `pred` on the state, up to `limit`.
-pub fn wait_state(player: &MusicPlayer, limit: Duration, pred: impl Fn(&PlayerState) -> bool) -> PlayerState {
+pub fn wait_state(
+    player: &MusicPlayer,
+    limit: Duration,
+    pred: impl Fn(&PlayerState) -> bool,
+) -> PlayerState {
     let t0 = Instant::now();
     loop {
         let s = player.state();
@@ -229,7 +253,10 @@ pub fn events(player: &MusicPlayer) -> Vec<PlayerEvent> {
 }
 
 pub fn meta(artist: &str, title: &str) -> PlayerEvent {
-    PlayerEvent::Metadata { artist: artist.into(), title: title.into() }
+    PlayerEvent::Metadata {
+        artist: artist.into(),
+        title: title.into(),
+    }
 }
 
 /// Amplitude of the `freq` component of `x` (Goertzel, rectangular window

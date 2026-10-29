@@ -76,10 +76,11 @@ pub mod message;
 pub use create::CreateRequest;
 pub use llsd::LocalizedNames;
 pub use machine::{
-    cap_fetch_begin, cap_fetch_reply, create_inventory_item, create_item_completed, create_item_succeeded,
-    delayed_fetch_due, delete_inventory_item, dirty_inventory, load_task_inv_file, move_inventory, remove_inventory,
-    reply_task_inventory, request_inventory, save_script, update_inventory, update_inventory_local,
-    update_material_inventory, update_viewer_inventory_asset, xfer_completed, xfer_requested,
+    cap_fetch_begin, cap_fetch_reply, create_inventory_item, create_item_completed,
+    create_item_succeeded, delayed_fetch_due, delete_inventory_item, dirty_inventory,
+    load_task_inv_file, move_inventory, remove_inventory, reply_task_inventory, request_inventory,
+    save_script, update_inventory, update_inventory_local, update_material_inventory,
+    update_viewer_inventory_asset, xfer_completed, xfer_requested,
 };
 pub use message::Outgoing;
 
@@ -87,7 +88,7 @@ use vkstorm_llsd::Value;
 
 use crate::item::Item;
 use crate::object::Object;
-use crate::perms::{Permissions, Uuid, NULL_ID};
+use crate::perms::{NULL_ID, Permissions, Uuid};
 use crate::sale::SaleInfo;
 use crate::types::{AssetType, InventoryType};
 
@@ -156,7 +157,13 @@ pub struct ViewerItem {
 impl Default for ViewerItem {
     /// `LLViewerInventoryItem()`: a default item, not complete.
     fn default() -> Self {
-        ViewerItem { item: Item::default(), complete: false, transaction: NULL_ID, running: false, faulted: false }
+        ViewerItem {
+            item: Item::default(),
+            complete: false,
+            transaction: NULL_ID,
+            running: false,
+            faulted: false,
+        }
     }
 }
 
@@ -270,7 +277,12 @@ impl Entry {
     /// The `Contents` category the loaders synthesise:
     /// `LLInventoryObject(object id, null, AT_CATEGORY, "Contents")`.
     pub fn contents_category(object_id: &Uuid) -> Entry {
-        Entry::Object(Object::new(object_id, &NULL_ID, AssetType::CATEGORY, b"Contents"))
+        Entry::Object(Object::new(
+            object_id,
+            &NULL_ID,
+            AssetType::CATEGORY,
+            b"Contents",
+        ))
     }
 }
 
@@ -412,5 +424,7 @@ pub enum Action {
 /// `LLDir::getScrubbedFileName`: every forbidden file name character
 /// (`\ / : * ? " < > |`) becomes `_`.
 pub fn scrubbed_file_name(name: &[u8]) -> Vec<u8> {
-    name.iter().map(|&c| if b"\\/:*?\"<>|".contains(&c) { b'_' } else { c }).collect()
+    name.iter()
+        .map(|&c| if b"\\/:*?\"<>|".contains(&c) { b'_' } else { c })
+        .collect()
 }

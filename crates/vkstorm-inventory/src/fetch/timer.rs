@@ -20,7 +20,11 @@ pub struct FrameTimer {
 impl FrameTimer {
     /// The constructor: started at `now`, expiry 0 (so already expired).
     pub fn new(now: f64) -> Self {
-        FrameTimer { start: now, expiry: 0.0, started: true }
+        FrameTimer {
+            start: now,
+            expiry: 0.0,
+            started: true,
+        }
     }
 
     /// `reset()`: start and expiry at `now`.
@@ -75,7 +79,10 @@ impl CategoryFetchState {
     pub fn new(now: f64) -> Self {
         let mut requested = FrameTimer::new(now);
         requested.reset(now);
-        CategoryFetchState { fetching: CategoryFetch::None, requested }
+        CategoryFetchState {
+            fetching: CategoryFetch::None,
+            requested,
+        }
     }
 
     /// `getFetching()`: an expired mark reads (and becomes) `FETCH_NONE`.

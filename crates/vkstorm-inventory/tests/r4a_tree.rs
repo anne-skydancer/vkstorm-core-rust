@@ -48,14 +48,26 @@ fn fixture_tree_is_exact() {
     .collect();
     assert_eq!(names_in(""), top);
     let samples = |n: u64, ext: &str| -> BTreeSet<String> {
-        (0..n).filter(|i| i % SAMPLE_EVERY == 0).map(|i| format!("random_{i:04}.{ext}")).collect()
+        (0..n)
+            .filter(|i| i % SAMPLE_EVERY == 0)
+            .map(|i| format!("random_{i:04}.{ext}"))
+            .collect()
     };
     assert_eq!(names_in("random"), samples(FILE_SWEEP_COUNT as u64, "inv"));
-    assert_eq!(names_in("replies_random"), samples(REPLY_SWEEP_COUNT as u64, "llsd"));
-    let create: BTreeSet<String> = ["script", "lua_script_params", "notecard", "server_says_no", "http_error"]
-        .iter()
-        .map(|s| format!("{s}.llsd"))
-        .collect();
+    assert_eq!(
+        names_in("replies_random"),
+        samples(REPLY_SWEEP_COUNT as u64, "llsd")
+    );
+    let create: BTreeSet<String> = [
+        "script",
+        "lua_script_params",
+        "notecard",
+        "server_says_no",
+        "http_error",
+    ]
+    .iter()
+    .map(|s| format!("{s}.llsd"))
+    .collect();
     assert_eq!(names_in("create"), create);
     assert!(names_in("files").iter().all(|n| n.ends_with(".inv")));
     assert!(names_in("replies").iter().all(|n| n.ends_with(".llsd")));

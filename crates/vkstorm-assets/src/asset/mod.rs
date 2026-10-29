@@ -8,7 +8,7 @@
 
 use std::collections::BTreeMap;
 
-use crate::{uuid_to_string, Uuid};
+use crate::{Uuid, uuid_to_string};
 
 /// The legacy error codes the callbacks receive.
 pub const LL_ERR_NOERR: i32 = 0;
@@ -119,7 +119,13 @@ pub enum Verdict {
 }
 
 /// `getAssetData`'s duplicate scan over the pending downloads.
-pub fn duplicate_verdict(pending: &[RequestKey], id: &Uuid, asset_type: i32, callback: u64, user_data: u64) -> Verdict {
+pub fn duplicate_verdict(
+    pending: &[RequestKey],
+    id: &Uuid,
+    asset_type: i32,
+    callback: u64,
+    user_data: u64,
+) -> Verdict {
     let mut duplicate = false;
     for r in pending {
         if r.asset_type == asset_type && r.id == *id {
@@ -129,7 +135,11 @@ pub fn duplicate_verdict(pending: &[RequestKey], id: &Uuid, asset_type: i32, cal
             duplicate = true;
         }
     }
-    if duplicate { Verdict::Duplicate } else { Verdict::New }
+    if duplicate {
+        Verdict::Duplicate
+    } else {
+        Verdict::New
+    }
 }
 
 /// `removeAndCallbackPendingDownloads`'s selection: the indices of the
@@ -137,7 +147,12 @@ pub fn duplicate_verdict(pending: &[RequestKey], id: &Uuid, asset_type: i32, cal
 /// C++ pushed each to the front of a list, so the latest matching request
 /// is called back first).
 pub fn completion_order(pending: &[RequestKey], id: &Uuid, asset_type: i32) -> Vec<usize> {
-    let mut out: Vec<usize> = pending.iter().enumerate().filter(|(_, r)| r.id == *id && r.asset_type == asset_type).map(|(i, _)| i).collect();
+    let mut out: Vec<usize> = pending
+        .iter()
+        .enumerate()
+        .filter(|(_, r)| r.id == *id && r.asset_type == asset_type)
+        .map(|(i, _)| i)
+        .collect();
     out.reverse();
     out
 }
@@ -145,7 +160,13 @@ pub fn completion_order(pending: &[RequestKey], id: &Uuid, asset_type: i32) -> V
 /// `_cleanupRequests`'s selection for one list: the indices to time out
 /// (every request when `all`, else downloads older than the timeout), in
 /// callback order (reversed, as above).
-pub fn timed_out_order(requests: &[RequestKey], is_download_list: bool, all: bool, now_secs: f64, timeout_secs: f64) -> Vec<usize> {
+pub fn timed_out_order(
+    requests: &[RequestKey],
+    is_download_list: bool,
+    all: bool,
+    now_secs: f64,
+    timeout_secs: f64,
+) -> Vec<usize> {
     let mut out: Vec<usize> = requests
         .iter()
         .enumerate()
@@ -163,8 +184,14 @@ mod tests {
     #[test]
     fn urls_and_strings() {
         let id = crate::uuid_from_string("01234567-89ab-cdef-1032-547698badcfe").unwrap();
-        assert_eq!(asset_url("http://cap/va", "texture", &id), "http://cap/va/?texture_id=01234567-89ab-cdef-1032-547698badcfe");
-        assert_eq!(error_string(LL_ERR_NO_CAP), "Asset request: region or asset capability not available");
+        assert_eq!(
+            asset_url("http://cap/va", "texture", &id),
+            "http://cap/va/?texture_id=01234567-89ab-cdef-1032-547698badcfe"
+        );
+        assert_eq!(
+            error_string(LL_ERR_NO_CAP),
+            "Asset request: region or asset capability not available"
+        );
         assert_eq!(error_string(12345), "Unknown status");
     }
 
@@ -188,16 +215,46 @@ mod tests {
         let a = [1; 16];
         let b = [2; 16];
         let pending = vec![
-            RequestKey { id: a, asset_type: 0, callback: 10, user_data: 1, time: 0.0 },
-            RequestKey { id: b, asset_type: 0, callback: 10, user_data: 2, time: 100.0 },
-            RequestKey { id: a, asset_type: 0, callback: 11, user_data: 1, time: 400.0 },
+            RequestKey {
+                id: a,
+                asset_type: 0,
+                callback: 10,
+                user_data: 1,
+                time: 0.0,
+            },
+            RequestKey {
+                id: b,
+                asset_type: 0,
+                callback: 10,
+                user_data: 2,
+                time: 100.0,
+            },
+            RequestKey {
+                id: a,
+                asset_type: 0,
+                callback: 11,
+                user_data: 1,
+                time: 400.0,
+            },
         ];
         assert_eq!(duplicate_verdict(&pending, &a, 0, 10, 1), Verdict::Discard);
-        assert_eq!(duplicate_verdict(&pending, &a, 0, 12, 1), Verdict::Duplicate);
+        assert_eq!(
+            duplicate_verdict(&pending, &a, 0, 12, 1),
+            Verdict::Duplicate
+        );
         assert_eq!(duplicate_verdict(&pending, &a, 1, 10, 1), Verdict::New);
         assert_eq!(completion_order(&pending, &a, 0), vec![2, 0]);
-        assert_eq!(timed_out_order(&pending, true, false, 401.0, 300.0), vec![1, 0]);
-        assert_eq!(timed_out_order(&pending, false, false, 401.0, 300.0), Vec::<usize>::new());
-        assert_eq!(timed_out_order(&pending, false, true, 0.0, 300.0), vec![2, 1, 0]);
+        assert_eq!(
+            timed_out_order(&pending, true, false, 401.0, 300.0),
+            vec![1, 0]
+        );
+        assert_eq!(
+            timed_out_order(&pending, false, false, 401.0, 300.0),
+            Vec::<usize>::new()
+        );
+        assert_eq!(
+            timed_out_order(&pending, false, true, 0.0, 300.0),
+            vec![2, 1, 0]
+        );
     }
 }

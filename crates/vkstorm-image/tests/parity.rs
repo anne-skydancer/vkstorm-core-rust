@@ -13,7 +13,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use vkstorm_image::{bmp, dxt, png, tga, Error, Raster};
+use vkstorm_image::{Error, Raster, bmp, dxt, png, tga};
 
 #[cfg(feature = "jpeg")]
 use vkstorm_image::jpeg;
@@ -28,11 +28,23 @@ fn read(name: &str) -> Vec<u8> {
 
 fn read_raw(name: &str) -> Raster {
     let b = read(name);
-    assert!(b.len() >= 16 && &b[..4] == b"VKSR", "{name}: not a VKSR raster");
+    assert!(
+        b.len() >= 16 && &b[..4] == b"VKSR",
+        "{name}: not a VKSR raster"
+    );
     let u = |at: usize| u32::from_le_bytes([b[at], b[at + 1], b[at + 2], b[at + 3]]);
     let (width, height, components) = (u(4), u(8), u(12));
-    assert_eq!(b.len(), 16 + (width * height * components) as usize, "{name}: size");
-    Raster { width, height, components, data: b[16..].to_vec() }
+    assert_eq!(
+        b.len(),
+        16 + (width * height * components) as usize,
+        "{name}: size"
+    );
+    Raster {
+        width,
+        height,
+        components,
+        data: b[16..].to_vec(),
+    }
 }
 
 fn manifest() -> Vec<Vec<String>> {
@@ -116,7 +128,10 @@ const VIEWER_MESSAGES: &[&str] = &[
 ];
 
 fn max_abs_diff(a: &Raster, b: &Raster) -> (u8, f64) {
-    assert_eq!((a.width, a.height, a.components), (b.width, b.height, b.components));
+    assert_eq!(
+        (a.width, a.height, a.components),
+        (b.width, b.height, b.components)
+    );
     let mut max = 0u8;
     let mut sum = 0u64;
     for (&x, &y) in a.data.iter().zip(&b.data) {
@@ -144,8 +159,15 @@ fn decode_matches_oracle() {
                 if codec == "jpeg" {
                     continue; // measured separately
                 }
-                assert_eq!((got.width, got.height, got.components), (expected.width, expected.height, expected.components), "{name}: shape");
-                assert!(got.data == expected.data, "{name}: raster differs from the C++ decode");
+                assert_eq!(
+                    (got.width, got.height, got.components),
+                    (expected.width, expected.height, expected.components),
+                    "{name}: shape"
+                );
+                assert!(
+                    got.data == expected.data,
+                    "{name}: raster differs from the C++ decode"
+                );
                 let h = header(codec, &data).unwrap_or_else(|e| panic!("{name}: header: {e}"));
                 // DXT headers describe the full image, the decode a mip; LLImageBMP
                 // reports 1 component for 8-bit files although it decodes to 3.
@@ -153,7 +175,11 @@ fn decode_matches_oracle() {
                 // and LLImageTGA reports 4 for a 32-bit file whose opaque alpha
                 // the decode drops.
                 if codec != "dxt" {
-                    assert_eq!((h.0, h.1), (expected.width, expected.height), "{name}: header");
+                    assert_eq!(
+                        (h.0, h.1),
+                        (expected.width, expected.height),
+                        "{name}: header"
+                    );
                 }
                 let compacted = codec == "tga" && h.2 == 4 && expected.components == 3;
                 if codec != "dxt" && codec != "bmp" && !compacted {
@@ -169,7 +195,9 @@ fn decode_matches_oracle() {
                 let data = read(name);
                 let expected = fs::read_to_string(fixtures().join(err)).unwrap();
                 let got = decode(codec, &data);
-                let Err(e) = got else { panic!("{name}: decoded but the C++ failed with {expected:?}") };
+                let Err(e) = got else {
+                    panic!("{name}: decoded but the C++ failed with {expected:?}")
+                };
                 if VIEWER_MESSAGES.contains(&expected.as_str()) {
                     assert_eq!(e.message, expected, "{name}: error message");
                 }
@@ -179,7 +207,9 @@ fn decode_matches_oracle() {
         }
     }
     println!("decode parity: {count:?}");
-    assert!(count.get("png").copied().unwrap_or(0) > 40 && count.get("tga").copied().unwrap_or(0) > 40);
+    assert!(
+        count.get("png").copied().unwrap_or(0) > 40 && count.get("tga").copied().unwrap_or(0) > 40
+    );
 }
 
 /// JPEG decoding against libjpeg-turbo: bounded sample distance.
@@ -209,7 +239,10 @@ fn jpeg_decode_distance() {
     // Different IDCT and upsampling arithmetic from libjpeg-turbo's; the
     // viewer keeps libjpeg-turbo (see doc/rust_port.md), this bounds the
     // candidate.
-    assert!(worst <= 16, "worst JPEG decode difference {worst} on {worst_name}");
+    assert!(
+        worst <= 16,
+        "worst JPEG decode difference {worst} on {worst_name}"
+    );
 }
 
 /// Lossless encoders: byte-identical files. JPEG: byte-identical, or decoded
@@ -240,15 +273,27 @@ fn encode_matches_oracle() {
                     let a = png::decode(&got).unwrap();
                     let b = png::decode(&expected).unwrap();
                     assert!(a == b, "{out}: PNG re-encode does not decode identically");
-                    assert!(a == src || src.components < 3, "{out}: PNG re-encode does not decode to the source");
+                    assert!(
+                        a == src || src.components < 3,
+                        "{out}: PNG re-encode does not decode to the source"
+                    );
                     png_total_ours += got.len();
                     png_total_libpng += expected.len();
                     let ratio = got.len() as f64 / expected.len() as f64;
                     // 20%, or 128 bytes for tiny files where a deflate block
                     // boundary is a large fraction of the file.
-                    assert!(ratio <= 1.20 || got.len() <= expected.len() + 128, "{out}: PNG {:.1}% larger than libpng's", (ratio - 1.0) * 100.0);
+                    assert!(
+                        ratio <= 1.20 || got.len() <= expected.len() + 128,
+                        "{out}: PNG {:.1}% larger than libpng's",
+                        (ratio - 1.0) * 100.0
+                    );
                     if got != expected {
-                        println!("png encode {out:40} differs: {} vs {} bytes ({:+.2}%)", got.len(), expected.len(), (ratio - 1.0) * 100.0);
+                        println!(
+                            "png encode {out:40} differs: {} vs {} bytes ({:+.2}%)",
+                            got.len(),
+                            expected.len(),
+                            (ratio - 1.0) * 100.0
+                        );
                         png_sizes.push((out.clone(), got.len(), expected.len()));
                         continue;
                     }
@@ -262,13 +307,25 @@ fn encode_matches_oracle() {
                     let a = jpeg::decode(&got).unwrap();
                     let b = jpeg::decode(&expected).unwrap();
                     let (max, mean) = max_abs_diff(&a, &b);
-                    println!("jpeg encode {out:40} differs: {} vs {} bytes, decoded max {max} mean {mean:.4}", got.len(), expected.len());
+                    println!(
+                        "jpeg encode {out:40} differs: {} vs {} bytes, decoded max {max} mean {mean:.4}",
+                        got.len(),
+                        expected.len()
+                    );
                     jpeg_worst = jpeg_worst.max(max);
                     jpeg_sizes.push((out.clone(), got.len(), expected.len()));
                     continue;
                 }
-                let first = got.iter().zip(&expected).position(|(a, b)| a != b).unwrap_or(got.len().min(expected.len()));
-                panic!("{out}: {codec} encoding differs from the C++ ({} vs {} bytes, first difference at {first})", got.len(), expected.len());
+                let first = got
+                    .iter()
+                    .zip(&expected)
+                    .position(|(a, b)| a != b)
+                    .unwrap_or(got.len().min(expected.len()));
+                panic!(
+                    "{out}: {codec} encoding differs from the C++ ({} vs {} bytes, first difference at {first})",
+                    got.len(),
+                    expected.len()
+                );
             }
             "encode-error" => {
                 let (raw, codec) = (&line[1], &line[2]);
@@ -279,7 +336,9 @@ fn encode_matches_oracle() {
                 let src = read_raw(raw);
                 let expected = fs::read_to_string(fixtures().join(&line[3])).unwrap();
                 let got = encode(codec, &src, quality);
-                let Err(e) = got else { panic!("{raw} {codec}: encoded but the C++ failed with {expected:?}") };
+                let Err(e) = got else {
+                    panic!("{raw} {codec}: encoded but the C++ failed with {expected:?}")
+                };
                 if VIEWER_MESSAGES.contains(&expected.as_str()) {
                     assert_eq!(e.message, expected, "{raw} {codec}: error message");
                 }
@@ -287,13 +346,29 @@ fn encode_matches_oracle() {
             _ => {}
         }
     }
-    println!("byte-identical encodes: {identical:?}; png differing: {}; jpeg differing: {}", png_sizes.len(), jpeg_sizes.len());
+    println!(
+        "byte-identical encodes: {identical:?}; png differing: {}; jpeg differing: {}",
+        png_sizes.len(),
+        jpeg_sizes.len()
+    );
     for (name, ours, theirs) in &jpeg_sizes {
-        println!("  {name}: {ours} bytes vs {theirs} ({:+.2}%)", (*ours as f64 / *theirs as f64 - 1.0) * 100.0);
+        println!(
+            "  {name}: {ours} bytes vs {theirs} ({:+.2}%)",
+            (*ours as f64 / *theirs as f64 - 1.0) * 100.0
+        );
     }
-    println!("png corpus: {png_total_ours} bytes vs libpng {png_total_libpng} ({:+.2}%)", (png_total_ours as f64 / png_total_libpng as f64 - 1.0) * 100.0);
-    assert!(png_total_ours > 0 && png_total_ours <= png_total_libpng, "PNG corpus grew: {png_total_ours} vs {png_total_libpng}");
-    assert!(identical.get("png").copied().unwrap_or(0) > 10, "PNG encodes of the synthetic rasters must be byte-identical");
+    println!(
+        "png corpus: {png_total_ours} bytes vs libpng {png_total_libpng} ({:+.2}%)",
+        (png_total_ours as f64 / png_total_libpng as f64 - 1.0) * 100.0
+    );
+    assert!(
+        png_total_ours > 0 && png_total_ours <= png_total_libpng,
+        "PNG corpus grew: {png_total_ours} vs {png_total_libpng}"
+    );
+    assert!(
+        identical.get("png").copied().unwrap_or(0) > 10,
+        "PNG encodes of the synthetic rasters must be byte-identical"
+    );
     // The JPEG encoder candidate is not used by the viewer; its distance is reported above.
     println!("jpeg encode: worst decoded difference {jpeg_worst}");
 }
@@ -306,16 +381,27 @@ fn process_matches_oracle() {
         match line[0].as_str() {
             "process" => {
                 let data = read(&line[1]);
-                let (domain, weight): (f32, f32) = (line[2].parse().unwrap(), line[3].parse().unwrap());
+                let (domain, weight): (f32, f32) =
+                    (line[2].parse().unwrap(), line[3].parse().unwrap());
                 let expected = read_raw(&line[4]);
-                let got = tga::decode_and_process(&data, domain, weight).unwrap_or_else(|e| panic!("{}: {e}", line[1]));
-                assert!(got == expected, "{} domain {domain} weight {weight}: differs", line[1]);
+                let got = tga::decode_and_process(&data, domain, weight)
+                    .unwrap_or_else(|e| panic!("{}: {e}", line[1]));
+                assert!(
+                    got == expected,
+                    "{} domain {domain} weight {weight}: differs",
+                    line[1]
+                );
                 n += 1;
             }
             "process-error" => {
                 let data = read(&line[1]);
-                let (domain, weight): (f32, f32) = (line[2].parse().unwrap(), line[3].parse().unwrap());
-                assert!(tga::decode_and_process(&data, domain, weight).is_err(), "{}: processed but the C++ refused", line[1]);
+                let (domain, weight): (f32, f32) =
+                    (line[2].parse().unwrap(), line[3].parse().unwrap());
+                assert!(
+                    tga::decode_and_process(&data, domain, weight).is_err(),
+                    "{}: processed but the C++ refused",
+                    line[1]
+                );
             }
             _ => {}
         }
@@ -336,15 +422,30 @@ fn jpeg_dimensions_match_oracle() {
         let data = read(&line[1]);
         let got = jpeg::dimensions(&data);
         if line[2] == "error" {
-            assert!(!matches!(got, Ok(jpeg::Dimensions::Found { .. })), "{}: dimensions found but the C++ failed", line[1]);
+            assert!(
+                !matches!(got, Ok(jpeg::Dimensions::Found { .. })),
+                "{}: dimensions found but the C++ failed",
+                line[1]
+            );
         } else {
             let (w, h) = line[2].split_once('x').unwrap();
-            assert_eq!(got.unwrap(), jpeg::Dimensions::Found { width: w.parse().unwrap(), height: h.parse().unwrap() }, "{}", line[1]);
+            assert_eq!(
+                got.unwrap(),
+                jpeg::Dimensions::Found {
+                    width: w.parse().unwrap(),
+                    height: h.parse().unwrap()
+                },
+                "{}",
+                line[1]
+            );
         }
         n += 1;
     }
     assert!(n > 0);
     // A prefix that ends before the frame header asks for more data.
     let data = read("raw_64x64_c3.raw.q75.jpg");
-    assert_eq!(jpeg::dimensions(&data[..4]).unwrap(), jpeg::Dimensions::Truncated);
+    assert_eq!(
+        jpeg::dimensions(&data[..4]).unwrap(),
+        jpeg::Dimensions::Truncated
+    );
 }

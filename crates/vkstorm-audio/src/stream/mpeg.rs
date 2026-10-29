@@ -19,15 +19,27 @@ pub(crate) struct MpegHeader {
 const BITRATES: [[[u16; 16]; 3]; 2] = [
     // MPEG-1: layer I, II, III
     [
-        [0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 0],
-        [0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384, 0],
-        [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0],
+        [
+            0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 0,
+        ],
+        [
+            0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384, 0,
+        ],
+        [
+            0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 0,
+        ],
     ],
     // MPEG-2/2.5: layer I, II, III
     [
-        [0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256, 0],
-        [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0],
-        [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0],
+        [
+            0, 32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256, 0,
+        ],
+        [
+            0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0,
+        ],
+        [
+            0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 0,
+        ],
     ],
 ];
 
@@ -59,7 +71,8 @@ pub(crate) fn parse_mpeg(b: &[u8]) -> Option<MpegHeader> {
         2 => base / 2,
         _ => base / 4,
     };
-    let bitrate = u32::from(BITRATES[usize::from(version != 1)][usize::from(layer - 1)][br_idx]) * 1000;
+    let bitrate =
+        u32::from(BITRATES[usize::from(version != 1)][usize::from(layer - 1)][br_idx]) * 1000;
     let pad = u32::from((b[2] >> 1) & 1);
     let frame_len = match layer {
         1 => (12 * bitrate / sample_rate + pad) * 4,
@@ -71,7 +84,13 @@ pub(crate) fn parse_mpeg(b: &[u8]) -> Option<MpegHeader> {
     if frame_len < 4 {
         return None;
     }
-    Some(MpegHeader { version, layer, sample_rate, channels, frame_len })
+    Some(MpegHeader {
+        version,
+        layer,
+        sample_rate,
+        channels,
+        frame_len,
+    })
 }
 
 /// A parsed ADTS header.
@@ -87,7 +106,9 @@ pub(crate) struct AdtsHeader {
     pub raw_blocks: u8,
 }
 
-pub(crate) const ADTS_RATES: [u32; 13] = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350];
+pub(crate) const ADTS_RATES: [u32; 13] = [
+    96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350,
+];
 
 pub(crate) fn parse_adts(b: &[u8]) -> Option<AdtsHeader> {
     if b.len() < 7 || b[0] != 0xFF || b[1] & 0xF6 != 0xF0 {
@@ -98,21 +119,36 @@ pub(crate) fn parse_adts(b: &[u8]) -> Option<AdtsHeader> {
     let sr_idx = usize::from((b[2] >> 2) & 0xF);
     let sample_rate = *ADTS_RATES.get(sr_idx)?;
     let channel_config = ((b[2] & 1) << 2) | (b[3] >> 6);
-    let frame_len = (usize::from(b[3] & 3) << 11) | (usize::from(b[4]) << 3) | usize::from(b[5] >> 5);
+    let frame_len =
+        (usize::from(b[3] & 3) << 11) | (usize::from(b[4]) << 3) | usize::from(b[5] >> 5);
     let header_len = if protection_absent { 7 } else { 9 };
     if frame_len <= header_len {
         return None;
     }
-    Some(AdtsHeader { object_type, sample_rate, channel_config, header_len, frame_len, raw_blocks: b[6] & 3 })
+    Some(AdtsHeader {
+        object_type,
+        sample_rate,
+        channel_config,
+        header_len,
+        frame_len,
+        raw_blocks: b[6] & 3,
+    })
 }
 
 /// The size of an ID3v2 tag at the start of `b` (header, body and footer),
 /// or None when `b` does not start with one.
 pub(crate) fn id3v2_len(b: &[u8]) -> Option<usize> {
-    if b.len() < 10 || &b[..3] != b"ID3" || b[3] == 0xFF || b[4] == 0xFF || b[6..10].iter().any(|&x| x & 0x80 != 0) {
+    if b.len() < 10
+        || &b[..3] != b"ID3"
+        || b[3] == 0xFF
+        || b[4] == 0xFF
+        || b[6..10].iter().any(|&x| x & 0x80 != 0)
+    {
         return None;
     }
-    let size = b[6..10].iter().fold(0usize, |a, &x| (a << 7) | usize::from(x));
+    let size = b[6..10]
+        .iter()
+        .fold(0usize, |a, &x| (a << 7) | usize::from(x));
     let footer = if b[3] >= 4 && b[5] & 0x10 != 0 { 10 } else { 0 };
     Some(10 + size + footer)
 }
@@ -146,7 +182,9 @@ pub(crate) fn id3v2_artist_title(tag: &[u8]) -> (String, String) {
     let mut p = 0;
     if flags & 0x40 != 0 && ver >= 3 && body.len() >= 4 {
         let ext = if ver >= 4 {
-            body[..4].iter().fold(0usize, |a, &x| (a << 7) | usize::from(x & 0x7F))
+            body[..4]
+                .iter()
+                .fold(0usize, |a, &x| (a << 7) | usize::from(x & 0x7F))
         } else {
             4 + u32::from_be_bytes([body[0], body[1], body[2], body[3]]) as usize
         };
@@ -159,12 +197,20 @@ pub(crate) fn id3v2_artist_title(tag: &[u8]) -> (String, String) {
             break;
         }
         let size = match ver {
-            2 => (usize::from(body[p + 3]) << 16) | (usize::from(body[p + 4]) << 8) | usize::from(body[p + 5]),
+            2 => {
+                (usize::from(body[p + 3]) << 16)
+                    | (usize::from(body[p + 4]) << 8)
+                    | usize::from(body[p + 5])
+            }
             3 => u32::from_be_bytes([body[p + 4], body[p + 5], body[p + 6], body[p + 7]]) as usize,
-            _ => body[p + 4..p + 8].iter().fold(0usize, |a, &x| (a << 7) | usize::from(x & 0x7F)),
+            _ => body[p + 4..p + 8]
+                .iter()
+                .fold(0usize, |a, &x| (a << 7) | usize::from(x & 0x7F)),
         };
         let start = p + hdr_len;
-        let Some(end) = start.checked_add(size).filter(|&e| e <= body.len()) else { break };
+        let Some(end) = start.checked_add(size).filter(|&e| e <= body.len()) else {
+            break;
+        };
         let frame = &body[start..end];
         match id {
             b"TIT2" | b"TT2" => title = id3_text(frame),
@@ -178,9 +224,15 @@ pub(crate) fn id3v2_artist_title(tag: &[u8]) -> (String, String) {
 
 /// An ID3v2 text frame's first value.
 fn id3_text(frame: &[u8]) -> String {
-    let Some((&enc, data)) = frame.split_first() else { return String::new() };
+    let Some((&enc, data)) = frame.split_first() else {
+        return String::new();
+    };
     let s = match enc {
-        0 => data.iter().take_while(|&&b| b != 0).map(|&b| char::from(b)).collect(),
+        0 => data
+            .iter()
+            .take_while(|&&b| b != 0)
+            .map(|&b| char::from(b))
+            .collect(),
         3 => {
             let end = data.iter().position(|&b| b == 0).unwrap_or(data.len());
             String::from_utf8_lossy(&data[..end]).into_owned()
@@ -190,8 +242,14 @@ fn id3_text(frame: &[u8]) -> String {
             let mut d = data;
             if d.len() >= 2 && enc == 1 {
                 match (d[0], d[1]) {
-                    (0xFE, 0xFF) => { be = true; d = &d[2..]; }
-                    (0xFF, 0xFE) => { be = false; d = &d[2..]; }
+                    (0xFE, 0xFF) => {
+                        be = true;
+                        d = &d[2..];
+                    }
+                    (0xFF, 0xFE) => {
+                        be = false;
+                        d = &d[2..];
+                    }
                     _ => {}
                 }
             }
@@ -199,7 +257,13 @@ fn id3_text(frame: &[u8]) -> String {
                 .as_chunks::<2>()
                 .0
                 .iter()
-                .map(|&c| if be { u16::from_be_bytes(c) } else { u16::from_le_bytes(c) })
+                .map(|&c| {
+                    if be {
+                        u16::from_be_bytes(c)
+                    } else {
+                        u16::from_le_bytes(c)
+                    }
+                })
                 .take_while(|&u| u != 0)
                 .collect();
             String::from_utf16_lossy(&units)
@@ -226,7 +290,13 @@ pub(crate) fn chain_frames(b: &[u8], n: usize, adts: bool, eof: bool) -> Chain {
     let mut first: Option<(u32, u8)> = None;
     for k in 0..n {
         if at + 7 > b.len() {
-            return if !eof { Chain::NeedMore } else if k > 0 { Chain::Yes } else { Chain::No };
+            return if !eof {
+                Chain::NeedMore
+            } else if k > 0 {
+                Chain::Yes
+            } else {
+                Chain::No
+            };
         }
         let (len, key) = if adts {
             match parse_adts(&b[at..]) {
@@ -255,17 +325,29 @@ mod tests {
     fn mpeg_headers() {
         // MPEG-1 layer III 128 kbit/s 44.1 kHz, stereo, no padding.
         let h = parse_mpeg(&[0xFF, 0xFB, 0x90, 0x00]).unwrap();
-        assert_eq!((h.version, h.layer, h.sample_rate, h.channels, h.frame_len), (1, 3, 44100, 2, 417));
+        assert_eq!(
+            (h.version, h.layer, h.sample_rate, h.channels, h.frame_len),
+            (1, 3, 44100, 2, 417)
+        );
         // MPEG-2 layer III 64 kbit/s 22.05 kHz mono.
         let h = parse_mpeg(&[0xFF, 0xF3, 0x80, 0xC0]).unwrap();
-        assert_eq!((h.version, h.sample_rate, h.channels, h.frame_len), (2, 22050, 1, 208));
-        assert!(parse_mpeg(&[0xFF, 0xF1, 0x50, 0x80]).is_none(), "ADTS is not MPEG audio");
+        assert_eq!(
+            (h.version, h.sample_rate, h.channels, h.frame_len),
+            (2, 22050, 1, 208)
+        );
+        assert!(
+            parse_mpeg(&[0xFF, 0xF1, 0x50, 0x80]).is_none(),
+            "ADTS is not MPEG audio"
+        );
     }
 
     #[test]
     fn adts_header() {
         let h = parse_adts(&[0xFF, 0xF1, 0x50, 0x80, 0x2E, 0x7F, 0xFC]).unwrap();
-        assert_eq!((h.object_type, h.sample_rate, h.channel_config, h.header_len), (2, 44100, 2, 7));
+        assert_eq!(
+            (h.object_type, h.sample_rate, h.channel_config, h.header_len),
+            (2, 44100, 2, 7)
+        );
         assert_eq!(h.frame_len, 0x173);
     }
 
@@ -280,7 +362,12 @@ mod tests {
             frames.extend_from_slice(text.as_bytes());
         }
         let n = frames.len();
-        tag.extend_from_slice(&[(n >> 21) as u8 & 0x7F, (n >> 14) as u8 & 0x7F, (n >> 7) as u8 & 0x7F, n as u8 & 0x7F]);
+        tag.extend_from_slice(&[
+            (n >> 21) as u8 & 0x7F,
+            (n >> 14) as u8 & 0x7F,
+            (n >> 7) as u8 & 0x7F,
+            n as u8 & 0x7F,
+        ]);
         tag.extend_from_slice(&frames);
         assert_eq!(id3v2_len(&tag), Some(tag.len()));
         assert_eq!(id3v2_artist_title(&tag), ("Artist".into(), "Title".into()));

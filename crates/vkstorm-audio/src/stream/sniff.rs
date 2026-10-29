@@ -52,10 +52,19 @@ pub(crate) enum Detected {
 const SCAN_LIMIT: usize = 64 * 1024;
 
 fn ct_main(ct: &str) -> String {
-    ct.split(';').next().unwrap_or("").trim().to_ascii_lowercase()
+    ct.split(';')
+        .next()
+        .unwrap_or("")
+        .trim()
+        .to_ascii_lowercase()
 }
 
-pub(crate) fn detect(input: &mut Input, head: &Head, url: &str, sink: &mut dyn PcmSink) -> Result<Detected, StreamError> {
+pub(crate) fn detect(
+    input: &mut Input,
+    head: &Head,
+    url: &str,
+    sink: &mut dyn PcmSink,
+) -> Result<Detected, StreamError> {
     let ct = ct_main(&head.content_type);
     // Leading ID3v2 tags (MP3, sometimes AAC or FLAC behind them).
     while input.fill(10)? && input.data().starts_with(b"ID3") {
@@ -79,7 +88,11 @@ pub(crate) fn detect(input: &mut Input, head: &Head, url: &str, sink: &mut dyn P
                 match chain_frames(&d[off..], 3, adts, eof) {
                     Chain::Yes => {
                         input.consume(off);
-                        return Ok(Detected::Audio(if adts { Format::Adts } else { Format::Mpeg }));
+                        return Ok(Detected::Audio(if adts {
+                            Format::Adts
+                        } else {
+                            Format::Mpeg
+                        }));
                     }
                     Chain::NeedMore => {
                         need_more = true;
@@ -96,16 +109,28 @@ pub(crate) fn detect(input: &mut Input, head: &Head, url: &str, sink: &mut dyn P
         input.more()?;
     }
     if ct.starts_with("video/") {
-        return Ok(Detected::Refused(format!("the URL serves video ({ct}), not audio")));
+        return Ok(Detected::Refused(format!(
+            "the URL serves video ({ct}), not audio"
+        )));
     }
     if ct == "text/html" || ct == "application/xhtml+xml" {
-        return Ok(Detected::Refused("the URL is a web page, not an audio stream".into()));
+        return Ok(Detected::Refused(
+            "the URL is a web page, not an audio stream".into(),
+        ));
     }
     if let Some(pls) = content_type_kind(&ct) {
         return Ok(Detected::Playlist { pls });
     }
-    let path = url.split(['?', '#']).next().unwrap_or("").to_ascii_lowercase();
-    let texty = input.data().iter().take(512).all(|&b| b >= 0x09 && b != 0x7F);
+    let path = url
+        .split(['?', '#'])
+        .next()
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    let texty = input
+        .data()
+        .iter()
+        .take(512)
+        .all(|&b| b >= 0x09 && b != 0x7F);
     if texty && (path.ends_with(".m3u") || path.ends_with(".m3u8")) {
         return Ok(Detected::Playlist { pls: false });
     }
@@ -115,8 +140,14 @@ pub(crate) fn detect(input: &mut Input, head: &Head, url: &str, sink: &mut dyn P
     if input.len() == 0 {
         return Ok(Detected::Refused("the stream is empty".into()));
     }
-    let shown = if ct.is_empty() { "no content type".to_owned() } else { ct };
-    Ok(Detected::Refused(format!("unrecognised stream format ({shown})")))
+    let shown = if ct.is_empty() {
+        "no content type".to_owned()
+    } else {
+        ct
+    };
+    Ok(Detected::Refused(format!(
+        "unrecognised stream format ({shown})"
+    )))
 }
 
 fn strong(input: &mut Input, ct: &str) -> Result<Option<Detected>, StreamError> {
@@ -129,7 +160,10 @@ fn strong(input: &mut Input, ct: &str) -> Result<Option<Detected>, StreamError> 
     }
     // Text: skip a BOM and white space.
     let text = d.strip_prefix(b"\xEF\xBB\xBF").unwrap_or(d);
-    let t = &text[text.iter().position(|b| !b.is_ascii_whitespace()).unwrap_or(text.len())..];
+    let t = &text[text
+        .iter()
+        .position(|b| !b.is_ascii_whitespace())
+        .unwrap_or(text.len())..];
     if starts_ci(t, b"#EXTM3U") {
         return Ok(Some(Detected::Playlist { pls: false }));
     }
@@ -142,15 +176,23 @@ fn strong(input: &mut Input, ct: &str) -> Result<Option<Detected>, StreamError> 
         let lower: Vec<u8> = d.iter().take(4096).map(u8::to_ascii_lowercase).collect();
         let has = |n: &[u8]| lower.windows(n.len()).any(|w| w == n);
         if has(b"<html") || has(b"<!doctype html") || has(b"<head") || has(b"<body") {
-            return Ok(Some(Detected::Refused("the URL is a web page, not an audio stream".into())));
+            return Ok(Some(Detected::Refused(
+                "the URL is a web page, not an audio stream".into(),
+            )));
         }
         if has(b"<playlist") {
-            return Ok(Some(Detected::Refused("XSPF playlists are not supported".into())));
+            return Ok(Some(Detected::Refused(
+                "XSPF playlists are not supported".into(),
+            )));
         }
         if has(b"<asx") {
-            return Ok(Some(Detected::Refused("ASX playlists are not supported".into())));
+            return Ok(Some(Detected::Refused(
+                "ASX playlists are not supported".into(),
+            )));
         }
-        return Ok(Some(Detected::Refused("the URL serves an XML document, not audio".into())));
+        return Ok(Some(Detected::Refused(
+            "the URL serves an XML document, not audio".into(),
+        )));
     }
     if d.len() >= 8 && &d[4..8] == b"ftyp" {
         return mp4(input, ct).map(Some);
@@ -163,11 +205,16 @@ fn strong(input: &mut Input, ct: &str) -> Result<Option<Detected>, StreamError> 
         })));
     }
     if d.starts_with(&[0x00, 0x00, 0x01, 0xBA]) || d.starts_with(&[0x00, 0x00, 0x01, 0xB3]) {
-        return Ok(Some(Detected::Refused("the stream is video (MPEG program stream), not audio".into())));
+        return Ok(Some(Detected::Refused(
+            "the stream is video (MPEG program stream), not audio".into(),
+        )));
     }
     if d.starts_with(&[0x1A, 0x45, 0xDF, 0xA3]) {
         input.fill(64 * 1024)?;
-        let video = input.data().windows(4).any(|w| w[0] == 0x86 && w[2] == b'V' && w[3] == b'_');
+        let video = input
+            .data()
+            .windows(4)
+            .any(|w| w[0] == 0x86 && w[2] == b'V' && w[3] == b'_');
         return Ok(Some(Detected::Refused(if video {
             "the stream is video (Matroska/WebM with a video track), not audio".into()
         } else {
@@ -182,17 +229,21 @@ fn strong(input: &mut Input, ct: &str) -> Result<Option<Detected>, StreamError> 
         })));
     }
     if d.starts_with(&[0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11]) {
-        return Ok(Some(Detected::Refused("ASF/WMA streams are not supported".into())));
+        return Ok(Some(Detected::Refused(
+            "ASF/WMA streams are not supported".into(),
+        )));
     }
     if d.first() == Some(&0x47) {
         input.fill(188 * 64)?;
         let d = input.data();
         if d.len() > 188 * 2 && d[188] == 0x47 && d[376] == 0x47 {
-            return Ok(Some(Detected::Refused(if ts_has_video(d) || ct.starts_with("video/") {
-                "the stream is video (MPEG-TS with a video stream), not audio".into()
-            } else {
-                "MPEG-TS streams are not supported".into()
-            })));
+            return Ok(Some(Detected::Refused(
+                if ts_has_video(d) || ct.starts_with("video/") {
+                    "the stream is video (MPEG-TS with a video stream), not audio".into()
+                } else {
+                    "MPEG-TS streams are not supported".into()
+                },
+            )));
         }
     }
     Ok(None)
@@ -253,11 +304,13 @@ fn mp4(input: &mut Input, ct: &str) -> Result<Detected, StreamError> {
             }
         }
     }
-    Ok(Detected::Refused(if video || (!saw_moov && ct.starts_with("video/")) {
-        "the stream is video (MP4 with a video track), not audio".into()
-    } else {
-        "MP4/M4A streams are not supported".into()
-    }))
+    Ok(Detected::Refused(
+        if video || (!saw_moov && ct.starts_with("video/")) {
+            "the stream is video (MP4 with a video track), not audio".into()
+        } else {
+            "MP4/M4A streams are not supported".into()
+        },
+    ))
 }
 
 /// Whether the PMTs in the first packets declare a video stream.
@@ -286,7 +339,8 @@ fn ts_has_video(d: &[u8]) -> bool {
                 continue;
             }
             let sec = &pkt[p..];
-            let len = ((usize::from(sec[1] & 0x0F) << 8) | usize::from(sec[2])).min(sec.len().saturating_sub(3));
+            let len = ((usize::from(sec[1] & 0x0F) << 8) | usize::from(sec[2]))
+                .min(sec.len().saturating_sub(3));
             if pass == 0 && pid == 0 && sec[0] == 0 {
                 let mut q = 8;
                 while q + 4 <= 3 + len.saturating_sub(4) {
@@ -322,7 +376,13 @@ mod tests {
 
     struct Null;
     impl PcmSink for Null {
-        fn pcm(&mut self, _: &[&[f32]], _: usize, _: u32, _: ChannelLayout) -> Result<(), StreamError> {
+        fn pcm(
+            &mut self,
+            _: &[&[f32]],
+            _: usize,
+            _: u32,
+            _: ChannelLayout,
+        ) -> Result<(), StreamError> {
             Ok(())
         }
         fn metadata(&mut self, _: InBand) {}
@@ -330,7 +390,11 @@ mod tests {
     }
 
     fn sniff(body: &[u8], ct: &str, url: &str) -> Detected {
-        let head = Head { status: 200, content_type: ct.into(), ..Default::default() };
+        let head = Head {
+            status: 200,
+            content_type: ct.into(),
+            ..Default::default()
+        };
         detect(&mut Input::from_memory(body), &head, url, &mut Null).expect("detect")
     }
 
@@ -343,24 +407,62 @@ mod tests {
 
     #[test]
     fn containers_and_text() {
-        refused(sniff(b"FLV\x01\x05\0\0\0\x09", "", ""), "FLV with a video track");
-        refused(sniff(b"FLV\x01\x04\0\0\0\x09", "", ""), "FLV streams are not supported");
-        refused(sniff(&[0, 0, 1, 0xBA, 0x44, 0, 4, 0, 4, 1, 1, 0x89, 0xC3, 0xF8], "", ""), "MPEG program stream");
+        refused(
+            sniff(b"FLV\x01\x05\0\0\0\x09", "", ""),
+            "FLV with a video track",
+        );
+        refused(
+            sniff(b"FLV\x01\x04\0\0\0\x09", "", ""),
+            "FLV streams are not supported",
+        );
+        refused(
+            sniff(
+                &[0, 0, 1, 0xBA, 0x44, 0, 4, 0, 4, 1, 1, 0x89, 0xC3, 0xF8],
+                "",
+                "",
+            ),
+            "MPEG program stream",
+        );
         let mut mkv = vec![0x1A, 0x45, 0xDF, 0xA3, 0x9F];
         mkv.extend_from_slice(b"\x42\x86\x81\x01....\x86\x8fV_MPEG4/ISO/AVC");
         refused(sniff(&mkv, "", ""), "Matroska/WebM with a video track");
         refused(sniff(b"RIFF\x24\0\0\0AVI LIST", "", ""), "AVI");
         refused(sniff(b"RIFF\x24\0\0\0WAVEfmt ", "", ""), "WAV");
-        refused(sniff(&[0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11, 0xA6, 0xD9], "", ""), "ASF");
-        refused(sniff(b"  <!DOCTYPE html><html></html>", "audio/mpeg", ""), "web page");
-        refused(sniff(b"<?xml version=\"1.0\"?><playlist version=\"1\">", "", ""), "XSPF");
+        refused(
+            sniff(
+                &[0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11, 0xA6, 0xD9],
+                "",
+                "",
+            ),
+            "ASF",
+        );
+        refused(
+            sniff(b"  <!DOCTYPE html><html></html>", "audio/mpeg", ""),
+            "web page",
+        );
+        refused(
+            sniff(b"<?xml version=\"1.0\"?><playlist version=\"1\">", "", ""),
+            "XSPF",
+        );
         refused(sniff(b"\0\x01\x02 binary junk", "video/mp4", ""), "video");
         refused(sniff(b"plain text", "text/html", ""), "web page");
         refused(sniff(b"", "audio/mpeg", ""), "empty");
-        assert_eq!(sniff(b"\xEF\xBB\xBF#EXTM3U\nhttp://a/b\n", "", ""), Detected::Playlist { pls: false });
-        assert_eq!(sniff(b"[Playlist]\nFile1=http://a/b\n", "", ""), Detected::Playlist { pls: true });
-        assert_eq!(sniff(b"http://a/b\n", "audio/x-mpegurl", ""), Detected::Playlist { pls: false });
-        assert_eq!(sniff(b"http://a/b\n", "text/plain", "http://h/list.pls?x"), Detected::Playlist { pls: true });
+        assert_eq!(
+            sniff(b"\xEF\xBB\xBF#EXTM3U\nhttp://a/b\n", "", ""),
+            Detected::Playlist { pls: false }
+        );
+        assert_eq!(
+            sniff(b"[Playlist]\nFile1=http://a/b\n", "", ""),
+            Detected::Playlist { pls: true }
+        );
+        assert_eq!(
+            sniff(b"http://a/b\n", "audio/x-mpegurl", ""),
+            Detected::Playlist { pls: false }
+        );
+        assert_eq!(
+            sniff(b"http://a/b\n", "text/plain", "http://h/list.pls?x"),
+            Detected::Playlist { pls: true }
+        );
     }
 
     #[test]
@@ -368,10 +470,15 @@ mod tests {
         // A PAT pointing at PMT PID 0x100, and a PMT with an H.264 stream.
         let mut ts = Vec::new();
         let mut pat = vec![0x47, 0x40, 0x00, 0x10, 0x00];
-        pat.extend_from_slice(&[0x00, 0xB0, 0x0D, 0x00, 0x01, 0xC1, 0x00, 0x00, 0x00, 0x01, 0xE1, 0x00, 0, 0, 0, 0]);
+        pat.extend_from_slice(&[
+            0x00, 0xB0, 0x0D, 0x00, 0x01, 0xC1, 0x00, 0x00, 0x00, 0x01, 0xE1, 0x00, 0, 0, 0, 0,
+        ]);
         pat.resize(188, 0xFF);
         let mut pmt = vec![0x47, 0x41, 0x00, 0x10, 0x00];
-        pmt.extend_from_slice(&[0x02, 0xB0, 0x12, 0x00, 0x01, 0xC1, 0x00, 0x00, 0xE1, 0x01, 0xF0, 0x00, 0x1B, 0xE1, 0x01, 0xF0, 0x00, 0, 0, 0, 0]);
+        pmt.extend_from_slice(&[
+            0x02, 0xB0, 0x12, 0x00, 0x01, 0xC1, 0x00, 0x00, 0xE1, 0x01, 0xF0, 0x00, 0x1B, 0xE1,
+            0x01, 0xF0, 0x00, 0, 0, 0, 0,
+        ]);
         pmt.resize(188, 0xFF);
         ts.extend_from_slice(&pat);
         ts.extend_from_slice(&pmt);
