@@ -8,6 +8,7 @@ use crate::perms::{Uuid, NULL_ID};
 use crate::types::AssetType;
 
 use super::im::IM_NOTHING_SPECIAL;
+use super::names::atol;
 
 /// `LLHost`: an IPv4 address (the four bytes in network order, as `mIP`
 /// holds them in memory) and a port. The default is `0.0.0.0:0`
@@ -20,8 +21,9 @@ pub struct NetHost {
 
 impl NetHost {
     /// `LLHost(const std::string& ip_and_port)`: the text before the first
-    /// `:` through `ip_string_to_u32`, the rest through `atol`; without a
-    /// colon, port 0.
+    /// `:` through `ip_string_to_u32`, the rest through `atol` into the
+    /// `U32` port (so the platform's `long` decides an out-of-range port:
+    /// see [`atol`]); without a colon, port 0.
     pub fn parse(s: &[u8]) -> NetHost {
         match s.iter().position(|&c| c == b':') {
             None => NetHost { ip: ip_string_to_u32(s), port: 0 },
@@ -97,28 +99,6 @@ fn inet_addr(s: &[u8]) -> Option<[u8; 4]> {
         return None;
     }
     Some((addr as u32).to_be_bytes())
-}
-
-/// `atol`: leading white space, an optional sign, decimal digits; a 32-bit
-/// `long` that saturates.
-fn atol(s: &[u8]) -> i32 {
-    let s = c_str(s);
-    let mut i = 0;
-    while i < s.len() && crate::text::is_space(s[i]) {
-        i += 1;
-    }
-    let mut neg = false;
-    if i < s.len() && (s[i] == b'+' || s[i] == b'-') {
-        neg = s[i] == b'-';
-        i += 1;
-    }
-    let mut v: i64 = 0;
-    while i < s.len() && s[i].is_ascii_digit() {
-        v = (v * 10 + (s[i] - b'0') as i64).min(1 << 40);
-        i += 1;
-    }
-    let v = if neg { -v } else { v };
-    v.clamp(i32::MIN as i64, i32::MAX as i64) as i32
 }
 
 /// `LLOfferInfo`'s fields. The dialog and the asset type are raw integers
@@ -231,5 +211,44 @@ mod tests {
         assert_eq!(NetHost::parse(b"localhost:13000").ip_and_port(), "0.0.0.0:13000");
         assert_eq!(NetHost::parse(b"255.255.255.255:65535").ip_and_port(), "255.255.255.255:65535");
         assert_eq!(NetHost::parse(b"").ip_and_port(), "0.0.0.0:0");
+    }
+
+    fn port(s: &[u8]) -> u32 {
+        NetHost::parse(s).port
+    }
+
+    /// `atol`'s text rules, the same on both platforms.
+    #[test]
+    fn port_text_rules() {
+        assert_eq!(port(b"1.2.3.4: \t+13000x"), 13000);
+        assert_eq!(port(b"1.2.3.4:x13000"), 0);
+        assert_eq!(port(b"1.2.3.4:- 1"), 0);
+        assert_eq!(port(b"1.2.3.4:-1"), u32::MAX);
+        assert_eq!(port(b"1.2.3.4:2147483647"), 2147483647);
+        assert_eq!(port(b"1.2.3.4:-2147483648"), 2147483648);
+        assert_eq!(port(b"1.2.3.4:1:2"), 1);
+    }
+
+    /// MSVC: a 32-bit `long`, saturated, then `U32`.
+    #[cfg(windows)]
+    #[test]
+    fn port_overflow_msvc() {
+        assert_eq!(port(b"1.2.3.4:2147483648"), 2147483647);
+        assert_eq!(port(b"1.2.3.4:4294967297"), 2147483647);
+        assert_eq!(port(b"1.2.3.4:99999999999999999999"), 2147483647);
+        assert_eq!(port(b"1.2.3.4:-2147483649"), 2147483648);
+        assert_eq!(port(b"1.2.3.4:-99999999999999999999"), 2147483648);
+    }
+
+    /// glibc: a 64-bit `long`, saturated, then its low 32 bits.
+    #[cfg(not(windows))]
+    #[test]
+    fn port_overflow_glibc() {
+        assert_eq!(port(b"1.2.3.4:2147483648"), 2147483648);
+        assert_eq!(port(b"1.2.3.4:4294967297"), 1);
+        assert_eq!(port(b"1.2.3.4:99999999999999999999"), u32::MAX);
+        assert_eq!(port(b"1.2.3.4:-2147483649"), 2147483647);
+        assert_eq!(port(b"1.2.3.4:-99999999999999999999"), 0);
+        assert_eq!(port(b"1.2.3.4:-9223372036854775808"), 0);
     }
 }
