@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022, ubuntu-24.04]
+        os: [windows-2025, ubuntu-26.04]
         # full: vkstorm-rust (every rung). j2c: vkstorm-release's first rung.
         rungs: ['full', 'j2c']
     runs-on: ${{ matrix.os }}
@@ -57,7 +57,7 @@ jobs:
   release:
     if: startsWith(github.ref, 'refs/tags/ffi-v')
     needs: package
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
     steps:
