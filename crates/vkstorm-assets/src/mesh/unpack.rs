@@ -466,8 +466,8 @@ mod tests {
     #[test]
     fn weights_decode() {
         let verts = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]];
-        let mut fv = match face_value(&verts, &[0, 1, 2], false) {
-            Value::Map(m) => m,
+        let mut fv = match &mut face_value(&verts, &[0, 1, 2], false) {
+            Value::Map(m) => std::mem::take(m),
             _ => unreachable!(),
         };
         // vertex 0: joint 3 @ 0.5 ; vertex 1: joints 1 @ 0.25, 2 @ 0.75; vertex 2: no influences.
