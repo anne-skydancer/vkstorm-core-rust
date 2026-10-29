@@ -1588,13 +1588,17 @@ mod tests {
             scope.spawn(move || {
                 let _guard = cache.fast.lock().unwrap();
                 held_tx.send(()).unwrap();
-                release_rx.recv().unwrap();
+                // Bounded, so a read that blocks (the regression) still
+                // returns and fails below instead of hanging the test.
+                let _ = release_rx.recv_timeout(Duration::from_secs(10));
             });
             held_rx.recv().unwrap();
             let started = Instant::now();
-            assert_eq!(cache.try_read_fast(&id), FastRead::Busy);
-            assert!(started.elapsed() < Duration::from_secs(1), "try_read_fast waited");
-            release_tx.send(()).unwrap();
+            let read = cache.try_read_fast(&id);
+            let waited = started.elapsed();
+            let _ = release_tx.send(());
+            assert_eq!(read, FastRead::Busy);
+            assert!(waited < Duration::from_secs(1), "try_read_fast waited {waited:?}");
         });
         match cache.try_read_fast(&id) {
             FastRead::Hit(r) => {
