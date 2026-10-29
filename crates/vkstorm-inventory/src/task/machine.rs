@@ -112,6 +112,24 @@ impl<'a> Work<'a> {
         }
     }
 
+    /// `push_front` of each entry in turn, as the loaders' loops do: the
+    /// same [`Action::PushFront`]s in the same order, and the list the C++
+    /// `std::list` ends with (the batch reversed, before the old entries),
+    /// built in one pass instead of shifting the vector once per entry.
+    fn push_front_all(&mut self, entries: impl IntoIterator<Item = Entry>) {
+        let Some(inv) = self.inv.as_mut() else {
+            return;
+        };
+        let mut front = Vec::new();
+        for e in entries {
+            front.push(e.clone());
+            self.out.push(Action::PushFront(e));
+        }
+        front.reverse();
+        front.append(inv);
+        *inv = front;
+    }
+
     fn entries(&self) -> &[Entry] {
         self.inv.as_deref().unwrap_or(&[])
     }
@@ -216,9 +234,7 @@ impl<'a> Work<'a> {
             return false;
         };
         self.reset_inventory();
-        for e in read_task_inventory(bytes) {
-            self.push_front(e);
-        }
+        self.push_front_all(read_task_inventory(bytes));
         self.out.push(Action::RemoveCacheFile { filename: filename.to_vec() });
         self.do_inventory_callback();
         true
@@ -230,9 +246,7 @@ impl<'a> Work<'a> {
             Some(entries) => {
                 self.reset_inventory();
                 self.push_front(Entry::contents_category(&self.id));
-                for e in entries {
-                    self.push_front(e);
-                }
+                self.push_front_all(entries);
                 self.do_inventory_callback();
             }
             None => {
@@ -679,4 +693,86 @@ fn uuid_string(id: &Uuid) -> String {
     let mut out = Vec::with_capacity(36);
     vkstorm_llsd::text::uuid_to_hex(id, &mut out);
     String::from_utf8(out).unwrap_or_default()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::super::{Agent, LocalizedNames, TaskState};
+    use super::*;
+    use crate::object::Object;
+
+    fn id(n: u32) -> Uuid {
+        let mut u = [0u8; 16];
+        u[..4].copy_from_slice(&n.to_be_bytes());
+        u[15] = 1;
+        u
+    }
+
+    /// `n` entries, the last seven sharing ids with the first (the first
+    /// match is the one `deleteInventoryItem` erases).
+    fn synthetic(n: u32) -> Vec<Entry> {
+        (0..n)
+            .map(|i| {
+                let name = format!("item {i}");
+                Entry::Object(Object::new(&id(i % (n - 7)), &id(0), AssetType::OBJECT, name.as_bytes()))
+            })
+            .collect()
+    }
+
+    fn view(object: Uuid) -> TaskView<'static> {
+        TaskView { id: object, local_id: 1, state: TaskState::default(), inventory: None, pending: &[], has_listeners: false }
+    }
+
+    fn env(names: &LocalizedNames) -> Env<'_> {
+        Env { agent: Agent::default(), region: None, you_owner: false, selection: None, in_open_sim: false, names }
+    }
+
+    /// The batched load emits the actions, and leaves the list, that one
+    /// `push_front` per entry (the C++ loop, and the code before the
+    /// batching) does; the later front-based `Erase` indices agree too.
+    #[test]
+    fn push_front_all_matches_push_front_per_entry() {
+        let names = LocalizedNames::default();
+        let env = env(&names);
+        let object = id(0xffff_ffff);
+        let view = view(object);
+        let entries = synthetic(5000);
+
+        let mut per_entry = Work::new(&view, &env);
+        per_entry.reset_inventory();
+        per_entry.push_front(Entry::contents_category(&object));
+        for e in entries.clone() {
+            per_entry.push_front(e);
+        }
+        let mut batched = Work::new(&view, &env);
+        batched.reset_inventory();
+        batched.push_front(Entry::contents_category(&object));
+        batched.push_front_all(entries.clone());
+
+        assert_eq!(batched.inv, per_entry.inv);
+        assert_eq!(batched.out, per_entry.out);
+        assert_eq!(batched.out.len(), 2 + entries.len());
+        assert_eq!(batched.inv.as_ref().map(Vec::len), Some(entries.len() + 1));
+
+        for n in [0, 1, 2, 2500, 4992, 4999, 77_777] {
+            per_entry.delete_inventory_item(&id(n));
+            batched.delete_inventory_item(&id(n));
+        }
+        assert_eq!(batched.inv, per_entry.inv);
+        assert_eq!(batched.out, per_entry.out);
+        assert!(batched.out.iter().any(|a| matches!(a, Action::Erase(i) if *i > 0)));
+    }
+
+    /// With no list (`push_front` on a NULL `mInventory` does nothing) the
+    /// batch does nothing either.
+    #[test]
+    fn push_front_all_without_a_list_does_nothing() {
+        let names = LocalizedNames::default();
+        let env = env(&names);
+        let view = view(id(1));
+        let mut w = Work::new(&view, &env);
+        w.push_front_all(synthetic(10));
+        assert!(w.inv.is_none());
+        assert!(w.out.is_empty());
+    }
 }
