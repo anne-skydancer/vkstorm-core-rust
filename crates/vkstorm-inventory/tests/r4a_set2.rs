@@ -60,7 +60,10 @@ const REPLY_CASES: &[(&str, i16)] = &[
 
 /// `run_reply_case`.
 fn run_reply_case(label: &str, body: Option<&Value>, input: &str, expected: i16) -> String {
-    let mut out = format!("case {label} input={} expected_before={expected}\n", if body.is_some() { input } else { "-" });
+    let mut out = format!(
+        "case {label} input={} expected_before={expected}\n",
+        if body.is_some() { input } else { "-" }
+    );
     out += &format!("  body {}\n", body.map_or("<no body>".to_owned(), notation));
     let mut s = Scene::new(true, 1, false);
     s.obj.st.expected = expected;
@@ -97,19 +100,36 @@ fn set2_cap_replies() {
         text += &run_reply_case(label, body.as_ref(), &input, expected);
     }
     assert_text("cap_replies.txt", text.as_bytes());
-    assert_eq!(std::fs::read_dir(fixture_path("replies")).unwrap().count(), files);
+    assert_eq!(
+        std::fs::read_dir(fixture_path("replies")).unwrap().count(),
+        files
+    );
 }
 
 /// `random_reply`: the README's generator.
 fn random_reply(rng: &mut Rng) -> Value {
-    const NAMES: [&[u8]; 9] = [b"New Script", b"Contents", b"Thing", b"", b"  padded  ", b"dance8", b"a|b", b"\xc3\xa9", b"New Folder"];
+    const NAMES: [&[u8]; 9] = [
+        b"New Script",
+        b"Contents",
+        b"Thing",
+        b"",
+        b"  padded  ",
+        b"dance8",
+        b"a|b",
+        b"\xc3\xa9",
+        b"New Folder",
+    ];
     const TYPES: [i32; 8] = [7, 6, 10, 0, 24, 8, 57, 56];
     const INV_TYPES: [i32; 6] = [7, 6, 10, 0, -1, 26];
     // `LLSD body;`: undefined until a key is set
     let mut body = Value::Undefined;
     match rng.below(6) {
         0 => {}
-        1 => insert(&mut body, "inventory_serial", Value::Integer((rng.next() & 0xffff_ffff) as u32 as i32)),
+        1 => insert(
+            &mut body,
+            "inventory_serial",
+            Value::Integer((rng.next() & 0xffff_ffff) as u32 as i32),
+        ),
         2 => {
             let v = rng.below(70000) as i32 - 35000;
             insert(&mut body, "inventory_serial", s(&v.to_string()));
@@ -135,8 +155,14 @@ fn random_reply(rng: &mut Rng) -> Value {
             continue;
         }
         let mut sp = ItemSpec::default();
-        sp.id = uid(&format!("1a000000-0000-4000-8000-{:012x}", rng.next() & 0xffff));
-        sp.asset = uid(&format!("a5000000-0000-4000-8000-{:012x}", rng.next() & 0xffff));
+        sp.id = uid(&format!(
+            "1a000000-0000-4000-8000-{:012x}",
+            rng.next() & 0xffff
+        ));
+        sp.asset = uid(&format!(
+            "a5000000-0000-4000-8000-{:012x}",
+            rng.next() & 0xffff
+        ));
         sp.ty = AssetType(TYPES[rng.below(8) as usize]);
         sp.inv_type = InventoryType(INV_TYPES[rng.below(6) as usize]);
         sp.name = NAMES[rng.below(9) as usize].to_vec();
@@ -185,7 +211,11 @@ fn set2_random_sweep() {
     for i in 0..REPLY_SWEEP_COUNT {
         let label = format!("random_{i:04}");
         let body = random_reply(&mut rng);
-        let expected = if rng.below(5) == 0 { (rng.below(70000) as i32 - 35000) as i16 } else { 0 };
+        let expected = if rng.below(5) == 0 {
+            (rng.below(70000) as i32 - 35000) as i16
+        } else {
+            0
+        };
         let input = format!("replies_random/{label}.llsd");
         let result = run_reply_case(&label, Some(&body), &input, expected);
         digest.add(result.as_bytes());
@@ -195,7 +225,12 @@ fn set2_random_sweep() {
             kept += 1;
         }
     }
-    assert_eq!(std::fs::read_dir(fixture_path("replies_random")).unwrap().count(), kept);
+    assert_eq!(
+        std::fs::read_dir(fixture_path("replies_random"))
+            .unwrap()
+            .count(),
+        kept
+    );
     assert_text("cap_replies_random_samples.txt", samples.as_bytes());
     assert_lines("digests_set2.txt", &digest_lines(vec![digest.finish()]));
 }

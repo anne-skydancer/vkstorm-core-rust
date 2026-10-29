@@ -8,9 +8,9 @@
 
 use std::path::PathBuf;
 
-use vkstorm_assets::mesh::skin::{Decomposition, SkinInfo};
-use vkstorm_assets::mesh::unpack::{unpack_volume_faces, Face};
 use vkstorm_assets::mesh::llsd::parse_binary;
+use vkstorm_assets::mesh::skin::{Decomposition, SkinInfo};
+use vkstorm_assets::mesh::unpack::{Face, unpack_volume_faces};
 
 const FIXTURE_MAGIC: u32 = 0x4853_4d56;
 const FIXTURE_VERSION: u32 = 2;
@@ -134,11 +134,15 @@ fn fnv1a(data: &[u8]) -> u64 {
 }
 
 fn floats(v: &[[f32; 4]]) -> Vec<u8> {
-    v.iter().flat_map(|q| q.iter().flat_map(|f| f.to_le_bytes())).collect()
+    v.iter()
+        .flat_map(|q| q.iter().flat_map(|f| f.to_le_bytes()))
+        .collect()
 }
 
 fn floats2(v: &[[f32; 2]]) -> Vec<u8> {
-    v.iter().flat_map(|q| q.iter().flat_map(|f| f.to_le_bytes())).collect()
+    v.iter()
+        .flat_map(|q| q.iter().flat_map(|f| f.to_le_bytes()))
+        .collect()
 }
 
 /// The face as the C++ test recorded it from the unpacked `LLVolumeFace`.
@@ -148,7 +152,11 @@ fn record(face: &Face) -> FaceRecord {
     let normals = floats(&face.normals[..n.min(face.normals.len())]);
     let texcoords = floats2(&face.texcoords[..n.min(face.texcoords.len())]);
     let indices: Vec<u8> = face.indices.iter().flat_map(|i| i.to_le_bytes()).collect();
-    let weights = face.weights.as_ref().map(|w| floats(&w[..n.min(w.len())])).unwrap_or_default();
+    let weights = face
+        .weights
+        .as_ref()
+        .map(|w| floats(&w[..n.min(w.len())]))
+        .unwrap_or_default();
     let full = face.num_vertices <= FULL_BUFFER_LIMIT;
     let have_verts = face.num_vertices > 0 && !face.positions.is_empty();
     let have_idx = face.num_indices > 0 && !face.indices.is_empty();
@@ -161,19 +169,54 @@ fn record(face: &Face) -> FaceRecord {
         hash_normals: if have_verts { fnv1a(&normals) } else { 0 },
         hash_texcoords: if have_verts { fnv1a(&texcoords) } else { 0 },
         hash_indices: if have_idx { fnv1a(&indices) } else { 0 },
-        hash_weights: if face.weights.is_some() && have_verts { fnv1a(&weights) } else { 0 },
+        hash_weights: if face.weights.is_some() && have_verts {
+            fnv1a(&weights)
+        } else {
+            0
+        },
         hash_tangents: 0,
         extents: [
-            face.extents[0][0], face.extents[0][1], face.extents[0][2], face.extents[0][3],
-            face.extents[1][0], face.extents[1][1], face.extents[1][2], face.extents[1][3],
+            face.extents[0][0],
+            face.extents[0][1],
+            face.extents[0][2],
+            face.extents[0][3],
+            face.extents[1][0],
+            face.extents[1][1],
+            face.extents[1][2],
+            face.extents[1][3],
         ],
-        tc_extents: [face.tc_extents[0][0], face.tc_extents[0][1], face.tc_extents[1][0], face.tc_extents[1][1]],
+        tc_extents: [
+            face.tc_extents[0][0],
+            face.tc_extents[0][1],
+            face.tc_extents[1][0],
+            face.tc_extents[1][1],
+        ],
         normalized_scale: face.normalized_scale,
-        positions: if full && have_verts { positions } else { Vec::new() },
-        normals: if full && have_verts { normals } else { Vec::new() },
-        texcoords: if full && have_verts { texcoords } else { Vec::new() },
-        indices: if full && have_idx { indices } else { Vec::new() },
-        weights: if full && face.weights.is_some() && have_verts { weights } else { Vec::new() },
+        positions: if full && have_verts {
+            positions
+        } else {
+            Vec::new()
+        },
+        normals: if full && have_verts {
+            normals
+        } else {
+            Vec::new()
+        },
+        texcoords: if full && have_verts {
+            texcoords
+        } else {
+            Vec::new()
+        },
+        indices: if full && have_idx {
+            indices
+        } else {
+            Vec::new()
+        },
+        weights: if full && face.weights.is_some() && have_verts {
+            weights
+        } else {
+            Vec::new()
+        },
         tangents: Vec::new(),
     }
 }
@@ -206,18 +249,38 @@ fn read_skin(r: &mut Reader) -> SkinRecord {
     let pelvis_offset = r.u32();
     let lock_scale = r.u8() != 0;
     let _hash = r.u64();
-    SkinRecord { present, ok, joint_names, joint_nums, inv_bind, alt_bind, bind_shape, bind_pose, pelvis_offset, lock_scale }
+    SkinRecord {
+        present,
+        ok,
+        joint_names,
+        joint_nums,
+        inv_bind,
+        alt_bind,
+        bind_shape,
+        bind_pose,
+        pelvis_offset,
+        lock_scale,
+    }
 }
 
 fn mats(m: &[[[f32; 4]; 4]]) -> Vec<u8> {
-    m.iter().flat_map(|x| x.iter().flat_map(|row| row.iter().flat_map(|f| f.to_le_bytes()))).collect()
+    m.iter()
+        .flat_map(|x| {
+            x.iter()
+                .flat_map(|row| row.iter().flat_map(|f| f.to_le_bytes()))
+        })
+        .collect()
 }
 
 fn record_skin(s: &SkinInfo, present: bool, ok: bool) -> SkinRecord {
     SkinRecord {
         present,
         ok,
-        joint_names: s.joint_names.iter().map(|n| String::from_utf8_lossy(n).into_owned()).collect(),
+        joint_names: s
+            .joint_names
+            .iter()
+            .map(|n| String::from_utf8_lossy(n).into_owned())
+            .collect(),
         joint_nums: s.joint_nums.clone(),
         inv_bind: mats(&s.inv_bind_matrix),
         alt_bind: mats(&s.alternate_bind_matrix),
@@ -244,11 +307,19 @@ fn read_decomp(r: &mut Reader) -> DecompRecord {
     let hulls = (0..n).map(|_| r.bytes()).collect();
     let base_hull = r.bytes();
     let base_mesh_cleared = r.u8() != 0;
-    DecompRecord { present, ok, hulls, base_hull, base_mesh_cleared }
+    DecompRecord {
+        present,
+        ok,
+        hulls,
+        base_hull,
+        base_mesh_cleared,
+    }
 }
 
 fn vec3s(v: &[[f32; 3]]) -> Vec<u8> {
-    v.iter().flat_map(|p| p.iter().flat_map(|f| f.to_le_bytes())).collect()
+    v.iter()
+        .flat_map(|p| p.iter().flat_map(|f| f.to_le_bytes()))
+        .collect()
 }
 
 fn record_decomp(d: &Decomposition, present: bool, ok: bool) -> DecompRecord {
@@ -299,26 +370,61 @@ pub fn read_corpus(bytes: &[u8]) -> Vec<Case> {
         }
         let skin = read_skin(&mut r);
         let decomp = read_decomp(&mut r);
-        cases.push(Case { name, sculpt_type, asset, raw_faces, present, ok, skin, decomp });
+        cases.push(Case {
+            name,
+            sculpt_type,
+            asset,
+            raw_faces,
+            present,
+            ok,
+            skin,
+            decomp,
+        });
     }
     assert_eq!(r.pos, bytes.len(), "fixture read completely");
     cases
 }
 
 /// The header of a packed asset: `(header_size, parts[(offset, size)], skin, convex)`.
-pub fn parse_asset_header(asset: &[u8]) -> (usize, [Option<(i32, i32)>; NUM_PARTS], Option<(i32, i32)>, Option<(i32, i32)>) {
+pub fn parse_asset_header(
+    asset: &[u8],
+) -> (
+    usize,
+    [Option<(i32, i32)>; NUM_PARTS],
+    Option<(i32, i32)>,
+    Option<(i32, i32)>,
+) {
     use vkstorm_assets::mesh::llsd::{as_integer, get, has};
-    let (value, consumed) = parse_binary(asset, asset.len() as i64, -1).expect("asset header parses");
-    const NAMES: [&str; NUM_PARTS] = ["lowest_lod", "low_lod", "medium_lod", "high_lod", "physics_mesh"];
+    let (value, consumed) =
+        parse_binary(asset, asset.len() as i64, -1).expect("asset header parses");
+    const NAMES: [&str; NUM_PARTS] = [
+        "lowest_lod",
+        "low_lod",
+        "medium_lod",
+        "high_lod",
+        "physics_mesh",
+    ];
     let mut parts = [None; NUM_PARTS];
     for (i, name) in NAMES.iter().enumerate() {
         if has(&value, name) {
-            parts[i] = Some((as_integer(get(get(&value, name), "offset")), as_integer(get(get(&value, name), "size"))));
+            parts[i] = Some((
+                as_integer(get(get(&value, name), "offset")),
+                as_integer(get(get(&value, name), "size")),
+            ));
         }
     }
-    let skin = has(&value, "skin").then(|| (as_integer(get(get(&value, "skin"), "offset")), as_integer(get(get(&value, "skin"), "size"))));
-    let convex = has(&value, "physics_convex")
-        .then(|| (as_integer(get(get(&value, "physics_convex"), "offset")), as_integer(get(get(&value, "physics_convex"), "size"))));
+    let skin = has(&value, "skin").then(|| {
+        (
+            as_integer(get(get(&value, "skin"), "offset")),
+            as_integer(get(get(&value, "skin"), "size")),
+        )
+    });
+    let convex = has(&value, "physics_convex").then(|| {
+        (
+            as_integer(get(get(&value, "physics_convex"), "offset")),
+            as_integer(get(get(&value, "physics_convex"), "size")),
+        )
+    });
     (consumed, parts, skin, convex)
 }
 
@@ -337,7 +443,11 @@ fn corpus_unpacks_bit_identically() {
         let (header_size, parts, skin, convex) = parse_asset_header(&c.asset);
         for p in 0..NUM_PARTS {
             let Some((offset, size)) = parts[p] else {
-                assert!(!c.present[p], "{}: part {} unexpectedly recorded", c.name, p);
+                assert!(
+                    !c.present[p],
+                    "{}: part {} unexpectedly recorded",
+                    c.name, p
+                );
                 continue;
             };
             if offset < 0 || size <= 0 {
@@ -354,7 +464,13 @@ fn corpus_unpacks_bit_identically() {
                         continue;
                     }
                     if faces.len() != c.raw_faces[p].len() {
-                        problems.push(format!("{}/{}: {} faces, expected {}", c.name, p, faces.len(), c.raw_faces[p].len()));
+                        problems.push(format!(
+                            "{}/{}: {} faces, expected {}",
+                            c.name,
+                            p,
+                            faces.len(),
+                            c.raw_faces[p].len()
+                        ));
                         continue;
                     }
                     for (i, (face, want)) in faces.iter().zip(c.raw_faces[p].iter()).enumerate() {
@@ -362,7 +478,9 @@ fn corpus_unpacks_bit_identically() {
                         faces_compared += 1;
                         if got != *want {
                             let mut what = Vec::new();
-                            if got.num_vertices != want.num_vertices || got.num_indices != want.num_indices {
+                            if got.num_vertices != want.num_vertices
+                                || got.num_indices != want.num_indices
+                            {
                                 what.push("counts");
                             }
                             if got.hash_positions != want.hash_positions {
@@ -377,7 +495,9 @@ fn corpus_unpacks_bit_identically() {
                             if got.hash_indices != want.hash_indices {
                                 what.push("indices");
                             }
-                            if got.hash_weights != want.hash_weights || got.has_weights != want.has_weights {
+                            if got.hash_weights != want.hash_weights
+                                || got.has_weights != want.has_weights
+                            {
                                 what.push("weights");
                             }
                             if got.extents != want.extents {
@@ -389,7 +509,13 @@ fn corpus_unpacks_bit_identically() {
                             if got.normalized_scale != want.normalized_scale {
                                 what.push("normalized_scale");
                             }
-                            problems.push(format!("{}/{} face {}: {}", c.name, p, i, what.join(" ")));
+                            problems.push(format!(
+                                "{}/{} face {}: {}",
+                                c.name,
+                                p,
+                                i,
+                                what.join(" ")
+                            ));
                         }
                     }
                 }
@@ -426,12 +552,21 @@ fn corpus_unpacks_bit_identically() {
                     problems.push(format!("{}: decomposition differs", c.name));
                 }
             }
-            _ => assert!(!c.decomp.present, "{}: decomposition unexpectedly recorded", c.name),
+            _ => assert!(
+                !c.decomp.present,
+                "{}: decomposition unexpectedly recorded",
+                c.name
+            ),
         }
     }
     for p in &problems {
         eprintln!("PARITY: {p}");
     }
-    eprintln!("compared {} cases, {} raw faces, {} differences", cases.len(), faces_compared, problems.len());
+    eprintln!(
+        "compared {} cases, {} raw faces, {} differences",
+        cases.len(),
+        faces_compared,
+        problems.len()
+    );
     assert!(problems.is_empty(), "{} differences", problems.len());
 }

@@ -22,7 +22,9 @@ use vkstorm_audio::stream::{MusicPlayer, PlayerEvent, PlayerState, StatusPolicy,
 fn enc(s: &str) -> String {
     s.bytes()
         .map(|b| match b {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => (b as char).to_string(),
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => {
+                (b as char).to_string()
+            }
             _ => format!("%{b:02X}"),
         })
         .collect()
@@ -43,7 +45,11 @@ fn assert_exact_accounting(player: &MusicPlayer, p: &Pulled, rate: u32) {
     let stats = player.stats();
     let mut total = 0;
     for s in &stats.segments {
-        assert_eq!(s.out_frames, expected_out_frames(s.in_frames, s.source_rate, rate), "segment {s:?}");
+        assert_eq!(
+            s.out_frames,
+            expected_out_frames(s.in_frames, s.source_rate, rate),
+            "segment {s:?}"
+        );
         total += s.out_frames;
     }
     assert_eq!(p.frames, total, "pulled frames");
@@ -84,8 +90,14 @@ fn icy_metadata_split_dedup_and_clean_audio() {
     assert!(ev.windows(2).all(|w| w[0] != w[1]), "{ev:?}");
     // The request asked for ICY metadata and named the viewer.
     let log = srv.log();
-    assert!(log.contains("\"query\": \"icy=1&metaint=3000&every=3&repeat=1&loops=2&length=1&key=icy1"), "{log}");
-    assert!(log.contains("\"ua\": \"Vulkanstorm-test\", \"icy\": \"1\""), "{log}");
+    assert!(
+        log.contains("\"query\": \"icy=1&metaint=3000&every=3&repeat=1&loops=2&length=1&key=icy1"),
+        "{log}"
+    );
+    assert!(
+        log.contains("\"ua\": \"Vulkanstorm-test\", \"icy\": \"1\""),
+        "{log}"
+    );
 }
 
 #[test]
@@ -111,7 +123,10 @@ fn icy_200_ok_status_line_and_ogg_comments() {
 fn icy_latin1_titles() {
     let srv = server();
     let player = MusicPlayer::new(config(48000));
-    let url = srv.url(&format!("/live/tone_mono22.mp3?icy=1&metaint=2000&length=1&enc=latin1&key=icy3&title={}", enc("Café - Crème")));
+    let url = srv.url(&format!(
+        "/live/tone_mono22.mp3?icy=1&metaint=2000&length=1&enc=latin1&key=icy3&title={}",
+        enc("Café - Crème")
+    ));
     let p = play_to_end(&player, &url, Duration::from_secs(60));
     assert!(p.ended);
     assert_eq!(events(&player), vec![meta("Café", "Crème")]);
@@ -122,23 +137,37 @@ fn playlists_try_entries_in_order() {
     let srv = server();
     let player = MusicPlayer::new(config(48000));
     // PLS: the first entry is a 404, the second plays.
-    let url = srv.url(&format!("/playlist.pls?e={}&e={}", enc("/status/404"), enc("/media/tone.ogg")));
+    let url = srv.url(&format!(
+        "/playlist.pls?e={}&e={}",
+        enc("/status/404"),
+        enc("/media/tone.ogg")
+    ));
     let p = play_to_end(&player, &url, Duration::from_secs(60));
     assert!(p.ended);
     assert_eq!(player.stats().codec, "vorbis");
     left_tone_ok(&p, 48000);
     // M3U whose entry redirects.
-    let url = srv.url(&format!("/playlist.m3u?e={}", enc("/redirect?to=/media/tone.flac")));
+    let url = srv.url(&format!(
+        "/playlist.m3u?e={}",
+        enc("/redirect?to=/media/tone.flac")
+    ));
     let p = play_to_end(&player, &url, Duration::from_secs(60));
     assert!(p.ended);
     assert_eq!(player.state(), PlayerState::Ended);
     assert_eq!(player.stats().codec, "flac");
     // Nothing playable.
-    let url = srv.url(&format!("/playlist.m3u?e={}&e={}", enc("/status/404"), enc("/media/page.html")));
+    let url = srv.url(&format!(
+        "/playlist.m3u?e={}&e={}",
+        enc("/status/404"),
+        enc("/media/page.html")
+    ));
     let p = play_to_end(&player, &url, Duration::from_secs(60));
     assert!(p.ended && p.frames == 0);
     match player.state() {
-        PlayerState::Failed(r) => assert!(r.contains("no playlist entry") && r.contains("web page"), "{r}"),
+        PlayerState::Failed(r) => assert!(
+            r.contains("no playlist entry") && r.contains("web page"),
+            "{r}"
+        ),
         s => panic!("{s:?}"),
     }
 }
@@ -180,7 +209,11 @@ fn refusals_with_reasons() {
     let port = dead.local_addr().expect("addr").port();
     drop(dead);
     let player = MusicPlayer::new(config(48000));
-    play_to_end(&player, &format!("http://127.0.0.1:{port}/x.mp3"), Duration::from_secs(30));
+    play_to_end(
+        &player,
+        &format!("http://127.0.0.1:{port}/x.mp3"),
+        Duration::from_secs(30),
+    );
     match player.state() {
         PlayerState::Failed(r) => assert!(r.starts_with("cannot connect"), "{r}"),
         s => panic!("{s:?}"),
@@ -191,7 +224,10 @@ fn refusals_with_reasons() {
 }
 
 fn reconnect_config() -> StreamConfig {
-    StreamConfig { reconnect_delays: vec![ms(300), ms(300)], ..config(48000) }
+    StreamConfig {
+        reconnect_delays: vec![ms(300), ms(300)],
+        ..config(48000)
+    }
 }
 
 #[test]
@@ -200,7 +236,11 @@ fn reconnect_after_a_drop_continues() {
     let player = MusicPlayer::new(reconnect_config());
     // The first connection drops after 40000 bytes (a reset); the second
     // plays to a clean end.
-    let p = play_to_end(&player, &srv.url("/live/tone.mp3?drop=40000&key=rc1&lengthafter=1"), Duration::from_secs(60));
+    let p = play_to_end(
+        &player,
+        &srv.url("/live/tone.mp3?drop=40000&key=rc1&lengthafter=1"),
+        Duration::from_secs(60),
+    );
     assert!(p.ended);
     assert_eq!(player.state(), PlayerState::Ended);
     let stats = player.stats();
@@ -216,13 +256,20 @@ fn reconnect_after_a_drop_continues() {
 fn reconnect_gives_up_with_a_reason() {
     let srv = server();
     let player = MusicPlayer::new(reconnect_config());
-    let p = play_to_end(&player, &srv.url("/live/tone.mp3?drop=40000&key=rc2&maxconn=1"), Duration::from_secs(60));
+    let p = play_to_end(
+        &player,
+        &srv.url("/live/tone.mp3?drop=40000&key=rc2&maxconn=1"),
+        Duration::from_secs(60),
+    );
     assert!(p.ended);
     assert!(p.frames > 0, "the first connection's audio played");
     let stats = player.stats();
     assert_eq!(stats.reconnects, 2);
     match player.state() {
-        PlayerState::Failed(r) => assert!(r.contains("could not be reconnected") && r.contains("503"), "{r}"),
+        PlayerState::Failed(r) => assert!(
+            r.contains("could not be reconnected") && r.contains("503"),
+            "{r}"
+        ),
         s => panic!("{s:?}"),
     }
 }
@@ -255,7 +302,10 @@ fn slow_start_and_jitter_no_rate_change() {
 #[test]
 fn underruns_give_silence_not_stretched_time() {
     let srv = server();
-    let cfg = StreamConfig { start_buffer: ms(500), ..config(48000) };
+    let cfg = StreamConfig {
+        start_buffer: ms(500),
+        ..config(48000)
+    };
     let player = MusicPlayer::new(cfg);
     // The server delivers at 0.6x real time: the ring runs dry repeatedly.
     player.start(&srv.url("/live/tone_mono22.mp3?pace=0.6&length=1&key=under1"));
@@ -306,8 +356,17 @@ fn status_json_side_channel() {
     let pos_status = seen
         .iter()
         .position(|e| *e == meta("Status Artist", "Status Title"))
-        .unwrap_or_else(|| panic!("no status metadata: {seen:?} {:?} {}", player.state(), srv.log()));
-    assert!(seen[..pos_status].contains(&meta("InBand", "Song")), "{seen:?}");
+        .unwrap_or_else(|| {
+            panic!(
+                "no status metadata: {seen:?} {:?} {}",
+                player.state(),
+                srv.log()
+            )
+        });
+    assert!(
+        seen[..pos_status].contains(&meta("InBand", "Song")),
+        "{seen:?}"
+    );
     // The side channel wins: no in-band updates after it.
     assert!(seen[pos_status + 1..].is_empty(), "{seen:?}");
     // Requests: the walk up from /live/, at 5 s after the start.
@@ -321,7 +380,11 @@ fn status_json_side_channel() {
     let t_stream = t_of("\"path\": \"/live/tone.mp3\"").expect("stream request");
     let t_first = t_of("\"path\": \"/live/status-json.xsl\"").expect("first candidate");
     let t_root = t_of("\"path\": \"/status-json.xsl\"").expect("second candidate");
-    assert!(t_first - t_stream >= 4900.0, "first poll {} ms after the stream request", t_first - t_stream);
+    assert!(
+        t_first - t_stream >= 4900.0,
+        "first poll {} ms after the stream request",
+        t_first - t_stream
+    );
     assert!(t_root >= t_first);
     player.stop();
     assert_eq!(events(&player), vec![PlayerEvent::MetadataCleared]);
@@ -332,7 +395,11 @@ fn status_json_side_channel() {
 fn status_json_gives_up_after_three_failed_polls() {
     let srv = own_server();
     let cfg = StreamConfig {
-        status: StatusPolicy { first_poll: ms(200), interval: ms(300), max_failures: 3 },
+        status: StatusPolicy {
+            first_poll: ms(200),
+            interval: ms(300),
+            max_failures: 3,
+        },
         ..config(48000)
     };
     let player = MusicPlayer::new(cfg);
@@ -350,7 +417,9 @@ fn pause_and_resume() {
     // A live stream: pause closes the connection, resume reconnects.
     let player = MusicPlayer::new(config(48000));
     player.start(&srv.url("/live/tone.mp3?pace=realtime&burst=200000&loops=10&key=pz1"));
-    let st = wait_state(&player, Duration::from_secs(10), |s| *s == PlayerState::Playing);
+    let st = wait_state(&player, Duration::from_secs(10), |s| {
+        *s == PlayerState::Playing
+    });
     assert_eq!(st, PlayerState::Playing);
     let mut reader = player.reader();
     let mut out = vec![0f32; 480 * 8];
@@ -361,7 +430,9 @@ fn pause_and_resume() {
     let r = reader.pull(&mut out, 480);
     assert_eq!((r.frames, r.ended), (0, false));
     player.pause(false);
-    let st = wait_state(&player, Duration::from_secs(10), |s| *s == PlayerState::Playing);
+    let st = wait_state(&player, Duration::from_secs(10), |s| {
+        *s == PlayerState::Playing
+    });
     assert_eq!(st, PlayerState::Playing);
     assert!(reader.pull(&mut out, 480).frames > 0);
     assert_eq!(srv.log().matches("key=pz1").count(), 2);
@@ -371,7 +442,9 @@ fn pause_and_resume() {
     let player = MusicPlayer::new(config(48000));
     player.start(&srv.url("/media/tone.ogg?key=pz2"));
     let mut reader = player.reader();
-    let st = wait_state(&player, Duration::from_secs(10), |s| *s == PlayerState::Playing);
+    let st = wait_state(&player, Duration::from_secs(10), |s| {
+        *s == PlayerState::Playing
+    });
     assert_eq!(st, PlayerState::Playing);
     let a = pull(&mut reader, 480, Some(ms(10)), ms(200));
     player.pause(true);
@@ -417,12 +490,20 @@ fn stop_ends_the_reader_and_clears_metadata() {
     let srv = server();
     let player = MusicPlayer::new(config(48000));
     // A label after the URL (FMOD allowed it) is ignored.
-    player.start(&format!("{} My Station", srv.url("/media/tone.ogg?key=st1")));
+    player.start(&format!(
+        "{} My Station",
+        srv.url("/media/tone.ogg?key=st1")
+    ));
     assert_eq!(player.url(), srv.url("/media/tone.ogg?key=st1"));
     let mut reader = player.reader();
-    wait_state(&player, Duration::from_secs(10), |s| *s == PlayerState::Playing);
+    wait_state(&player, Duration::from_secs(10), |s| {
+        *s == PlayerState::Playing
+    });
     assert_eq!(events(&player), vec![meta("Plain Artist", "Plain Title")]);
-    assert_eq!(player.current_metadata(), Some(("Plain Artist".into(), "Plain Title".into())));
+    assert_eq!(
+        player.current_metadata(),
+        Some(("Plain Artist".into(), "Plain Title".into()))
+    );
     player.stop();
     let mut out = vec![0f32; 480 * 8];
     let r = reader.pull(&mut out, 480);

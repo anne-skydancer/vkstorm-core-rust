@@ -14,16 +14,116 @@ use std::process::{Command, Stdio};
 use vkstorm_llsd::text::string_as_real_native;
 
 const EDGES: &[&str] = &[
-    "", " ", "\t", "\n", "\r\n", "0", "-0", "+0", "00", "007.5", "1", "-1", "+1", "--1", "+-1", "-+1", " 1", "1 ",
-    "\t1", "\n1", "1\n", " 1 ", ".", "-.", "+.", ".5", "-.5", "5.", "5..", "1.2.3", "..5", "1e", "1E", "1e+", "1e-",
-    "1e5", "1E5", "1e+5", "1e-5", "1e5x", "1e5.", "1e5e", "1.e5", ".e5", "e5", "-e5", "1ee5", "1e+-5", "0x", "0X",
-    "0x10", "-0x10", "+0x10", "0x1p3", "0X1P-2", "0x1.8p1", "0xg", "0x.", "0x1p", "0x1p+", "0x10 ", "x10", "inf",
-    "-inf", "+inf", "INF", "infinity", "Infinity", "nan", "NAN", "nan(1)", "-nan", "1e999", "-1e999", "1e308",
-    "1.7976931348623157e308", "1.7976931348623158e308", "1.7976931348623159e308", "1.8e308", "-1.8e308",
-    "1e-307", "2.2250738585072014e-308", "2.5e-308", "1e-310", "4.9e-324", "5e-324", "2.5e-324", "2.4703282292062328e-324",
-    "2e-324", "1e-400", "1e-999", "-1e-999", "123456789012345678901234567890", "0.1", "0.30000000000000004",
-    "9007199254740993", "1.00000000000000011102230246251565404236316680908203125", "2147483647", "2147483648",
-    "-2147483649", "4294967296", "1,5", "1_000", "١", "\u{a0}1", "1\0", "\0", "7", "x7", "0x7",
+    "",
+    " ",
+    "\t",
+    "\n",
+    "\r\n",
+    "0",
+    "-0",
+    "+0",
+    "00",
+    "007.5",
+    "1",
+    "-1",
+    "+1",
+    "--1",
+    "+-1",
+    "-+1",
+    " 1",
+    "1 ",
+    "\t1",
+    "\n1",
+    "1\n",
+    " 1 ",
+    ".",
+    "-.",
+    "+.",
+    ".5",
+    "-.5",
+    "5.",
+    "5..",
+    "1.2.3",
+    "..5",
+    "1e",
+    "1E",
+    "1e+",
+    "1e-",
+    "1e5",
+    "1E5",
+    "1e+5",
+    "1e-5",
+    "1e5x",
+    "1e5.",
+    "1e5e",
+    "1.e5",
+    ".e5",
+    "e5",
+    "-e5",
+    "1ee5",
+    "1e+-5",
+    "0x",
+    "0X",
+    "0x10",
+    "-0x10",
+    "+0x10",
+    "0x1p3",
+    "0X1P-2",
+    "0x1.8p1",
+    "0xg",
+    "0x.",
+    "0x1p",
+    "0x1p+",
+    "0x10 ",
+    "x10",
+    "inf",
+    "-inf",
+    "+inf",
+    "INF",
+    "infinity",
+    "Infinity",
+    "nan",
+    "NAN",
+    "nan(1)",
+    "-nan",
+    "1e999",
+    "-1e999",
+    "1e308",
+    "1.7976931348623157e308",
+    "1.7976931348623158e308",
+    "1.7976931348623159e308",
+    "1.8e308",
+    "-1.8e308",
+    "1e-307",
+    "2.2250738585072014e-308",
+    "2.5e-308",
+    "1e-310",
+    "4.9e-324",
+    "5e-324",
+    "2.5e-324",
+    "2.4703282292062328e-324",
+    "2e-324",
+    "1e-400",
+    "1e-999",
+    "-1e-999",
+    "123456789012345678901234567890",
+    "0.1",
+    "0.30000000000000004",
+    "9007199254740993",
+    "1.00000000000000011102230246251565404236316680908203125",
+    "2147483647",
+    "2147483648",
+    "-2147483649",
+    "4294967296",
+    "1,5",
+    "1_000",
+    "١",
+    "\u{a0}1",
+    "1\0",
+    "\0",
+    "7",
+    "x7",
+    "0x7",
 ];
 
 /// xorshift64*, as the inventory corpora's generators.
@@ -58,7 +158,9 @@ fn inputs() -> Vec<Vec<u8>> {
     let mut rng = Rng(0x5EED_C0E2_2026_1028);
     for _ in 0..30_000 {
         let len = (rng.next() % 14) as usize;
-        let s = (0..len).map(|_| ALPHABET[(rng.next() % ALPHABET.len() as u64) as usize]).collect();
+        let s = (0..len)
+            .map(|_| ALPHABET[(rng.next() % ALPHABET.len() as u64) as usize])
+            .collect();
         v.push(s);
     }
     // Numbers that look ordinary, to exercise rounding.
@@ -85,7 +187,11 @@ fn string_as_real_matches_cxx_runtime() {
     let src = manifest.join("tests/cxx/as_real_probe.cpp");
     let out_dir = std::env::temp_dir().join(format!("vks_as_real_probe_{}", std::process::id()));
     std::fs::create_dir_all(&out_dir).unwrap();
-    let exe = out_dir.join(if cfg!(windows) { "as_real_probe.exe" } else { "as_real_probe" });
+    let exe = out_dir.join(if cfg!(windows) {
+        "as_real_probe.exe"
+    } else {
+        "as_real_probe"
+    });
     let status = Command::new(&cxx)
         .args(["-O1", "-std=c++17", "-o"])
         .arg(&exe)
@@ -102,7 +208,11 @@ fn string_as_real_matches_cxx_runtime() {
         }
         stdin_text.push('\n');
     }
-    let mut child = Command::new(&exe).stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().unwrap();
+    let mut child = Command::new(&exe)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .unwrap();
     let mut stdin = child.stdin.take().unwrap();
     let writer = std::thread::spawn(move || stdin.write_all(stdin_text.as_bytes()).unwrap());
     let output = child.wait_with_output().unwrap();
@@ -110,7 +220,10 @@ fn string_as_real_matches_cxx_runtime() {
     assert!(output.status.success());
     let _ = std::fs::remove_dir_all(&out_dir);
 
-    let lines: Vec<&str> = std::str::from_utf8(&output.stdout).unwrap().lines().collect();
+    let lines: Vec<&str> = std::str::from_utf8(&output.stdout)
+        .unwrap()
+        .lines()
+        .collect();
     assert_eq!(lines.len(), inputs.len(), "probe output line count");
     let mut mismatches = Vec::new();
     for (s, line) in inputs.iter().zip(&lines) {
@@ -133,6 +246,11 @@ fn string_as_real_matches_cxx_runtime() {
         "{} of {} strings differ:\n{}",
         mismatches.len(),
         inputs.len(),
-        mismatches.iter().take(40).cloned().collect::<Vec<_>>().join("\n")
+        mismatches
+            .iter()
+            .take(40)
+            .cloned()
+            .collect::<Vec<_>>()
+            .join("\n")
     );
 }

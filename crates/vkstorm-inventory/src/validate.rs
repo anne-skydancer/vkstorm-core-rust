@@ -43,7 +43,7 @@ use std::fmt::Write as _;
 use vkstorm_llsd::Value;
 
 use crate::llsd::coerce::insert;
-use crate::perms::{Uuid, NULL_ID};
+use crate::perms::{NULL_ID, Uuid};
 use crate::types::folder::BAD_LOOKUP;
 use crate::types::{AssetType, FolderType};
 
@@ -127,7 +127,8 @@ impl Snapshot {
     /// Whether the two orders name exactly the keys of their maps.
     pub fn orders_match_maps(&self) -> bool {
         fn same<V>(order: &[Uuid], map: &BTreeMap<Uuid, V>) -> bool {
-            order.len() == map.len() && order.iter().collect::<BTreeSet<_>>().len() == order.len()
+            order.len() == map.len()
+                && order.iter().collect::<BTreeSet<_>>().len() == order.len()
                 && order.iter().all(|k| map.contains_key(k))
         }
         same(&self.category_order, &self.category_map) && same(&self.item_order, &self.item_map)
@@ -159,18 +160,38 @@ impl ValidationInfo {
     /// written by key turns it into a map (`LLSD::operator[]`).
     pub fn to_llsd(&self) -> Value {
         let mut sd = Value::map();
-        insert(&mut sd, "fatal_error_count", Value::Integer(self.fatal_error_count));
+        insert(
+            &mut sd,
+            "fatal_error_count",
+            Value::Integer(self.fatal_error_count),
+        );
         insert(&mut sd, "loop_count", Value::Integer(self.loop_count));
-        insert(&mut sd, "orphaned_count", Value::Integer(self.orphaned_count));
+        insert(
+            &mut sd,
+            "orphaned_count",
+            Value::Integer(self.orphaned_count),
+        );
         insert(&mut sd, "initialized", Value::Boolean(self.initialized));
         insert(
             &mut sd,
             "missing_system_folders_count",
             Value::Integer(self.missing_required_system_folders.len() as i32),
         );
-        insert(&mut sd, "fatal_no_root_folder", Value::Boolean(self.fatal_no_root_folder));
-        insert(&mut sd, "fatal_no_library_root_folder", Value::Boolean(self.fatal_no_library_root_folder));
-        insert(&mut sd, "fatal_qa_debug_mode", Value::Boolean(self.fatal_qa_debug_mode));
+        insert(
+            &mut sd,
+            "fatal_no_root_folder",
+            Value::Boolean(self.fatal_no_root_folder),
+        );
+        insert(
+            &mut sd,
+            "fatal_no_library_root_folder",
+            Value::Boolean(self.fatal_no_library_root_folder),
+        );
+        insert(
+            &mut sd,
+            "fatal_qa_debug_mode",
+            Value::Boolean(self.fatal_qa_debug_mode),
+        );
         insert(&mut sd, "warning_count", Value::Integer(self.warning_count));
         if self.warning_count > 0 {
             let mut warnings = Value::array();
@@ -186,10 +207,18 @@ impl ValidationInfo {
             insert(&mut sd, "warnings", warnings);
         }
         let names = |set: &BTreeSet<i32>| {
-            Value::Array(set.iter().map(|&ft| Value::String(FolderType(ft).lookup().as_bytes().to_vec())).collect())
+            Value::Array(
+                set.iter()
+                    .map(|&ft| Value::String(FolderType(ft).lookup().as_bytes().to_vec()))
+                    .collect(),
+            )
         };
         if !self.missing_required_system_folders.is_empty() {
-            insert(&mut sd, "missing_system_folders", names(&self.missing_required_system_folders));
+            insert(
+                &mut sd,
+                "missing_system_folders",
+                names(&self.missing_required_system_folders),
+            );
         }
         insert(
             &mut sd,
@@ -197,7 +226,11 @@ impl ValidationInfo {
             Value::Integer(self.duplicate_required_system_folders.len() as i32),
         );
         if !self.duplicate_required_system_folders.is_empty() {
-            insert(&mut sd, "duplicate_system_folders", names(&self.duplicate_required_system_folders));
+            insert(
+                &mut sd,
+                "duplicate_system_folders",
+                names(&self.duplicate_required_system_folders),
+            );
         }
         sd
     }
@@ -235,8 +268,16 @@ impl QaRandom {
     /// A default-constructed engine of `library`.
     pub fn new(library: QaLibrary) -> QaRandom {
         match library {
-            QaLibrary::Msvc => QaRandom { library, mt: Some(Box::new(Mt19937::new(5489))), minstd: 0 },
-            QaLibrary::Libstdcxx => QaRandom { library, mt: None, minstd: 1 },
+            QaLibrary::Msvc => QaRandom {
+                library,
+                mt: Some(Box::new(Mt19937::new(5489))),
+                minstd: 0,
+            },
+            QaLibrary::Libstdcxx => QaRandom {
+                library,
+                mt: None,
+                minstd: 1,
+            },
         }
     }
 
@@ -244,7 +285,11 @@ impl QaRandom {
     /// for a `target_env = "msvc"` build, else libstdc++), as the viewer
     /// linked beside it would draw.
     pub fn native() -> QaRandom {
-        if cfg!(target_env = "msvc") { QaRandom::new(QaLibrary::Msvc) } else { QaRandom::new(QaLibrary::Libstdcxx) }
+        if cfg!(target_env = "msvc") {
+            QaRandom::new(QaLibrary::Msvc)
+        } else {
+            QaRandom::new(QaLibrary::Libstdcxx)
+        }
     }
 
     /// The library this engine follows.
@@ -290,7 +335,9 @@ impl Mt19937 {
         let mut state = [0u32; 624];
         state[0] = seed;
         for i in 1..624 {
-            state[i] = 1_812_433_253u32.wrapping_mul(state[i - 1] ^ (state[i - 1] >> 30)).wrapping_add(i as u32);
+            state[i] = 1_812_433_253u32
+                .wrapping_mul(state[i - 1] ^ (state[i - 1] >> 30))
+                .wrapping_add(i as u32);
         }
         Mt19937 { state, index: 624 }
     }
@@ -431,7 +478,9 @@ impl Model<'_> {
     }
 
     fn has_backlink(&self, link: &Uuid, target: &Uuid) -> bool {
-        self.backlinks.get(target).is_some_and(|links| links.contains(link))
+        self.backlinks
+            .get(target)
+            .is_some_and(|links| links.contains(link))
     }
 
     /// `isInSuitcase` (OpenSim only).
@@ -469,15 +518,25 @@ impl Model<'_> {
 /// When an order does not name exactly the keys of its map
 /// ([`Snapshot::orders_match_maps`]).
 pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
-    assert!(snapshot.orders_match_maps(), "Snapshot iteration orders must name exactly the map keys");
-    let Options { mut qa, in_open_sim } = options;
+    assert!(
+        snapshot.orders_match_maps(),
+        "Snapshot iteration orders must name exactly the map keys"
+    );
+    let Options {
+        mut qa,
+        in_open_sim,
+    } = options;
     let skip_suitcase = cfg!(feature = "opensim") && in_open_sim;
     let s = snapshot;
     let mut backlinks: BTreeMap<Uuid, Vec<Uuid>> = BTreeMap::new();
     for (target, link) in &s.backlinks {
         backlinks.entry(*target).or_default().push(*link);
     }
-    let mut m = Model { s, last_item: s.last_item, backlinks };
+    let mut m = Model {
+        s,
+        last_item: s.last_item,
+        backlinks,
+    };
     let mut info = ValidationInfo::default();
     let mut fatal_errs = 0;
     let mut warning_count = 0;
@@ -533,7 +592,8 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
         if skip_suitcase && m.in_suitcase(ci) {
             continue;
         }
-        let (Some(cats), Some(items)) = (s.category_tree.get(cat_id), s.item_tree.get(cat_id)) else {
+        let (Some(cats), Some(items)) = (s.category_tree.get(cat_id), s.item_tree.get(cat_id))
+        else {
             warn(&mut info, "direct_descendents", &mut warning_count);
             continue;
         };
@@ -558,7 +618,11 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
             match m.topmost_ancestor(&item_id) {
                 Ancestor::Ok(top) => {
                     if top != s.root && top != s.library_root {
-                        warn(&mut info, "topmost_ancestor_not_recognized", &mut warning_count);
+                        warn(
+                            &mut info,
+                            "topmost_ancestor_not_recognized",
+                            &mut warning_count,
+                        );
                     }
                 }
                 _ => warn(&mut info, "topmost_ancestor_not_found", &mut warning_count),
@@ -574,7 +638,8 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
                 }
             }
         }
-        let in_library = matches!(m.topmost_ancestor(&cat.id), Ancestor::Ok(top) if top == s.library_root);
+        let in_library =
+            matches!(m.topmost_ancestor(&cat.id), Ancestor::Ok(top) if top == s.library_root);
         if !in_library {
             #[cfg(feature = "opensim")]
             if skip_suitcase && m.in_suitcase(ci) {
@@ -651,15 +716,27 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
         }
         if count_under_root == 0 {
             if is_automatic {
-                let _ = writeln!(info.log, "Cannot create system folder of type {}({})", folder_type.lookup(), ft);
+                let _ = writeln!(
+                    info.log,
+                    "Cannot create system folder of type {}({})",
+                    folder_type.lookup(),
+                    ft
+                );
                 info.missing_required_system_folders.insert(ft);
                 fatal_errs += 1;
             } else {
-                warn(&mut info, "missing_system_folder_can_create", &mut warning_count);
+                warn(
+                    &mut info,
+                    "missing_system_folder_can_create",
+                    &mut warning_count,
+                );
             }
         } else if count_under_root > 1 {
             info.duplicate_required_system_folders.insert(ft);
-            if !is_automatic && folder_type != FolderType::SETTINGS && folder_type != FolderType::MATERIAL {
+            if !is_automatic
+                && folder_type != FolderType::SETTINGS
+                && folder_type != FolderType::MATERIAL
+            {
                 let _ = writeln!(
                     info.log,
                     "System folder type has excess copies under root, type {}({}) count {}",
@@ -670,11 +747,19 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
                 info.fatal_system_duplicate += 1;
                 fatal_errs += 1;
             } else {
-                warn(&mut info, "non_fatal_system_duplicate_under_root", &mut warning_count);
+                warn(
+                    &mut info,
+                    "non_fatal_system_duplicate_under_root",
+                    &mut warning_count,
+                );
             }
         }
         if count_elsewhere > 0 {
-            warn(&mut info, "non_fatal_system_duplicate_elsewhere", &mut warning_count);
+            warn(
+                &mut info,
+                "non_fatal_system_duplicate_elsewhere",
+                &mut warning_count,
+            );
         }
     }
 
@@ -682,7 +767,10 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
     info.warning_count = warning_count;
     info.loop_count = loop_count;
     info.orphaned_count = orphaned_count;
-    Validation { info, last_item: m.last_item }
+    Validation {
+        info,
+        last_item: m.last_item,
+    }
 }
 
 #[cfg(test)]
@@ -721,7 +809,9 @@ mod tests {
     fn empty_model_is_fatal_without_roots() {
         let v = validate(&Snapshot::default(), Options::default());
         assert!(v.info.fatal_no_root_folder && v.info.fatal_no_library_root_folder);
-        assert!(v.info.log.starts_with("No library root folder id\nCannot create system folder of type texture(0)\n"));
+        assert!(v.info.log.starts_with(
+            "No library root folder id\nCannot create system folder of type texture(0)\n"
+        ));
         // The category map is empty and the tree lacks the null entry.
         assert_eq!(v.info.warnings.get("category_map_size"), Some(&1));
     }
@@ -732,7 +822,11 @@ mod tests {
     fn item_walk_order_reaches_last_item() {
         let id = |n: u8| [n; 16];
         let root = id(1);
-        let mut s = Snapshot { root, library_root: id(2), ..Snapshot::default() };
+        let mut s = Snapshot {
+            root,
+            library_root: id(2),
+            ..Snapshot::default()
+        };
         for (k, cid) in [root, id(2)].into_iter().enumerate() {
             s.categories.push(SnapCategory {
                 id: cid,
@@ -753,7 +847,12 @@ mod tests {
             (id(21), AssetType::LINK, id(11)),
         ];
         for (k, (iid, ty, asset)) in items.into_iter().enumerate() {
-            s.items.push(SnapItem { id: iid, parent: root, asset_type: ty, asset: if asset == NULL_ID { iid } else { asset } });
+            s.items.push(SnapItem {
+                id: iid,
+                parent: root,
+                asset_type: ty,
+                asset: if asset == NULL_ID { iid } else { asset },
+            });
             s.item_map.insert(iid, k);
             s.item_tree.get_mut(&root).unwrap().push(Some(k));
         }

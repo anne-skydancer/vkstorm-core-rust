@@ -19,7 +19,10 @@ impl Mode {
             return Some(Mode::Tiles);
         }
         let v = s.strip_prefix("area=")?;
-        let n: Vec<i32> = v.split(',').map(|x| x.parse().ok()).collect::<Option<_>>()?;
+        let n: Vec<i32> = v
+            .split(',')
+            .map(|x| x.parse().ok())
+            .collect::<Option<_>>()?;
         if n.len() != 4 {
             return None;
         }
@@ -117,7 +120,11 @@ pub fn decode(data: &[u8], reduce: u32, mode: &Mode) -> Result<(u32, u32, u32, V
         opj_stream_set_user_data(stream, &mut mem as *mut Mem as *mut c_void, Some(no_free));
         opj_stream_set_user_data_length(stream, data.len() as u64);
         let codec = opj_create_decompress(CODEC_FORMAT::OPJ_CODEC_J2K);
-        let mut h = Handles { codec, stream, image: std::ptr::null_mut() };
+        let mut h = Handles {
+            codec,
+            stream,
+            image: std::ptr::null_mut(),
+        };
         let mut params: opj_dparameters_t = std::mem::zeroed();
         opj_set_default_decoder_parameters(&mut params);
         params.cp_reduce = reduce;

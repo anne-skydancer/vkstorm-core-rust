@@ -91,7 +91,13 @@ impl Sink<'_> {
 }
 
 impl PcmSink for Sink<'_> {
-    fn pcm(&mut self, planes: &[&[f32]], frames: usize, rate: u32, layout: ChannelLayout) -> Result<(), StreamError> {
+    fn pcm(
+        &mut self,
+        planes: &[&[f32]],
+        frames: usize,
+        rate: u32,
+        layout: ChannelLayout,
+    ) -> Result<(), StreamError> {
         // Wait until the ring can take this packet (with margin for the
         // resampler's tail and a rate up to 8x).
         let need = frames.saturating_mul(8) + 1024;
@@ -108,7 +114,9 @@ impl PcmSink for Sink<'_> {
         let mut conv = self.ctx.conv.lock().unwrap_or_else(|e| e.into_inner());
         let shared = &self.ctx.shared;
         let id = self.ctx.id;
-        conv.feed(planes, frames, rate, layout, &mut |layout, data| shared.push(id, layout, data));
+        conv.feed(planes, frames, rate, layout, &mut |layout, data| {
+            shared.push(id, layout, data)
+        });
         self.produced += frames as u64;
         Ok(())
     }
@@ -136,7 +144,12 @@ fn fail<T>(s: impl Into<String>) -> Result<T, StreamError> {
 
 /// Connects to `url` and plays it (resolving playlists) until its body
 /// ends. `Err(Failed)` when it produced no audio.
-fn play(ctx: &SessionCtx, sink: &mut Sink<'_>, url: &str, depth: u32) -> Result<Played, StreamError> {
+fn play(
+    ctx: &SessionCtx,
+    sink: &mut Sink<'_>,
+    url: &str,
+    depth: u32,
+) -> Result<Played, StreamError> {
     if depth > MAX_DEPTH {
         return fail("playlists nested too deeply");
     }
@@ -156,7 +169,9 @@ fn play(ctx: &SessionCtx, sink: &mut Sink<'_>, url: &str, depth: u32) -> Result<
             .name("vks-music-net".into())
             .spawn(move || {
                 let abort = || cancel.load(Ordering::Relaxed);
-                curl::stream(&url, &cfg, &pipe, &abort, &mut |t| shared.meta().in_band(generation, InBand::NowPlaying(t)));
+                curl::stream(&url, &cfg, &pipe, &abort, &mut |t| {
+                    shared.meta().in_band(generation, InBand::NowPlaying(t))
+                });
             })
             .map_err(|e| StreamError::Failed(format!("cannot start the network thread: {e}")))?
     };
@@ -178,7 +193,11 @@ fn play(ctx: &SessionCtx, sink: &mut Sink<'_>, url: &str, depth: u32) -> Result<
     if !(200..300).contains(&head.status) {
         finish(&pipe, net);
         let line = head.status_line.trim();
-        return fail(if line.is_empty() { format!("HTTP {}", head.status) } else { format!("the server answered \"{line}\"") });
+        return fail(if line.is_empty() {
+            format!("HTTP {}", head.status)
+        } else {
+            format!("the server answered \"{line}\"")
+        });
     }
     let mut input = Input::from_pipe(pipe.clone(), ctx.cancel.clone());
     let detected = match detect(&mut input, &head, url, sink) {
@@ -197,7 +216,11 @@ fn play(ctx: &SessionCtx, sink: &mut Sink<'_>, url: &str, depth: u32) -> Result<
             let body = input.read_all(PLAYLIST_BYTES);
             finish(&pipe, net);
             let body = body?;
-            let base = if head.effective_url.is_empty() { url } else { head.effective_url.as_str() };
+            let base = if head.effective_url.is_empty() {
+                url
+            } else {
+                head.effective_url.as_str()
+            };
             let entries = match playlist::parse(&body, pls, base) {
                 Playlist::Hls => return fail("HLS streams are not supported"),
                 Playlist::Entries(e) => e,
@@ -225,14 +248,24 @@ fn play(ctx: &SessionCtx, sink: &mut Sink<'_>, url: &str, depth: u32) -> Result<
             match r {
                 Err(StreamError::Cancelled) => Err(StreamError::Cancelled),
                 Err(StreamError::Failed(reason)) if !produced => fail(reason),
-                Err(StreamError::Failed(reason)) => {
-                    Ok(Played { url: url.to_owned(), end: PipeEnd::Error(reason), live: head.is_live(), produced })
-                }
+                Err(StreamError::Failed(reason)) => Ok(Played {
+                    url: url.to_owned(),
+                    end: PipeEnd::Error(reason),
+                    live: head.is_live(),
+                    produced,
+                }),
                 Ok(()) if !produced => fail(match end {
-                    Some(PipeEnd::Error(e)) => format!("the connection failed before any audio: {e}"),
+                    Some(PipeEnd::Error(e)) => {
+                        format!("the connection failed before any audio: {e}")
+                    }
                     _ => "the stream ended before any audio".to_owned(),
                 }),
-                Ok(()) => Ok(Played { url: url.to_owned(), end: end.unwrap_or(PipeEnd::Eof), live: head.is_live(), produced }),
+                Ok(()) => Ok(Played {
+                    url: url.to_owned(),
+                    end: end.unwrap_or(PipeEnd::Eof),
+                    live: head.is_live(),
+                    produced,
+                }),
             }
         }
     }
@@ -240,7 +273,10 @@ fn play(ctx: &SessionCtx, sink: &mut Sink<'_>, url: &str, depth: u32) -> Result<
 
 /// The session thread's body.
 pub(crate) fn run(ctx: SessionCtx) {
-    let mut sink = Sink { ctx: &ctx, produced: 0 };
+    let mut sink = Sink {
+        ctx: &ctx,
+        produced: 0,
+    };
     let outcome = run_inner(&ctx, &mut sink);
     sink.end_segment();
     ctx.shared.session_ended(ctx.id, &ctx.conv, outcome);
@@ -259,7 +295,9 @@ fn run_inner(ctx: &SessionCtx, sink: &mut Sink<'_>) -> Result<(), StreamError> {
             PipeEnd::Cancelled => return Err(StreamError::Cancelled),
             PipeEnd::Eof if !played.live => return Ok(()),
             PipeEnd::Eof => "the server closed the stream".to_owned(),
-            PipeEnd::Error(e) if !played.live => return fail(format!("the connection failed: {e}")),
+            PipeEnd::Error(e) if !played.live => {
+                return fail(format!("the connection failed: {e}"));
+            }
             PipeEnd::Error(e) => e.clone(),
         };
         if !played.produced {
@@ -285,7 +323,11 @@ fn run_inner(ctx: &SessionCtx, sink: &mut Sink<'_>) -> Result<(), StreamError> {
         }
         match again {
             Some(p) => played = p,
-            None => return fail(format!("the stream was lost and could not be reconnected: {last}")),
+            None => {
+                return fail(format!(
+                    "the stream was lost and could not be reconnected: {last}"
+                ));
+            }
         }
     }
 }

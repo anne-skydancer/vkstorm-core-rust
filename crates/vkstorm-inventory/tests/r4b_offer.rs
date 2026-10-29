@@ -13,7 +13,7 @@ use vkstorm_inventory::exchange::offer;
 use vkstorm_inventory::exchange::throttle::check_offer_throttle;
 use vkstorm_inventory::exchange::{NetHost, OfferInfo};
 use vkstorm_inventory::llsd::coerce::insert;
-use vkstorm_inventory::perms::{Uuid, NULL_ID};
+use vkstorm_inventory::perms::{NULL_ID, Uuid};
 use vkstorm_inventory::types::AssetType;
 use vkstorm_llsd::Value;
 
@@ -40,15 +40,25 @@ fn responses() {
     let dest = uid(0xde, 1);
     type Op = (&'static str, fn(&mut Fake, &mut OfferInfo, &Uuid));
     let ops: [Op; 9] = [
-        ("accept_dest", |f, o, d| offer::send_receive_response(f, o, true, d)),
-        ("accept_null_dest", |f, o, _| offer::send_receive_response(f, o, true, &NULL_ID)),
-        ("decline", |f, o, d| offer::send_receive_response(f, o, false, d)),
+        ("accept_dest", |f, o, d| {
+            offer::send_receive_response(f, o, true, d)
+        }),
+        ("accept_null_dest", |f, o, _| {
+            offer::send_receive_response(f, o, true, &NULL_ID)
+        }),
+        ("decline", |f, o, d| {
+            offer::send_receive_response(f, o, false, d)
+        }),
         ("accept_then_decline", |f, o, d| {
             offer::send_receive_response(f, o, true, d);
             offer::send_receive_response(f, o, false, d);
         }),
-        ("auto_receive", |f, o, _| offer::send_auto_receive_response(f, o)),
-        ("legacy_decline", |f, o, _| offer::send_decline_response(f, o)),
+        ("auto_receive", |f, o, _| {
+            offer::send_auto_receive_response(f, o)
+        }),
+        ("legacy_decline", |f, o, _| {
+            offer::send_decline_response(f, o)
+        }),
         ("legacy_decline_twice", |f, o, _| {
             offer::send_decline_response(f, o);
             offer::send_decline_response(f, o);
@@ -82,7 +92,11 @@ fn responses() {
             }
         }
     }
-    assert_lines("offer/responses", &compared("offer", "responses.txt"), &out.lines);
+    assert_lines(
+        "offer/responses",
+        &compared("offer", "responses.txt"),
+        &out.lines,
+    );
 }
 
 fn incoming_cases() -> Vec<Incoming> {
@@ -91,7 +105,11 @@ fn incoming_cases() -> Vec<Incoming> {
         v.push(Incoming::new(&format!("agent_size_{sz}"), 4, vec![7; sz]));
     }
     for t in [0i32, 6, 7, 8, 13, 24, 25, 56, 59, 60, 127, -1, -2, -128] {
-        v.push(Incoming::new(&format!("agent_type_{t}"), 4, agent_bucket(t as i8, &offered())));
+        v.push(Incoming::new(
+            &format!("agent_type_{t}"),
+            4,
+            agent_bucket(t as i8, &offered()),
+        ));
     }
     {
         let mut c = Incoming::new("agent_null_object", 4, agent_bucket(7, &NULL_ID));
@@ -170,7 +188,11 @@ fn incoming_cases() -> Vec<Incoming> {
     }
     for sz in [0usize, 16, 17, 18, 34] {
         for fill in 0..2 {
-            let b = if sz == 17 { agent_bucket(7, &offered()) } else { vec![b'7'; sz] };
+            let b = if sz == 17 {
+                agent_bucket(7, &offered())
+            } else {
+                vec![b'7'; sz]
+            };
             let mut c = Incoming::new(&format!("task_size_{sz}_fill{fill}"), 9, b);
             c.fill = fill;
             c.name = b"Gadget".to_vec();
@@ -204,7 +226,11 @@ fn incoming_cases() -> Vec<Incoming> {
     }
     for d in [32, 37] {
         let p = format!("d{d}_");
-        let mut c = Incoming::new(&format!("{p}bin_full"), d, notice_bucket(1, 7, &group(), b"Notice Item", true));
+        let mut c = Incoming::new(
+            &format!("{p}bin_full"),
+            d,
+            notice_bucket(1, 7, &group(), b"Notice Item", true),
+        );
         c.message = b"Subject|Body text".to_vec();
         c.name = b"Officer Resident".to_vec();
         v.push(c.clone());
@@ -273,12 +299,16 @@ fn incoming() {
         let mut f = setup();
         f.snapshots = true;
         f.trim_resident = c.trim;
-        f.ids_by_legacy_name.insert(b"Known Resident".to_vec(), other2());
+        f.ids_by_legacy_name
+            .insert(b"Known Resident".to_vec(), other2());
         if c.id.contains("sender_muted") {
             f.mute_insert(other(), b"", 1, 0);
         }
         run_incoming(&mut f, &c, true);
-        if f.ev.iter().any(|e| e.starts_with("legacy_read ") && e.contains("type=UNINITIALISED")) {
+        if f.ev
+            .iter()
+            .any(|e| e.starts_with("legacy_read ") && e.contains("type=UNINITIALISED"))
+        {
             // the outcome depends on the stack and is kept as notes only
             uninit += 1;
             f.ev.truncate(2);
@@ -286,8 +316,14 @@ fn incoming() {
         }
         out.events(&mut f, &c.id);
     }
-    assert_lines("offer/incoming", &compared("offer", "incoming.txt"), &out.lines);
-    println!("offer/incoming: {uninit} uninitialised-type cases compared up to the runtime edge line");
+    assert_lines(
+        "offer/incoming",
+        &compared("offer", "incoming.txt"),
+        &out.lines,
+    );
+    println!(
+        "offer/incoming: {uninit} uninitialised-type cases compared up to the runtime edge line"
+    );
 }
 
 #[test]
@@ -324,8 +360,16 @@ fn incoming_sweep() {
         c.aux = if rng.below(3) == 0 { group() } else { NULL_ID };
         c.from_group = rng.coin();
         c.from = if rng.below(5) == 0 { agent() } else { other() };
-        c.message = if rng.coin() { b"Subject|Body".to_vec() } else { b"#RLV/~x".to_vec() };
-        c.name = if rng.coin() { b"Sender Resident".to_vec() } else { Vec::new() };
+        c.message = if rng.coin() {
+            b"Subject|Body".to_vec()
+        } else {
+            b"#RLV/~x".to_vec()
+        };
+        c.name = if rng.coin() {
+            b"Sender Resident".to_vec()
+        } else {
+            Vec::new()
+        };
         c.fill = 0;
         if c.dialog == 9 && size != 1 {
             let mut buf = c.bucket.clone();
@@ -362,7 +406,19 @@ fn offerinfo_llsd() {
         host: &'static [u8],
         persist: bool,
     }
-    let f = |id, im, from, group, object, txn, folder, obj, ty, from_name: &[u8], desc: &[u8], host, persist| F {
+    let f = |id,
+             im,
+             from,
+             group,
+             object,
+             txn,
+             folder,
+             obj,
+             ty,
+             from_name: &[u8],
+             desc: &[u8],
+             host,
+             persist| F {
         id,
         im,
         from,
@@ -380,19 +436,201 @@ fn offerinfo_llsd() {
     let u7 = uid(0xf0, 7);
     let pipe_name = format!("{}|{{InvOfferGroupNoticeName|NAME=%s}}", us(&other2())).into_bytes();
     let fields = vec![
-        f("agent", 4, other(), false, false, txn(), u7, offered(), 7, b"other.sender", b"Gift", OFFER_HOST, true),
-        f("task", 9, other(), false, true, txn(), u7, NULL_ID, 7, b"Gadget", b"'Gadget'  ( http://slurl.com/secondlife/R/1/2/3 )", OFFER_HOST, true),
-        f("group_notice", 32, other(), true, false, txn(), uid(0xf0, 8), NULL_ID, 8, b"{InvOfferGroupNoticeName|NAME=Officer}", b"Kit", OFFER_HOST, false),
-        f("group_requested", 37, group(), true, false, txn(), u7, NULL_ID, 7, b"x", b"y", OFFER_HOST, false),
-        f("null_everything", 0, NULL_ID, false, false, NULL_ID, NULL_ID, NULL_ID, -1, b"", b"", b"", false),
-        f("type_link", 4, other(), false, false, txn(), u7, offered(), 24, b"a", b"b", OFFER_HOST, false),
-        f("type_127", 4, other(), false, false, txn(), u7, offered(), 127, b"a", b"b", OFFER_HOST, false),
-        f("type_unknown_255", 9, other(), false, true, txn(), u7, NULL_ID, 255, b"a", b"b", OFFER_HOST, false),
-        f("type_minus_2", 4, other(), false, false, txn(), u7, offered(), -2, b"a", b"b", OFFER_HOST, false),
-        f("utf8_names", 4, other(), false, false, txn(), u7, offered(), 0, "J\u{e9}r\u{f4}me".as_bytes(), "\u{2713} tick".as_bytes(), OFFER_HOST, false),
-        f("uuid_pipe_name", 32, other(), true, false, txn(), u7, NULL_ID, 7, &pipe_name, b"Kit", OFFER_HOST, false),
-        f("host_zero", 4, other(), false, false, txn(), u7, offered(), 7, b"a", b"b", b"0.0.0.0:0", false),
-        f("host_max_port", 4, other(), false, false, txn(), u7, offered(), 7, b"a", b"b", b"255.255.255.255:65535", false),
+        f(
+            "agent",
+            4,
+            other(),
+            false,
+            false,
+            txn(),
+            u7,
+            offered(),
+            7,
+            b"other.sender",
+            b"Gift",
+            OFFER_HOST,
+            true,
+        ),
+        f(
+            "task",
+            9,
+            other(),
+            false,
+            true,
+            txn(),
+            u7,
+            NULL_ID,
+            7,
+            b"Gadget",
+            b"'Gadget'  ( http://slurl.com/secondlife/R/1/2/3 )",
+            OFFER_HOST,
+            true,
+        ),
+        f(
+            "group_notice",
+            32,
+            other(),
+            true,
+            false,
+            txn(),
+            uid(0xf0, 8),
+            NULL_ID,
+            8,
+            b"{InvOfferGroupNoticeName|NAME=Officer}",
+            b"Kit",
+            OFFER_HOST,
+            false,
+        ),
+        f(
+            "group_requested",
+            37,
+            group(),
+            true,
+            false,
+            txn(),
+            u7,
+            NULL_ID,
+            7,
+            b"x",
+            b"y",
+            OFFER_HOST,
+            false,
+        ),
+        f(
+            "null_everything",
+            0,
+            NULL_ID,
+            false,
+            false,
+            NULL_ID,
+            NULL_ID,
+            NULL_ID,
+            -1,
+            b"",
+            b"",
+            b"",
+            false,
+        ),
+        f(
+            "type_link",
+            4,
+            other(),
+            false,
+            false,
+            txn(),
+            u7,
+            offered(),
+            24,
+            b"a",
+            b"b",
+            OFFER_HOST,
+            false,
+        ),
+        f(
+            "type_127",
+            4,
+            other(),
+            false,
+            false,
+            txn(),
+            u7,
+            offered(),
+            127,
+            b"a",
+            b"b",
+            OFFER_HOST,
+            false,
+        ),
+        f(
+            "type_unknown_255",
+            9,
+            other(),
+            false,
+            true,
+            txn(),
+            u7,
+            NULL_ID,
+            255,
+            b"a",
+            b"b",
+            OFFER_HOST,
+            false,
+        ),
+        f(
+            "type_minus_2",
+            4,
+            other(),
+            false,
+            false,
+            txn(),
+            u7,
+            offered(),
+            -2,
+            b"a",
+            b"b",
+            OFFER_HOST,
+            false,
+        ),
+        f(
+            "utf8_names",
+            4,
+            other(),
+            false,
+            false,
+            txn(),
+            u7,
+            offered(),
+            0,
+            "J\u{e9}r\u{f4}me".as_bytes(),
+            "\u{2713} tick".as_bytes(),
+            OFFER_HOST,
+            false,
+        ),
+        f(
+            "uuid_pipe_name",
+            32,
+            other(),
+            true,
+            false,
+            txn(),
+            u7,
+            NULL_ID,
+            7,
+            &pipe_name,
+            b"Kit",
+            OFFER_HOST,
+            false,
+        ),
+        f(
+            "host_zero",
+            4,
+            other(),
+            false,
+            false,
+            txn(),
+            u7,
+            offered(),
+            7,
+            b"a",
+            b"b",
+            b"0.0.0.0:0",
+            false,
+        ),
+        f(
+            "host_max_port",
+            4,
+            other(),
+            false,
+            false,
+            txn(),
+            u7,
+            offered(),
+            7,
+            b"a",
+            b"b",
+            b"255.255.255.255:65535",
+            false,
+        ),
     ];
     for x in &fields {
         let o = OfferInfo {
@@ -406,7 +644,11 @@ fn offerinfo_llsd() {
             ty: AssetType(x.ty),
             from_name: x.from_name.clone(),
             desc: x.desc.clone(),
-            host: if x.host.is_empty() { NetHost::default() } else { NetHost::parse(x.host) },
+            host: if x.host.is_empty() {
+                NetHost::default()
+            } else {
+                NetHost::parse(x.host)
+            },
             persist: x.persist,
         };
         let c = format!("fields_{}", x.id);
@@ -415,9 +657,21 @@ fn offerinfo_llsd() {
         out.put(&c, "asLLSD.bin", &sd_bin_hex(&sd));
         let back = OfferInfo::from_llsd(&sd);
         out.put(&c, "fromLLSD", &offer_fields(&back));
-        out.put(&c, "fromLLSD_assign", &offer_fields(&OfferInfo::from_llsd(&sd)));
+        out.put(
+            &c,
+            "fromLLSD_assign",
+            &offer_fields(&OfferInfo::from_llsd(&sd)),
+        );
         let again = back.as_llsd();
-        out.put(&c, "round_trip_equal", if sd_bin_hex(&again) == sd_bin_hex(&sd) { "1" } else { "0" });
+        out.put(
+            &c,
+            "round_trip_equal",
+            if sd_bin_hex(&again) == sd_bin_hex(&sd) {
+                "1"
+            } else {
+                "0"
+            },
+        );
     }
     // crafted documents: the notation as the C++ string literals hold it
     // (the binary_desc literal ends at its embedded NUL)
@@ -449,18 +703,36 @@ fn offerinfo_llsd() {
         out.put(&c, "fromLLSD", &offer_fields(&o));
         out.put(&c, "asLLSD.bin", &sd_bin_hex(&o.as_llsd()));
     }
-    assert_lines("offer/offerinfo_llsd", &compared("offer", "offerinfo_llsd.txt"), &out.lines);
+    assert_lines(
+        "offer/offerinfo_llsd",
+        &compared("offer", "offerinfo_llsd.txt"),
+        &out.lines,
+    );
 }
 
 #[test]
 fn forced_response_index() {
     let mut out = Out::default();
-    for name in ["UserGiveItem", "UserGiveItemLegacy", "ObjectGiveItem", "OwnObjectGiveItem"] {
+    for name in [
+        "UserGiveItem",
+        "UserGiveItemLegacy",
+        "ObjectGiveItem",
+        "OwnObjectGiveItem",
+    ] {
         if let Some(Value::Array(form)) = &notification_form(name) {
             for (i, e) in form.iter().enumerate() {
-                let n = String::from_utf8_lossy(&vkstorm_inventory::llsd::coerce::as_string(vkstorm_inventory::llsd::coerce::get(e, "name"))).into_owned();
-                let idx = vkstorm_inventory::llsd::coerce::as_integer(vkstorm_inventory::llsd::coerce::get(e, "index"));
-                out.put(&format!("form_{name}"), &format!("element{i}"), &format!("name={n} button_index={idx}"));
+                let n = String::from_utf8_lossy(&vkstorm_inventory::llsd::coerce::as_string(
+                    vkstorm_inventory::llsd::coerce::get(e, "name"),
+                ))
+                .into_owned();
+                let idx = vkstorm_inventory::llsd::coerce::as_integer(
+                    vkstorm_inventory::llsd::coerce::get(e, "index"),
+                );
+                out.put(
+                    &format!("form_{name}"),
+                    &format!("element{i}"),
+                    &format!("name={n} button_index={idx}"),
+                );
             }
         }
     }
@@ -472,8 +744,12 @@ fn forced_response_index() {
         match (i >= 0).then(|| form.get(i as usize)).flatten() {
             Some(e) => format!(
                 "{} (button {})",
-                String::from_utf8_lossy(&vkstorm_inventory::llsd::coerce::as_string(vkstorm_inventory::llsd::coerce::get(e, "name"))),
-                vkstorm_inventory::llsd::coerce::as_integer(vkstorm_inventory::llsd::coerce::get(e, "index"))
+                String::from_utf8_lossy(&vkstorm_inventory::llsd::coerce::as_string(
+                    vkstorm_inventory::llsd::coerce::get(e, "name")
+                )),
+                vkstorm_inventory::llsd::coerce::as_integer(vkstorm_inventory::llsd::coerce::get(
+                    e, "index"
+                ))
             ),
             None => "- (button -1)".into(),
         }
@@ -494,10 +770,22 @@ fn forced_response_index() {
             2 => 3,
             _ => -1,
         };
-        out.put(&format!("index_{r}"), "element_used", &format!("{element} -> {}", describe(element)));
-        out.put(&format!("index_{r}"), "if_button_index_were_used", &format!("{r} -> {}", describe(r)));
+        out.put(
+            &format!("index_{r}"),
+            "element_used",
+            &format!("{element} -> {}", describe(element)),
+        );
+        out.put(
+            &format!("index_{r}"),
+            "if_button_index_were_used",
+            &format!("{r} -> {}", describe(r)),
+        );
     }
-    assert_lines("offer/forced_response_index", &compared("offer", "forced_response_index.txt"), &out.lines);
+    assert_lines(
+        "offer/forced_response_index",
+        &compared("offer", "forced_response_index.txt"),
+        &out.lines,
+    );
 }
 
 #[test]
@@ -511,8 +799,17 @@ fn throttle() {
     burst.push((10.5, true, b"giver"));
     burst.push((10.5, false, b"giver"));
     burst.push((10.6, false, b""));
-    let anon: Vec<(f64, bool, &[u8])> = burst.iter().map(|&(t, c, _)| (t, c, b"".as_slice())).collect();
-    let check_first: Vec<(f64, bool, &[u8])> = vec![(0.0, true, b"x"), (0.0, false, b"x"), (0.0, true, b"x"), (9.99, true, b"x"), (10.0, true, b"x")];
+    let anon: Vec<(f64, bool, &[u8])> = burst
+        .iter()
+        .map(|&(t, c, _)| (t, c, b"".as_slice()))
+        .collect();
+    let check_first: Vec<(f64, bool, &[u8])> = vec![
+        (0.0, true, b"x"),
+        (0.0, false, b"x"),
+        (0.0, true, b"x"),
+        (9.99, true, b"x"),
+        (10.0, true, b"x"),
+    ];
     let traces = [
         ("default_burst", 5, true, true, true, &burst),
         ("anonymous_burst", 5, true, true, true, &anon),
@@ -527,8 +824,10 @@ fn throttle() {
     for (id, max, started, spam_from, spam, steps) in traces {
         let mut f = setup();
         f.settings_u.insert("FSOfferThrottleMaxCount".into(), max);
-        f.settings_b.insert("FSNotifyIncomingObjectSpamFrom".into(), spam_from);
-        f.settings_b.insert("FSNotifyIncomingObjectSpam".into(), spam);
+        f.settings_b
+            .insert("FSNotifyIncomingObjectSpamFrom".into(), spam_from);
+        f.settings_b
+            .insert("FSNotifyIncomingObjectSpam".into(), spam);
         f.startup_started = started;
         state.expiry = 0.0;
         f.throttle = state;
@@ -536,12 +835,21 @@ fn throttle() {
         for &(t, check_only, from) in steps.iter() {
             f.clock = t0 + t;
             let r = check_offer_throttle(&mut f, from, check_only);
-            f.add(format!("t={t:.2} check_only={} from=\"{}\" -> {}", check_only as i32, esc(from), r as i32));
+            f.add(format!(
+                "t={t:.2} check_only={} from=\"{}\" -> {}",
+                check_only as i32,
+                esc(from),
+                r as i32
+            ));
         }
         state = f.throttle;
         out.events(&mut f, id);
     }
-    assert_lines("offer/throttle", &compared("offer", "throttle.txt"), &out.lines);
+    assert_lines(
+        "offer/throttle",
+        &compared("offer", "throttle.txt"),
+        &out.lines,
+    );
 }
 
 #[test]
@@ -555,14 +863,30 @@ fn offline() {
         insert(&mut m, "dialog", Value::Integer(dialog));
         insert(&mut m, "transaction-id", Value::Uuid(txn()));
         insert(&mut m, "timestamp", Value::Integer(1_700_000_000));
-        insert(&mut m, "from_agent_name", Value::string(if dialog == 9 { "Gadget" } else { "Sender Resident" }));
+        insert(
+            &mut m,
+            "from_agent_name",
+            Value::string(if dialog == 9 {
+                "Gadget"
+            } else {
+                "Sender Resident"
+            }),
+        );
         insert(
             &mut m,
             "message",
-            Value::string(if dialog == 9 { "'Gadget'  ( http://slurl.com/secondlife/Region/1/2/3 )" } else { "Gift" }),
+            Value::string(if dialog == 9 {
+                "'Gadget'  ( http://slurl.com/secondlife/Region/1/2/3 )"
+            } else {
+                "Gift"
+            }),
         );
         insert(&mut m, "region_id", Value::Uuid(uid(0x9e, 1)));
-        insert(&mut m, "position", Value::Array(vec![Value::Real(1.0), Value::Real(2.0), Value::Real(3.0)]));
+        insert(
+            &mut m,
+            "position",
+            Value::Array(vec![Value::Real(1.0), Value::Real(2.0), Value::Real(3.0)]),
+        );
         if let Some(b) = bucket {
             insert(&mut m, "binary_bucket", Value::Binary(b));
         }
@@ -573,19 +897,52 @@ fn offline() {
         m
     };
     let cases: Vec<(&str, Value, i32, bool)> = vec![
-        ("agent_offer_keep", msg(4, Some(agent_bucket(7, &offered()))), 0, false),
-        ("agent_offer_discard", msg(4, Some(agent_bucket(7, &offered()))), 1, false),
-        ("agent_offer_no_bucket_key", msg(4, None), 0, false),
         (
-            "agent_offer_transaction_from_asset_id",
-            set(set(msg(4, Some(agent_bucket(7, &offered()))), "transaction-id", Value::Uuid(NULL_ID)), "asset_id", Value::Uuid(uid(0xd4, 2))),
+            "agent_offer_keep",
+            msg(4, Some(agent_bucket(7, &offered()))),
             0,
             false,
         ),
-        ("task_offer_keep_replies_to_region_host", msg(9, Some(vec![7])), 0, false),
-        ("task_offer_discard_replies_to_region_host", msg(9, Some(vec![7])), 1, false),
+        (
+            "agent_offer_discard",
+            msg(4, Some(agent_bucket(7, &offered()))),
+            1,
+            false,
+        ),
+        ("agent_offer_no_bucket_key", msg(4, None), 0, false),
+        (
+            "agent_offer_transaction_from_asset_id",
+            set(
+                set(
+                    msg(4, Some(agent_bucket(7, &offered()))),
+                    "transaction-id",
+                    Value::Uuid(NULL_ID),
+                ),
+                "asset_id",
+                Value::Uuid(uid(0xd4, 2)),
+            ),
+            0,
+            false,
+        ),
+        (
+            "task_offer_keep_replies_to_region_host",
+            msg(9, Some(vec![7])),
+            0,
+            false,
+        ),
+        (
+            "task_offer_discard_replies_to_region_host",
+            msg(9, Some(vec![7])),
+            1,
+            false,
+        ),
         ("task_offer_no_bucket_key", msg(9, None), 0, false),
-        ("task_offer_from_group_string_Y", set(msg(9, Some(vec![7])), "from_group", Value::string("Y")), 0, false),
+        (
+            "task_offer_from_group_string_Y",
+            set(msg(9, Some(vec![7])), "from_group", Value::string("Y")),
+            0,
+            false,
+        ),
         (
             "task_offer_local_position",
             {
@@ -602,13 +959,28 @@ fn offline() {
         ),
         (
             "group_notice_asset_id_is_group",
-            set(set(msg(32, Some(b"7|7|Notice Item".to_vec())), "asset_id", Value::Uuid(group())), "message", Value::string("Subject|Body")),
+            set(
+                set(
+                    msg(32, Some(b"7|7|Notice Item".to_vec())),
+                    "asset_id",
+                    Value::Uuid(group()),
+                ),
+                "message",
+                Value::string("Subject|Body"),
+            ),
             0,
             true,
         ),
         (
             "group_notice_binary_bucket",
-            set(msg(32, Some(notice_bucket(1, 7, &group(), b"Notice Item", true))), "message", Value::string("Subject|Body")),
+            set(
+                msg(
+                    32,
+                    Some(notice_bucket(1, 7, &group(), b"Notice Item", true)),
+                ),
+                "message",
+                Value::string("Subject|Body"),
+            ),
             0,
             true,
         ),
@@ -617,23 +989,45 @@ fn offline() {
         let mut f = setup();
         f.snapshots = true;
         let messages = Value::Array(vec![m]);
-        out.put(id, "input.00", &format!("messages {}", sd_notation(&messages)));
-        out.put(id, "input.01", &format!("agent_region_host {}", f.region_host.ip_and_port()));
+        out.put(
+            id,
+            "input.00",
+            &format!("messages {}", sd_notation(&messages)),
+        );
+        out.put(
+            id,
+            "input.01",
+            &format!("agent_region_host {}", f.region_host.ip_and_port()),
+        );
         offer::receive_offline(&mut f, &messages);
         f.add("stage main_coro");
         f.run_idle();
-        f.add(format!("stage response {} button={button}", if forced { "forced" } else { "interactive" }));
+        f.add(format!(
+            "stage response {} button={button}",
+            if forced { "forced" } else { "interactive" }
+        ));
         if let Some(nid) = f.posted.last().copied() {
             let n = f.live.get(&nid).cloned();
-            let info = n.as_ref().and_then(|n| n.responder).filter(|h| f.offers.contains_key(h));
+            let info = n
+                .as_ref()
+                .and_then(|n| n.responder)
+                .filter(|h| f.offers.contains_key(h));
             if let (Some(h), true) = (info, forced) {
                 f.force_response(h, button);
             } else if let Some(n) = n {
                 let mut response = Value::Undefined;
                 if let Some(Value::Array(a)) = &n.form {
                     for e in a {
-                        if vkstorm_inventory::llsd::coerce::as_integer(vkstorm_inventory::llsd::coerce::get(e, "index")) == button {
-                            let k = String::from_utf8_lossy(&vkstorm_inventory::llsd::coerce::as_string(vkstorm_inventory::llsd::coerce::get(e, "name"))).into_owned();
+                        if vkstorm_inventory::llsd::coerce::as_integer(
+                            vkstorm_inventory::llsd::coerce::get(e, "index"),
+                        ) == button
+                        {
+                            let k = String::from_utf8_lossy(
+                                &vkstorm_inventory::llsd::coerce::as_string(
+                                    vkstorm_inventory::llsd::coerce::get(e, "name"),
+                                ),
+                            )
+                            .into_owned();
                             insert(&mut response, &k, Value::Boolean(true));
                         }
                     }
@@ -641,7 +1035,10 @@ fn offline() {
                 f.respond_notification(&nid, &response);
             }
         } else if vkstorm_inventory::llsd::coerce::has(&f.group_notice_payload, "inventory_offer") {
-            let o = OfferInfo::from_llsd(vkstorm_inventory::llsd::coerce::get(&f.group_notice_payload, "inventory_offer"));
+            let o = OfferInfo::from_llsd(vkstorm_inventory::llsd::coerce::get(
+                &f.group_notice_payload,
+                "inventory_offer",
+            ));
             let h = f.new_offer(o);
             f.force_response(h, button);
             if f.offers.contains_key(&h) {
@@ -651,125 +1048,282 @@ fn offline() {
         f.run_idle();
         out.events(&mut f, id);
     }
-    assert_lines("offer/offline", &compared("offer", "offline.txt"), &out.lines);
+    assert_lines(
+        "offer/offline",
+        &compared("offer", "offline.txt"),
+        &out.lines,
+    );
 }
 
 #[test]
 fn policy_named() {
-    let base = |d: i32, button: i32, forced: bool| PolicyCase { dialog: d, button, forced, ty: 1, log_decline: true, ..PolicyCase::default() };
+    let base = |d: i32, button: i32, forced: bool| PolicyCase {
+        dialog: d,
+        button,
+        forced,
+        ty: 1,
+        log_decline: true,
+        ..PolicyCase::default()
+    };
     type Set = fn(&mut PolicyCase);
     let named: Vec<(&str, PolicyCase, Set)> = vec![
-        ("agent_offer_accepted_on_arrival_closed", base(4, 7, false), |_| {}),
-        ("agent_offer_keep_sends_nothing_more", base(4, 0, false), |_| {}),
-        ("agent_offer_discard_moves_to_trash_locally", base(4, 1, false), |_| {}),
+        (
+            "agent_offer_accepted_on_arrival_closed",
+            base(4, 7, false),
+            |_| {},
+        ),
+        (
+            "agent_offer_keep_sends_nothing_more",
+            base(4, 0, false),
+            |_| {},
+        ),
+        (
+            "agent_offer_discard_moves_to_trash_locally",
+            base(4, 1, false),
+            |_| {},
+        ),
         ("agent_offer_mute_button", base(4, 2, false), |_| {}),
-        ("agent_offer_mute_button_deferred_names", base(4, 2, false), |p| {
-            p.response_table = true;
-            p.defer = true
+        (
+            "agent_offer_mute_button_deferred_names",
+            base(4, 2, false),
+            |p| {
+                p.response_table = true;
+                p.defer = true
+            },
+        ),
+        (
+            "agent_offer_legacy_keep_sends_accept",
+            base(4, 0, false),
+            |p| p.legacy = true,
+        ),
+        (
+            "agent_offer_legacy_discard_sends_decline_to_trash",
+            base(4, 1, false),
+            |p| p.legacy = true,
+        ),
+        (
+            "agent_offer_muted_by_id_forced_decline",
+            base(4, 0, false),
+            |p| p.mute = 1,
+        ),
+        (
+            "agent_offer_muted_by_name_forced_mute",
+            base(4, 0, false),
+            |p| p.mute = 2,
+        ),
+        (
+            "agent_offer_textchat_exempt_mute_forced_mute",
+            base(4, 0, false),
+            |p| p.mute = 3,
+        ),
+        (
+            "agent_offer_dnd_accepts_and_replies",
+            base(4, 7, false),
+            |p| p.dnd = true,
+        ),
+        ("agent_offer_auto_accept", base(4, 0, false), |p| {
+            p.auto_accept = true
         }),
-        ("agent_offer_legacy_keep_sends_accept", base(4, 0, false), |p| p.legacy = true),
-        ("agent_offer_legacy_discard_sends_decline_to_trash", base(4, 1, false), |p| p.legacy = true),
-        ("agent_offer_muted_by_id_forced_decline", base(4, 0, false), |p| p.mute = 1),
-        ("agent_offer_muted_by_name_forced_mute", base(4, 0, false), |p| p.mute = 2),
-        ("agent_offer_textchat_exempt_mute_forced_mute", base(4, 0, false), |p| p.mute = 3),
-        ("agent_offer_dnd_accepts_and_replies", base(4, 7, false), |p| p.dnd = true),
-        ("agent_offer_auto_accept", base(4, 0, false), |p| p.auto_accept = true),
-        ("agent_offer_invalid_type_forced_decline", base(4, 0, false), |p| p.ty = 2),
-        ("agent_offer_forced_show_does_nothing", base(4, 3, true), |_| {}),
+        (
+            "agent_offer_invalid_type_forced_decline",
+            base(4, 0, false),
+            |p| p.ty = 2,
+        ),
+        (
+            "agent_offer_forced_show_does_nothing",
+            base(4, 3, true),
+            |_| {},
+        ),
         ("agent_give_to_rlv_keep", base(4, 0, false), |p| {
             p.rlv = true;
             p.give_rlv = 1;
             p.ty = 0
         }),
-        ("agent_give_to_rlv_not_auto_accepted", base(4, 0, false), |p| {
-            p.rlv = true;
-            p.give_rlv = 1;
-            p.ty = 0;
-            p.auto_accept = true
-        }),
-        ("agent_give_to_rlv_forbidden_auto_accepted", base(4, 0, false), |p| {
-            p.rlv = true;
-            p.give_rlv = 1;
-            p.ty = 0;
-            p.auto_accept = true;
-            p.forbid = true
-        }),
-        ("agent_give_to_rlv_no_shared_root_auto_accepted", base(4, 0, false), |p| {
-            p.rlv = true;
-            p.give_rlv = 2;
-            p.ty = 0;
-            p.auto_accept = true
-        }),
+        (
+            "agent_give_to_rlv_not_auto_accepted",
+            base(4, 0, false),
+            |p| {
+                p.rlv = true;
+                p.give_rlv = 1;
+                p.ty = 0;
+                p.auto_accept = true
+            },
+        ),
+        (
+            "agent_give_to_rlv_forbidden_auto_accepted",
+            base(4, 0, false),
+            |p| {
+                p.rlv = true;
+                p.give_rlv = 1;
+                p.ty = 0;
+                p.auto_accept = true;
+                p.forbid = true
+            },
+        ),
+        (
+            "agent_give_to_rlv_no_shared_root_auto_accepted",
+            base(4, 0, false),
+            |p| {
+                p.rlv = true;
+                p.give_rlv = 2;
+                p.ty = 0;
+                p.auto_accept = true
+            },
+        ),
         ("object_offer_keep", base(9, 0, false), |_| {}),
-        ("object_offer_discard_accepts_into_trash", base(9, 1, false), |_| {}),
-        ("object_offer_closed_accepts_into_trash", base(9, 7, false), |_| {}),
-        ("object_offer_mute_button_declines", base(9, 2, false), |_| {}),
-        ("object_offer_mute_button_deferred_names_declines", base(9, 2, false), |p| {
-            p.response_table = true;
-            p.defer = true
+        (
+            "object_offer_discard_accepts_into_trash",
+            base(9, 1, false),
+            |_| {},
+        ),
+        (
+            "object_offer_closed_accepts_into_trash",
+            base(9, 7, false),
+            |_| {},
+        ),
+        (
+            "object_offer_mute_button_declines",
+            base(9, 2, false),
+            |_| {},
+        ),
+        (
+            "object_offer_mute_button_deferred_names_declines",
+            base(9, 2, false),
+            |p| {
+                p.response_table = true;
+                p.defer = true
+            },
+        ),
+        (
+            "object_offer_discard_after_late_mute_by_id_declines",
+            base(9, 1, false),
+            |p| {
+                p.response_table = true;
+                p.late_mute = 1
+            },
+        ),
+        (
+            "object_offer_discard_after_late_mute_by_name_declines",
+            base(9, 1, false),
+            |p| {
+                p.response_table = true;
+                p.late_mute = 2
+            },
+        ),
+        (
+            "object_offer_keep_after_late_mute_still_accepts",
+            base(9, 0, false),
+            |p| {
+                p.response_table = true;
+                p.late_mute = 1
+            },
+        ),
+        (
+            "object_offer_group_owned_mute_button_mutes_group",
+            base(9, 2, false),
+            |p| {
+                p.response_table = true;
+                p.from_group = true
+            },
+        ),
+        (
+            "object_offer_group_owned_mute_button_deferred",
+            base(9, 2, false),
+            |p| {
+                p.response_table = true;
+                p.from_group = true;
+                p.defer = true
+            },
+        ),
+        ("object_offer_own_object_keep", base(9, 0, false), |p| {
+            p.self_ = true
         }),
-        ("object_offer_discard_after_late_mute_by_id_declines", base(9, 1, false), |p| {
-            p.response_table = true;
-            p.late_mute = 1
+        (
+            "object_offer_own_object_muted_by_name",
+            base(9, 0, false),
+            |p| {
+                p.self_ = true;
+                p.mute = 2
+            },
+        ),
+        ("object_offer_dnd_no_reply", base(9, 0, false), |p| {
+            p.dnd = true
         }),
-        ("object_offer_discard_after_late_mute_by_name_declines", base(9, 1, false), |p| {
-            p.response_table = true;
-            p.late_mute = 2
+        ("object_offer_muted_no_reply", base(9, 0, false), |p| {
+            p.mute = 1
         }),
-        ("object_offer_keep_after_late_mute_still_accepts", base(9, 0, false), |p| {
-            p.response_table = true;
-            p.late_mute = 1
+        ("object_offer_auto_accept", base(9, 0, false), |p| {
+            p.auto_accept = true
         }),
-        ("object_offer_group_owned_mute_button_mutes_group", base(9, 2, false), |p| {
-            p.response_table = true;
-            p.from_group = true
-        }),
-        ("object_offer_group_owned_mute_button_deferred", base(9, 2, false), |p| {
-            p.response_table = true;
-            p.from_group = true;
-            p.defer = true
-        }),
-        ("object_offer_own_object_keep", base(9, 0, false), |p| p.self_ = true),
-        ("object_offer_own_object_muted_by_name", base(9, 0, false), |p| {
-            p.self_ = true;
-            p.mute = 2
-        }),
-        ("object_offer_dnd_no_reply", base(9, 0, false), |p| p.dnd = true),
-        ("object_offer_muted_no_reply", base(9, 0, false), |p| p.mute = 1),
-        ("object_offer_auto_accept", base(9, 0, false), |p| p.auto_accept = true),
-        ("object_offer_invalid_type_forced_decline", base(9, 0, false), |p| p.ty = 2),
-        ("object_give_to_rlv_keep_redirects_to_root", base(9, 0, false), |p| {
-            p.rlv = true;
-            p.give_rlv = 1;
-            p.ty = 0
-        }),
-        ("object_give_to_rlv_forbidden_keep", base(9, 0, false), |p| {
-            p.rlv = true;
-            p.give_rlv = 1;
-            p.ty = 0;
-            p.forbid = true
-        }),
+        (
+            "object_offer_invalid_type_forced_decline",
+            base(9, 0, false),
+            |p| p.ty = 2,
+        ),
+        (
+            "object_give_to_rlv_keep_redirects_to_root",
+            base(9, 0, false),
+            |p| {
+                p.rlv = true;
+                p.give_rlv = 1;
+                p.ty = 0
+            },
+        ),
+        (
+            "object_give_to_rlv_forbidden_keep",
+            base(9, 0, false),
+            |p| {
+                p.rlv = true;
+                p.give_rlv = 1;
+                p.ty = 0;
+                p.forbid = true
+            },
+        ),
         ("object_give_to_rlv_discard", base(9, 1, false), |p| {
             p.rlv = true;
             p.give_rlv = 1;
             p.ty = 0
         }),
-        ("object_offer_linden_discard_after_late_mute", base(9, 1, false), |p| {
-            p.response_table = true;
-            p.late_mute = 1;
-            p.linden = true
-        }),
+        (
+            "object_offer_linden_discard_after_late_mute",
+            base(9, 1, false),
+            |p| {
+                p.response_table = true;
+                p.late_mute = 1;
+                p.linden = true
+            },
+        ),
         ("group_notice_accept", base(32, 0, true), |_| {}),
         ("group_notice_discard_no_dismiss", base(32, 1, true), |_| {}),
-        ("group_notice_discard_dismiss_accepts_into_trash", base(32, 1, true), |p| p.dismiss = true),
-        ("group_notice_discard_dismiss_after_late_mute_declines", base(32, 1, true), |p| {
-            p.dismiss = true;
-            p.response_table = true;
-            p.late_mute = 1
-        }),
-        ("group_notice_mute_dismiss_declines", base(32, 2, true), |p| p.dismiss = true),
-        ("group_notice_requested_accept_sends_33", base(37, 0, true), |_| {}),
-        ("group_notice_requested_discard_dismiss", base(37, 1, true), |p| p.dismiss = true),
+        (
+            "group_notice_discard_dismiss_accepts_into_trash",
+            base(32, 1, true),
+            |p| p.dismiss = true,
+        ),
+        (
+            "group_notice_discard_dismiss_after_late_mute_declines",
+            base(32, 1, true),
+            |p| {
+                p.dismiss = true;
+                p.response_table = true;
+                p.late_mute = 1
+            },
+        ),
+        (
+            "group_notice_mute_dismiss_declines",
+            base(32, 2, true),
+            |p| p.dismiss = true,
+        ),
+        (
+            "group_notice_requested_accept_sends_33",
+            base(37, 0, true),
+            |_| {},
+        ),
+        (
+            "group_notice_requested_discard_dismiss",
+            base(37, 1, true),
+            |p| p.dismiss = true,
+        ),
         ("group_notice_from_group_mute", base(32, 2, true), |p| {
             p.response_table = true;
             p.from_group = true;
@@ -782,16 +1336,47 @@ fn policy_named() {
         out.lines.extend(run_policy_case(&pc, Some(id)));
     }
     let direct: [(&str, &[u8], bool, bool, i32); 5] = [
-        ("direct_group_notice_discard_dismiss_muted_resident", b"Grid Resident", true, true, 1),
-        ("direct_group_notice_discard_dismiss_muted_linden", b"Grid Linden", true, true, 1),
-        ("direct_group_notice_discard_dismiss_not_muted_linden", b"Grid Linden", false, true, 1),
-        ("direct_group_notice_mute_dismiss_linden", b"Grid Linden", true, true, 2),
-        ("direct_group_notice_closed_dismiss_muted", b"Grid Resident", true, true, 7),
+        (
+            "direct_group_notice_discard_dismiss_muted_resident",
+            b"Grid Resident",
+            true,
+            true,
+            1,
+        ),
+        (
+            "direct_group_notice_discard_dismiss_muted_linden",
+            b"Grid Linden",
+            true,
+            true,
+            1,
+        ),
+        (
+            "direct_group_notice_discard_dismiss_not_muted_linden",
+            b"Grid Linden",
+            false,
+            true,
+            1,
+        ),
+        (
+            "direct_group_notice_mute_dismiss_linden",
+            b"Grid Linden",
+            true,
+            true,
+            2,
+        ),
+        (
+            "direct_group_notice_closed_dismiss_muted",
+            b"Grid Resident",
+            true,
+            true,
+            7,
+        ),
     ];
     for (id, from_name, muted, dismiss, response) in direct {
         let mut f = setup();
         f.snapshots = true;
-        f.settings_b.insert("FSDismissGroupNoticeAttachmentsToTrash".into(), dismiss);
+        f.settings_b
+            .insert("FSDismissGroupNoticeAttachmentsToTrash".into(), dismiss);
         if muted {
             f.mute_insert(other(), from_name, 1, 0);
         }
@@ -811,7 +1396,11 @@ fn policy_named() {
         if response == 7 {
             let mut notification = Value::Undefined;
             insert(&mut notification, "name", Value::string("UserGiveItem"));
-            insert(&mut notification, "form", notification_form("UserGiveItem").unwrap());
+            insert(
+                &mut notification,
+                "form",
+                notification_form("UserGiveItem").unwrap(),
+            );
             insert(&mut notification, "id", Value::Uuid(uid(0x6e, 999)));
             f.respond_offer(h, &notification, &Value::Map(Default::default()));
         } else {
@@ -823,5 +1412,9 @@ fn policy_named() {
         }
         out.events(&mut f, id);
     }
-    assert_lines("offer/policy_named", &compared("offer", "policy_named.txt"), &out.lines);
+    assert_lines(
+        "offer/policy_named",
+        &compared("offer", "policy_named.txt"),
+        &out.lines,
+    );
 }

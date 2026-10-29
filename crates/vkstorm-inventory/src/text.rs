@@ -61,7 +61,10 @@ pub fn replace_char(s: &mut [u8], target: u8, replacement: u8) {
 /// [`is_space`] bytes at both ends.
 pub fn trim(s: &[u8]) -> &[u8] {
     let start = s.iter().position(|&c| !is_space(c)).unwrap_or(s.len());
-    let end = s.iter().rposition(|&c| !is_space(c)).map_or(start, |i| i + 1);
+    let end = s
+        .iter()
+        .rposition(|&c| !is_space(c))
+        .map_or(start, |i| i + 1);
     &s[start..end]
 }
 
@@ -122,7 +125,10 @@ mod tests {
         assert_eq!(correct_inventory_name(b"\x00"), b"");
         assert_eq!(correct_inventory_name(b" a|b\x7f\n"), b"a b\x7f");
         assert_eq!(correct_inventory_name("caf\u{e9}".as_bytes()), b"caf");
-        assert_eq!(correct_inventory_name(&[b'a'; 70]).len(), DB_INV_ITEM_NAME_STR_LEN);
+        assert_eq!(
+            correct_inventory_name(&[b'a'; 70]).len(),
+            DB_INV_ITEM_NAME_STR_LEN
+        );
         assert_eq!(correct_inventory_description(b"\xc3\xa9|\n"), b"   \n");
         assert_eq!(rename(b"prev", b"  "), None);
         assert_eq!(rename(b"prev", b"prev "), None);

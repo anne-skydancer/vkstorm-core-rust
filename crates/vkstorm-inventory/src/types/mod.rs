@@ -8,6 +8,6 @@ pub mod settings;
 
 pub use asset::AssetType;
 pub use folder::FolderType;
-pub use inventory::{inventory_and_asset_types_match, IconName, InventoryType};
+pub use inventory::{IconName, InventoryType, inventory_and_asset_types_match};
 pub use sale::SaleType;
 pub use settings::SettingsType;

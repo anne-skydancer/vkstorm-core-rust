@@ -42,7 +42,7 @@ use crate::category::{Category, ViewerCategory};
 use crate::category_obj::Category as LLCategory;
 use crate::item::Item;
 use crate::perms::{PermissionMask, Uuid};
-use crate::sale::{clamp_price, SaleInfo, SaleType};
+use crate::sale::{SaleInfo, SaleType, clamp_price};
 use crate::text::replace_nonstandard_ascii;
 use crate::types::{AssetType, FolderType, InventoryType};
 
@@ -222,7 +222,12 @@ pub fn add_string(builder: &mut Builder, key: u64, s: &[u8]) -> Result<(), Build
 
 /// `getStringFast(block, var, std::string&, blocknum)`: the field's bytes
 /// (at most `MTUBYTES`) up to the first NUL.
-pub fn get_string(reader: &Reader, block: u64, block_num: i32, key: u64) -> Result<Vec<u8>, GetError> {
+pub fn get_string(
+    reader: &Reader,
+    block: u64,
+    block_num: i32,
+    key: u64,
+) -> Result<Vec<u8>, GetError> {
     let data = reader.get(block, block_num, key, 0)?;
     let data = &data[..data.len().min(MTUBYTES as usize)];
     let end = data.iter().position(|&c| c == 0).unwrap_or(data.len());
@@ -231,7 +236,11 @@ pub fn get_string(reader: &Reader, block: u64, block_num: i32, key: u64) -> Resu
 
 /// Adds the block's variables to the builder's current block repeat, in
 /// the C++ order (the wire order is the template's).
-pub fn pack_item_block(builder: &mut Builder, keys: &ItemBlockKeys, b: &ItemBlock) -> Result<(), BuilderError> {
+pub fn pack_item_block(
+    builder: &mut Builder,
+    keys: &ItemBlockKeys,
+    b: &ItemBlock,
+) -> Result<(), BuilderError> {
     builder.add_data(keys.item_id, &b.item_id, VarType::LLUUID)?;
     builder.add_data(keys.folder_id, &b.folder_id, VarType::LLUUID)?;
     builder.add_data(keys.creator_id, &b.creator_id, VarType::LLUUID)?;
@@ -240,8 +249,16 @@ pub fn pack_item_block(builder: &mut Builder, keys: &ItemBlockKeys, b: &ItemBloc
     builder.add_data(keys.base_mask, &b.base_mask.to_le_bytes(), VarType::U32)?;
     builder.add_data(keys.owner_mask, &b.owner_mask.to_le_bytes(), VarType::U32)?;
     builder.add_data(keys.group_mask, &b.group_mask.to_le_bytes(), VarType::U32)?;
-    builder.add_data(keys.everyone_mask, &b.everyone_mask.to_le_bytes(), VarType::U32)?;
-    builder.add_data(keys.next_owner_mask, &b.next_owner_mask.to_le_bytes(), VarType::U32)?;
+    builder.add_data(
+        keys.everyone_mask,
+        &b.everyone_mask.to_le_bytes(),
+        VarType::U32,
+    )?;
+    builder.add_data(
+        keys.next_owner_mask,
+        &b.next_owner_mask.to_le_bytes(),
+        VarType::U32,
+    )?;
     builder.add_data(keys.group_owned, &[u8::from(b.group_owned)], VarType::Bool)?;
     builder.add_data(keys.asset, &b.asset, VarType::LLUUID)?;
     builder.add_data(keys.ty, &b.ty.to_le_bytes(), VarType::S8)?;
@@ -251,13 +268,21 @@ pub fn pack_item_block(builder: &mut Builder, keys: &ItemBlockKeys, b: &ItemBloc
     builder.add_data(keys.sale_price, &b.sale_price.to_le_bytes(), VarType::S32)?;
     add_string(builder, keys.name, &b.name)?;
     add_string(builder, keys.description, &b.description)?;
-    builder.add_data(keys.creation_date, &b.creation_date.to_le_bytes(), VarType::S32)?;
+    builder.add_data(
+        keys.creation_date,
+        &b.creation_date.to_le_bytes(),
+        VarType::S32,
+    )?;
     builder.add_data(keys.crc, &b.crc.to_le_bytes(), VarType::U32)?;
     Ok(())
 }
 
 /// `LLInventoryItem::packMessage`: the item, its asset id in `keys.asset`.
-pub fn pack_item(builder: &mut Builder, keys: &ItemBlockKeys, item: &Item) -> Result<(), BuilderError> {
+pub fn pack_item(
+    builder: &mut Builder,
+    keys: &ItemBlockKeys,
+    item: &Item,
+) -> Result<(), BuilderError> {
     pack_item_block(builder, keys, &ItemBlock::from_item(item))
 }
 
@@ -269,10 +294,19 @@ pub fn pack_viewer_item(
     item: &Item,
     transaction_id: &Uuid,
 ) -> Result<(), BuilderError> {
-    pack_item_block(builder, keys, &ItemBlock::from_viewer_item(item, transaction_id))
+    pack_item_block(
+        builder,
+        keys,
+        &ItemBlock::from_viewer_item(item, transaction_id),
+    )
 }
 
-fn get_fixed<const N: usize>(reader: &Reader, block: u64, num: i32, key: u64) -> Result<[u8; N], GetError> {
+fn get_fixed<const N: usize>(
+    reader: &Reader,
+    block: u64,
+    num: i32,
+    key: u64,
+) -> Result<[u8; N], GetError> {
     let data = reader.get(block, num, key, N as i32)?;
     let mut out = [0u8; N];
     out.copy_from_slice(data);
@@ -281,7 +315,12 @@ fn get_fixed<const N: usize>(reader: &Reader, block: u64, num: i32, key: u64) ->
 
 /// Reads repeat `block_num` of block `block` as an [`ItemBlock`], the
 /// strings as `getStringFast` returns them (unsanitised).
-pub fn read_item_block(reader: &Reader, block: u64, block_num: i32, keys: &ItemBlockKeys) -> Result<ItemBlock, GetError> {
+pub fn read_item_block(
+    reader: &Reader,
+    block: u64,
+    block_num: i32,
+    keys: &ItemBlockKeys,
+) -> Result<ItemBlock, GetError> {
     let id = |key| get_fixed::<16>(reader, block, block_num, key);
     let u32_ = |key| get_fixed::<4>(reader, block, block_num, key).map(u32::from_le_bytes);
     let u8_ = |key| get_fixed::<1>(reader, block, block_num, key).map(|b| b[0]);
@@ -374,17 +413,30 @@ impl FolderBlockKeys {
     /// variable is missing.
     pub fn from_block(block: &Block) -> Option<FolderBlockKeys> {
         let k = |name: &str| block.variable_by_name(name).map(|v| v.key);
-        Some(FolderBlockKeys { folder_id: k("FolderID")?, parent_id: k("ParentID")?, ty: k("Type")?, name: k("Name")? })
+        Some(FolderBlockKeys {
+            folder_id: k("FolderID")?,
+            parent_id: k("ParentID")?,
+            ty: k("Type")?,
+            name: k("Name")?,
+        })
     }
 }
 
 /// `LLInventoryCategory::packMessage` (and `LLViewerInventoryCategory`'s,
 /// which is the same): the id, parent, preferred type as `S8` and name.
-pub fn pack_category(builder: &mut Builder, keys: &FolderBlockKeys, category: &Category) -> Result<(), BuilderError> {
+pub fn pack_category(
+    builder: &mut Builder,
+    keys: &FolderBlockKeys,
+    category: &Category,
+) -> Result<(), BuilderError> {
     let o = &category.object;
     builder.add_data(keys.folder_id, &o.id, VarType::LLUUID)?;
     builder.add_data(keys.parent_id, &o.parent, VarType::LLUUID)?;
-    builder.add_data(keys.ty, &(category.preferred_type.0 as i8).to_le_bytes(), VarType::S8)?;
+    builder.add_data(
+        keys.ty,
+        &(category.preferred_type.0 as i8).to_le_bytes(),
+        VarType::S8,
+    )?;
     add_string(builder, keys.name, &o.name)
 }
 
@@ -427,27 +479,49 @@ pub fn unpack_category(
 // ---------------------------------------------------------------------------
 
 /// `LLAggregatePermissions::packMessage(msg, field)`: `getU8` as a `U8`.
-pub fn pack_aggregate(builder: &mut Builder, key: u64, agg: &AggregatePermissions) -> Result<(), BuilderError> {
+pub fn pack_aggregate(
+    builder: &mut Builder,
+    key: u64,
+    agg: &AggregatePermissions,
+) -> Result<(), BuilderError> {
     builder.add_data(key, &[agg.to_u8()], VarType::U8)?;
     Ok(())
 }
 
 /// `LLAggregatePermissions::unpackMessage(msg, block, field, block_num)`:
 /// two bits each for copy, modify and transfer; the top two bits dropped.
-pub fn unpack_aggregate(reader: &Reader, block: u64, block_num: i32, key: u64) -> Result<AggregatePermissions, GetError> {
-    Ok(AggregatePermissions::from_u8(get_fixed::<1>(reader, block, block_num, key)?[0]))
+pub fn unpack_aggregate(
+    reader: &Reader,
+    block: u64,
+    block_num: i32,
+    key: u64,
+) -> Result<AggregatePermissions, GetError> {
+    Ok(AggregatePermissions::from_u8(
+        get_fixed::<1>(reader, block, block_num, key)?[0],
+    ))
 }
 
 /// `LLCategory::packMessage`: `Category` as `getU32`.
-pub fn pack_llcategory(builder: &mut Builder, key: u64, category: LLCategory) -> Result<(), BuilderError> {
+pub fn pack_llcategory(
+    builder: &mut Builder,
+    key: u64,
+    category: LLCategory,
+) -> Result<(), BuilderError> {
     builder.add_data(key, &category.as_u32().to_le_bytes(), VarType::U32)?;
     Ok(())
 }
 
 /// `LLCategory::unpackMessage` (repeat 0) and `unpackMultiMessage`: `init`
 /// of the `U32`.
-pub fn unpack_llcategory(reader: &Reader, block: u64, block_num: i32, key: u64) -> Result<LLCategory, GetError> {
-    Ok(LLCategory::new(u32::from_le_bytes(get_fixed::<4>(reader, block, block_num, key)?)))
+pub fn unpack_llcategory(
+    reader: &Reader,
+    block: u64,
+    block_num: i32,
+    key: u64,
+) -> Result<LLCategory, GetError> {
+    Ok(LLCategory::new(u32::from_le_bytes(get_fixed::<4>(
+        reader, block, block_num, key,
+    )?)))
 }
 
 /// The keys of the `SaleType` and `SalePrice` variables of a block.
@@ -460,13 +534,20 @@ pub struct SaleKeys {
 impl SaleKeys {
     pub fn from_block(block: &Block) -> Option<SaleKeys> {
         let k = |name: &str| block.variable_by_name(name).map(|v| v.key);
-        Some(SaleKeys { sale_type: k("SaleType")?, sale_price: k("SalePrice")? })
+        Some(SaleKeys {
+            sale_type: k("SaleType")?,
+            sale_price: k("SalePrice")?,
+        })
     }
 }
 
 /// `LLSaleInfo::packMessage(msg)`: the sale type's low byte as `U8` and the
 /// price as `S32`, unclamped.
-pub fn pack_sale(builder: &mut Builder, keys: &SaleKeys, sale: &SaleInfo) -> Result<(), BuilderError> {
+pub fn pack_sale(
+    builder: &mut Builder,
+    keys: &SaleKeys,
+    sale: &SaleInfo,
+) -> Result<(), BuilderError> {
     builder.add_data(keys.sale_type, &[sale.sale_type.0 as u8], VarType::U8)?;
     builder.add_data(keys.sale_price, &sale.price.to_le_bytes(), VarType::S32)?;
     Ok(())
@@ -476,7 +557,13 @@ pub fn pack_sale(builder: &mut Builder, keys: &SaleKeys, sale: &SaleInfo) -> Res
 /// `unpackMultiMessage(msg, block, block_num)`: the sale type as `U8`
 /// (0..=255), the price clamped to `0..=S32_MAX`. On an error `sale` is
 /// unchanged.
-pub fn unpack_sale(reader: &Reader, block: u64, block_num: i32, keys: &SaleKeys, sale: &mut SaleInfo) -> Result<(), GetError> {
+pub fn unpack_sale(
+    reader: &Reader,
+    block: u64,
+    block_num: i32,
+    keys: &SaleKeys,
+    sale: &mut SaleInfo,
+) -> Result<(), GetError> {
     let ty = get_fixed::<1>(reader, block, block_num, keys.sale_type)?[0];
     let price = i32::from_le_bytes(get_fixed::<4>(reader, block, block_num, keys.sale_price)?);
     sale.sale_type = SaleType(i32::from(ty));

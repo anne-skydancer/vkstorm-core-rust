@@ -1,13 +1,15 @@
 //! Rung two: LLSD serialization via `vkstorm-llsd` (the `vks_llsd_*` calls).
 
 use std::ffi::c_void;
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::slice;
 
 // ---------------------------------------------------------------------------
 // LLSD serialization (rung two)
 
-use vkstorm_llsd::{FlatDoc, FlatSink, FloatField, Format, Formatter, Limits, Options, Out, Reader, Source, XmlMode};
+use vkstorm_llsd::{
+    FlatDoc, FlatSink, FloatField, Format, Formatter, Limits, Options, Out, Reader, Source, XmlMode,
+};
 
 /// Format ids shared with the C++ side.
 const VKS_LLSD_NOTATION: i32 = 0;
@@ -100,27 +102,57 @@ pub unsafe extern "C" fn vks_llsd_parse(
         return std::ptr::null_mut();
     }
     let Some(fmt) = format_from(format) else {
-        unsafe { *out = VksLlsdParseResult { count: -1, consumed: 0, unconsumed: 0 } };
+        unsafe {
+            *out = VksLlsdParseResult {
+                count: -1,
+                consumed: 0,
+                unconsumed: 0,
+            }
+        };
         return std::ptr::null_mut();
     };
-    let prefix: &[u8] = if prefix.is_null() { &[] } else { unsafe { slice::from_raw_parts(prefix, prefix_len) } };
+    let prefix: &[u8] = if prefix.is_null() {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(prefix, prefix_len) }
+    };
     let src = unsafe { &*src };
     let r = catch_unwind(AssertUnwindSafe(|| {
         let mut csrc = CSource(src);
         let mut reader = Reader::with_prefix(prefix, &mut csrc);
         let mut sink = FlatSink::new();
         let limits = Limits::from_cpp(max_bytes, max_depth);
-        let mode = if xml_lines != 0 { XmlMode::Lines } else { XmlMode::Parse };
+        let mode = if xml_lines != 0 {
+            XmlMode::Lines
+        } else {
+            XmlMode::Parse
+        };
         let count = vkstorm_llsd::parse_into(fmt, &mut reader, &mut sink, limits, mode);
         (count, reader.consumed(), reader.unconsumed(), sink.finish())
     }));
     match r {
         Ok((count, consumed, unconsumed, doc)) => {
-            unsafe { *out = VksLlsdParseResult { count, consumed, unconsumed } };
-            if count > 0 { Box::into_raw(Box::new(VksLlsdDoc { doc })) } else { std::ptr::null_mut() }
+            unsafe {
+                *out = VksLlsdParseResult {
+                    count,
+                    consumed,
+                    unconsumed,
+                }
+            };
+            if count > 0 {
+                Box::into_raw(Box::new(VksLlsdDoc { doc }))
+            } else {
+                std::ptr::null_mut()
+            }
         }
         Err(_) => {
-            unsafe { *out = VksLlsdParseResult { count: -1, consumed: 0, unconsumed: 0 } };
+            unsafe {
+                *out = VksLlsdParseResult {
+                    count: -1,
+                    consumed: 0,
+                    unconsumed: 0,
+                }
+            };
             std::ptr::null_mut()
         }
     }
@@ -131,7 +163,10 @@ pub unsafe extern "C" fn vks_llsd_parse(
 /// # Safety
 /// `d` must come from `vks_llsd_parse` and be live.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_llsd_doc_nodes(d: *const VksLlsdDoc, count: *mut usize) -> *const vkstorm_llsd::FlatNode {
+pub unsafe extern "C" fn vks_llsd_doc_nodes(
+    d: *const VksLlsdDoc,
+    count: *mut usize,
+) -> *const vkstorm_llsd::FlatNode {
     let d = unsafe { &*d };
     if !count.is_null() {
         unsafe { *count = d.doc.nodes.len() };
@@ -207,7 +242,9 @@ pub unsafe extern "C" fn vks_llsd_formatter_new(
     ctx: *mut c_void,
     write: VksLlsdWrite,
 ) -> *mut VksLlsdFormatter {
-    let Some(fmt) = format_from(format) else { return std::ptr::null_mut() };
+    let Some(fmt) = format_from(format) else {
+        return std::ptr::null_mut();
+    };
     let opts = Options {
         pretty: options & VKS_LLSD_OPT_PRETTY != 0,
         pretty_binary: options & VKS_LLSD_OPT_PRETTY_BINARY != 0,
@@ -219,7 +256,9 @@ pub unsafe extern "C" fn vks_llsd_formatter_new(
             _ => FloatField::General,
         },
     };
-    let r = catch_unwind(AssertUnwindSafe(|| Formatter::new(fmt, opts, COut { ctx, write })));
+    let r = catch_unwind(AssertUnwindSafe(|| {
+        Formatter::new(fmt, opts, COut { ctx, write })
+    }));
     match r {
         Ok(inner) => Box::into_raw(Box::new(VksLlsdFormatter { inner })),
         Err(_) => std::ptr::null_mut(),
@@ -245,14 +284,21 @@ macro_rules! fmt_fn {
 }
 
 unsafe fn bytes<'a>(p: *const u8, len: usize) -> &'a [u8] {
-    if p.is_null() || len == 0 { &[] } else { unsafe { slice::from_raw_parts(p, len) } }
+    if p.is_null() || len == 0 {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(p, len) }
+    }
 }
 
 fmt_fn!(vks_llsd_fmt_undef, |f| f.undef());
 fmt_fn!(vks_llsd_fmt_boolean, |f, v: i32| f.boolean(v != 0));
 fmt_fn!(vks_llsd_fmt_integer, |f, v: i32| f.integer(v));
 fmt_fn!(vks_llsd_fmt_real, |f, v: f64| f.real(v));
-fmt_fn!(vks_llsd_fmt_real_text, |f, v: f64, p: *const u8, len: usize| f.real_text(v, unsafe { bytes(p, len) }));
+fmt_fn!(
+    vks_llsd_fmt_real_text,
+    |f, v: f64, p: *const u8, len: usize| f.real_text(v, unsafe { bytes(p, len) })
+);
 fmt_fn!(vks_llsd_fmt_uuid, |f, p: *const u8| {
     let mut u = [0u8; 16];
     if !p.is_null() {
@@ -260,14 +306,19 @@ fmt_fn!(vks_llsd_fmt_uuid, |f, p: *const u8| {
     }
     f.uuid(&u)
 });
-fmt_fn!(vks_llsd_fmt_string, |f, p: *const u8, len: usize| f.string(unsafe { bytes(p, len) }));
+fmt_fn!(vks_llsd_fmt_string, |f, p: *const u8, len: usize| f
+    .string(unsafe { bytes(p, len) }));
 fmt_fn!(vks_llsd_fmt_date, |f, seconds: f64| f.date(seconds));
-fmt_fn!(vks_llsd_fmt_uri, |f, p: *const u8, len: usize| f.uri(unsafe { bytes(p, len) }));
-fmt_fn!(vks_llsd_fmt_binary, |f, p: *const u8, len: usize| f.binary(unsafe { bytes(p, len) }));
+fmt_fn!(vks_llsd_fmt_uri, |f, p: *const u8, len: usize| f
+    .uri(unsafe { bytes(p, len) }));
+fmt_fn!(vks_llsd_fmt_binary, |f, p: *const u8, len: usize| f
+    .binary(unsafe { bytes(p, len) }));
 fmt_fn!(vks_llsd_fmt_map_begin, |f, count: usize| f.begin_map(count));
-fmt_fn!(vks_llsd_fmt_key, |f, p: *const u8, len: usize| f.key(unsafe { bytes(p, len) }));
+fmt_fn!(vks_llsd_fmt_key, |f, p: *const u8, len: usize| f
+    .key(unsafe { bytes(p, len) }));
 fmt_fn!(vks_llsd_fmt_map_end, |f| f.end_map());
-fmt_fn!(vks_llsd_fmt_array_begin, |f, count: usize| f.begin_array(count));
+fmt_fn!(vks_llsd_fmt_array_begin, |f, count: usize| f
+    .begin_array(count));
 fmt_fn!(vks_llsd_fmt_array_end, |f| f.end_array());
 
 /// Ends the document, flushes the remaining output, frees the formatter and
@@ -293,7 +344,13 @@ pub unsafe extern "C" fn vks_llsd_formatter_finish(f: *mut VksLlsdFormatter) -> 
 /// # Safety
 /// `p` must be readable for `len` bytes; `write` must be callable with `ctx`.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_llsd_escape(kind: i32, p: *const u8, len: usize, ctx: *mut c_void, write: VksLlsdWrite) {
+pub unsafe extern "C" fn vks_llsd_escape(
+    kind: i32,
+    p: *const u8,
+    len: usize,
+    ctx: *mut c_void,
+    write: VksLlsdWrite,
+) {
     let input = unsafe { bytes(p, len) };
     let mut out = Vec::with_capacity(len + 8);
     match kind {

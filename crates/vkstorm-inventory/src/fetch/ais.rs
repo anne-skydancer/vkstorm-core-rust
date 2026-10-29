@@ -47,9 +47,20 @@ pub enum AisFetch {
     /// `FetchItem(item_id, library ? LIBRARY : INVENTORY, cb)`
     FetchItem { item_id: Uuid, library: bool },
     /// `FetchCategoryChildren(category_id, type, recursive, cb, depth)`
-    FetchCategoryChildren { category_id: Uuid, library: bool, recursive: bool, depth: i32 },
+    FetchCategoryChildren {
+        category_id: Uuid,
+        library: bool,
+        recursive: bool,
+        depth: i32,
+    },
     /// `FetchCategorySubset(category_id, children, type, recursive, cb, depth)`
-    FetchCategorySubset { category_id: Uuid, children: Vec<Uuid>, library: bool, recursive: bool, depth: i32 },
+    FetchCategorySubset {
+        category_id: Uuid,
+        children: Vec<Uuid>,
+        library: bool,
+        recursive: bool,
+        depth: i32,
+    },
     /// `FetchCOF(cb)`
     FetchCof,
     /// `FetchCategoryLinks(category_id, cb)`
@@ -76,14 +87,34 @@ impl AisFetch {
     pub fn to_command(&self) -> Command {
         match self.clone() {
             AisFetch::FetchItem { item_id, library } => Command::FetchItem { item_id, library },
-            AisFetch::FetchCategoryChildren { category_id, library, recursive, depth } => {
-                Command::FetchCategoryChildren { category_id, library, recursive, depth }
-            }
-            AisFetch::FetchCategorySubset { category_id, children, library, recursive, depth } => {
-                Command::FetchCategorySubset { category_id, children, library, recursive, depth }
-            }
+            AisFetch::FetchCategoryChildren {
+                category_id,
+                library,
+                recursive,
+                depth,
+            } => Command::FetchCategoryChildren {
+                category_id,
+                library,
+                recursive,
+                depth,
+            },
+            AisFetch::FetchCategorySubset {
+                category_id,
+                children,
+                library,
+                recursive,
+                depth,
+            } => Command::FetchCategorySubset {
+                category_id,
+                children,
+                library,
+                recursive,
+                depth,
+            },
             AisFetch::FetchCof => Command::FetchCof,
-            AisFetch::FetchCategoryLinks { category_id } => Command::FetchCategoryLinks { category_id },
+            AisFetch::FetchCategoryLinks { category_id } => {
+                Command::FetchCategoryLinks { category_id }
+            }
             AisFetch::FetchOrphans => Command::FetchOrphans,
         }
     }
@@ -99,8 +130,14 @@ impl AisFetch {
     /// with the capability present or empty (the capability first, then the
     /// empty subset). No fetch command uses a transaction id.
     pub fn refusal(&self, inventory_cap: bool, library_cap: bool) -> Option<Refusal> {
-        let present = if self.uses_library_cap() { library_cap } else { inventory_cap };
-        self.to_command().build(if present { "cap" } else { "" }, &NULL_ID).err()
+        let present = if self.uses_library_cap() {
+            library_cap
+        } else {
+            inventory_cap
+        };
+        self.to_command()
+            .build(if present { "cap" } else { "" }, &NULL_ID)
+            .err()
     }
 }
 
@@ -120,13 +157,17 @@ pub struct PostponedQueue<T> {
 
 impl<T> Default for PostponedQueue<T> {
     fn default() -> Self {
-        PostponedQueue { queue: VecDeque::new() }
+        PostponedQueue {
+            queue: VecDeque::new(),
+        }
     }
 }
 
 impl<T> PostponedQueue<T> {
     pub fn new() -> Self {
-        PostponedQueue { queue: VecDeque::new() }
+        PostponedQueue {
+            queue: VecDeque::new(),
+        }
     }
 
     pub fn len(&self) -> usize {
@@ -184,7 +225,10 @@ mod tests {
         assert_eq!(e.refusal(true, false), Some(Refusal::NoCapability));
         assert_eq!(e.refusal(false, true), Some(Refusal::EmptyRequest));
         assert_eq!(AisFetch::FetchCof.refusal(true, false), None);
-        assert_eq!(AisFetch::FetchOrphans.refusal(false, true), Some(Refusal::NoCapability));
+        assert_eq!(
+            AisFetch::FetchOrphans.refusal(false, true),
+            Some(Refusal::NoCapability)
+        );
     }
 
     #[test]

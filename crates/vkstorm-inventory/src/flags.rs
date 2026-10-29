@@ -123,7 +123,11 @@ fn append_reason(out: &mut Vec<u8>, transaction_type: i32, description: &[u8]) {
     match transaction_type {
         TRANS_OBJECT_SALE => {
             out.extend_from_slice(b" for ");
-            out.extend_from_slice(if description.is_empty() { b"<unknown>" } else { description });
+            out.extend_from_slice(if description.is_empty() {
+                b"<unknown>"
+            } else {
+                description
+            });
         }
         TRANS_LAND_SALE => out.extend_from_slice(b" for a parcel of land"),
         TRANS_LAND_PASS_SALE => out.extend_from_slice(b" for a land access pass"),

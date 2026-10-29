@@ -28,9 +28,20 @@ fn thread_cpu() -> f64 {
     }
     unsafe extern "system" {
         fn GetCurrentThread() -> *mut std::ffi::c_void;
-        fn GetThreadTimes(t: *mut std::ffi::c_void, c: *mut FileTime, e: *mut FileTime, k: *mut FileTime, u: *mut FileTime) -> i32;
+        fn GetThreadTimes(
+            t: *mut std::ffi::c_void,
+            c: *mut FileTime,
+            e: *mut FileTime,
+            k: *mut FileTime,
+            u: *mut FileTime,
+        ) -> i32;
     }
-    let (mut c, mut e, mut k, mut u) = (FileTime::default(), FileTime::default(), FileTime::default(), FileTime::default());
+    let (mut c, mut e, mut k, mut u) = (
+        FileTime::default(),
+        FileTime::default(),
+        FileTime::default(),
+        FileTime::default(),
+    );
     // SAFETY: the pseudo-handle of the current thread and four out-params.
     let ok = unsafe { GetThreadTimes(GetCurrentThread(), &mut c, &mut e, &mut k, &mut u) };
     assert!(ok != 0);
@@ -51,7 +62,10 @@ fn thread_cpu() -> f64 {
     const CLOCK_THREAD_CPUTIME_ID: i32 = 3;
     let mut ts = Timespec { sec: 0, nsec: 0 };
     // SAFETY: a valid clock id and out-param.
-    assert_eq!(unsafe { clock_gettime(CLOCK_THREAD_CPUTIME_ID, &mut ts) }, 0);
+    assert_eq!(
+        unsafe { clock_gettime(CLOCK_THREAD_CPUTIME_ID, &mut ts) },
+        0
+    );
     ts.sec as f64 + ts.nsec as f64 * 1e-9
 }
 
@@ -72,7 +86,10 @@ fn decode_cpu_per_second_of_audio() {
         ("tone_flac.oga", "Ogg FLAC 44.1k st"),
     ];
     let ff = ffmpeg_dir();
-    println!("{:<16} {:<20} {:>12} {:>8}", "file", "format", "ms CPU / s", "% core");
+    println!(
+        "{:<16} {:<20} {:>12} {:>8}",
+        "file", "format", "ms CPU / s", "% core"
+    );
     for (file, what) in files {
         if ff.is_none() && (file.ends_with(".opus") || file.contains("he")) {
             println!("{file:<16} {what:<20} skipped (no VKS_FFMPEG_DIR)");
@@ -80,7 +97,11 @@ fn decode_cpu_per_second_of_audio() {
         }
         let data = fixture(file);
         let once = decode_bytes(&data, 48000, ff.clone(), false).expect(file);
-        let secs: f64 = once.segments.iter().map(|(s, _)| s.in_frames as f64 / f64::from(s.source_rate)).sum();
+        let secs: f64 = once
+            .segments
+            .iter()
+            .map(|(s, _)| s.in_frames as f64 / f64::from(s.source_rate))
+            .sum();
         let reps = (600.0 / secs).ceil() as usize;
         let mut best = f64::MAX;
         for _ in 0..3 {
@@ -90,7 +111,11 @@ fn decode_cpu_per_second_of_audio() {
             }
             best = best.min((thread_cpu() - t0) / (reps as f64 * secs));
         }
-        println!("{file:<16} {what:<20} {:>12.3} {:>8.3}", best * 1e3, best * 100.0);
+        println!(
+            "{file:<16} {what:<20} {:>12.3} {:>8.3}",
+            best * 1e3,
+            best * 100.0
+        );
     }
     // The converter alone, 44.1 kHz stereo to 48 kHz (64 taps per phase).
     let n = 44100 * 30;
@@ -114,5 +139,11 @@ fn decode_cpu_per_second_of_audio() {
         rs.flush(&mut out);
         best = best.min((thread_cpu() - t0) / (30.0 * f64::from(passes)));
     }
-    println!("{:<16} {:<20} {:>12.3} {:>8.3}", "resampler", "44.1k->48k stereo", best * 1e3, best * 100.0);
+    println!(
+        "{:<16} {:<20} {:>12.3} {:>8.3}",
+        "resampler",
+        "44.1k->48k stereo",
+        best * 1e3,
+        best * 100.0
+    );
 }

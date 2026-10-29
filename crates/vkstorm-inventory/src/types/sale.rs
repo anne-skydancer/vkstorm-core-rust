@@ -31,7 +31,10 @@ impl SaleType {
     /// `LLSaleInfo::lookup(EForSale)`: the name of `0..FS_COUNT`, else `None`
     /// (`NULL`).
     pub fn lookup(self) -> Option<&'static str> {
-        usize::try_from(self.0).ok().and_then(|i| NAMES.get(i)).copied()
+        usize::try_from(self.0)
+            .ok()
+            .and_then(|i| NAMES.get(i))
+            .copied()
     }
 
     /// `LLSaleInfo::lookup(const char*)`: the type whose name equals `name`

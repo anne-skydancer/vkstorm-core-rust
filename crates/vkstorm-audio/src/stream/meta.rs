@@ -98,7 +98,8 @@ impl Meta {
     /// The last emitted pair (the viewer's `getCurrentMetadata`); None
     /// when the map is empty.
     pub(crate) fn current(&self) -> Option<(String, String)> {
-        self.has_metadata.then(|| (self.artist.clone(), self.title.clone()))
+        self.has_metadata
+            .then(|| (self.artist.clone(), self.title.clone()))
     }
 
     /// In-band metadata of the stream of `generation`.
@@ -118,7 +119,11 @@ impl Meta {
         if artist.is_empty() && title.is_empty() {
             return;
         }
-        if self.inband.as_ref().is_some_and(|(a, t)| *a == artist && *t == title) {
+        if self
+            .inband
+            .as_ref()
+            .is_some_and(|(a, t)| *a == artist && *t == title)
+        {
             return;
         }
         self.inband = Some((artist.clone(), title.clone()));
@@ -144,7 +149,13 @@ impl Meta {
     }
 
     /// `onStreamStatus`: a status document was read for `generation`.
-    pub(crate) fn status_ok(&mut self, generation: u64, artist: String, title: String, status_url: &str) {
+    pub(crate) fn status_ok(
+        &mut self,
+        generation: u64,
+        artist: String,
+        title: String,
+        status_url: &str,
+    ) {
         if generation != self.generation {
             return;
         }
@@ -178,7 +189,10 @@ mod tests {
     }
 
     fn md(a: &str, t: &str) -> PlayerEvent {
-        PlayerEvent::Metadata { artist: a.into(), title: t.into() }
+        PlayerEvent::Metadata {
+            artist: a.into(),
+            title: t.into(),
+        }
     }
 
     #[test]
@@ -187,8 +201,20 @@ mod tests {
         m.reset(1, "http://h/live/radio.ogg");
         m.in_band(1, InBand::NowPlaying("A - B".into()));
         m.in_band(1, InBand::NowPlaying("A - B".into()));
-        m.in_band(1, InBand::Tags { artist: String::new(), title: "radio.ogg".into() });
-        m.in_band(1, InBand::Tags { artist: String::new(), title: String::new() });
+        m.in_band(
+            1,
+            InBand::Tags {
+                artist: String::new(),
+                title: "radio.ogg".into(),
+            },
+        );
+        m.in_band(
+            1,
+            InBand::Tags {
+                artist: String::new(),
+                title: String::new(),
+            },
+        );
         m.in_band(0, InBand::NowPlaying("Old - X".into()));
         m.in_band(1, InBand::NowPlaying("Solo".into()));
         assert_eq!(events(&mut m), vec![md("A", "B"), md("", "Solo")]);

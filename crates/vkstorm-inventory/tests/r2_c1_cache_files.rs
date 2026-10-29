@@ -57,7 +57,11 @@ fn decode_line(d: &Decoded, with_obsolete: bool) -> String {
     format!(
         "decode rv={}{} cats={} items={} cats_to_update={}",
         u8::from(d.rv()),
-        if with_obsolete { format!(" obsolete={}", u8::from(d.obsolete)) } else { String::new() },
+        if with_obsolete {
+            format!(" obsolete={}", u8::from(d.obsolete))
+        } else {
+            String::new()
+        },
         d.categories.len(),
         d.items.len(),
         ids(&d.cats_to_update)
@@ -75,7 +79,11 @@ fn reencode_line(again: &[u8], plain: &[u8], with_rv: bool) -> String {
         "reencode{} identical={}{} size={}",
         if with_rv { " rv=1" } else { "" },
         u8::from(identical),
-        if identical { String::new() } else { format!(" first_difference={first}") },
+        if identical {
+            String::new()
+        } else {
+            format!(" first_difference={first}")
+        },
         again.len()
     )
 }
@@ -106,9 +114,16 @@ fn c1_cache_files() {
         // this build's copy is the one of its standard library.
         let label = format!("cache/c1/{}.inv.llsd", case.id);
         let plain = read_bytes(&cache_lib(&format!("c1/{}.inv.llsd", case.id)));
-        let mut out = vec![format!("file {label} size={} sha256={}", plain.len(), sha256_hex(&plain))];
+        let mut out = vec![format!(
+            "file {label} size={} sha256={}",
+            plain.len(),
+            sha256_hex(&plain)
+        )];
         let version = u32::from_be_bytes([plain[0], plain[1], plain[2], plain[3]]);
-        out.push(format!("header={version} last_byte={}", plain.last().map(|&b| i32::from(b)).unwrap_or(-1)));
+        out.push(format!(
+            "header={version} last_byte={}",
+            plain.last().map(|&b| i32::from(b)).unwrap_or(-1)
+        ));
         let d = decode(&plain);
         out.push(decode_line(&d, true));
         out.extend(records(&d).into_iter().map(|l| format!("  {l}")));
@@ -118,18 +133,32 @@ fn c1_cache_files() {
         // so differs between worlds. Only the standard world's library file
         // is committed: the other worlds' line is left to the viewer test.
         let mut expected: &[String] = &case.lines;
-        if case.lines.last().is_some_and(|l| l.starts_with("library file")) {
+        if case
+            .lines
+            .last()
+            .is_some_and(|l| l.starts_with("library file"))
+        {
             if case.id == "standard.agent" {
-                out.push(format!("library file size={} sha256={library_digest}", library.len()));
+                out.push(format!(
+                    "library file size={} sha256={library_digest}",
+                    library.len()
+                ));
             } else {
                 expected = &case.lines[..case.lines.len() - 1];
-                tally.left("library file of a world whose library cache is not committed", 1);
+                tally.left(
+                    "library file of a world whose library cache is not committed",
+                    1,
+                );
             }
         }
         assert_case(file, &case.id, expected, &out);
         tally.replayed("cache file", out.len());
 
-        let notation = String::from_utf8(read_bytes(&cache_lib(&format!("c1/{}.notation.txt", case.id)))).unwrap();
+        let notation = String::from_utf8(read_bytes(&cache_lib(&format!(
+            "c1/{}.notation.txt",
+            case.id
+        ))))
+        .unwrap();
         assert_eq!(notation_file(&plain), notation, "{}.notation.txt", case.id);
         notation_files += 1;
     }
@@ -148,14 +177,34 @@ fn c1_realistic() {
     let plain = gunzip_strict(&read_bytes(&cache_lib("c1/realistic_100k.inv.llsd.gz")));
     let d = decode(&plain);
     let recs = records(&d);
-    let mut produced = vec![format!("file size={} sha256={}", plain.len(), sha256_hex(&plain))];
-    produced.push(format!("{} records_sha256={}", decode_line(&d, false), digest_lines(&recs)));
+    let mut produced = vec![format!(
+        "file size={} sha256={}",
+        plain.len(),
+        sha256_hex(&plain)
+    )];
+    produced.push(format!(
+        "{} records_sha256={}",
+        decode_line(&d, false),
+        digest_lines(&recs)
+    ));
     produced.extend(chunked_digests("records", &recs, 10000));
-    produced.push(format!("reencode identical={}", u8::from(reencode(&d) == plain)));
+    produced.push(format!(
+        "reencode identical={}",
+        u8::from(reencode(&d) == plain)
+    ));
     // The produced lines are the fixture's lines 2.. up to the validation
     // of the populated model.
-    let start = case.lines.iter().position(|l| l.starts_with("file size=")).unwrap();
-    assert_case(file, &case.id, &case.lines[start..start + produced.len()], &produced);
+    let start = case
+        .lines
+        .iter()
+        .position(|l| l.starts_with("file size="))
+        .unwrap();
+    assert_case(
+        file,
+        &case.id,
+        &case.lines[start..start + produced.len()],
+        &produced,
+    );
     let mut tally = Tally::default();
     tally.replayed("decode and re-encode", produced.len());
 
@@ -163,9 +212,16 @@ fn c1_realistic() {
     // (as r2_c4_validation.rs rebuilds populate): every folder has the
     // server's version and the count of its loaded children; the library
     // is the standard world's, without items.
-    let mut populated = HarnessModel { root: f(1), library_root: lf(1), library_owner: lib_owner(), ..HarnessModel::default() };
+    let mut populated = HarnessModel {
+        root: f(1),
+        library_root: lf(1),
+        library_owner: lib_owner(),
+        ..HarnessModel::default()
+    };
     for c in d.categories.iter().cloned().chain(standard_library()) {
-        populated.cats.insert(c.category.object.id, HCat { cat: c, count: 0 });
+        populated
+            .cats
+            .insert(c.category.object.id, HCat { cat: c, count: 0 });
     }
     for it in &d.items {
         if it.is_link_type() {
@@ -174,15 +230,27 @@ fn c1_realistic() {
         populated.items.insert(it.object.id, it.clone());
     }
     let mut snap = populated.built_snapshot();
-    let counts: Vec<i32> =
-        snap.categories.iter().map(|c| (snap.category_tree[&c.id].len() + snap.item_tree[&c.id].len()) as i32).collect();
+    let counts: Vec<i32> = snap
+        .categories
+        .iter()
+        .map(|c| (snap.category_tree[&c.id].len() + snap.item_tree[&c.id].len()) as i32)
+        .collect();
     for (c, n) in snap.categories.iter_mut().zip(counts) {
         c.descendent_count = n;
     }
     let v_start = start + produced.len();
-    let validation = dump_validation(&validate::validate(&key_ordered(&snap), Default::default()).info);
-    assert_case(file, "realistic_100k (populated)", &case.lines[v_start..v_start + validation.len()], &validation);
-    tally.replayed("validation of the populated model (rebuilt)", validation.len());
+    let validation =
+        dump_validation(&validate::validate(&key_ordered(&snap), Default::default()).info);
+    assert_case(
+        file,
+        "realistic_100k (populated)",
+        &case.lines[v_start..v_start + validation.len()],
+        &validation,
+    );
+    tally.replayed(
+        "validation of the populated model (rebuilt)",
+        validation.len(),
+    );
 
     // The reload: a login from that cache with the world's skeletons (the
     // agent's: the cached folders with their versions; the standard
@@ -198,30 +266,77 @@ fn c1_realistic() {
     };
     let lib_entries: Vec<SkeletonEntry> = standard_library().iter().map(entry).collect();
     let agent_entries: Vec<SkeletonEntry> = d.categories.iter().map(entry).collect();
-    let mut model = HarnessModel { root: f(1), library_root: lf(1), library_owner: lib_owner(), ..HarnessModel::default() };
-    let lib_plan = Skeleton::import(&lib_owner(), &lib_entries).load(&CacheInput::default(), false, &model);
+    let mut model = HarnessModel {
+        root: f(1),
+        library_root: lf(1),
+        library_owner: lib_owner(),
+        ..HarnessModel::default()
+    };
+    let lib_plan =
+        Skeleton::import(&lib_owner(), &lib_entries).load(&CacheInput::default(), false, &model);
     let lib_rv = lib_plan.rv;
     model.apply(lib_plan);
-    let input = CacheInput { gz_present: true, gunzip_ok: true, file: Some(&plain), second_instance: false };
+    let input = CacheInput {
+        gz_present: true,
+        gunzip_ok: true,
+        file: Some(&plain),
+        second_instance: false,
+    };
     let agent_plan = Skeleton::import(&agent(), &agent_entries).load(&input, false, &model);
     let agent_rv = agent_plan.rv;
     model.apply(agent_plan);
     let known = model.cats.values().filter(|c| c.cat.version != -1).count();
     let links = model.items.values().filter(|i| i.is_link_type()).count();
-    let summary =
-        format!("reload cats={} cats_known_version={known} items={} links={links}", model.cats.len(), model.items.len());
-    let at = case.lines.iter().position(|l| l.starts_with("reload cats=")).unwrap();
-    assert_case(file, "realistic_100k (reload summary)", &case.lines[at..=at], &[summary]);
-    let steps = [format!("step load_library rv={}", u8::from(lib_rv)), format!("step load_agent rv={}", u8::from(agent_rv))];
-    let at = case.lines.iter().position(|l| l.starts_with("step load_library")).unwrap();
-    assert_case(file, "realistic_100k (reload steps)", &case.lines[at..at + 2], &steps);
-    let mut info = validate::validate(&key_ordered(&model.built_snapshot()), Default::default()).info;
+    let summary = format!(
+        "reload cats={} cats_known_version={known} items={} links={links}",
+        model.cats.len(),
+        model.items.len()
+    );
+    let at = case
+        .lines
+        .iter()
+        .position(|l| l.starts_with("reload cats="))
+        .unwrap();
+    assert_case(
+        file,
+        "realistic_100k (reload summary)",
+        &case.lines[at..=at],
+        &[summary],
+    );
+    let steps = [
+        format!("step load_library rv={}", u8::from(lib_rv)),
+        format!("step load_agent rv={}", u8::from(agent_rv)),
+    ];
+    let at = case
+        .lines
+        .iter()
+        .position(|l| l.starts_with("step load_library"))
+        .unwrap();
+    assert_case(
+        file,
+        "realistic_100k (reload steps)",
+        &case.lines[at..at + 2],
+        &steps,
+    );
+    let mut info =
+        validate::validate(&key_ordered(&model.built_snapshot()), Default::default()).info;
     info.initialized = true;
     let reload_validation = dump_validation(&info);
     let at = at + 3; // after "step build_parent_child_map"
-    assert_case(file, "realistic_100k (reload validation)", &case.lines[at..at + reload_validation.len()], &reload_validation);
-    tally.replayed("reload: summary, load steps, validation", 1 + steps.len() + reload_validation.len());
-    tally.left("world, populated summary, reload digests, build and later steps", case.lines.len() - tally.replayed);
+    assert_case(
+        file,
+        "realistic_100k (reload validation)",
+        &case.lines[at..at + reload_validation.len()],
+        &reload_validation,
+    );
+    tally.replayed(
+        "reload: summary, load steps, validation",
+        1 + steps.len() + reload_validation.len(),
+    );
+    tally.left(
+        "world, populated summary, reload digests, build and later steps",
+        case.lines.len() - tally.replayed,
+    );
     tally.print(file);
     assert_eq!((tally.replayed, tally.left), (25, 20));
 }
@@ -230,7 +345,11 @@ fn c1_realistic() {
 /// server's versions.
 fn standard_library() -> Vec<ViewerCategory> {
     let mk = |id, parent, ft: i32, name: &[u8], version| {
-        let mut c = ViewerCategory { owner: lib_owner(), version, ..ViewerCategory::default() };
+        let mut c = ViewerCategory {
+            owner: lib_owner(),
+            version,
+            ..ViewerCategory::default()
+        };
         c.category.object.id = id;
         c.category.object.parent = parent;
         c.category.object.name = name.to_vec();
@@ -254,8 +373,16 @@ fn library_real() {
     let plain = gunzip_strict(&read_bytes(&format!("model/library/{name}")));
     let d = decode(&plain);
     let recs = records(&d);
-    let mut out = vec![format!("source {name} plain_size={} plain_sha256={}", plain.len(), sha256_hex(&plain))];
-    out.push(format!("{} records_sha256={}", decode_line(&d, true), digest_lines(&recs)));
+    let mut out = vec![format!(
+        "source {name} plain_size={} plain_sha256={}",
+        plain.len(),
+        sha256_hex(&plain)
+    )];
+    out.push(format!(
+        "{} records_sha256={}",
+        decode_line(&d, true),
+        digest_lines(&recs)
+    ));
     out.extend(chunked_digests("records", &recs, 1000));
     let mut types = std::collections::BTreeMap::<i32, u32>::new();
     for it in &d.items {
@@ -267,7 +394,12 @@ fn library_real() {
     }
     out.push(type_line);
     out.push(reencode_line(&reencode(&d), &plain, false));
-    let root = d.categories.iter().filter(|c| c.category.object.parent == [0; 16]).last().unwrap();
+    let root = d
+        .categories
+        .iter()
+        .filter(|c| c.category.object.parent == [0; 16])
+        .last()
+        .unwrap();
     out.push(format!("library_root {}", uuid(&root.category.object.id)));
     assert_case(file, &case.id, &case.lines[..out.len()], &out);
     let mut tally = Tally::default();
@@ -275,7 +407,10 @@ fn library_real() {
     // The login as a library skeleton: r2_c2_load.rs replays its file
     // listings; the model summary and digests and the validation record
     // the C++ model after buildParentChildMap.
-    tally.left("login model, digests, validation", case.lines.len() - out.len());
+    tally.left(
+        "login model, digests, validation",
+        case.lines.len() - out.len(),
+    );
     tally.print(file);
     assert_eq!((tally.replayed, tally.left), (12, 18));
 }

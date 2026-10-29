@@ -22,7 +22,12 @@ fn flip_rows(top_down: &[u8], width: usize, channels: usize) -> Vec<u8> {
 
 fn assert_close(actual: &[u8], expected: &[u8], max_abs: u8, what: &str) {
     assert_eq!(actual.len(), expected.len(), "{what}: length");
-    let worst = actual.iter().zip(expected).map(|(a, b)| a.abs_diff(*b)).max().unwrap_or(0);
+    let worst = actual
+        .iter()
+        .zip(expected)
+        .map(|(a, b)| a.abs_diff(*b))
+        .max()
+        .unwrap_or(0);
     assert!(worst <= max_abs, "{what}: max abs diff {worst} > {max_abs}");
 }
 
@@ -30,7 +35,10 @@ fn assert_close(actual: &[u8], expected: &[u8], max_abs: u8, what: &str) {
 fn header() {
     let m = metadata(J2C).unwrap();
     assert_eq!((m.width, m.height, m.components), (256, 256, 3));
-    assert_eq!(comment(J2C).as_deref(), Some("Created by OpenJPEG version 2.5.4"));
+    assert_eq!(
+        comment(J2C).as_deref(),
+        Some("Created by OpenJPEG version 2.5.4")
+    );
 }
 
 #[test]
@@ -45,11 +53,21 @@ fn full_decode_matches_openjpeg() {
 fn discard_levels_match_openjpeg() {
     let d1 = decode(J2C, 0, 1, 0, 4).unwrap();
     assert_eq!((d1.width, d1.height), (128, 128));
-    assert_close(&d1.data, &flip_rows(include_bytes!("fixtures/synth_256.r1.opj.raw"), 128, 3), 1, "discard 1");
+    assert_close(
+        &d1.data,
+        &flip_rows(include_bytes!("fixtures/synth_256.r1.opj.raw"), 128, 3),
+        1,
+        "discard 1",
+    );
 
     let d2 = decode(J2C, 0, 2, 0, 4).unwrap();
     assert_eq!((d2.width, d2.height), (64, 64));
-    assert_close(&d2.data, &flip_rows(include_bytes!("fixtures/synth_256.r2.opj.raw"), 64, 3), 1, "discard 2");
+    assert_close(
+        &d2.data,
+        &flip_rows(include_bytes!("fixtures/synth_256.r2.opj.raw"), 64, 3),
+        1,
+        "discard 2",
+    );
 }
 
 #[test]
@@ -68,22 +86,34 @@ fn truncated_stream_decodes() {
         .data
         .iter()
         .zip(&full.data)
-        .map(|(a, b)| { let e = f64::from(a.abs_diff(*b)); e * e })
+        .map(|(a, b)| {
+            let e = f64::from(a.abs_diff(*b));
+            e * e
+        })
         .sum::<f64>()
         / d.data.len() as f64;
     let psnr = 10.0 * (255.0f64 * 255.0 / mse).log10();
-    assert!(psnr > 30.0, "truncated decode PSNR {psnr:.1} dB vs complete decode");
+    assert!(
+        psnr > 30.0,
+        "truncated decode PSNR {psnr:.1} dB vs complete decode"
+    );
 
     // And OpenJPEG's truncated decode of the same bytes is in the same place.
     let opj = flip_rows(include_bytes!("fixtures/synth_256.r0.t25.opj.raw"), 256, 3);
     let mse_opj = opj
         .iter()
         .zip(&full.data)
-        .map(|(a, b)| { let e = f64::from(a.abs_diff(*b)); e * e })
+        .map(|(a, b)| {
+            let e = f64::from(a.abs_diff(*b));
+            e * e
+        })
         .sum::<f64>()
         / opj.len() as f64;
     let psnr_opj = 10.0 * (255.0f64 * 255.0 / mse_opj).log10();
-    assert!((psnr - psnr_opj).abs() < 3.0, "hayro {psnr:.1} dB vs OpenJPEG {psnr_opj:.1} dB");
+    assert!(
+        (psnr - psnr_opj).abs() < 3.0,
+        "hayro {psnr:.1} dB vs OpenJPEG {psnr_opj:.1} dB"
+    );
 }
 
 #[test]
@@ -93,7 +123,10 @@ fn channel_selection() {
     let full = decode(J2C, 0, 0, 0, 4).unwrap();
     let green: Vec<u8> = full.data.chunks(3).map(|p| p[1]).collect();
     assert_eq!(d.data, green);
-    assert!(decode(J2C, 0, 0, 3, 1).is_err(), "first channel past the end");
+    assert!(
+        decode(J2C, 0, 0, 3, 1).is_err(),
+        "first channel past the end"
+    );
 }
 
 #[test]

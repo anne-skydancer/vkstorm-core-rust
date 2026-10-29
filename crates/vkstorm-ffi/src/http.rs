@@ -9,15 +9,15 @@
 //!
 //! Panics are caught at the boundary and reported as failures.
 
-use std::ffi::{c_char, c_void, CStr};
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::ffi::{CStr, c_char, c_void};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::slice;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use vkstorm_http::hooks::{Hooks, LogLevel, Stat};
 use vkstorm_http::request::{Reply, ReplyKind, ReplyQueue, Request};
-use vkstorm_http::sys::{SendPtr, SslInfo, UserPtr, CURL};
-use vkstorm_http::{he, Method, RequestOptions, Service, Status};
+use vkstorm_http::sys::{CURL, SendPtr, SslInfo, UserPtr};
+use vkstorm_http::{Method, RequestOptions, Service, Status, he};
 
 /// The hooks the host supplies; every function may be null.
 #[repr(C)]
@@ -44,7 +44,14 @@ unsafe impl Sync for CHooks {}
 impl Hooks for CHooks {
     fn log(&self, level: LogLevel, message: &str) {
         if let Some(f) = self.0.log {
-            unsafe { f(self.0.ctx, level as i32, message.as_ptr() as *const c_char, message.len()) };
+            unsafe {
+                f(
+                    self.0.ctx,
+                    level as i32,
+                    message.as_ptr() as *const c_char,
+                    message.len(),
+                )
+            };
         }
     }
 
@@ -98,7 +105,10 @@ pub struct VksHttpStatus {
 
 impl From<Status> for VksHttpStatus {
     fn from(s: Status) -> Self {
-        VksHttpStatus { kind: s.kind, code: s.code }
+        VksHttpStatus {
+            kind: s.kind,
+            code: s.code,
+        }
     }
 }
 
@@ -168,7 +178,11 @@ fn service() -> MutexGuard<'static, Option<Service>> {
 }
 
 unsafe fn bytes<'a>(p: *const c_char, len: usize) -> &'a [u8] {
-    if p.is_null() || len == 0 { &[] } else { unsafe { slice::from_raw_parts(p as *const u8, len) } }
+    if p.is_null() || len == 0 {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(p as *const u8, len) }
+    }
 }
 
 fn lossy(b: &[u8]) -> String {
@@ -204,12 +218,21 @@ fn issue(out: *mut VksHttpStatus, r: Result<u64, Status>) -> u64 {
 /// `hooks` must point to a valid table whose functions stay callable until
 /// `vks_http_service_destroy`; `user_agent` must be NUL-terminated.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_service_create(hooks: *const VksHttpHooks, user_agent: *const c_char) -> i32 {
+pub unsafe extern "C" fn vks_http_service_create(
+    hooks: *const VksHttpHooks,
+    user_agent: *const c_char,
+) -> i32 {
     if hooks.is_null() {
         return 0;
     }
     let hooks = unsafe { *hooks };
-    let ua = if user_agent.is_null() { String::new() } else { unsafe { CStr::from_ptr(user_agent) }.to_string_lossy().into_owned() };
+    let ua = if user_agent.is_null() {
+        String::new()
+    } else {
+        unsafe { CStr::from_ptr(user_agent) }
+            .to_string_lossy()
+            .into_owned()
+    };
     let r = catch_unwind(AssertUnwindSafe(|| {
         let mut s = service();
         if s.is_some() {
@@ -237,7 +260,10 @@ pub extern "C" fn vks_http_service_destroy() {
 /// 2 stopped.
 #[unsafe(no_mangle)]
 pub extern "C" fn vks_http_service_state() -> i32 {
-    catch_unwind(AssertUnwindSafe(|| service().as_ref().map_or(-1, |s| s.state() as i32))).unwrap_or(-1)
+    catch_unwind(AssertUnwindSafe(|| {
+        service().as_ref().map_or(-1, |s| s.state() as i32)
+    }))
+    .unwrap_or(-1)
 }
 
 /// `HttpRequest::startThread`.
@@ -253,7 +279,10 @@ pub extern "C" fn vks_http_service_start_thread() {
 /// `HttpRequest::createPolicyClass`.
 #[unsafe(no_mangle)]
 pub extern "C" fn vks_http_policy_class_create() -> u32 {
-    catch_unwind(AssertUnwindSafe(|| service().as_ref().map_or(0, |s| s.create_policy_class()))).unwrap_or(0)
+    catch_unwind(AssertUnwindSafe(|| {
+        service().as_ref().map_or(0, |s| s.create_policy_class())
+    }))
+    .unwrap_or(0)
 }
 
 /// `HttpRequest::setStaticPolicyOption` with a long; `ret` (optional)
@@ -262,7 +291,12 @@ pub extern "C" fn vks_http_policy_class_create() -> u32 {
 /// # Safety
 /// `ret` must be null or valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_policy_set_long(opt: i32, pclass: u32, value: i64, ret: *mut i64) -> VksHttpStatus {
+pub unsafe extern "C" fn vks_http_policy_set_long(
+    opt: i32,
+    pclass: u32,
+    value: i64,
+    ret: *mut i64,
+) -> VksHttpStatus {
     catch_unwind(AssertUnwindSafe(|| {
         let s = service();
         let Some(s) = s.as_ref() else {
@@ -286,7 +320,12 @@ pub unsafe extern "C" fn vks_http_policy_set_long(opt: i32, pclass: u32, value: 
 /// # Safety
 /// `value` must point to `len` readable bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_policy_set_string(opt: i32, pclass: u32, value: *const c_char, len: usize) -> VksHttpStatus {
+pub unsafe extern "C" fn vks_http_policy_set_string(
+    opt: i32,
+    pclass: u32,
+    value: *const c_char,
+    len: usize,
+) -> VksHttpStatus {
     let v = lossy(unsafe { bytes(value, len) });
     catch_unwind(AssertUnwindSafe(|| {
         let s = service();
@@ -323,7 +362,11 @@ pub extern "C" fn vks_http_policy_set_callback(opt: i32, pclass: u32, set: i32) 
 /// # Safety
 /// `ret` must be null or valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_policy_get_long(opt: i32, pclass: u32, ret: *mut i64) -> VksHttpStatus {
+pub unsafe extern "C" fn vks_http_policy_get_long(
+    opt: i32,
+    pclass: u32,
+    ret: *mut i64,
+) -> VksHttpStatus {
     catch_unwind(AssertUnwindSafe(|| {
         let s = service();
         let Some(s) = s.as_ref() else {
@@ -348,7 +391,13 @@ pub unsafe extern "C" fn vks_http_policy_get_long(opt: i32, pclass: u32, ret: *m
 /// # Safety
 /// `buf` must be writable for `cap` bytes; `len` must be null or valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_policy_get_string(opt: i32, pclass: u32, buf: *mut c_char, cap: usize, len: *mut usize) -> VksHttpStatus {
+pub unsafe extern "C" fn vks_http_policy_get_string(
+    opt: i32,
+    pclass: u32,
+    buf: *mut c_char,
+    cap: usize,
+    len: *mut usize,
+) -> VksHttpStatus {
     catch_unwind(AssertUnwindSafe(|| {
         let s = service();
         let Some(s) = s.as_ref() else {
@@ -375,7 +424,9 @@ pub unsafe extern "C" fn vks_http_policy_get_string(opt: i32, pclass: u32, buf: 
 #[unsafe(no_mangle)]
 pub extern "C" fn vks_http_reply_queue_new() -> *mut VksHttpReplyQueue {
     catch_unwind(AssertUnwindSafe(|| match service().as_ref() {
-        Some(s) => Box::into_raw(Box::new(VksHttpReplyQueue { inner: s.reply_queue() })),
+        Some(s) => Box::into_raw(Box::new(VksHttpReplyQueue {
+            inner: s.reply_queue(),
+        })),
         None => std::ptr::null_mut(),
     }))
     .unwrap_or(std::ptr::null_mut())
@@ -424,7 +475,12 @@ fn options_from(o: *const VksHttpOptions) -> Option<RequestOptions> {
 /// `q` and `desc` must be valid; the pointers in `desc` must be readable
 /// for their lengths for the duration of the call (everything is copied).
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_request_submit(q: *mut VksHttpReplyQueue, desc: *const VksHttpRequestDesc, user: *mut c_void, status: *mut VksHttpStatus) -> u64 {
+pub unsafe extern "C" fn vks_http_request_submit(
+    q: *mut VksHttpReplyQueue,
+    desc: *const VksHttpRequestDesc,
+    user: *mut c_void,
+    status: *mut VksHttpStatus,
+) -> u64 {
     if q.is_null() || desc.is_null() {
         return status_fail(status, Status::llcore(he::INVALID_ARG));
     }
@@ -441,14 +497,30 @@ pub unsafe extern "C" fn vks_http_request_submit(q: *mut VksHttpReplyQueue, desc
         _ => return status_fail(status, Status::llcore(he::INVALID_ARG)),
     };
     let url = lossy(unsafe { bytes(d.url, d.url_len) });
-    let body = if d.has_body != 0 { Some(unsafe { bytes(d.body as *const c_char, d.body_len) }.to_vec()) } else { None };
+    let body = if d.has_body != 0 {
+        Some(unsafe { bytes(d.body as *const c_char, d.body_len) }.to_vec())
+    } else {
+        None
+    };
     let mut headers = Vec::with_capacity(d.header_count);
     if !d.headers.is_null() {
         for h in unsafe { slice::from_raw_parts(d.headers, d.header_count) } {
-            headers.push((lossy(unsafe { bytes(h.name, h.name_len) }), lossy(unsafe { bytes(h.value, h.value_len) })));
+            headers.push((
+                lossy(unsafe { bytes(h.name, h.name_len) }),
+                lossy(unsafe { bytes(h.value, h.value_len) }),
+            ));
         }
     }
-    let req = Request { policy: d.policy, method, url, body, offset: d.offset, length: d.length, headers, options: options_from(d.options) };
+    let req = Request {
+        policy: d.policy,
+        method,
+        url,
+        body,
+        offset: d.offset,
+        length: d.length,
+        headers,
+        options: options_from(d.options),
+    };
     catch_unwind(AssertUnwindSafe(|| {
         let s = service();
         let Some(s) = s.as_ref() else {
@@ -482,7 +554,12 @@ macro_rules! with_service {
 /// # Safety
 /// `q` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_request_cancel(q: *mut VksHttpReplyQueue, target: u64, user: *mut c_void, status: *mut VksHttpStatus) -> u64 {
+pub unsafe extern "C" fn vks_http_request_cancel(
+    q: *mut VksHttpReplyQueue,
+    target: u64,
+    user: *mut c_void,
+    status: *mut VksHttpStatus,
+) -> u64 {
     with_service!(q, status, |s| |q| s.cancel(q, SendPtr(user), target))
 }
 
@@ -491,7 +568,11 @@ pub unsafe extern "C" fn vks_http_request_cancel(q: *mut VksHttpReplyQueue, targ
 /// # Safety
 /// `q` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_request_noop(q: *mut VksHttpReplyQueue, user: *mut c_void, status: *mut VksHttpStatus) -> u64 {
+pub unsafe extern "C" fn vks_http_request_noop(
+    q: *mut VksHttpReplyQueue,
+    user: *mut c_void,
+    status: *mut VksHttpStatus,
+) -> u64 {
     with_service!(q, status, |s| |q| s.noop(q, SendPtr(user)))
 }
 
@@ -500,7 +581,11 @@ pub unsafe extern "C" fn vks_http_request_noop(q: *mut VksHttpReplyQueue, user: 
 /// # Safety
 /// `q` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_request_stop(q: *mut VksHttpReplyQueue, user: *mut c_void, status: *mut VksHttpStatus) -> u64 {
+pub unsafe extern "C" fn vks_http_request_stop(
+    q: *mut VksHttpReplyQueue,
+    user: *mut c_void,
+    status: *mut VksHttpStatus,
+) -> u64 {
     with_service!(q, status, |s| |q| s.stop_thread(q, SendPtr(user)))
 }
 
@@ -509,7 +594,11 @@ pub unsafe extern "C" fn vks_http_request_stop(q: *mut VksHttpReplyQueue, user: 
 /// # Safety
 /// `q` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_request_spin(q: *mut VksHttpReplyQueue, mode: i32, status: *mut VksHttpStatus) -> u64 {
+pub unsafe extern "C" fn vks_http_request_spin(
+    q: *mut VksHttpReplyQueue,
+    mode: i32,
+    status: *mut VksHttpStatus,
+) -> u64 {
     with_service!(q, status, |s| |q| s.spin(q, mode))
 }
 
@@ -519,8 +608,21 @@ pub unsafe extern "C" fn vks_http_request_spin(q: *mut VksHttpReplyQueue, mode: 
 /// # Safety
 /// `q` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_request_set_long(q: *mut VksHttpReplyQueue, opt: i32, pclass: u32, value: i64, user: *mut c_void, status: *mut VksHttpStatus) -> u64 {
-    with_service!(q, status, |s| |q| s.set_option_long_dynamic(q, SendPtr(user), opt, pclass, value))
+pub unsafe extern "C" fn vks_http_request_set_long(
+    q: *mut VksHttpReplyQueue,
+    opt: i32,
+    pclass: u32,
+    value: i64,
+    user: *mut c_void,
+    status: *mut VksHttpStatus,
+) -> u64 {
+    with_service!(q, status, |s| |q| s.set_option_long_dynamic(
+        q,
+        SendPtr(user),
+        opt,
+        pclass,
+        value
+    ))
 }
 
 /// `HttpRequest::setPolicyOption` with a string.
@@ -528,9 +630,23 @@ pub unsafe extern "C" fn vks_http_request_set_long(q: *mut VksHttpReplyQueue, op
 /// # Safety
 /// `q` must be valid; `value` readable for `len` bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_request_set_string(q: *mut VksHttpReplyQueue, opt: i32, pclass: u32, value: *const c_char, len: usize, user: *mut c_void, status: *mut VksHttpStatus) -> u64 {
+pub unsafe extern "C" fn vks_http_request_set_string(
+    q: *mut VksHttpReplyQueue,
+    opt: i32,
+    pclass: u32,
+    value: *const c_char,
+    len: usize,
+    user: *mut c_void,
+    status: *mut VksHttpStatus,
+) -> u64 {
     let v = lossy(unsafe { bytes(value, len) });
-    with_service!(q, status, |s| |q| s.set_option_string_dynamic(q, SendPtr(user), opt, pclass, &v))
+    with_service!(q, status, |s| |q| s.set_option_string_dynamic(
+        q,
+        SendPtr(user),
+        opt,
+        pclass,
+        &v
+    ))
 }
 
 /// The next completed operation on the queue, or null.
@@ -585,8 +701,12 @@ reply_get!(vks_http_reply_kind, i32, |r| match r.kind {
     ReplyKind::NoOp => 4,
 });
 reply_get!(vks_http_reply_status, VksHttpStatus, |r| r.status.into());
-reply_get!(vks_http_reply_has_headers, i32, |r| r.headers.is_some() as i32);
-reply_get!(vks_http_reply_header_count, usize, |r| r.headers.as_ref().map_or(0, |h| h.len()));
+reply_get!(vks_http_reply_has_headers, i32, |r| r.headers.is_some()
+    as i32);
+reply_get!(vks_http_reply_header_count, usize, |r| r
+    .headers
+    .as_ref()
+    .map_or(0, |h| h.len()));
 reply_get!(vks_http_reply_retries, u32, |r| r.retries);
 reply_get!(vks_http_reply_retries_503, u32, |r| r.retries_503);
 reply_get!(vks_http_reply_long, i64, |r| r.long_value);
@@ -609,13 +729,22 @@ pub unsafe extern "C" fn vks_http_reply_body(r: *const VksHttpReply, len: *mut u
 /// # Safety
 /// `r` must be live; `out` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_reply_header(r: *const VksHttpReply, i: usize, out: *mut VksHttpHeader) -> i32 {
+pub unsafe extern "C" fn vks_http_reply_header(
+    r: *const VksHttpReply,
+    i: usize,
+    out: *mut VksHttpHeader,
+) -> i32 {
     let r = &unsafe { &*r }.inner;
     let Some((n, v)) = r.headers.as_ref().and_then(|h| h.get(i)) else {
         return 0;
     };
     unsafe {
-        *out = VksHttpHeader { name: n.as_ptr() as *const c_char, name_len: n.len(), value: v.as_ptr() as *const c_char, value_len: v.len() };
+        *out = VksHttpHeader {
+            name: n.as_ptr() as *const c_char,
+            name_len: n.len(),
+            value: v.as_ptr() as *const c_char,
+            value_len: v.len(),
+        };
     }
     1
 }
@@ -632,7 +761,10 @@ unsafe fn out_str(s: &str, len: *mut usize) -> *const c_char {
 /// # Safety
 /// `r` must be live; `len` must be null or valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_reply_content_type(r: *const VksHttpReply, len: *mut usize) -> *const c_char {
+pub unsafe extern "C" fn vks_http_reply_content_type(
+    r: *const VksHttpReply,
+    len: *mut usize,
+) -> *const c_char {
     unsafe { out_str(&(*r).inner.content_type, len) }
 }
 
@@ -641,7 +773,10 @@ pub unsafe extern "C" fn vks_http_reply_content_type(r: *const VksHttpReply, len
 /// # Safety
 /// `r` must be live; `len` must be null or valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_reply_url(r: *const VksHttpReply, len: *mut usize) -> *const c_char {
+pub unsafe extern "C" fn vks_http_reply_url(
+    r: *const VksHttpReply,
+    len: *mut usize,
+) -> *const c_char {
     unsafe { out_str(&(*r).inner.url, len) }
 }
 
@@ -650,7 +785,10 @@ pub unsafe extern "C" fn vks_http_reply_url(r: *const VksHttpReply, len: *mut us
 /// # Safety
 /// `r` must be live; `len` must be null or valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_reply_method(r: *const VksHttpReply, len: *mut usize) -> *const c_char {
+pub unsafe extern "C" fn vks_http_reply_method(
+    r: *const VksHttpReply,
+    len: *mut usize,
+) -> *const c_char {
     unsafe { out_str((*r).inner.method, len) }
 }
 
@@ -659,7 +797,10 @@ pub unsafe extern "C" fn vks_http_reply_method(r: *const VksHttpReply, len: *mut
 /// # Safety
 /// `r` must be live; `len` must be null or valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_reply_string(r: *const VksHttpReply, len: *mut usize) -> *const c_char {
+pub unsafe extern "C" fn vks_http_reply_string(
+    r: *const VksHttpReply,
+    len: *mut usize,
+) -> *const c_char {
     unsafe { out_str(&(*r).inner.string_value, len) }
 }
 
@@ -669,7 +810,12 @@ pub unsafe extern "C" fn vks_http_reply_string(r: *const VksHttpReply, len: *mut
 /// # Safety
 /// `r` must be live; the out pointers must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_reply_range(r: *const VksHttpReply, offset: *mut u64, length: *mut u64, full: *mut u64) -> i32 {
+pub unsafe extern "C" fn vks_http_reply_range(
+    r: *const VksHttpReply,
+    offset: *mut u64,
+    length: *mut u64,
+    full: *mut u64,
+) -> i32 {
     let r = &unsafe { &*r }.inner;
     match r.range {
         Some((o, l, f)) => {
@@ -689,7 +835,12 @@ pub unsafe extern "C" fn vks_http_reply_range(r: *const VksHttpReply, offset: *m
 /// # Safety
 /// `r` must be live; the out pointers must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_http_reply_stats(r: *const VksHttpReply, size_download: *mut f64, total_time: *mut f64, speed_download: *mut f64) {
+pub unsafe extern "C" fn vks_http_reply_stats(
+    r: *const VksHttpReply,
+    size_download: *mut f64,
+    total_time: *mut f64,
+    speed_download: *mut f64,
+) {
     let r = &unsafe { &*r }.inner;
     unsafe {
         *size_download = r.stats.size_download;
@@ -709,5 +860,6 @@ pub extern "C" fn vks_http_status_is_retryable(kind: u16, code: i16) -> i32 {
 #[unsafe(no_mangle)]
 pub extern "C" fn vks_http_curl_version() -> *const c_char {
     static V: std::sync::OnceLock<std::ffi::CString> = std::sync::OnceLock::new();
-    V.get_or_init(|| std::ffi::CString::new(vkstorm_http::sys::version()).unwrap_or_default()).as_ptr()
+    V.get_or_init(|| std::ffi::CString::new(vkstorm_http::sys::version()).unwrap_or_default())
+        .as_ptr()
 }

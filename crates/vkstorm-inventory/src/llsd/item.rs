@@ -10,7 +10,9 @@
 
 use vkstorm_llsd::Value;
 
-use super::coerce::{as_boolean, as_integer, as_string, as_uuid, get, has, insert, make_map, u32_from_sd};
+use super::coerce::{
+    as_boolean, as_integer, as_string, as_uuid, get, has, insert, make_map, u32_from_sd,
+};
 use crate::item::Item;
 use crate::legacy::reader::c_str;
 use crate::perms::NULL_ID;
@@ -62,7 +64,9 @@ pub(crate) fn with(key: &str, value: Value) -> Value {
 
 /// `sd[key]` on a non-const `LLSD`: the entry, created undefined.
 pub(crate) fn entry<'a>(sd: &'a mut Value, key: &str) -> &'a mut Value {
-    make_map(sd).entry(key.as_bytes().to_vec()).or_insert(Value::Undefined)
+    make_map(sd)
+        .entry(key.as_bytes().to_vec())
+        .or_insert(Value::Undefined)
 }
 
 impl Item {
@@ -93,7 +97,11 @@ impl Item {
             insert(sd, FAVORITE, with(TOGGLED, Value::Boolean(o.favorite)));
         }
         if !o.runtime.is_empty() {
-            insert(sd, "script", with("runtime", Value::String(o.runtime.clone())));
+            insert(
+                sd,
+                "script",
+                with("runtime", Value::String(o.runtime.clone())),
+            );
         }
         let e = exported_asset_id(self.permissions.base, &self.asset);
         insert(sd, e.label(), Value::Uuid(*e.id()));
@@ -146,11 +154,16 @@ impl Item {
         self.object.thumbnail = NULL_ID;
         self.object.favorite = false;
         if !in_open_sim {
-            self.permissions.init(&NULL_ID, &NULL_ID, &NULL_ID, &NULL_ID);
+            self.permissions
+                .init(&NULL_ID, &NULL_ID, &NULL_ID, &NULL_ID);
         }
         let metadata_script = has(sd, "metadata") && has(get(sd, "metadata"), "script");
         if is_new || has(sd, "script") || metadata_script {
-            let script = if has(sd, "script") { get(sd, "script") } else { get(get(sd, "metadata"), "script") };
+            let script = if has(sd, "script") {
+                get(sd, "script")
+            } else {
+                get(get(sd, "metadata"), "script")
+            };
             self.object.runtime = as_string(get(script, "runtime"));
         }
         let Value::Map(map) = sd else {
@@ -175,7 +188,10 @@ impl Item {
                 b"permissions" => self.permissions.import_llsd(v),
                 b"sale_info" => {
                     let (mut has_perm_mask, mut perm_mask) = (false, 0u32);
-                    if !self.sale_info.from_llsd(v, &mut has_perm_mask, &mut perm_mask) {
+                    if !self
+                        .sale_info
+                        .from_llsd(v, &mut has_perm_mask, &mut perm_mask)
+                    {
                         return false;
                     }
                     if has_perm_mask {
@@ -186,7 +202,9 @@ impl Item {
                 b"asset_id" | b"linked_id" => self.asset = as_uuid(v),
                 b"type" => match v {
                     Value::String(s) => self.object.asset_type = AssetType::from_name_cstr(Some(s)),
-                    Value::Integer(i) => self.object.asset_type = AssetType(i32::from(*i as u8 as i8)),
+                    Value::Integer(i) => {
+                        self.object.asset_type = AssetType(i32::from(*i as u8 as i8))
+                    }
                     _ => {}
                 },
                 b"inv_type" => match v {
@@ -237,9 +255,17 @@ impl Item {
         insert(&mut rv, DESC, Value::String(self.description.clone()));
         insert(&mut rv, SALE_INFO, self.sale_info.to_llsd());
         insert(&mut rv, PERMISSIONS, self.permissions.to_llsd());
-        insert(&mut rv, INVENTORY_TYPE, Value::string(self.inv_type.lookup()));
+        insert(
+            &mut rv,
+            INVENTORY_TYPE,
+            Value::string(self.inv_type.lookup()),
+        );
         insert(&mut rv, FLAGS, Value::Integer(self.flags as i32));
-        insert(&mut rv, CREATION_DATE, Value::Integer(o.creation_date as i32));
+        insert(
+            &mut rv,
+            CREATION_DATE,
+            Value::Integer(o.creation_date as i32),
+        );
         rv
     }
 }

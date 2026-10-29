@@ -18,7 +18,7 @@ use std::io::Write as _;
 
 use super::reader::Stream;
 use super::scanf::{scan_hex, scan_int, sscanf};
-use crate::sale::{clamp_price, SaleInfo, SaleType};
+use crate::sale::{SaleInfo, SaleType, clamp_price};
 
 /// `MAX_STRING` (`lldefs.h`): the line buffer of the sale-info, item and
 /// category readers, so lines of up to 254 bytes.
@@ -38,7 +38,12 @@ impl SaleInfo {
     ///   `perm_mask` and sets `has_perm_mask`.
     ///
     /// Always returns true. The stream is left where the C++ leaves it.
-    pub fn import_legacy_stream(&mut self, input: &mut Stream<'_>, has_perm_mask: &mut bool, perm_mask: &mut u32) -> bool {
+    pub fn import_legacy_stream(
+        &mut self,
+        input: &mut Stream<'_>,
+        has_perm_mask: &mut bool,
+        perm_mask: &mut u32,
+    ) -> bool {
         *has_perm_mask = false;
         while input.good() {
             let line = input.getline(MAX_STRING);

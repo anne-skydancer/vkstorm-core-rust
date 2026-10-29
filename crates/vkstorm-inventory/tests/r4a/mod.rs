@@ -26,15 +26,20 @@ use vkstorm_inventory::item::Item;
 use vkstorm_inventory::llsd::coerce::{as_integer, as_string, as_uuid, get, insert};
 use vkstorm_inventory::message::{add_string, get_string};
 use vkstorm_inventory::object::Object;
-use vkstorm_inventory::perms::{Permissions, Uuid, NULL_ID, PERM_ALL, PERM_COPY, PERM_MOVE, PERM_NONE, PERM_TRANSFER};
+use vkstorm_inventory::perms::{
+    NULL_ID, PERM_ALL, PERM_COPY, PERM_MOVE, PERM_NONE, PERM_TRANSFER, Permissions, Uuid,
+};
 use vkstorm_inventory::sale::{SaleInfo, SaleType};
 use vkstorm_inventory::task::{
-    self, lookup, Action, Agent, CreateRequest, Entry, Env, FloaterKey, LocalizedNames, Region, RequestState, Selection,
-    TaskState, TaskView, ViewerItem, TASK_INVENTORY_ASSET_KEY, TASK_INVENTORY_ITEM_KEY,
+    self, Action, Agent, CreateRequest, Entry, Env, FloaterKey, LocalizedNames, Region,
+    RequestState, Selection, TASK_INVENTORY_ASSET_KEY, TASK_INVENTORY_ITEM_KEY, TaskState,
+    TaskView, ViewerItem, lookup,
 };
 use vkstorm_inventory::types::{AssetType, InventoryType};
 use vkstorm_llsd::{Format, Options, Value};
-use vkstorm_messages::{parse_template, Builder, Encoding, Reader, Template, Tokenizer, VarType, MAX_BUFFER_SIZE};
+use vkstorm_messages::{
+    Builder, Encoding, MAX_BUFFER_SIZE, Reader, Template, Tokenizer, VarType, parse_template,
+};
 
 use crate::common::Sha256;
 
@@ -117,7 +122,13 @@ fn aliases() -> &'static HashMap<Uuid, &'static str> {
         for (c, n) in [('a', "A"), ('b', "B"), ('c', "C"), ('d', "D"), ('e', "E")] {
             m.insert(item(c), n);
         }
-        for (c, n) in [('a', "assetA"), ('b', "assetB"), ('c', "assetC"), ('d', "assetD"), ('e', "assetE")] {
+        for (c, n) in [
+            ('a', "assetA"),
+            ('b', "assetB"),
+            ('c', "assetC"),
+            ('d', "assetD"),
+            ('e', "assetE"),
+        ] {
             m.insert(asset(c), n);
         }
         m.insert(asset_pending(), "assetP");
@@ -141,7 +152,11 @@ pub fn nm(id: &Uuid) -> String {
     if let Some(a) = aliases().get(id) {
         return (*a).to_owned();
     }
-    if *id == NULL_ID { "null".to_owned() } else { uuid_str(id) }
+    if *id == NULL_ID {
+        "null".to_owned()
+    } else {
+        uuid_str(id)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -196,7 +211,8 @@ pub fn sha256(data: &[u8]) -> String {
 
 /// `notation`: one line, binary as `b16"..."`.
 pub fn notation(v: &Value) -> String {
-    String::from_utf8_lossy(&vkstorm_llsd::format(Format::Notation, v, Options::default()).0).into_owned()
+    String::from_utf8_lossy(&vkstorm_llsd::format(Format::Notation, v, Options::default()).0)
+        .into_owned()
 }
 
 /// The notation as bytes (it can hold any byte of a string).
@@ -229,7 +245,11 @@ pub struct Rng(u64);
 
 impl Rng {
     pub fn new(seed: u64) -> Rng {
-        Rng(if seed == 0 { 0x9E37_79B9_7F4A_7C15 } else { seed })
+        Rng(if seed == 0 {
+            0x9E37_79B9_7F4A_7C15
+        } else {
+            seed
+        })
     }
 
     pub fn next(&mut self) -> u64 {
@@ -242,7 +262,11 @@ impl Rng {
     }
 
     pub fn below(&mut self, n: u32) -> u32 {
-        if n == 0 { 0 } else { (self.next() % u64::from(n)) as u32 }
+        if n == 0 {
+            0
+        } else {
+            (self.next() % u64::from(n)) as u32
+        }
     }
 
     pub fn coin(&mut self) -> bool {
@@ -261,7 +285,13 @@ pub struct DigestBuilder {
 
 impl DigestBuilder {
     pub fn new(name: &str) -> DigestBuilder {
-        DigestBuilder { name: name.to_owned(), total: Sha256::default(), chunk: Sha256::default(), count: 0, chunks: Vec::new() }
+        DigestBuilder {
+            name: name.to_owned(),
+            total: Sha256::default(),
+            chunk: Sha256::default(),
+            count: 0,
+            chunks: Vec::new(),
+        }
     }
 
     pub fn add(&mut self, unit: &[u8]) {
@@ -276,7 +306,14 @@ impl DigestBuilder {
     fn flush(&mut self) {
         let k = (self.count - 1) / SAMPLE_EVERY;
         let chunk = std::mem::take(&mut self.chunk);
-        self.chunks.push(format!("{} chunk {} units {}-{} {}", self.name, k, k * SAMPLE_EVERY, self.count - 1, chunk.hex()));
+        self.chunks.push(format!(
+            "{} chunk {} units {}-{} {}",
+            self.name,
+            k,
+            k * SAMPLE_EVERY,
+            self.count - 1,
+            chunk.hex()
+        ));
     }
 
     /// The `<name> <count> <sha>` line and the chunk lines.
@@ -285,7 +322,10 @@ impl DigestBuilder {
             self.flush();
         }
         let total = std::mem::take(&mut self.total);
-        (format!("{} {} {}", self.name, self.count, total.hex()), self.chunks)
+        (
+            format!("{} {} {}", self.name, self.count, total.hex()),
+            self.chunks,
+        )
     }
 }
 
@@ -303,7 +343,9 @@ pub fn digest_lines(digests: Vec<(String, Vec<String>)>) -> Vec<String> {
 // ---------------------------------------------------------------------------
 
 pub fn fixture_path(rel: &str) -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/task").join(rel)
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/task")
+        .join(rel)
 }
 
 pub fn read_bytes(rel: &str) -> Vec<u8> {
@@ -344,9 +386,15 @@ pub fn assert_text(fixture: &str, produced: &[u8]) {
         if shown >= 5 {
             break;
         }
-        let w = want.get(i).map_or_else(|| b"<end of fixture>".to_vec(), Clone::clone);
-        let g = got.get(i).map_or_else(|| b"<end of output>".to_vec(), Clone::clone);
-        if i < want.len() && (w.starts_with(b"case ") || w.starts_with(b"trace ") || w.starts_with(b"scrub ")) {
+        let w = want
+            .get(i)
+            .map_or_else(|| b"<end of fixture>".to_vec(), Clone::clone);
+        let g = got
+            .get(i)
+            .map_or_else(|| b"<end of output>".to_vec(), Clone::clone);
+        if i < want.len()
+            && (w.starts_with(b"case ") || w.starts_with(b"trace ") || w.starts_with(b"scrub "))
+        {
             last_case = String::from_utf8_lossy(&w).into_owned();
         }
         if w != g {
@@ -375,7 +423,12 @@ pub fn assert_lines(fixture: &str, produced: &[String]) {
 
 pub fn assert_bytes(fixture: &str, produced: &[u8]) {
     let want = read_bytes(fixture);
-    assert!(want == produced, "input bytes differ: {fixture} ({} vs {} bytes)", want.len(), produced.len());
+    assert!(
+        want == produced,
+        "input bytes differ: {fixture} ({} vs {} bytes)",
+        want.len(),
+        produced.len()
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -468,7 +521,13 @@ pub fn make_item(s: &ItemSpec) -> ViewerItem {
 }
 
 pub fn spec_a() -> ItemSpec {
-    ItemSpec { id: item('a'), asset: asset('a'), name: b"Notecard A".to_vec(), desc: b"copyable".to_vec(), ..ItemSpec::default() }
+    ItemSpec {
+        id: item('a'),
+        asset: asset('a'),
+        name: b"Notecard A".to_vec(),
+        desc: b"copyable".to_vec(),
+        ..ItemSpec::default()
+    }
 }
 
 pub fn spec_b() -> ItemSpec {
@@ -516,7 +575,12 @@ pub fn item_llsd(v: &ViewerItem) -> Value {
 
 pub fn standard_reply(serial: i32) -> Value {
     static C: OnceLock<Value> = OnceLock::new();
-    let contents = C.get_or_init(|| Value::Array(vec![item_llsd(&make_item(&spec_a())), item_llsd(&make_item(&spec_b()))]));
+    let contents = C.get_or_init(|| {
+        Value::Array(vec![
+            item_llsd(&make_item(&spec_a())),
+            item_llsd(&make_item(&spec_b())),
+        ])
+    });
     let mut body = Value::map();
     insert(&mut body, "inventory_serial", Value::Integer(serial));
     insert(&mut body, "contents", contents.clone());
@@ -535,7 +599,10 @@ pub struct Messages {
 pub fn messages() -> &'static Messages {
     static M: OnceLock<Messages> = OnceLock::new();
     M.get_or_init(|| {
-        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../vkstorm-messages/tests/fixtures/message_template.msg");
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../vkstorm-messages/tests/fixtures/message_template.msg"
+        );
         let text = std::fs::read_to_string(path).unwrap_or_else(|e| panic!("{path}: {e}"));
         let file = parse_template(&mut Tokenizer::new(&text)).expect("message template parses");
         let mut by_name = HashMap::new();
@@ -550,15 +617,24 @@ pub fn messages() -> &'static Messages {
 }
 
 pub fn template(name: &str) -> Arc<Template> {
-    messages().by_name.get(name).unwrap_or_else(|| panic!("no message {name}")).clone()
+    messages()
+        .by_name
+        .get(name)
+        .unwrap_or_else(|| panic!("no message {name}"))
+        .clone()
 }
 
 fn key_of(t: &Template, block: &str, var: &str) -> u64 {
-    t.block_by_name(block).and_then(|b| b.variable_by_name(var)).unwrap_or_else(|| panic!("{block}.{var}")).key
+    t.block_by_name(block)
+        .and_then(|b| b.variable_by_name(var))
+        .unwrap_or_else(|| panic!("{block}.{var}"))
+        .key
 }
 
 fn block_key(t: &Template, block: &str) -> u64 {
-    t.block_by_name(block).unwrap_or_else(|| panic!("{block}")).key
+    t.block_by_name(block)
+        .unwrap_or_else(|| panic!("{block}"))
+        .key
 }
 
 /// `LL_RELIABLE_FLAG`.
@@ -569,7 +645,9 @@ const RELIABLE_FLAG: u8 = 0x40;
 /// coding makes it smaller (then the zero-code flag). The packet id is left
 /// zero (the recording zeroes it).
 pub fn datagram(builder: &mut Builder, reliable: bool) -> Vec<u8> {
-    let zerocoded = builder.template().is_some_and(|t| t.encoding == Encoding::ZeroCoded);
+    let zerocoded = builder
+        .template()
+        .is_some_and(|t| t.encoding == Encoding::ZeroCoded);
     let mut buf = vec![0u8; MAX_BUFFER_SIZE];
     let n = builder.build_message(&mut buf, 0).expect("message builds");
     builder.clear_message();
@@ -594,8 +672,14 @@ pub fn reply_round_trip(task: &Uuid, serial: i16, filename: &[u8]) -> (Uuid, i16
     let mut b = Builder::new();
     b.new_message(t.clone());
     b.next_block(block_key(&t, "InventoryData")).unwrap();
-    b.add_data(key_of(&t, "InventoryData", "TaskID"), task, VarType::LLUUID).unwrap();
-    b.add_data(key_of(&t, "InventoryData", "Serial"), &serial.to_le_bytes(), VarType::S16).unwrap();
+    b.add_data(key_of(&t, "InventoryData", "TaskID"), task, VarType::LLUUID)
+        .unwrap();
+    b.add_data(
+        key_of(&t, "InventoryData", "Serial"),
+        &serial.to_le_bytes(),
+        VarType::S16,
+    )
+    .unwrap();
     add_string(&mut b, key_of(&t, "InventoryData", "Filename"), filename).unwrap();
     let mut buf = vec![0u8; MAX_BUFFER_SIZE];
     let n = b.build_message(&mut buf, 0).unwrap();
@@ -603,8 +687,14 @@ pub fn reply_round_trip(task: &Uuid, serial: i16, filename: &[u8]) -> (Uuid, i16
     r.set_message(t.clone(), n as i32);
     r.decode_data(&buf[..n]);
     let blk = block_key(&t, "InventoryData");
-    let task_id: [u8; 16] = r.get(blk, 0, key_of(&t, "InventoryData", "TaskID"), 16).unwrap().try_into().unwrap();
-    let s = r.get(blk, 0, key_of(&t, "InventoryData", "Serial"), 2).unwrap();
+    let task_id: [u8; 16] = r
+        .get(blk, 0, key_of(&t, "InventoryData", "TaskID"), 16)
+        .unwrap()
+        .try_into()
+        .unwrap();
+    let s = r
+        .get(blk, 0, key_of(&t, "InventoryData", "Serial"), 2)
+        .unwrap();
     let serial = i16::from_le_bytes([s[0], s[1]]);
     let name = get_string(&r, blk, 0, key_of(&t, "InventoryData", "Filename")).unwrap();
     (task_id, serial, name)
@@ -643,11 +733,21 @@ pub fn packet_text(wire_in: &[u8], xfer_ids: &HashMap<u64, String>) -> String {
             for rep in 0..count {
                 for v in &b.variables {
                     let size = r.size(b.key, rep, v.key).unwrap_or(0);
-                    let raw = if size > 0 { r.get(b.key, rep, v.key, size).unwrap().to_vec() } else { Vec::new() };
+                    let raw = if size > 0 {
+                        r.get(b.key, rep, v.key, size).unwrap().to_vec()
+                    } else {
+                        Vec::new()
+                    };
                     let mut shown = hex(&raw);
-                    if (name == "RequestXfer" || name == "AbortXfer") && v.name == "ID" && raw.len() == 8 {
+                    if (name == "RequestXfer" || name == "AbortXfer")
+                        && v.name == "ID"
+                        && raw.len() == 8
+                    {
                         let id = u64::from_le_bytes(raw[..8].try_into().unwrap());
-                        shown = format!("<xfer id {}>", xfer_ids.get(&id).map_or("unknown", String::as_str));
+                        shown = format!(
+                            "<xfer id {}>",
+                            xfer_ids.get(&id).map_or("unknown", String::as_str)
+                        );
                         if body.len() >= 18 && body[10..18] == raw[..] {
                             body[10..18].fill(0);
                             random_id = true;
@@ -661,8 +761,18 @@ pub fn packet_text(wire_in: &[u8], xfer_ids: &HashMap<u64, String>) -> String {
             }
         }
     }
-    let wirelen: i64 = if random_id && zerocoded { -1 } else { wire.len() as i64 };
-    let mut out = format!("  packet {} flags={:02x} zerocoded={} wirelen={}\n", name, wire[0], i32::from(zerocoded), wirelen);
+    let wirelen: i64 = if random_id && zerocoded {
+        -1
+    } else {
+        wire.len() as i64
+    };
+    let mut out = format!(
+        "  packet {} flags={:02x} zerocoded={} wirelen={}\n",
+        name,
+        wire[0],
+        i32::from(zerocoded),
+        wirelen
+    );
     if random_id && zerocoded {
         out.push_str("    wire <zero-coded with the random xfer id: see body>\n");
     } else {
@@ -722,7 +832,11 @@ pub enum Xfers {
     Fake { next: u64, list: Vec<FakeXfer> },
     /// The real `LLXferManager` (scrub corpus, set 4): its receive list, the
     /// ids in request order (`g_real_ids`), and the next id.
-    Real { list: Vec<RealXfer>, ids: Vec<u64>, next: u64 },
+    Real {
+        list: Vec<RealXfer>,
+        ids: Vec<u64>,
+        next: u64,
+    },
 }
 
 /// How a create callback records (the trace's or set 4's).
@@ -809,9 +923,16 @@ impl Scene {
             http: VecDeque::new(),
             timers: VecDeque::new(),
             xfers: if real_xfer {
-                Xfers::Real { list: Vec::new(), ids: Vec::new(), next: 0x5a17_0000_0000_0001 }
+                Xfers::Real {
+                    list: Vec::new(),
+                    ids: Vec::new(),
+                    next: 0x5a17_0000_0000_0001,
+                }
             } else {
-                Xfers::Fake { next: 1001, list: Vec::new() }
+                Xfers::Fake {
+                    next: 1001,
+                    list: Vec::new(),
+                }
             },
             cache: BTreeMap::new(),
             written: Vec::new(),
@@ -843,13 +964,20 @@ impl Scene {
 
     pub fn env(&self) -> Env<'static> {
         Env {
-            agent: Agent { id: agent(), session: session(), group: agent_group() },
+            agent: Agent {
+                id: agent(),
+                session: session(),
+                group: agent_group(),
+            },
             region: self.region.then_some(Region {
                 request_task_inventory: if self.cap_rti { CAP_RTI } else { "" },
                 create_task_inventory_item: if self.cap_create { CAP_CREATE } else { "" },
             }),
             you_owner: self.obj.you_owner,
-            selection: self.selected.then_some(Selection { owner: other(), group: other_group() }),
+            selection: self.selected.then_some(Selection {
+                owner: other(),
+                group: other_group(),
+            }),
             in_open_sim: false,
             names: names(),
         }
@@ -888,7 +1016,10 @@ impl Scene {
                 names.push(f);
             }
         }
-        let parts: Vec<String> = names.iter().map(|n| String::from_utf8_lossy(n).into_owned()).collect();
+        let parts: Vec<String> = names
+            .iter()
+            .map(|n| String::from_utf8_lossy(n).into_owned())
+            .collect();
         format!("[{}]", parts.join(","))
     }
 
@@ -922,8 +1053,12 @@ impl Scene {
             Action::NotifyListeners => {
                 let brief = inv_brief(self.obj.inv.as_deref());
                 let serial = self.obj.st.serial;
-                let lines: Vec<String> =
-                    self.obj.callbacks.iter().map(|l| format!("callback L{l} ser={serial} inv={brief}")).collect();
+                let lines: Vec<String> = self
+                    .obj
+                    .callbacks
+                    .iter()
+                    .map(|l| format!("callback L{l} ser={serial} inv={brief}"))
+                    .collect();
                 self.rec.extend(lines);
             }
             Action::Send(msg) => {
@@ -945,7 +1080,12 @@ impl Scene {
             }
             Action::HttpGet { url } => {
                 self.add(format!("http.get TaskInventoryRequest {url}"));
-                self.http.push_back(PendingHttp { method: "GET", url, body: Value::Undefined, kind: HttpKind::Cap });
+                self.http.push_back(PendingHttp {
+                    method: "GET",
+                    url,
+                    body: Value::Undefined,
+                    kind: HttpKind::Cap,
+                });
             }
             Action::LaunchDelayedFetch { seconds } => {
                 self.add("coro.launch LLViewerObject::fetchInventoryDelayedCoro()");
@@ -954,7 +1094,13 @@ impl Scene {
                 self.timers.push_back(s);
             }
             Action::RequestXfer { filename, serial } => {
-                let id = self.request_file(&filename, Ft { filename: filename.clone(), serial });
+                let id = self.request_file(
+                    &filename,
+                    Ft {
+                        filename: filename.clone(),
+                        serial,
+                    },
+                );
                 let acts = task::xfer_requested(&self.view(), &self.env(), id);
                 self.run(acts);
             }
@@ -965,7 +1111,9 @@ impl Scene {
             Action::HideFloater { name, key } => {
                 let k = match key {
                     FloaterKey::Id(id) => nm(&id),
-                    FloaterKey::ItemAndObject { id, object } => format!("{{id={},object={}}}", nm(&id), nm(&object)),
+                    FloaterKey::ItemAndObject { id, object } => {
+                        format!("{{id={},object={}}}", nm(&id), nm(&object))
+                    }
                 };
                 self.add(format!("floater.hide {name} {k}"));
             }
@@ -973,7 +1121,12 @@ impl Scene {
                 self.add("coro.launch LLViewerObject::createInventoryItemCoro");
                 self.add(format!("http.post CreateTaskInventoryItem {url}"));
                 let callback = self.create_callback;
-                self.http.push_back(PendingHttp { method: "POST", url, body, kind: HttpKind::Create { callback } });
+                self.http.push_back(PendingHttp {
+                    method: "POST",
+                    url,
+                    body,
+                    kind: HttpKind::Create { callback },
+                });
             }
             Action::CreateCallback { success } => {
                 let result = self.create_result.clone().unwrap_or_else(Value::map);
@@ -981,7 +1134,11 @@ impl Scene {
             }
             Action::CreateFailed { message } => {
                 let mut result = Value::map();
-                insert(&mut result, "message", Value::String(message.as_bytes().to_vec()));
+                insert(
+                    &mut result,
+                    "message",
+                    Value::String(message.as_bytes().to_vec()),
+                );
                 self.create_callback_record(false, &result);
             }
         }
@@ -991,7 +1148,11 @@ impl Scene {
         match self.create_callback {
             CreateCallback::Trace => {
                 let m = as_string(get(result, "message"));
-                self.add(format!("create.callback success={} message={}", i32::from(success), esc(&m)));
+                self.add(format!(
+                    "create.callback success={} message={}",
+                    i32::from(success),
+                    esc(&m)
+                ));
             }
             CreateCallback::Body => {
                 let mut shown = result.clone();
@@ -999,7 +1160,12 @@ impl Scene {
                     m.remove(b"http_result".as_slice());
                 }
                 let http_type = as_integer(get(get(result, "http_result"), "type"));
-                self.add(format!("create.callback success={} result={} http_type={}", i32::from(success), notation(&shown), http_type));
+                self.add(format!(
+                    "create.callback success={} result={} http_type={}",
+                    i32::from(success),
+                    notation(&shown),
+                    http_type
+                ));
             }
         }
     }
@@ -1009,12 +1175,21 @@ impl Scene {
     fn request_file(&mut self, filename: &[u8], ft: Ft) -> u64 {
         let mut local = b"<cache>/".to_vec();
         local.extend_from_slice(filename);
-        let args = format!(" local={} remote={} path=4 delete=1 priority=1 big=0", printable(&local), printable(filename));
+        let args = format!(
+            " local={} remote={} path=4 delete=1 priority=1 big=0",
+            printable(&local),
+            printable(filename)
+        );
         match &mut self.xfers {
             Xfers::Fake { next, list } => {
                 let id = *next;
                 *next += 1;
-                list.push(FakeXfer { id, local: filename.to_vec(), ft, aborted: false });
+                list.push(FakeXfer {
+                    id,
+                    local: filename.to_vec(),
+                    ft,
+                    aborted: false,
+                });
                 self.rec.push(format!("xfer.request id={id}{args}"));
                 id
             }
@@ -1032,10 +1207,16 @@ impl Scene {
     /// its own `LLFilenameAndTask`), then `startPendingDownloads` sends
     /// `RequestXfer`.
     fn real_request_file(&mut self, remote: &[u8]) -> u64 {
-        let Xfers::Real { list, ids, next } = &mut self.xfers else { unreachable!() };
+        let Xfers::Real { list, ids, next } = &mut self.xfers else {
+            unreachable!()
+        };
         let id = *next;
         *next = next.wrapping_add(0x0101_0101_0101_0101);
-        list.push(RealXfer { id, remote: remote.to_vec(), status: RealStatus::Pending });
+        list.push(RealXfer {
+            id,
+            remote: remote.to_vec(),
+            status: RealStatus::Pending,
+        });
         ids.push(id);
         if remote.len() >= 4 && remote.ends_with(b".tmp") {
             self.cache.remove(remote);
@@ -1045,7 +1226,9 @@ impl Scene {
     }
 
     fn start_pending_downloads(&mut self) {
-        let Xfers::Real { list, .. } = &mut self.xfers else { return };
+        let Xfers::Real { list, .. } = &mut self.xfers else {
+            return;
+        };
         let mut started = Vec::new();
         for x in list.iter_mut().rev() {
             if x.status == RealStatus::Pending {
@@ -1058,13 +1241,27 @@ impl Scene {
             let mut b = Builder::new();
             b.new_message(t.clone());
             b.next_block(block_key(&t, "XferID")).unwrap();
-            b.add_data(key_of(&t, "XferID", "ID"), &id.to_le_bytes(), VarType::U64).unwrap();
+            b.add_data(key_of(&t, "XferID", "ID"), &id.to_le_bytes(), VarType::U64)
+                .unwrap();
             add_string(&mut b, key_of(&t, "XferID", "Filename"), &remote).unwrap();
-            b.add_data(key_of(&t, "XferID", "FilePath"), &[4], VarType::U8).unwrap();
-            b.add_data(key_of(&t, "XferID", "DeleteOnCompletion"), &[1], VarType::Bool).unwrap();
-            b.add_data(key_of(&t, "XferID", "UseBigPackets"), &[0], VarType::Bool).unwrap();
-            b.add_data(key_of(&t, "XferID", "VFileID"), &NULL_ID, VarType::LLUUID).unwrap();
-            b.add_data(key_of(&t, "XferID", "VFileType"), &(-1i16).to_le_bytes(), VarType::S16).unwrap();
+            b.add_data(key_of(&t, "XferID", "FilePath"), &[4], VarType::U8)
+                .unwrap();
+            b.add_data(
+                key_of(&t, "XferID", "DeleteOnCompletion"),
+                &[1],
+                VarType::Bool,
+            )
+            .unwrap();
+            b.add_data(key_of(&t, "XferID", "UseBigPackets"), &[0], VarType::Bool)
+                .unwrap();
+            b.add_data(key_of(&t, "XferID", "VFileID"), &NULL_ID, VarType::LLUUID)
+                .unwrap();
+            b.add_data(
+                key_of(&t, "XferID", "VFileType"),
+                &(-1i16).to_le_bytes(),
+                VarType::S16,
+            )
+            .unwrap();
             let d = datagram(&mut b, true);
             if let Some(c) = self.capture.as_mut() {
                 c.push(d);
@@ -1082,15 +1279,23 @@ impl Scene {
                 }
             }
             Xfers::Real { list, .. } => {
-                let Some(i) = list.iter().position(|x| x.id == id) else { return };
+                let Some(i) = list.iter().position(|x| x.id == id) else {
+                    return;
+                };
                 if list[i].status == RealStatus::InProgress {
                     list[i].status = RealStatus::Aborted;
                     let t = template("AbortXfer");
                     let mut b = Builder::new();
                     b.new_message(t.clone());
                     b.next_block(block_key(&t, "XferID")).unwrap();
-                    b.add_data(key_of(&t, "XferID", "ID"), &id.to_le_bytes(), VarType::U64).unwrap();
-                    b.add_data(key_of(&t, "XferID", "Result"), &code.to_le_bytes(), VarType::S32).unwrap();
+                    b.add_data(key_of(&t, "XferID", "ID"), &id.to_le_bytes(), VarType::U64)
+                        .unwrap();
+                    b.add_data(
+                        key_of(&t, "XferID", "Result"),
+                        &code.to_le_bytes(),
+                        VarType::S32,
+                    )
+                    .unwrap();
                     let d = datagram(&mut b, false);
                     if let Some(c) = self.capture.as_mut() {
                         c.push(d);
@@ -1122,14 +1327,20 @@ impl Scene {
     /// The real manager's receive list as `real#k` names (the packets').
     pub fn real_ids(&self) -> HashMap<u64, String> {
         match &self.xfers {
-            Xfers::Real { list, .. } => list.iter().enumerate().map(|(i, x)| (x.id, format!("real#{}", i + 1))).collect(),
+            Xfers::Real { list, .. } => list
+                .iter()
+                .enumerate()
+                .map(|(i, x)| (x.id, format!("real#{}", i + 1)))
+                .collect(),
             Xfers::Fake { .. } => HashMap::new(),
         }
     }
 
     /// The oldest (or newest) fake transfer neither completed nor aborted.
     pub fn live_xfer(&self, newest: bool) -> Option<usize> {
-        let Xfers::Fake { list, .. } = &self.xfers else { return None };
+        let Xfers::Fake { list, .. } = &self.xfers else {
+            return None;
+        };
         let mut found = None;
         for (i, x) in list.iter().enumerate() {
             if !x.aborted {
@@ -1143,7 +1354,9 @@ impl Scene {
     }
 
     pub fn take_xfer(&mut self, i: usize) -> FakeXfer {
-        let Xfers::Fake { list, .. } = &mut self.xfers else { unreachable!() };
+        let Xfers::Fake { list, .. } = &mut self.xfers else {
+            unreachable!()
+        };
         list.remove(i)
     }
 
@@ -1153,7 +1366,14 @@ impl Scene {
             return;
         }
         let file = self.cache.get(&ft.filename).cloned();
-        let acts = task::xfer_completed(&self.view(), &self.env(), ft.serial, &ft.filename, code, file.as_deref());
+        let acts = task::xfer_completed(
+            &self.view(),
+            &self.env(),
+            ft.serial,
+            &ft.filename,
+            code,
+            file.as_deref(),
+        );
         self.run(acts);
     }
 
@@ -1209,7 +1429,10 @@ impl Scene {
             None => (!self.http.is_empty()).then_some(0),
         };
         let Some(index) = index else {
-            self.add(format!("http.complete none-pending{}", method.map_or(String::new(), |m| format!(" {m}"))));
+            self.add(format!(
+                "http.complete none-pending{}",
+                method.map_or(String::new(), |m| format!(" {m}"))
+            ));
             return;
         };
         let p = self.http.remove(index).unwrap();
@@ -1247,7 +1470,8 @@ impl Scene {
         match p.kind {
             HttpKind::Cap => {
                 if self.alive {
-                    let acts = task::cap_fetch_reply(&self.view(), &self.env(), ok, status, &result);
+                    let acts =
+                        task::cap_fetch_reply(&self.view(), &self.env(), ok, status, &result);
                     self.run(acts);
                 }
             }
@@ -1338,7 +1562,13 @@ impl Scene {
         let before = self.pending_http_count();
         let mut perm = Permissions::DEFAULT;
         perm.init(&agent(), &agent(), &NULL_ID, &NULL_ID);
-        perm.init_masks(PERM_ALL, PERM_ALL, PERM_NONE, PERM_NONE, PERM_MOVE | PERM_TRANSFER);
+        perm.init_masks(
+            PERM_ALL,
+            PERM_ALL,
+            PERM_NONE,
+            PERM_NONE,
+            PERM_MOVE | PERM_TRANSFER,
+        );
         let req = CreateRequest {
             asset_type: AssetType::LSL_TEXT,
             inventory_type: InventoryType::LSL,
@@ -1394,8 +1624,16 @@ impl Scene {
                     "rep.hi" => st.expected.wrapping_add(1),
                     _ => st.expected,
                 };
-                let name = if ev == "rep.none" { Vec::new() } else { serial_file_name(serial) };
-                self.add(format!("in ReplyTaskInventory serial={} filename={}", serial, esc(&name)));
+                let name = if ev == "rep.none" {
+                    Vec::new()
+                } else {
+                    serial_file_name(serial)
+                };
+                self.add(format!(
+                    "in ReplyTaskInventory serial={} filename={}",
+                    serial,
+                    esc(&name)
+                ));
                 self.deliver_reply(serial, &name);
             }
             "xfer.ok" => self.complete_xfer("ok", false),
@@ -1414,23 +1652,44 @@ impl Scene {
             "cap.err" => self.complete_http(None, 500, Some("GET")),
             "cap.nocontents" => {
                 let mut body = Value::map();
-                insert(&mut body, "inventory_serial", Value::Integer(i32::from(self.obj.st.expected)));
+                insert(
+                    &mut body,
+                    "inventory_serial",
+                    Value::Integer(i32::from(self.obj.st.expected)),
+                );
                 self.complete_http(Some(body), 200, Some("GET"));
             }
             "upd.known" => {
-                let a = ItemSpec { desc: b"edited".to_vec(), ..spec_a() };
+                let a = ItemSpec {
+                    desc: b"edited".to_vec(),
+                    ..spec_a()
+                };
                 self.update_item(&a, TASK_INVENTORY_ITEM_KEY, false);
             }
             "upd.guess" => {
-                let c = ItemSpec { id: item('c'), asset: asset('c'), name: b"Guessed C".to_vec(), ..spec_a() };
+                let c = ItemSpec {
+                    id: item('c'),
+                    asset: asset('c'),
+                    name: b"Guessed C".to_vec(),
+                    ..spec_a()
+                };
                 self.update_item(&c, TASK_INVENTORY_ITEM_KEY, false);
             }
             "upd.new" => {
-                let d = ItemSpec { id: item('d'), asset: asset('d'), name: b"New D".to_vec(), ..spec_a() };
+                let d = ItemSpec {
+                    id: item('d'),
+                    asset: asset('d'),
+                    name: b"New D".to_vec(),
+                    ..spec_a()
+                };
                 self.update_item(&d, TASK_INVENTORY_ITEM_KEY, true);
             }
             "upd.asset" => {
-                let a = ItemSpec { id: item('e'), desc: b"by asset".to_vec(), ..spec_a() };
+                let a = ItemSpec {
+                    id: item('e'),
+                    desc: b"by asset".to_vec(),
+                    ..spec_a()
+                };
                 self.update_item(&a, TASK_INVENTORY_ASSET_KEY, false);
             }
             "remove" => self.remove_inventory(&item('a')),
@@ -1442,7 +1701,11 @@ impl Scene {
                 if let Some(v) = ev.strip_prefix("rep=") {
                     let serial = atoi(v) as i16;
                     let name = serial_file_name(serial);
-                    self.add(format!("in ReplyTaskInventory serial={} filename={}", serial, esc(&name)));
+                    self.add(format!(
+                        "in ReplyTaskInventory serial={} filename={}",
+                        serial,
+                        esc(&name)
+                    ));
                     self.deliver_reply(serial, &name);
                 } else if let Some(v) = ev.strip_prefix("cap=") {
                     let r = standard_reply(atoi(v));
@@ -1487,9 +1750,18 @@ impl Scene {
         let entries = inv.unwrap_or(&[]);
         let mut out = format!("{indent}helpers root=");
         out.push_str(&lookup::root(entries).map_or("none".to_owned(), |i| nm(&entries[i].id())));
-        let contents: Vec<&Entry> = lookup::contents(entries).into_iter().map(|i| &entries[i]).collect();
+        let contents: Vec<&Entry> = lookup::contents(entries)
+            .into_iter()
+            .map(|i| &entries[i])
+            .collect();
         out.push_str(" contents=[");
-        out.push_str(&contents.iter().map(|e| nm(&e.id())).collect::<Vec<_>>().join(","));
+        out.push_str(
+            &contents
+                .iter()
+                .map(|e| nm(&e.id()))
+                .collect::<Vec<_>>()
+                .join(","),
+        );
         out.push(']');
         let mut types: Vec<i32> = Vec::new();
         let mut assets: Vec<Uuid> = Vec::new();
@@ -1515,11 +1787,15 @@ impl Scene {
             }
         }
         out.push_str(" count{");
-        let counts: Vec<String> =
-            types.iter().map(|&t| format!("{}:{}", t, lookup::count_of_type(entries, AssetType(t)))).collect();
+        let counts: Vec<String> = types
+            .iter()
+            .map(|&t| format!("{}:{}", t, lookup::count_of_type(entries, AssetType(t))))
+            .collect();
         out.push_str(&counts.join(","));
         out.push('}');
-        let safe = plain.iter().all(|&t| t == AssetType::CATEGORY.0 || t == AssetType::NONE.0);
+        let safe = plain
+            .iter()
+            .all(|&t| t == AssetType::CATEGORY.0 || t == AssetType::NONE.0);
         out.push_str(" byasset{");
         if !safe {
             out.push_str("not-called");
@@ -1527,7 +1803,8 @@ impl Scene {
             let parts: Vec<String> = assets
                 .iter()
                 .map(|a| {
-                    let f = lookup::item_by_asset(entries, a).map_or("none".to_owned(), |i| nm(&entries[i].id()));
+                    let f = lookup::item_by_asset(entries, a)
+                        .map_or("none".to_owned(), |i| nm(&entries[i].id()));
                     format!("{}:{}", nm(a), f)
                 })
                 .collect();
@@ -1549,7 +1826,8 @@ impl Scene {
                 continue;
             }
             out.push_str(
-                &lookup::item_by_asset_and_type(entries, a, AssetType(*t)).map_or("none".to_owned(), |i| nm(&entries[i].id())),
+                &lookup::item_by_asset_and_type(entries, a, AssetType(*t))
+                    .map_or("none".to_owned(), |i| nm(&entries[i].id())),
             );
         }
         out.push_str("} byid{");
@@ -1592,7 +1870,8 @@ impl Scene {
                 out.push_str("not-called");
                 continue;
             }
-            let r = lookup::is_asset_in_inventory(inv, &self.obj.pending, &it.item.asset, AssetType(t));
+            let r =
+                lookup::is_asset_in_inventory(inv, &self.obj.pending, &it.item.asset, AssetType(t));
             out.push(if r { '1' } else { '0' });
         }
         let _ = writeln!(
@@ -1623,7 +1902,11 @@ impl Scene {
             let _ = write!(
                 out,
                 "{indent} [{i}] {} uuid={} parent={} type={} name={} thumb={} fav={} runtime={} created={}",
-                if e.as_item().is_some() { "item" } else { "object" },
+                if e.as_item().is_some() {
+                    "item"
+                } else {
+                    "object"
+                },
                 nm(&o.id),
                 nm(&o.parent),
                 o.asset_type.0,
@@ -1684,7 +1967,13 @@ pub fn perm_text(p: &Permissions) -> String {
 pub fn inv_brief(inv: Option<&[Entry]>) -> String {
     match inv {
         None => "-".to_owned(),
-        Some(inv) => format!("[{}]", inv.iter().map(|e| nm(&e.id())).collect::<Vec<_>>().join(",")),
+        Some(inv) => format!(
+            "[{}]",
+            inv.iter()
+                .map(|e| nm(&e.id()))
+                .collect::<Vec<_>>()
+                .join(",")
+        ),
     }
 }
 
@@ -1727,7 +2016,14 @@ pub fn run_trace(caps: bool, listeners: u32, events: &[&str], label: &str) -> St
             continue;
         }
         let actions = s.take();
-        let _ = writeln!(out, " {} | {} cache={} | {}", e, s.state_line(), s.cache_text(), actions);
+        let _ = writeln!(
+            out,
+            " {} | {} cache={} | {}",
+            e,
+            s.state_line(),
+            s.cache_text(),
+            actions
+        );
     }
     out
 }

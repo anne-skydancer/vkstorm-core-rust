@@ -233,7 +233,10 @@ impl AssetType {
             .iter()
             .find(|e| {
                 e.desc.len() == name.len()
-                    && e.desc.bytes().zip(name).all(|(d, &n)| d == n.to_ascii_uppercase())
+                    && e.desc
+                        .bytes()
+                        .zip(name)
+                        .all(|(d, &n)| d == n.to_ascii_uppercase())
             })
             .map_or(AssetType::NONE, |e| e.asset_type)
     }
@@ -257,7 +260,11 @@ mod tests {
 
     #[test]
     fn entries_are_in_map_order() {
-        assert!(ENTRIES.windows(2).all(|w| w[0].asset_type.0 < w[1].asset_type.0));
+        assert!(
+            ENTRIES
+                .windows(2)
+                .all(|w| w[0].asset_type.0 < w[1].asset_type.0)
+        );
         assert!(ENTRIES.iter().all(|e| e.type_name.len() <= 8));
     }
 }

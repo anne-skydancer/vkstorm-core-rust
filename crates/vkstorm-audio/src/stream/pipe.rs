@@ -103,7 +103,11 @@ impl Pipe {
             if let Some(e) = &st.end {
                 return Err(e.clone());
             }
-            st = self.cv.wait_timeout(st, WAIT).unwrap_or_else(|e| e.into_inner()).0;
+            st = self
+                .cv
+                .wait_timeout(st, WAIT)
+                .unwrap_or_else(|e| e.into_inner())
+                .0;
         }
     }
 
@@ -117,7 +121,11 @@ impl Pipe {
             }
             let room = self.capacity.saturating_sub(st.data.len());
             if room == 0 {
-                st = self.cv.wait_timeout(st, WAIT).unwrap_or_else(|e| e.into_inner()).0;
+                st = self
+                    .cv
+                    .wait_timeout(st, WAIT)
+                    .unwrap_or_else(|e| e.into_inner())
+                    .0;
                 continue;
             }
             let n = room.min(bytes.len());
@@ -174,7 +182,11 @@ impl Pipe {
             if st.end.is_some() {
                 return Ok(0);
             }
-            st = self.cv.wait_timeout(st, WAIT).unwrap_or_else(|e| e.into_inner()).0;
+            st = self
+                .cv
+                .wait_timeout(st, WAIT)
+                .unwrap_or_else(|e| e.into_inner())
+                .0;
         }
     }
 

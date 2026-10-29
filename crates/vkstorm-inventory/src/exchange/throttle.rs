@@ -48,7 +48,11 @@ pub fn check_offer_throttle(host: &mut dyn Host, from_name: &[u8], check_only: b
                 if host.setting_bool("FSNotifyIncomingObjectSpamFrom") {
                     log_msg = host.trans(
                         "ItemsComingInTooFastFrom",
-                        &[("APP_NAME", app), ("FROM_NAME", from_name.to_vec()), ("TIME", time)],
+                        &[
+                            ("APP_NAME", app),
+                            ("FROM_NAME", from_name.to_vec()),
+                            ("TIME", time),
+                        ],
                     );
                 }
             } else if host.setting_bool("FSNotifyIncomingObjectSpam") {
@@ -57,7 +61,12 @@ pub fn check_offer_throttle(host: &mut dyn Host, from_name: &[u8], check_only: b
             if !log_msg.is_empty() {
                 let mut args = Value::Undefined;
                 insert(&mut args, "MESSAGE", Value::String(log_msg));
-                host.act(Action::Notify { name: "SystemMessage".to_owned(), substitutions: args, payload: Value::Undefined, handler: None });
+                host.act(Action::Notify {
+                    name: "SystemMessage".to_owned(),
+                    substitutions: args,
+                    payload: Value::Undefined,
+                    handler: None,
+                });
             }
             host.throttle().logged = true;
         }

@@ -18,7 +18,10 @@
 
 use vkstorm_llsd::text::uuid_set;
 
-use super::object::{apply_metadata, push_id_line, push_metadata, push_text_line, push_type_line, rescanned_value, KEYWORD_VALUE};
+use super::object::{
+    KEYWORD_VALUE, apply_metadata, push_id_line, push_metadata, push_text_line, push_type_line,
+    rescanned_value,
+};
 use super::reader::Stream;
 use super::sale::MAX_STRING;
 use super::scanf::sscanf;

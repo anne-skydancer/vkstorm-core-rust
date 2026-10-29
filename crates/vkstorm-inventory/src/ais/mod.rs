@@ -31,9 +31,10 @@ pub mod update;
 
 pub use command::{CapKind, Command, CommandType, Method, Refusal, Request};
 pub use result::{
-    begin, callback_ids, error_branch, process_result, AlertState, CommandContext, CommandResult, HttpStatus,
+    AlertState, CommandContext, CommandResult, HttpStatus, begin, callback_ids, error_branch,
+    process_result,
 };
 pub use update::{
-    ApplyOp, CategoryRecord, FetchTimer, Flow, ItemRecord, Model, ModelCategory, ModelRef, ParseContext, ParsedUpdate,
-    UpdateSummary,
+    ApplyOp, CategoryRecord, FetchTimer, Flow, ItemRecord, Model, ModelCategory, ModelRef,
+    ParseContext, ParsedUpdate, UpdateSummary,
 };

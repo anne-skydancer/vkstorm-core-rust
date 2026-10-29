@@ -35,9 +35,18 @@ fn matches_the_standard_library() {
     };
     let library = Library::native();
     let dir = std::env::temp_dir();
-    let exe = dir.join(if cfg!(windows) { "unordered_order_probe.exe" } else { "unordered_order_probe" });
+    let exe = dir.join(if cfg!(windows) {
+        "unordered_order_probe.exe"
+    } else {
+        "unordered_order_probe"
+    });
     let src = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/cxx/unordered_order_probe.cpp");
-    let st = Command::new(&cxx).args(["-std=c++17", "-O1", "-o"]).arg(&exe).arg(&src).status().expect("cannot run VKS_CXX");
+    let st = Command::new(&cxx)
+        .args(["-std=c++17", "-O1", "-o"])
+        .arg(&exe)
+        .arg(&src)
+        .status()
+        .expect("cannot run VKS_CXX");
     assert!(st.success(), "probe failed to compile");
 
     // One container for the whole script, as the probe keeps one (clear
@@ -89,10 +98,17 @@ fn matches_the_standard_library() {
         .output()
         .expect("cannot run the probe");
     assert!(out.status.success(), "probe failed: {:?}", out.status);
-    let got: Vec<String> = String::from_utf8(out.stdout).unwrap().lines().map(str::to_owned).collect();
+    let got: Vec<String> = String::from_utf8(out.stdout)
+        .unwrap()
+        .lines()
+        .map(str::to_owned)
+        .collect();
     assert_eq!(got.len(), want.len());
     for (i, (g, w)) in got.iter().zip(&want).enumerate() {
         assert_eq!(g, w, "print {i} differs");
     }
-    eprintln!("{} orders compared with the C++ standard library", want.len());
+    eprintln!(
+        "{} orders compared with the C++ standard library",
+        want.len()
+    );
 }

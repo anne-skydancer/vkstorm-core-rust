@@ -271,7 +271,12 @@ impl Shared {
     }
 
     /// The session thread finished (its last converted audio is pushed).
-    pub(crate) fn session_ended(&self, id: u64, conv: &Mutex<Converter>, outcome: Result<(), StreamError>) {
+    pub(crate) fn session_ended(
+        &self,
+        id: u64,
+        conv: &Mutex<Converter>,
+        outcome: Result<(), StreamError>,
+    ) {
         let segments = lock(conv).segments.clone();
         let mut c = lock(&self.ctrl);
         if c.session != id {
@@ -305,10 +310,18 @@ impl Shared {
             Phase::Failed(r) => PlayerState::Failed(r.clone()),
             Phase::Connecting => PlayerState::Connecting,
             Phase::Streaming | Phase::Reconnecting => {
-                if lock(&self.ring).primed { PlayerState::Playing } else { PlayerState::Buffering }
+                if lock(&self.ring).primed {
+                    PlayerState::Playing
+                } else {
+                    PlayerState::Buffering
+                }
             }
             Phase::Finished => {
-                if lock(&self.ring).frames() == 0 { PlayerState::Ended } else { PlayerState::Playing }
+                if lock(&self.ring).frames() == 0 {
+                    PlayerState::Ended
+                } else {
+                    PlayerState::Playing
+                }
             }
         }
     }
@@ -495,7 +508,10 @@ impl MusicPlayer {
     /// stream ends, fails or is stopped or replaced; take a new one after
     /// each [`MusicPlayer::start`].
     pub fn reader(&self) -> MusicReader {
-        MusicReader { shared: self.shared.clone(), generation: self.shared.generation() }
+        MusicReader {
+            shared: self.shared.clone(),
+            generation: self.shared.generation(),
+        }
     }
 
     /// The output device's rate changed: the buffered audio is converted
@@ -581,11 +597,16 @@ impl MusicPlayer {
             cancel,
             url: c.url.clone(),
             net: Self::net_config(&cfg),
-            decode: DecodeCtx { ffmpeg_dir: cfg.ffmpeg_dir.clone() },
+            decode: DecodeCtx {
+                ffmpeg_dir: cfg.ffmpeg_dir.clone(),
+            },
             reconnect_delays: cfg.reconnect_delays.clone(),
             conv,
         };
-        match std::thread::Builder::new().name("vks-music".into()).spawn(move || session::run(ctx)) {
+        match std::thread::Builder::new()
+            .name("vks-music".into())
+            .spawn(move || session::run(ctx))
+        {
             Ok(h) => c.threads.push(h),
             Err(e) => c.phase = Phase::Failed(format!("cannot start the stream thread: {e}")),
         }
@@ -621,7 +642,11 @@ impl MusicSource for MusicReader {
     fn pull(&mut self, out: &mut [f32], max_frames: usize) -> Pulled {
         let mut r = lock(&self.shared.ring);
         if r.generation != self.generation {
-            return Pulled { frames: 0, layout: ChannelLayout::STEREO, ended: true };
+            return Pulled {
+                frames: 0,
+                layout: ChannelLayout::STEREO,
+                ended: true,
+            };
         }
         r.pull(out, max_frames)
     }

@@ -63,7 +63,10 @@ fn avalanche3(mut h: u64) -> u64 {
 }
 
 fn mix16(input: &[u8], i: usize, s: usize) -> u64 {
-    fold64(r64(input, i) ^ r64(&SECRET, s), r64(input, i + 8) ^ r64(&SECRET, s + 8))
+    fold64(
+        r64(input, i) ^ r64(&SECRET, s),
+        r64(input, i + 8) ^ r64(&SECRET, s + 8),
+    )
 }
 
 fn mix32(acc: (u64, u64), input: &[u8], i1: usize, i2: usize, s: usize) -> (u64, u64) {
@@ -94,7 +97,9 @@ fn len_0to16(input: &[u8]) -> (u64, u64) {
         let (mut mlo, mut mhi) = mul128(in_lo ^ in_hi ^ flip_lo, P64_1);
         mlo = mlo.wrapping_add(((len - 1) as u64) << 54);
         in_hi ^= flip_hi;
-        mhi = mhi.wrapping_add(in_hi).wrapping_add((in_hi as u32 as u64).wrapping_mul(P32_2 - 1));
+        mhi = mhi
+            .wrapping_add(in_hi)
+            .wrapping_add((in_hi as u32 as u64).wrapping_mul(P32_2 - 1));
         mlo ^= mhi.swap_bytes();
         let (hlo, mut hhi) = mul128(mlo, P64_2);
         hhi = hhi.wrapping_add(mhi.wrapping_mul(P64_2));
@@ -121,9 +126,15 @@ fn len_0to16(input: &[u8]) -> (u64, u64) {
         let combined_hi = combined_lo.swap_bytes().rotate_left(13);
         let flip_lo = r32(&SECRET, 0) ^ r32(&SECRET, 4);
         let flip_hi = r32(&SECRET, 8) ^ r32(&SECRET, 12);
-        return (avalanche64(combined_lo as u64 ^ flip_lo), avalanche64(combined_hi as u64 ^ flip_hi));
+        return (
+            avalanche64(combined_lo as u64 ^ flip_lo),
+            avalanche64(combined_hi as u64 ^ flip_hi),
+        );
     }
-    (avalanche64(r64(&SECRET, 64) ^ r64(&SECRET, 72)), avalanche64(r64(&SECRET, 80) ^ r64(&SECRET, 88)))
+    (
+        avalanche64(r64(&SECRET, 64) ^ r64(&SECRET, 72)),
+        avalanche64(r64(&SECRET, 80) ^ r64(&SECRET, 88)),
+    )
 }
 
 fn len_17to128(input: &[u8]) -> (u64, u64) {
@@ -165,7 +176,9 @@ fn accumulate_512(acc: &mut [u64; 8], input: &[u8], at: usize, s: usize) {
         let v = r64(input, at + lane * 8);
         let k = v ^ r64(&SECRET, s + lane * 8);
         acc[lane ^ 1] = acc[lane ^ 1].wrapping_add(v);
-        acc[lane] = (k & 0xffff_ffff).wrapping_mul(k >> 32).wrapping_add(acc[lane]);
+        acc[lane] = (k & 0xffff_ffff)
+            .wrapping_mul(k >> 32)
+            .wrapping_add(acc[lane]);
     }
 }
 
@@ -181,7 +194,10 @@ fn scramble(acc: &mut [u64; 8], s: usize) {
 fn merge(acc: &[u64; 8], s: usize, start: u64) -> u64 {
     let mut r = start;
     for i in 0..4 {
-        r = r.wrapping_add(fold64(acc[2 * i] ^ r64(&SECRET, s + 16 * i), acc[2 * i + 1] ^ r64(&SECRET, s + 16 * i + 8)));
+        r = r.wrapping_add(fold64(
+            acc[2 * i] ^ r64(&SECRET, s + 16 * i),
+            acc[2 * i + 1] ^ r64(&SECRET, s + 16 * i + 8),
+        ));
     }
     avalanche3(r)
 }
@@ -204,7 +220,11 @@ fn long(input: &[u8]) -> (u64, u64) {
     }
     accumulate_512(&mut acc, input, len - 64, SECRET.len() - 64 - 7);
     let lo = merge(&acc, 11, (len as u64).wrapping_mul(P64_1));
-    let hi = merge(&acc, SECRET.len() - 64 - 11, !(len as u64).wrapping_mul(P64_2));
+    let hi = merge(
+        &acc,
+        SECRET.len() - 64 - 11,
+        !(len as u64).wrapping_mul(P64_2),
+    );
     (lo, hi)
 }
 
@@ -234,6 +254,9 @@ mod tests {
     #[test]
     fn known_vectors() {
         // XXH3_128bits("") (xxHash's sanity table, seed 0)
-        assert_eq!(xxh3_128(b""), (0x6001_C324_468D_497F, 0x99AA_06D3_0147_98D8));
+        assert_eq!(
+            xxh3_128(b""),
+            (0x6001_C324_468D_497F, 0x99AA_06D3_0147_98D8)
+        );
     }
 }

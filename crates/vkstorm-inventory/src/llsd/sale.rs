@@ -8,7 +8,7 @@
 use vkstorm_llsd::Value;
 
 use super::coerce::{as_integer, as_string, get, has, insert, u32_from_sd};
-use crate::sale::{clamp_price, SaleInfo, SaleType};
+use crate::sale::{SaleInfo, SaleType, clamp_price};
 
 /// `ST_TYPE_LABEL`.
 pub const SALE_TYPE: &str = "sale_type";
@@ -65,7 +65,9 @@ impl SaleInfo {
     /// price `(S32)` clamped.
     pub fn from_sd(sd: &Value) -> SaleInfo {
         let mut s = SaleInfo::DEFAULT;
-        s.set_sale_type(SaleType::from_name_cstr(Some(&as_string(get(sd, SALE_TYPE)))));
+        s.set_sale_type(SaleType::from_name_cstr(Some(&as_string(get(
+            sd, SALE_TYPE,
+        )))));
         s.set_sale_price(clamp_price(as_integer(get(sd, SALE_PRICE))));
         s
     }
@@ -73,7 +75,11 @@ impl SaleInfo {
     /// `LLSaleInfo::packMessage()` (LLSD): the type as `(U8)` and the price.
     pub fn pack_message_llsd(&self) -> Value {
         let mut sd = Value::map();
-        insert(&mut sd, "sale-type", Value::Integer(i32::from(self.sale_type.0 as u8)));
+        insert(
+            &mut sd,
+            "sale-type",
+            Value::Integer(i32::from(self.sale_type.0 as u8)),
+        );
         insert(&mut sd, "sale-price", Value::Integer(self.price));
         sd
     }

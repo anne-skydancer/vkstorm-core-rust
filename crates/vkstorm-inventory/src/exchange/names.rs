@@ -26,7 +26,9 @@ pub fn rfind_bytes(hay: &[u8], needle: &[u8]) -> Option<usize> {
     if needle.len() > hay.len() {
         return None;
     }
-    (0..=hay.len() - needle.len()).rev().find(|&i| &hay[i..i + needle.len()] == needle)
+    (0..=hay.len() - needle.len())
+        .rev()
+        .find(|&i| &hay[i..i + needle.len()] == needle)
 }
 
 /// `LLCacheName::cleanFullName`: with `LLAvatarName::trimResidentSurname()`
@@ -70,8 +72,16 @@ pub fn build_legacy_name(complete: &[u8]) -> Vec<u8> {
         if close == complete.len() - 1 {
             let start = open + 2;
             let length = close.wrapping_sub(open).wrapping_sub(2);
-            let end = if start > complete.len() { complete.len() } else { start.saturating_add(length).min(complete.len()) };
-            let legacy = if start > complete.len() { &complete[0..0] } else { &complete[start..end] };
+            let end = if start > complete.len() {
+                complete.len()
+            } else {
+                start.saturating_add(length).min(complete.len())
+            };
+            let legacy = if start > complete.len() {
+                &complete[0..0]
+            } else {
+                &complete[start..end]
+            };
             if !legacy.is_empty() {
                 let mut out = Vec::new();
                 out.push(legacy[0].to_ascii_uppercase());
@@ -95,7 +105,10 @@ pub fn build_legacy_name(complete: &[u8]) -> Vec<u8> {
 /// `LLMuteList::isLinden`: the second space-separated token (dots read as
 /// spaces), lower-cased, is `linden`.
 pub fn is_linden(name: &[u8]) -> bool {
-    let replaced: Vec<u8> = name.iter().map(|&c| if c == b'.' { b' ' } else { c }).collect();
+    let replaced: Vec<u8> = name
+        .iter()
+        .map(|&c| if c == b'.' { b' ' } else { c })
+        .collect();
     let mut tokens = replaced.split(|&c| c == b' ').filter(|t| !t.is_empty());
     if tokens.next().is_none() {
         return false;
@@ -240,11 +253,17 @@ pub struct PipeTokens<'a> {
 
 impl<'a> PipeTokens<'a> {
     pub fn new(s: &'a [u8]) -> PipeTokens<'a> {
-        PipeTokens { tokens: s.split(|&c| c == b'|').collect() }
+        PipeTokens {
+            tokens: s.split(|&c| c == b'|').collect(),
+        }
     }
 
     pub fn token(&self, i: usize) -> &'a [u8] {
-        self.tokens.get(i).or(self.tokens.last()).copied().unwrap_or(&[])
+        self.tokens
+            .get(i)
+            .or(self.tokens.last())
+            .copied()
+            .unwrap_or(&[])
     }
 }
 

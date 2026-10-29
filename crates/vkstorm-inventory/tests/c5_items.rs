@@ -24,7 +24,6 @@ use vkstorm_inventory::object::Object;
 use vkstorm_inventory::types::{AssetType, FolderType, InventoryType};
 use vkstorm_llsd::Value;
 
-
 /// The asset line of an item's legacy text and its byte range
 /// (`\t\tasset_id\t` or else `\t\tshadow_id\t` up to its newline).
 fn asset_line(t: &[u8]) -> Option<(usize, usize)> {
@@ -47,7 +46,9 @@ fn c5_item_record(cs: &str, f: &ItemF, s: &mut Lines) {
     if sale_ok {
         let (k, n) = (asset_line(&key), asset_line(&nokey));
         let rest_same = match (k, n) {
-            (Some((ka, kb)), Some((na, nb))) => key[..ka] == nokey[..na] && key[kb..] == nokey[nb..],
+            (Some((ka, kb)), Some((na, nb))) => {
+                key[..ka] == nokey[..na] && key[kb..] == nokey[nb..]
+            }
             _ => false,
         };
         let nv = n.map_or_else(|| "-".to_owned(), |(na, nb)| esc(&nokey[na..nb]));
@@ -64,7 +65,11 @@ fn c5_item_record(cs: &str, f: &ItemF, s: &mut Lines) {
         let mut back = make_item(&prev_item());
         let ok = back.import_legacy_stream(&mut is);
         s.emit(cs, "legacy.reimport", &item_cols(&back));
-        s.emit(cs, "legacy.reimport.stream", &with_ret(ok, stream_cols(&is, text)));
+        s.emit(
+            cs,
+            "legacy.reimport.stream",
+            &with_ret(ok, stream_cols(&is, text)),
+        );
     }
     {
         let mut obj = Vec::new();
@@ -86,7 +91,15 @@ fn c5_item_record(cs: &str, f: &ItemF, s: &mut Lines) {
             .iter()
             .filter(|(k, _)| k.as_slice() != b"preexisting")
             .all(|(k, v)| llsd_bin(v) == llsd_bin(get(&sd, std::str::from_utf8(k).unwrap())));
-        s.emit(cs, "llsd.into", &[esc_str(&keys.join(",")), bl(same), d(as_integer(get(&into, "preexisting")))]);
+        s.emit(
+            cs,
+            "llsd.into",
+            &[
+                esc_str(&keys.join(",")),
+                bl(same),
+                d(as_integer(get(&into, "preexisting"))),
+            ],
+        );
     }
     s.emit(cs, "crc", &[x8(item.crc32())]);
     s.emit(
@@ -104,7 +117,11 @@ fn c5_item_record(cs: &str, f: &ItemF, s: &mut Lines) {
         let mut n = Item::default();
         let ok = n.from_llsd(&sd, true, false);
         s.emit(cs, "fromllsd.new", &item_cols(&n));
-        s.emit(cs, "fromllsd.new.ret", &[bl(ok), bl(llsd_bin(&n.to_llsd()) == llsd_bin(&sd))]);
+        s.emit(
+            cs,
+            "fromllsd.new.ret",
+            &[bl(ok), bl(llsd_bin(&n.to_llsd()) == llsd_bin(&sd))],
+        );
     }
     {
         let mut o = make_item(&prev_item());
@@ -156,7 +173,11 @@ fn c5_matrix_lines() -> Lines {
     let mut s = Lines::default();
     for at in ASSET_TYPES {
         for it in INV_TYPES {
-            let f = ItemF { ty: at, inv_type: it, ..base_item() };
+            let f = ItemF {
+                ty: at,
+                inv_type: it,
+                ..base_item()
+            };
             let item = make_item(&f);
             let mut text = Vec::new();
             item.export_legacy_stream(&mut text, true);
@@ -166,7 +187,10 @@ fn c5_matrix_lines() -> Lines {
                     None => "-".to_owned(),
                     Some(p) => {
                         let a = p + pat.len();
-                        let e = a + text[a..].iter().position(|&c| c == b'\n').unwrap_or(text.len() - a);
+                        let e = a + text[a..]
+                            .iter()
+                            .position(|&c| c == b'\n')
+                            .unwrap_or(text.len() - a);
                         esc(&text[a..e])
                     }
                 }
@@ -206,7 +230,6 @@ fn c5_matrix_lines() -> Lines {
     s
 }
 
-
 /// `c5_cat_record<I>()` over the crate.
 fn c5_cat_record(cs: &str, f: &CatF, s: &mut Lines) {
     let cat = make_cat(f);
@@ -220,7 +243,11 @@ fn c5_cat_record(cs: &str, f: &CatF, s: &mut Lines) {
         let mut back = make_cat(&prev_cat());
         let ok = back.import_legacy_stream(&mut is);
         s.emit(cs, "legacy.reimport", &cat_cols(&back));
-        s.emit(cs, "legacy.reimport.stream", &with_ret(ok, stream_cols(&is, text)));
+        s.emit(
+            cs,
+            "legacy.reimport.stream",
+            &with_ret(ok, stream_cols(&is, text)),
+        );
     }
     {
         let mut os = Vec::new();
@@ -231,7 +258,11 @@ fn c5_cat_record(cs: &str, f: &CatF, s: &mut Lines) {
         let mut back = make_obj(&prev_cat());
         let ok = back.import_legacy_stream(&mut is);
         s.emit(cs, "legacy.object.reimport", &obj_cols(&back));
-        s.emit(cs, "legacy.object.reimport.stream", &with_ret(ok, stream_cols(&is, text)));
+        s.emit(
+            cs,
+            "legacy.object.reimport.stream",
+            &with_ret(ok, stream_cols(&is, text)),
+        );
     }
     let as_sd = cat.to_llsd();
     let ais = cat.to_ais_create_llsd();
@@ -265,12 +296,20 @@ fn c5_cat_record(cs: &str, f: &CatF, s: &mut Lines) {
         s.emit(cs, "vimportmap", &vcat_cols(&v));
         let mut again = Value::Undefined;
         v.export_llsd(&mut again);
-        s.emit(cs, "vimportmap.identity", &[bl(llsd_bin(&again) == llsd_bin(&vex))]);
+        s.emit(
+            cs,
+            "vimportmap.identity",
+            &[bl(llsd_bin(&again) == llsd_bin(&vex))],
+        );
     }
     {
         let c = cat.create_sd();
         s.emit(cs, "sdcreate.bin", &[llsd_bin(&c)]);
-        s.emit(cs, "sdcreate.back", &cat_cols(&Category::from_create_sd(&c)));
+        s.emit(
+            cs,
+            "sdcreate.back",
+            &cat_cols(&Category::from_create_sd(&c)),
+        );
         s.emit(cs, "copy", &cat_cols(&Category::copy_from(&cat)));
         let ctor = Category::new(&f.id, &f.parent, FolderType(f.pref), &f.name);
         s.emit(cs, "ctor", &cat_cols(&ctor));
@@ -283,8 +322,14 @@ fn c5_categories_lines() -> Lines {
     for (cs, f) in c5_cat_cases() {
         c5_cat_record(&cs, &f, &mut s);
     }
-    let names: [Vec<u8>; 6] =
-        [b"Object name".to_vec(), Vec::new(), b"  spaced  ".to_vec(), vec![b'o'; 80], b"pipe|obj".to_vec(), b"caf\xc3\xa9".to_vec()];
+    let names: [Vec<u8>; 6] = [
+        b"Object name".to_vec(),
+        Vec::new(),
+        b"  spaced  ".to_vec(),
+        vec![b'o'; 80],
+        b"pipe|obj".to_vec(),
+        b"caf\xc3\xa9".to_vec(),
+    ];
     for (i, name) in names.iter().enumerate() {
         let f = CatF {
             id: u(0xe5),
@@ -305,7 +350,11 @@ fn c5_categories_lines() -> Lines {
         let mut back = make_obj(&prev_cat());
         let ok = back.import_legacy_stream(&mut is);
         s.emit(&cs, "legacy.reimport", &obj_cols(&back));
-        s.emit(&cs, "legacy.reimport.stream", &with_ret(ok, stream_cols(&is, text)));
+        s.emit(
+            &cs,
+            "legacy.reimport.stream",
+            &with_ret(ok, stream_cols(&is, text)),
+        );
         let ctor = Object::new(&f.id, &f.parent, AssetType(f.ty), &f.name);
         s.emit(&cs, "ctor", &obj_cols(&ctor));
         let mut cp = make_obj(&prev_cat());
@@ -338,7 +387,11 @@ fn draw_id(r: &mut Rng) -> [u8; 16] {
 
 fn draw_mask(r: &mut Rng) -> u32 {
     let v = r.next();
-    if v & 1 != 0 { MASK_EDGES[((v >> 1) % 18) as usize] } else { (v >> 32) as u32 }
+    if v & 1 != 0 {
+        MASK_EDGES[((v >> 1) % 18) as usize]
+    } else {
+        (v >> 32) as u32
+    }
 }
 
 fn draw_perm(r: &mut Rng) -> PermF {
@@ -352,7 +405,18 @@ fn draw_perm(r: &mut Rng) -> PermF {
     let everyone = draw_mask(r);
     let next = draw_mask(r);
     let group_owned = r.coin();
-    PermF { creator, owner, last, group, base, owner_mask, group_mask, everyone, next, group_owned }
+    PermF {
+        creator,
+        owner,
+        last,
+        group,
+        base,
+        owner_mask,
+        group_mask,
+        everyone,
+        next,
+        group_owned,
+    }
 }
 
 fn draw_price(r: &mut Rng) -> i32 {
@@ -393,13 +457,21 @@ fn draw_item(r: &mut Rng, names: &[(Vec<u8>, Vec<u8>)]) -> ItemF {
         2 => vec![b'r'; 60],
         _ => b"lu au".to_vec(),
     };
-    f.flags = if r.coin() { FLAGS[r.below(7) as usize] } else { r.next() as u32 };
+    f.flags = if r.coin() {
+        FLAGS[r.below(7) as usize]
+    } else {
+        r.next() as u32
+    };
     f.perm = draw_perm(r);
     f.sale_type = r.below(4) as i32;
     f.sale_price = draw_price(r);
     f.name = names[r.below(16) as usize].0.clone();
     f.desc = names[r.below(16) as usize].1.clone();
-    f.date = if r.coin() { RT_DATES[r.below(6) as usize] } else { i64::from(r.next() as u32 as i32) };
+    f.date = if r.coin() {
+        RT_DATES[r.below(6) as usize]
+    } else {
+        i64::from(r.next() as u32 as i32)
+    };
     f
 }
 
@@ -409,14 +481,27 @@ fn draw_item(r: &mut Rng, names: &[(Vec<u8>, Vec<u8>)]) -> ItemF {
 
 /// The kind of a line, by its field.
 fn kind(field: &str) -> &'static str {
-    const LLSD: [&str; 9] = ["llsd", "fromllsd", "sdcreate", "asllsd", "ais", "export", "vexport", "importmap", "vimportmap"];
+    const LLSD: [&str; 9] = [
+        "llsd",
+        "fromllsd",
+        "sdcreate",
+        "asllsd",
+        "ais",
+        "export",
+        "vexport",
+        "importmap",
+        "vimportmap",
+    ];
     if field == "crc" {
         "crc"
     } else if field == "matrix" {
         "matrix"
     } else if field.starts_with("legacy") {
         "legacy"
-    } else if LLSD.iter().any(|p| field == *p || field.starts_with(&format!("{p}."))) {
+    } else if LLSD
+        .iter()
+        .any(|p| field == *p || field.starts_with(&format!("{p}.")))
+    {
         "llsd"
     } else {
         "record"
@@ -442,7 +527,10 @@ fn report_kinds(fixture: &str, expected: &[String], actual: &[String]) {
             tally("(shadow_id)");
         }
     }
-    let parts: Vec<String> = by.iter().map(|(k, (m, t))| format!("{k} {m}/{t}")).collect();
+    let parts: Vec<String> = by
+        .iter()
+        .map(|(k, (m, t))| format!("{k} {m}/{t}"))
+        .collect();
     println!("{fixture}: by kind: {}", parts.join(", "));
 }
 
@@ -509,7 +597,11 @@ fn c5_matrix_full_records() {
     let mut digest = ChunkedDigest::new("c5mf", n);
     for i in 0..(ASSET_TYPES.len() as u64 * n) {
         digest.begin_case(i);
-        let f = ItemF { ty: ASSET_TYPES[(i / n) as usize], inv_type: INV_TYPES[(i % n) as usize], ..base_item() };
+        let f = ItemF {
+            ty: ASSET_TYPES[(i / n) as usize],
+            inv_type: INV_TYPES[(i % n) as usize],
+            ..base_item()
+        };
         let mut lines = Lines::default();
         c5_item_record(&format!("c5mf.{}.{}", f.ty, f.inv_type), &f, &mut lines);
         for line in &lines.0 {

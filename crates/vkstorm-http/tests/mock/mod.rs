@@ -17,7 +17,9 @@ pub const LLSD_OK: &[u8] = b"<?xml version=\"1.0\" ?><llsd><map><key>reply</key>
 
 /// Deterministic body of n bytes (the Python server's `pattern`).
 pub fn pattern(n: usize) -> Vec<u8> {
-    (0..n).map(|i| (((i * 7 + 13) ^ (i >> 8)) & 0xFF) as u8).collect()
+    (0..n)
+        .map(|i| (((i * 7 + 13) ^ (i >> 8)) & 0xFF) as u8)
+        .collect()
 }
 
 #[derive(Clone, Debug)]
@@ -36,7 +38,10 @@ pub struct Recorded {
 
 impl Recorded {
     pub fn header(&self, name: &str) -> Option<&str> {
-        self.headers.iter().find(|(n, _)| n.eq_ignore_ascii_case(name)).map(|(_, v)| v.as_str())
+        self.headers
+            .iter()
+            .find(|(n, _)| n.eq_ignore_ascii_case(name))
+            .map(|(_, v)| v.as_str())
     }
 }
 
@@ -76,12 +81,18 @@ impl MockServer {
                         let s3 = s2.clone();
                         thread::spawn(move || Connection::new(sock, s3).run());
                     }
-                    Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => thread::sleep(Duration::from_millis(5)),
+                    Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                        thread::sleep(Duration::from_millis(5))
+                    }
                     Err(_) => break,
                 }
             }
         });
-        MockServer { shared, port, thread: Some(thread) }
+        MockServer {
+            shared,
+            port,
+            thread: Some(thread),
+        }
     }
 
     pub fn url(&self, path: &str) -> String {
@@ -134,7 +145,13 @@ fn find(hay: &[u8], needle: &[u8]) -> Option<usize> {
 impl Connection {
     fn new(sock: TcpStream, shared: Arc<Shared>) -> Connection {
         let conn = shared.conn_counter.fetch_add(1, Ordering::Relaxed) + 1;
-        Connection { sock, shared, conn, seq: 0, buf: Vec::new() }
+        Connection {
+            sock,
+            shared,
+            conn,
+            seq: 0,
+            buf: Vec::new(),
+        }
     }
 
     fn fill(&mut self) -> bool {
@@ -189,8 +206,14 @@ impl Connection {
             headers.push((n.to_owned(), v.trim().to_owned()));
         }
         let mut body = Vec::new();
-        let te = headers.iter().find(|(n, _)| n.eq_ignore_ascii_case("transfer-encoding")).map(|(_, v)| v.to_ascii_lowercase());
-        let cl = headers.iter().find(|(n, _)| n.eq_ignore_ascii_case("content-length")).and_then(|(_, v)| v.parse::<usize>().ok());
+        let te = headers
+            .iter()
+            .find(|(n, _)| n.eq_ignore_ascii_case("transfer-encoding"))
+            .map(|(_, v)| v.to_ascii_lowercase());
+        let cl = headers
+            .iter()
+            .find(|(n, _)| n.eq_ignore_ascii_case("content-length"))
+            .and_then(|(_, v)| v.parse::<usize>().ok());
         if te.as_deref().is_some_and(|t| t.contains("chunked")) {
             loop {
                 if !self.recv_until(b"\r\n") {
@@ -199,7 +222,8 @@ impl Connection {
                 let p = find(&self.buf, b"\r\n").unwrap();
                 let line = String::from_utf8_lossy(&self.buf[..p]).into_owned();
                 self.buf.drain(..p + 2);
-                let size = usize::from_str_radix(line.split(';').next().unwrap_or("0").trim(), 16).unwrap_or(0);
+                let size = usize::from_str_radix(line.split(';').next().unwrap_or("0").trim(), 16)
+                    .unwrap_or(0);
                 if size == 0 {
                     if !self.recv_until(b"\r\n") {
                         return None;
@@ -221,7 +245,14 @@ impl Connection {
             body.extend_from_slice(&self.buf[..n]);
             self.buf.drain(..n);
         }
-        Some(Req { method, target, version, headers, body, raw_head })
+        Some(Req {
+            method,
+            target,
+            version,
+            headers,
+            body,
+            raw_head,
+        })
     }
 
     fn run(mut self) {
@@ -259,7 +290,15 @@ impl Connection {
         let _ = self.sock.shutdown(Shutdown::Both);
     }
 
-    fn send(&mut self, status: u32, reason: &str, headers: &[(&str, String)], body: &[u8], content_length: bool, close: bool) -> bool {
+    fn send(
+        &mut self,
+        status: u32,
+        reason: &str,
+        headers: &[(&str, String)],
+        body: &[u8],
+        content_length: bool,
+        close: bool,
+    ) -> bool {
         let mut head = format!("HTTP/1.1 {status} {reason}\r\n");
         if content_length && status != 204 && status != 304 {
             head.push_str(&format!("Content-Length: {}\r\n", body.len()));
@@ -285,46 +324,104 @@ impl Connection {
         let ct = |v: &str| ("Content-Type", v.to_owned());
         match kind {
             "mark" => self.send(200, "OK", &[ct("text/plain")], b"", true, false),
-            "ok" => self.send(200, "OK", &[ct("application/llsd+xml")], LLSD_OK, true, false),
+            "ok" => self.send(
+                200,
+                "OK",
+                &[ct("application/llsd+xml")],
+                LLSD_OK,
+                true,
+                false,
+            ),
             "large" => {
                 let n: usize = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
                 let full = pattern(n);
-                let range = req.headers.iter().find(|(h, _)| h.eq_ignore_ascii_case("range")).map(|(_, v)| v.clone());
+                let range = req
+                    .headers
+                    .iter()
+                    .find(|(h, _)| h.eq_ignore_ascii_case("range"))
+                    .map(|(_, v)| v.clone());
                 match range.as_deref().and_then(|r| r.strip_prefix("bytes=")) {
                     Some(spec) => {
                         let (a, b) = spec.split_once('-').unwrap_or((spec, ""));
                         let first: usize = a.parse().unwrap_or(0);
-                        let last: usize = if b.is_empty() { n.saturating_sub(1) } else { b.parse().unwrap_or(0) };
+                        let last: usize = if b.is_empty() {
+                            n.saturating_sub(1)
+                        } else {
+                            b.parse().unwrap_or(0)
+                        };
                         if first >= n {
-                            self.send(416, "Range Not Satisfiable", &[("Content-Range", format!("bytes */{n}")), ct("text/plain")], b"out of range", true, false)
+                            self.send(
+                                416,
+                                "Range Not Satisfiable",
+                                &[("Content-Range", format!("bytes */{n}")), ct("text/plain")],
+                                b"out of range",
+                                true,
+                                false,
+                            )
                         } else {
                             let last = last.min(n - 1);
                             self.send(
                                 206,
                                 "Partial Content",
-                                &[("Content-Range", format!("bytes {first}-{last}/{n}")), ct("application/octet-stream")],
+                                &[
+                                    ("Content-Range", format!("bytes {first}-{last}/{n}")),
+                                    ct("application/octet-stream"),
+                                ],
                                 &full[first..=last],
                                 true,
                                 false,
                             )
                         }
                     }
-                    None => self.send(200, "OK", &[ct("application/octet-stream")], &full, true, false),
+                    None => self.send(
+                        200,
+                        "OK",
+                        &[ct("application/octet-stream")],
+                        &full,
+                        true,
+                        false,
+                    ),
                 }
             }
             "echo" => {
-                let ctype = req.headers.iter().find(|(h, _)| h.eq_ignore_ascii_case("content-type")).map(|(_, v)| v.clone()).unwrap_or_else(|| "text/plain".into());
+                let ctype = req
+                    .headers
+                    .iter()
+                    .find(|(h, _)| h.eq_ignore_ascii_case("content-type"))
+                    .map(|(_, v)| v.clone())
+                    .unwrap_or_else(|| "text/plain".into());
                 let body = req.body.clone();
-                self.send(200, "OK", &[("Content-Type", ctype), ("X-Echo-Method", req.method.clone())], &body, true, false)
+                self.send(
+                    200,
+                    "OK",
+                    &[
+                        ("Content-Type", ctype),
+                        ("X-Echo-Method", req.method.clone()),
+                    ],
+                    &body,
+                    true,
+                    false,
+                )
             }
             "status" => {
                 let code: u32 = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(500);
-                self.send(code, "Status", &[ct("text/plain")], format!("status {code}").as_bytes(), true, false)
+                self.send(
+                    code,
+                    "Status",
+                    &[ct("text/plain")],
+                    format!("status {code}").as_bytes(),
+                    true,
+                    false,
+                )
             }
             "flaky" => {
                 let key = parts.get(1).copied().unwrap_or("").to_owned();
                 let limit: u32 = parts.get(2).and_then(|s| s.parse().ok()).unwrap_or(0);
-                let retry = if parts.get(3) == Some(&"retry") { parts.get(4).map(|s| s.to_string()) } else { None };
+                let retry = if parts.get(3) == Some(&"retry") {
+                    parts.get(4).map(|s| s.to_string())
+                } else {
+                    None
+                };
                 let count = {
                     let mut f = self.shared.flaky.lock().unwrap();
                     let c = f.entry(key).or_insert(0);
@@ -339,7 +436,14 @@ impl Connection {
                     }
                     self.send(503, "Service Unavailable", &hdrs, b"flaky", true, false)
                 } else {
-                    self.send(200, "OK", &[ct("application/llsd+xml")], LLSD_OK, true, false)
+                    self.send(
+                        200,
+                        "OK",
+                        &[ct("application/llsd+xml")],
+                        LLSD_OK,
+                        true,
+                        false,
+                    )
                 }
             }
             "timeout" => {
@@ -350,7 +454,9 @@ impl Connection {
             "partial" | "reset" => {
                 let n: usize = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
                 let full = pattern(n);
-                let head = format!("HTTP/1.1 200 OK\r\nContent-Length: {n}\r\nContent-Type: application/octet-stream\r\n\r\n");
+                let head = format!(
+                    "HTTP/1.1 200 OK\r\nContent-Length: {n}\r\nContent-Type: application/octet-stream\r\n\r\n"
+                );
                 let mut out = head.into_bytes();
                 out.extend_from_slice(&full[..n / 2]);
                 let _ = self.sock.write_all(&out);
@@ -361,33 +467,89 @@ impl Connection {
             }
             "redirect" => {
                 let n: u32 = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(1);
-                let location = if n <= 1 { "/ok/".to_owned() } else { format!("/redirect/{}", n - 1) };
-                self.send(302, "Found", &[("Location", location), ct("text/plain")], b"moved", true, false)
+                let location = if n <= 1 {
+                    "/ok/".to_owned()
+                } else {
+                    format!("/redirect/{}", n - 1)
+                };
+                self.send(
+                    302,
+                    "Found",
+                    &[("Location", location), ct("text/plain")],
+                    b"moved",
+                    true,
+                    false,
+                )
             }
             "slow" => {
                 let ms: u64 = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
                 thread::sleep(Duration::from_millis(ms));
-                self.send(200, "OK", &[ct("application/llsd+xml")], LLSD_OK, true, false)
+                self.send(
+                    200,
+                    "OK",
+                    &[ct("application/llsd+xml")],
+                    LLSD_OK,
+                    true,
+                    false,
+                )
             }
             "headers" => {
-                let hdrs: Vec<(String, String)> = req.headers.iter().map(|(n, v)| (format!("X-Reflect-{n}"), v.clone())).collect();
-                let mut refs: Vec<(&str, String)> = hdrs.iter().map(|(n, v)| (n.as_str(), v.clone())).collect();
+                let hdrs: Vec<(String, String)> = req
+                    .headers
+                    .iter()
+                    .map(|(n, v)| (format!("X-Reflect-{n}"), v.clone()))
+                    .collect();
+                let mut refs: Vec<(&str, String)> =
+                    hdrs.iter().map(|(n, v)| (n.as_str(), v.clone())).collect();
                 refs.push(ct("text/plain"));
                 self.send(200, "OK", &refs, b"reflected", true, false)
             }
             "cookie" => {
                 if parts.get(1) == Some(&"set") {
-                    self.send(200, "OK", &[("Set-Cookie", "vks=1; Path=/".into()), ct("text/plain")], b"set", true, false)
+                    self.send(
+                        200,
+                        "OK",
+                        &[("Set-Cookie", "vks=1; Path=/".into()), ct("text/plain")],
+                        b"set",
+                        true,
+                        false,
+                    )
                 } else {
-                    let c = req.headers.iter().find(|(h, _)| h.eq_ignore_ascii_case("cookie")).map(|(_, v)| v.clone()).unwrap_or_default();
-                    self.send(200, "OK", &[ct("text/plain")], format!("cookie:{c}").as_bytes(), true, false)
+                    let c = req
+                        .headers
+                        .iter()
+                        .find(|(h, _)| h.eq_ignore_ascii_case("cookie"))
+                        .map(|(_, v)| v.clone())
+                        .unwrap_or_default();
+                    self.send(
+                        200,
+                        "OK",
+                        &[ct("text/plain")],
+                        format!("cookie:{c}").as_bytes(),
+                        true,
+                        false,
+                    )
                 }
             }
             "nolength" => {
-                self.send(200, "OK", &[ct("text/plain")], b"no length body", false, true);
+                self.send(
+                    200,
+                    "OK",
+                    &[ct("text/plain")],
+                    b"no length body",
+                    false,
+                    true,
+                );
                 false
             }
-            "badrange" => self.send(206, "Partial Content", &[("Content-Range", "bytes 10-5/100".into()), ct("text/plain")], b"bad", true, false),
+            "badrange" => self.send(
+                206,
+                "Partial Content",
+                &[("Content-Range", "bytes 10-5/100".into()), ct("text/plain")],
+                b"bad",
+                true,
+                false,
+            ),
             "chunked" => {
                 let body = pattern(1000);
                 let mut out = b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nContent-Type: application/octet-stream\r\n\r\n".to_vec();
@@ -399,7 +561,14 @@ impl Connection {
                 out.extend_from_slice(b"0\r\n\r\n");
                 self.sock.write_all(&out).is_ok()
             }
-            _ => self.send(404, "Not Found", &[ct("text/plain")], b"not found", true, false),
+            _ => self.send(
+                404,
+                "Not Found",
+                &[ct("text/plain")],
+                b"not found",
+                true,
+                false,
+            ),
         }
     }
 }

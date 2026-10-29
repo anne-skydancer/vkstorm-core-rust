@@ -16,7 +16,7 @@
 //! Everything crosses into the port through its C-shaped API with memory
 //! streams; no file I/O.
 
-use std::ffi::{c_void, CString};
+use std::ffi::{CString, c_void};
 
 use vkstorm_openjp2::openjpeg::*;
 
@@ -65,7 +65,10 @@ impl std::fmt::Display for Error {
             Error::Header(e) => write!(f, "j2c header: {e}"),
             Error::Decode(e) => write!(f, "j2c decode: {e}"),
             Error::Encode(e) => write!(f, "j2c encode: {e}"),
-            Error::NoChannels { components, first_channel } => write!(
+            Error::NoChannels {
+                components,
+                first_channel,
+            } => write!(
                 f,
                 "j2c: no channels selected (components {components}, first channel {first_channel})"
             ),
@@ -192,7 +195,11 @@ fn open_decoder<'a>(mem: &mut ReadMem<'a>, reduce: u32) -> Result<Handles, Error
         opj_stream_set_user_data_length(stream, mem.data.len() as u64);
 
         let codec = opj_create_decompress(CODEC_FORMAT::OPJ_CODEC_J2K);
-        let mut h = Handles { codec, stream, image: std::ptr::null_mut() };
+        let mut h = Handles {
+            codec,
+            stream,
+            image: std::ptr::null_mut(),
+        };
         let mut params: opj_dparameters_t = std::mem::zeroed();
         opj_set_default_decoder_parameters(&mut params);
         params.cp_reduce = reduce;
@@ -234,18 +241,31 @@ pub fn decode(
     first_channel: u32,
     max_channels: u32,
 ) -> Result<Decoded, Error> {
-    let data = if max_bytes > 0 && max_bytes < data.len() { &data[..max_bytes] } else { data };
+    let data = if max_bytes > 0 && max_bytes < data.len() {
+        &data[..max_bytes]
+    } else {
+        data
+    };
     let mut mem = ReadMem { data, pos: 0 };
     let h = open_decoder(&mut mem, discard_level)?;
     unsafe {
         let components = (*h.image).numcomps;
         let channels = components.saturating_sub(first_channel).min(max_channels);
         if channels == 0 {
-            return Err(Error::NoChannels { components, first_channel });
+            return Err(Error::NoChannels {
+                components,
+                first_channel,
+            });
         }
         run_decode(&h, discard_level)?;
         let (width, height, data) = convert(&*h.image, first_channel as usize, channels as usize)?;
-        Ok(Decoded { width, height, channels, components, data })
+        Ok(Decoded {
+            width,
+            height,
+            channels,
+            components,
+            data,
+        })
     }
 }
 
@@ -261,14 +281,22 @@ pub struct Dimensions {
 /// an OpenJPEG `opj_decode` call, for like-for-like benchmarks against the C
 /// library; [`decode`] adds the conversion to the viewer's 8-bit layout.
 pub fn decode_only(data: &[u8], max_bytes: usize, discard_level: u32) -> Result<Dimensions, Error> {
-    let data = if max_bytes > 0 && max_bytes < data.len() { &data[..max_bytes] } else { data };
+    let data = if max_bytes > 0 && max_bytes < data.len() {
+        &data[..max_bytes]
+    } else {
+        data
+    };
     let mut mem = ReadMem { data, pos: 0 };
     let h = open_decoder(&mut mem, discard_level)?;
     unsafe {
         run_decode(&h, discard_level)?;
         let img = &*h.image;
         let comps = std::slice::from_raw_parts(img.comps, img.numcomps as usize);
-        Ok(Dimensions { width: comps[0].w, height: comps[0].h, components: img.numcomps })
+        Ok(Dimensions {
+            width: comps[0].w,
+            height: comps[0].h,
+            components: img.numcomps,
+        })
     }
 }
 
@@ -276,7 +304,9 @@ pub fn decode_only(data: &[u8], max_bytes: usize, discard_level: u32) -> Result<
 unsafe fn run_decode(h: &Handles, discard_level: u32) -> Result<(), Error> {
     unsafe {
         if discard_level > 0 && opj_set_decoded_resolution_factor(h.codec, discard_level) == 0 {
-            return Err(Error::Decode(format!("discard level {discard_level} not available")));
+            return Err(Error::Decode(format!(
+                "discard level {discard_level} not available"
+            )));
         }
         if opj_decode(h.codec, h.stream, h.image) == 0 {
             return Err(Error::Decode("decode failed".into()));
@@ -302,8 +332,16 @@ unsafe fn convert(img: &opj_image_t, fc: usize, c: usize) -> Result<(u32, u32, V
         }
         let d = unsafe { std::slice::from_raw_parts(comp.data, w * h) };
         let prec = comp.prec;
-        let offset = if comp.sgnd != 0 { 1i32 << (prec - 1) } else { 0 };
-        let (shr, shl) = if prec > 8 { (prec - 8, 0) } else { (0, 8 - prec) };
+        let offset = if comp.sgnd != 0 {
+            1i32 << (prec - 1)
+        } else {
+            0
+        };
+        let (shr, shl) = if prec > 8 {
+            (prec - 8, 0)
+        } else {
+            (0, 8 - prec)
+        };
         for y in 0..h {
             let src = &d[y * w..(y + 1) * w];
             let dst = &mut out[(h - 1 - y) * w * c..(h - y) * w * c];
@@ -366,7 +404,10 @@ pub fn layers_for_surface(surface: u32) -> u32 {
 
 /// Compression ratios from lowest to highest quality: 8 * 4^i descending.
 pub fn compression_ratios(layers: u32) -> Vec<u32> {
-    (0..layers).rev().map(|i| LAST_COMPRESSION_RATIO * (1u32 << (2 * i))).collect()
+    (0..layers)
+        .rev()
+        .map(|i| LAST_COMPRESSION_RATIO * (1u32 << (2 * i)))
+        .collect()
 }
 
 /// Number of resolution levels the viewer requests for small images (either
@@ -374,8 +415,16 @@ pub fn compression_ratios(layers: u32) -> Vec<u32> {
 /// default of 6.
 pub fn resolutions_for(width: u32, height: u32) -> Option<u32> {
     const MIN_IMAGE_SIZE: u32 = 4;
-    let w_tiles = if width >> 6 == 0 && width >= MIN_IMAGE_SIZE { 1 } else { width >> 6 };
-    let h_tiles = if height >> 6 == 0 && height >= MIN_IMAGE_SIZE { 1 } else { height >> 6 };
+    let w_tiles = if width >> 6 == 0 && width >= MIN_IMAGE_SIZE {
+        1
+    } else {
+        width >> 6
+    };
+    let h_tiles = if height >> 6 == 0 && height >= MIN_IMAGE_SIZE {
+        1
+    } else {
+        height >> 6
+    };
     if w_tiles == 1 || h_tiles == 1 {
         let min_dim = width.min(height).max(1);
         Some(1 + min_dim.ilog2())
@@ -400,7 +449,10 @@ pub fn encode(
 ) -> Result<Vec<u8>, Error> {
     let (w, h, c) = (width as usize, height as usize, channels as usize);
     if w == 0 || h == 0 || !(1..=4).contains(&c) || data.len() < w * h * c {
-        return Err(Error::Encode(format!("invalid raw image {width}x{height}x{channels} ({} bytes)", data.len())));
+        return Err(Error::Encode(format!(
+            "invalid raw image {width}x{height}x{channels} ({} bytes)",
+            data.len()
+        )));
     }
     let comment_c = CString::new(comment.unwrap_or("no comment").replace('\0', " "))
         .map_err(|e| Error::Encode(e.to_string()))?;
@@ -443,11 +495,19 @@ pub fn encode(
                 p
             })
             .collect();
-        let image = opj_image_create(c as u32, cmptparm.as_mut_ptr(), COLOR_SPACE::OPJ_CLRSPC_SRGB);
+        let image = opj_image_create(
+            c as u32,
+            cmptparm.as_mut_ptr(),
+            COLOR_SPACE::OPJ_CLRSPC_SRGB,
+        );
         if image.is_null() {
             return Err(Error::Encode("image allocation failed".into()));
         }
-        let mut hnd = Handles { codec: std::ptr::null_mut(), stream: std::ptr::null_mut(), image };
+        let mut hnd = Handles {
+            codec: std::ptr::null_mut(),
+            stream: std::ptr::null_mut(),
+            image,
+        };
         {
             let img = &mut *image;
             img.x0 = 0;
@@ -501,7 +561,11 @@ mod engine_info_tests {
     #[test]
     fn engine_info_matches_baseline() {
         let v = vkstorm_openjp2::UPSTREAM_BASELINE.version;
-        assert!(super::ENGINE_INFO.contains(v), "ENGINE_INFO {:?} does not carry the baseline version {v}", super::ENGINE_INFO);
+        assert!(
+            super::ENGINE_INFO.contains(v),
+            "ENGINE_INFO {:?} does not carry the baseline version {v}",
+            super::ENGINE_INFO
+        );
         // LLTextureCache stores the engine string in a 32-byte header field.
         assert!(super::ENGINE_INFO.len() < 32);
     }

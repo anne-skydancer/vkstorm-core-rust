@@ -24,9 +24,19 @@ use super::input::Input;
 use crate::music::ChannelLayout;
 
 enum Codec {
-    Vorbis { dec: Box<VorbisDecoder>, headers: u8 },
-    Opus { dec: Option<FfDecoder>, headers: u8, skip_left: usize, decoded: u64 },
-    Flac { dec: Option<(SymDecoder, ChannelLayout)> },
+    Vorbis {
+        dec: Box<VorbisDecoder>,
+        headers: u8,
+    },
+    Opus {
+        dec: Option<FfDecoder>,
+        headers: u8,
+        skip_left: usize,
+        decoded: u64,
+    },
+    Flac {
+        dec: Option<(SymDecoder, ChannelLayout)>,
+    },
 }
 
 struct Link {
@@ -66,7 +76,11 @@ fn identify(p: &[u8]) -> Kind {
     }
 }
 
-pub(crate) fn run_ogg(input: &mut Input, ctx: &DecodeCtx, sink: &mut dyn PcmSink) -> Result<(), StreamError> {
+pub(crate) fn run_ogg(
+    input: &mut Input,
+    ctx: &DecodeCtx,
+    sink: &mut dyn PcmSink,
+) -> Result<(), StreamError> {
     let mut sync = SyncState::new();
     let mut page = Page::new();
     let mut link: Option<Link> = None;
@@ -93,22 +107,39 @@ pub(crate) fn run_ogg(input: &mut Input, ctx: &DecodeCtx, sink: &mut dyn PcmSink
             if !in_group {
                 in_group = true;
                 // A new group: whatever played before ends here.
-                if link.as_ref().is_some_and(|l| l.serial != page.serialno() || produced) {
+                if link
+                    .as_ref()
+                    .is_some_and(|l| l.serial != page.serialno() || produced)
+                {
                     link = None;
                 }
             }
             match identify(page.body()) {
                 Kind::Video(what) => {
-                    return Err(StreamError::Failed(format!("the stream is video (Ogg with {what}), not audio")));
+                    return Err(StreamError::Failed(format!(
+                        "the stream is video (Ogg with {what}), not audio"
+                    )));
                 }
                 Kind::Other => continue,
                 kind if link.is_none() => {
                     let codec = match kind {
-                        Kind::Vorbis => Codec::Vorbis { dec: Box::new(VorbisDecoder::new()), headers: 0 },
-                        Kind::Opus => Codec::Opus { dec: None, headers: 0, skip_left: 0, decoded: 0 },
+                        Kind::Vorbis => Codec::Vorbis {
+                            dec: Box::new(VorbisDecoder::new()),
+                            headers: 0,
+                        },
+                        Kind::Opus => Codec::Opus {
+                            dec: None,
+                            headers: 0,
+                            skip_left: 0,
+                            decoded: 0,
+                        },
                         _ => Codec::Flac { dec: None },
                     };
-                    link = Some(Link { serial: page.serialno(), stream: StreamState::new(page.serialno()), codec });
+                    link = Some(Link {
+                        serial: page.serialno(),
+                        stream: StreamState::new(page.serialno()),
+                        codec,
+                    });
                     produced = false;
                 }
                 _ => continue, // a second audio stream of the group
@@ -136,7 +167,12 @@ pub(crate) fn run_ogg(input: &mut Input, ctx: &DecodeCtx, sink: &mut dyn PcmSink
 }
 
 /// Handles one packet of the current link; true when audio came out.
-fn packet(codec: &mut Codec, pkt: &Packet<'_>, ctx: &DecodeCtx, sink: &mut dyn PcmSink) -> Result<bool, StreamError> {
+fn packet(
+    codec: &mut Codec,
+    pkt: &Packet<'_>,
+    ctx: &DecodeCtx,
+    sink: &mut dyn PcmSink,
+) -> Result<bool, StreamError> {
     match codec {
         Codec::Vorbis { dec, headers } => {
             if *headers < 3 {
@@ -145,15 +181,23 @@ fn packet(codec: &mut Codec, pkt: &Packet<'_>, ctx: &DecodeCtx, sink: &mut dyn P
                 *headers += 1;
                 if *headers == 2 {
                     let c = dec.comment();
-                    let artist = c.query_str("ARTIST", 0).map(|s| s.into_owned()).unwrap_or_default();
-                    let title = c.query_str("TITLE", 0).map(|s| s.into_owned()).unwrap_or_default();
+                    let artist = c
+                        .query_str("ARTIST", 0)
+                        .map(|s| s.into_owned())
+                        .unwrap_or_default();
+                    let title = c
+                        .query_str("TITLE", 0)
+                        .map(|s| s.into_owned())
+                        .unwrap_or_default();
                     sink.metadata(InBand::Tags { artist, title });
                 }
                 if *headers == 3 {
                     sink.codec("vorbis");
                     let ch = dec.info().channels;
                     if !(1..=8).contains(&ch) {
-                        return Err(StreamError::Failed(format!("Vorbis with {ch} channels is not supported")));
+                        return Err(StreamError::Failed(format!(
+                            "Vorbis with {ch} channels is not supported"
+                        )));
                     }
                 }
                 return Ok(false);
@@ -171,17 +215,25 @@ fn packet(codec: &mut Codec, pkt: &Packet<'_>, ctx: &DecodeCtx, sink: &mut dyn P
             let order = VORBIS_TO_WAVE[ch.min(8)];
             let planes: Vec<&[f32]> = order.iter().map(|&c| &pcm.channel(c)[..n]).collect();
             sink.pcm(&planes, n, rate, default_layout(ch as u16))?;
-            dec.read(n).map_err(|e| StreamError::Failed(format!("Vorbis: {e:?}")))?;
+            dec.read(n)
+                .map_err(|e| StreamError::Failed(format!("Vorbis: {e:?}")))?;
             Ok(true)
         }
-        Codec::Opus { dec, headers, skip_left, decoded } => {
+        Codec::Opus {
+            dec,
+            headers,
+            skip_left,
+            decoded,
+        } => {
             if *headers == 0 {
                 let d = pkt.data;
                 if d.len() < 19 {
                     return Err(StreamError::Failed("Opus: bad OpusHead".into()));
                 }
                 *skip_left = usize::from(u16::from_le_bytes([d[10], d[11]]));
-                let ff = ctx.ffmpeg().map_err(|e| StreamError::Failed(format!("Opus needs FFmpeg, which is unavailable: {e}")))?;
+                let ff = ctx.ffmpeg().map_err(|e| {
+                    StreamError::Failed(format!("Opus needs FFmpeg, which is unavailable: {e}"))
+                })?;
                 *dec = Some(FfDecoder::opus(ff, d).map_err(StreamError::Failed)?);
                 *headers = 1;
                 sink.codec("opus");
@@ -195,9 +247,15 @@ fn packet(codec: &mut Codec, pkt: &Packet<'_>, ctx: &DecodeCtx, sink: &mut dyn P
                 }
                 return Ok(false);
             }
-            let Some(d) = dec.as_mut() else { return Ok(false) };
+            let Some(d) = dec.as_mut() else {
+                return Ok(false);
+            };
             let mut out = false;
-            let eos_granule = if pkt.e_o_s && pkt.granulepos >= 0 { Some(pkt.granulepos as u64) } else { None };
+            let eos_granule = if pkt.e_o_s && pkt.granulepos >= 0 {
+                Some(pkt.granulepos as u64)
+            } else {
+                None
+            };
             d.decode(pkt.data, &mut |planes, frames, rate, layout| {
                 // Pre-skip at the start of the link; at its end, the final
                 // granule position bounds the samples (both in 48 kHz
@@ -226,7 +284,9 @@ fn packet(codec: &mut Codec, pkt: &Packet<'_>, ctx: &DecodeCtx, sink: &mut dyn P
                 *dec = Some((d, ChannelLayout::STEREO));
                 return Ok(false);
             }
-            let Some((d, _)) = dec.as_mut() else { return Ok(false) };
+            let Some((d, _)) = dec.as_mut() else {
+                return Ok(false);
+            };
             let data = pkt.data;
             if data.len() >= 2 && data[0] == 0xFF && data[1] & 0xFE == 0xF8 {
                 d.decode(data, sink)?;

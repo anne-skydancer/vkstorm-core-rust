@@ -20,7 +20,13 @@ pub struct Stream<'a> {
 impl<'a> Stream<'a> {
     /// A good stream at the start of `data`.
     pub fn new(data: &'a [u8]) -> Stream<'a> {
-        Stream { data, pos: 0, eof: false, fail: false, bad: false }
+        Stream {
+            data,
+            pos: 0,
+            eof: false,
+            fail: false,
+            bad: false,
+        }
     }
 
     /// `good()`: no state bit set.
@@ -255,7 +261,10 @@ impl<'a> Stream<'a> {
             if !b.is_ascii_digit() {
                 break;
             }
-            match acc.checked_mul(10).and_then(|v| v.checked_add(u64::from(b - b'0'))) {
+            match acc
+                .checked_mul(10)
+                .and_then(|v| v.checked_add(u64::from(b - b'0')))
+            {
                 Some(v) if v <= u64::from(u32::MAX) + 1 => acc = v,
                 _ => overflow = true,
             }
@@ -280,7 +289,11 @@ impl<'a> Stream<'a> {
             Err(true) => *v = 0,
             Err(false) => {}
             Ok((negative, acc, overflow)) => {
-                let limit = if negative { 1u64 << 31 } else { (1u64 << 31) - 1 };
+                let limit = if negative {
+                    1u64 << 31
+                } else {
+                    (1u64 << 31) - 1
+                };
                 if overflow || acc > limit {
                     self.fail = true;
                     *v = if negative { i32::MIN } else { i32::MAX };

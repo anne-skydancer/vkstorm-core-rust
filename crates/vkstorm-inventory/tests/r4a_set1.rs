@@ -119,7 +119,11 @@ const FILE_CASES: &[(&str, bool)] = &[
 
 /// `run_file_case`.
 fn run_file_case(label: &str, bytes: &[u8], input: &str, via_xfer: bool) -> String {
-    let mut out = format!("case {label} input={input} bytes={} sha256={}\n", bytes.len(), sha256(bytes));
+    let mut out = format!(
+        "case {label} input={input} bytes={} sha256={}\n",
+        bytes.len(),
+        sha256(bytes)
+    );
     {
         let mut s = Scene::new(false, 1, false);
         let name = format!("task_{label}.inv").into_bytes();
@@ -128,7 +132,13 @@ fn run_file_case(label: &str, bytes: &[u8], input: &str, via_xfer: bool) -> Stri
         let removed = !s.exists(&name);
         let line = s.state_line();
         let actions = s.take();
-        out += &format!(" direct returned={} removed={} {} | {}\n", i32::from(returned), i32::from(removed), line, actions);
+        out += &format!(
+            " direct returned={} removed={} {} | {}\n",
+            i32::from(returned),
+            i32::from(removed),
+            line,
+            actions
+        );
         out += &s.entries_text(" ");
     }
     if via_xfer {
@@ -144,7 +154,12 @@ fn run_file_case(label: &str, bytes: &[u8], input: &str, via_xfer: bool) -> Stri
         let pending: Vec<String> = s.obj.pending.iter().map(nm).collect();
         let line = s.state_line();
         let actions = s.take();
-        out += &format!(" via_xfer {} pending=[{}] | {}\n", line, pending.join(","), actions);
+        out += &format!(
+            " via_xfer {} pending=[{}] | {}\n",
+            line,
+            pending.join(","),
+            actions
+        );
     }
     out
 }
@@ -154,8 +169,12 @@ fn run_missing_file_case() -> String {
     let returned = s.load_task_inv_file(b"task_absent.inv");
     let line = s.state_line();
     let actions = s.take();
-    format!("case missing_file input=- bytes=-1\n direct returned={} {} | {}\n", i32::from(returned), line, actions)
-        + &s.entries_text(" ")
+    format!(
+        "case missing_file input=- bytes=-1\n direct returned={} {} | {}\n",
+        i32::from(returned),
+        line,
+        actions
+    ) + &s.entries_text(" ")
 }
 
 #[test]
@@ -183,7 +202,21 @@ fn set1_standard_file_matches_recorder() {
 /// `scrub_names`.
 fn scrub_names() -> Vec<Vec<u8>> {
     let mut n: Vec<Vec<u8>> = [
-        "", "a", "ab", "abc", "abcd", ".tmp", "x.tm", "a.tmp", ".", "..", "...", "../x", "..\\x", "a/..", "../../etc/passwd",
+        "",
+        "a",
+        "ab",
+        "abc",
+        "abcd",
+        ".tmp",
+        "x.tm",
+        "a.tmp",
+        ".",
+        "..",
+        "...",
+        "../x",
+        "..\\x",
+        "a/..",
+        "../../etc/passwd",
         "inventory_task.tmp",
     ]
     .iter()
@@ -217,7 +250,12 @@ fn run_scrub_case(raw: &[u8]) -> String {
     let mut out = format!("scrub raw={} rawlen={}", esc(raw), raw.len());
     let (_, _, read_back) = reply_round_trip(&obj_id(), 0, raw);
     let scrubbed = vkstorm_inventory::task::scrubbed_file_name(&read_back);
-    out += &format!(" received={} scrubbed={} len={}\n", esc(&read_back), esc(&scrubbed), scrubbed.len());
+    out += &format!(
+        " received={} scrubbed={} len={}\n",
+        esc(&read_back),
+        esc(&scrubbed),
+        scrubbed.len()
+    );
     let mut s = Scene::new(false, 1, true);
     s.capture = Some(Vec::new());
     let mut planted = false;
@@ -234,7 +272,13 @@ fn run_scrub_case(raw: &[u8]) -> String {
     let remaining = planted && s.exists(&scrubbed);
     let line = s.state_line();
     let actions = s.take();
-    out += &format!(" outcome returned planted={} remaining={} {} | {}\n", i32::from(planted), i32::from(remaining), line, actions);
+    out += &format!(
+        " outcome returned planted={} remaining={} {} | {}\n",
+        i32::from(planted),
+        i32::from(remaining),
+        line,
+        actions
+    );
     let ids = s.real_ids();
     out += &s.entries_text(" ");
     let packets = s.capture.take().unwrap();
@@ -366,7 +410,10 @@ fn set1_random_sweep() {
             kept += 1;
         }
     }
-    assert_eq!(std::fs::read_dir(fixture_path("random")).unwrap().count(), kept);
+    assert_eq!(
+        std::fs::read_dir(fixture_path("random")).unwrap().count(),
+        kept
+    );
     assert_text("task_files_random_samples.txt", samples.as_bytes());
     assert_lines("digests_set1.txt", &digest_lines(vec![digest.finish()]));
 }

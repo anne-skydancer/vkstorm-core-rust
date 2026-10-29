@@ -14,10 +14,13 @@
 use vkstorm_llsd::Value;
 
 use crate::llsd::coerce::{as_string, as_uuid, get, insert};
-use crate::perms::{Uuid, NULL_ID, PERM_COPY, PERM_ITEM_UNRESTRICTED, PERM_TRANSFER};
+use crate::perms::{NULL_ID, PERM_COPY, PERM_ITEM_UNRESTRICTED, PERM_TRANSFER, Uuid};
 use crate::types::{AssetType, FolderType};
 
-use super::host::{Action, Handler, Host, ModelCat, ModelItem, MoveInv, NameThen, PackArgs, RlvBehaviour, TaskObject, ViewerObject, LL_PCODE_VOLUME};
+use super::host::{
+    Action, Handler, Host, LL_PCODE_VOLUME, ModelCat, ModelItem, MoveInv, NameThen, PackArgs,
+    RlvBehaviour, TaskObject, ViewerObject,
+};
 use super::im::*;
 use super::names::{build_username, find_bytes};
 use super::notify::{force_response, selected_option};
@@ -95,11 +98,13 @@ pub fn is_item_worn(host: &dyn Host, id: &Uuid) -> bool {
 }
 
 fn can_transfer(host: &dyn Host, item: &ModelItem) -> bool {
-    item.perm.allow_operation_by(PERM_TRANSFER, &host.agent_id(), &NULL_ID)
+    item.perm
+        .allow_operation_by(PERM_TRANSFER, &host.agent_id(), &NULL_ID)
 }
 
 fn can_copy(host: &dyn Host, item: &ModelItem) -> bool {
-    item.perm.allow_operation_by(PERM_COPY, &host.agent_id(), &NULL_ID)
+    item.perm
+        .allow_operation_by(PERM_COPY, &host.agent_id(), &NULL_ID)
 }
 
 // ------------------------------------------------------------ predicates
@@ -109,7 +114,9 @@ fn can_copy(host: &dyn Host, item: &ModelItem) -> bool {
 pub fn transfer_commonly_allowed(host: &dyn Host, item: Option<&ModelItem>) -> bool {
     let Some(item) = item else { return false };
     match item_type(host, item) {
-        AssetType::OBJECT | AssetType::BODYPART | AssetType::CLOTHING => !is_item_worn(host, &item.id),
+        AssetType::OBJECT | AssetType::BODYPART | AssetType::CLOTHING => {
+            !is_item_worn(host, &item.id)
+        }
         _ => true,
     }
 }
@@ -121,7 +128,9 @@ pub fn is_give_acceptable(host: &dyn Host, item: Option<&ModelItem>) -> bool {
         return false;
     }
     match item_type(host, item) {
-        AssetType::OBJECT | AssetType::BODYPART | AssetType::CLOTHING => !is_item_worn(host, &item.id),
+        AssetType::OBJECT | AssetType::BODYPART | AssetType::CLOTHING => {
+            !is_item_worn(host, &item.id)
+        }
         _ => true,
     }
 }
@@ -167,7 +176,10 @@ impl Functor {
 
     /// Whether the functor counts the uncopyable items (`countNoCopy`).
     pub fn counts(self) -> bool {
-        matches!(self, Functor::Giveable | Functor::DroppableTransfer | Functor::DroppableNoTransfer)
+        matches!(
+            self,
+            Functor::Giveable | Functor::DroppableTransfer | Functor::DroppableNoTransfer
+        )
     }
 }
 
@@ -180,11 +192,19 @@ pub struct Collector {
 
 impl Collector {
     pub fn new(functor: Functor) -> Collector {
-        Collector { functor, count_no_copy: 0 }
+        Collector {
+            functor,
+            count_no_copy: 0,
+        }
     }
 
     /// `operator()(cat, item)`.
-    pub fn call(&mut self, host: &dyn Host, cat: Option<&ModelCat>, item: Option<&ModelItem>) -> bool {
+    pub fn call(
+        &mut self,
+        host: &dyn Host,
+        cat: Option<&ModelCat>,
+        item: Option<&ModelItem>,
+    ) -> bool {
         match self.functor {
             Functor::Giveable => {
                 if cat.is_some() {
@@ -200,11 +220,16 @@ impl Collector {
                 }
                 allowed
             }
-            Functor::Uncopyable => item.is_some_and(|i| transfer_commonly_allowed(host, Some(i)) && !can_copy(host, i)),
+            Functor::Uncopyable => {
+                item.is_some_and(|i| transfer_commonly_allowed(host, Some(i)) && !can_copy(host, i))
+            }
             Functor::DroppableTransfer | Functor::DroppableNoTransfer => {
                 let Some(item) = item else { return false };
                 let mut allowed = transfer_commonly_allowed(host, Some(item));
-                if allowed && self.functor == Functor::DroppableTransfer && !can_transfer(host, item) {
+                if allowed
+                    && self.functor == Functor::DroppableTransfer
+                    && !can_transfer(host, item)
+                {
                     allowed = false;
                 }
                 if allowed && !can_copy(host, item) {
@@ -226,7 +251,12 @@ impl Collector {
 
 /// One functor call on its own (the seam's `collect_functor`): the verdict
 /// and, for the counting functors, `countNoCopy()`.
-pub fn collect_functor(host: &dyn Host, functor: Functor, cat: Option<&ModelCat>, item: Option<&ModelItem>) -> (bool, Option<i32>) {
+pub fn collect_functor(
+    host: &dyn Host,
+    functor: Functor,
+    cat: Option<&ModelCat>,
+    item: Option<&ModelItem>,
+) -> (bool, Option<i32>) {
     let mut c = Collector::new(functor);
     let r = c.call(host, cat, item);
     (r, functor.counts().then_some(c.count_no_copy))
@@ -235,7 +265,13 @@ pub fn collect_functor(host: &dyn Host, functor: Functor, cat: Option<&ModelCat>
 /// `LLInventoryModel::collectDescendentsIf(id, cats, items, EXCLUDE_TRASH,
 /// functor)`: nothing under the Trash; categories (each followed by its own
 /// descendents) then the folder's items, in model order.
-pub fn collect_descendents(host: &mut dyn Host, id: &Uuid, c: &mut Collector, cats: &mut Vec<ModelCat>, items: &mut Vec<ModelItem>) {
+pub fn collect_descendents(
+    host: &mut dyn Host,
+    id: &Uuid,
+    c: &mut Collector,
+    cats: &mut Vec<ModelCat>,
+    items: &mut Vec<ModelItem>,
+) {
     let trash = host.find_category_for_type(FolderType::TRASH);
     if trash != NULL_ID && trash == *id {
         return;
@@ -274,32 +310,73 @@ fn rlv_share_blocked(host: &dyn Host, to: &Uuid) -> bool {
 }
 
 fn recent_people_allowed(host: &dyn Host, to: &Uuid, im_session: &Uuid) -> bool {
-    !host.rlv_enabled() || host.rlv_can_show_name(to) || *im_session != NULL_ID || !host.rlv_is_nearby(to) || host.rlv_has_open_profile(to)
+    !host.rlv_enabled()
+        || host.rlv_can_show_name(to)
+        || *im_session != NULL_ID
+        || !host.rlv_is_nearby(to)
+        || host.rlv_has_open_profile(to)
 }
 
-fn notify(host: &mut dyn Host, name: &str, substitutions: Value, payload: Value, handler: Option<Handler>) {
-    host.act(Action::Notify { name: name.to_owned(), substitutions, payload, handler });
+fn notify(
+    host: &mut dyn Host,
+    name: &str,
+    substitutions: Value,
+    payload: Value,
+    handler: Option<Handler>,
+) {
+    host.act(Action::Notify {
+        name: name.to_owned(),
+        substitutions,
+        payload,
+        handler,
+    });
 }
 
 /// `LLGiveInventory::logInventoryOffer(to, im_session, item_name, is_folder)`.
-pub fn log_inventory_offer(host: &mut dyn Host, to: &Uuid, im_session: &Uuid, name: &[u8], is_folder: bool) {
+pub fn log_inventory_offer(
+    host: &mut dyn Host,
+    to: &Uuid,
+    im_session: &Uuid,
+    name: &[u8],
+    is_folder: bool,
+) {
     let session_id = compute_session_id(&host.agent_id(), to);
     let mut args = Value::Undefined;
     insert(&mut args, "user_id", Value::Uuid(*to));
     insert(&mut args, "ITEM_NAME", Value::String(name.to_vec()));
-    let message_name = if is_folder { "inventory_folder_offered" } else { "inventory_item_offered" };
+    let message_name = if is_folder {
+        "inventory_folder_offered"
+    } else {
+        "inventory_item_offered"
+    };
     if *im_session != NULL_ID {
-        host.act(Action::ImSystemMessage { session: *im_session, name: message_name.to_owned(), args });
-    } else if host.rlv_enabled() && !host.rlv_can_show_name(to) && host.rlv_is_nearby(to) && !host.rlv_has_open_profile(to) {
+        host.act(Action::ImSystemMessage {
+            session: *im_session,
+            name: message_name.to_owned(),
+            args,
+        });
+    } else if host.rlv_enabled()
+        && !host.rlv_can_show_name(to)
+        && host.rlv_is_nearby(to)
+        && !host.rlv_has_open_profile(to)
+    {
         let mut rlv_args = Value::Undefined;
         let mut msg_name = "inventory_item_offered-im";
         if let Some(anon) = host.rlv_anonym_avatar(to) {
             insert(&mut rlv_args, "NAME", Value::String(anon));
             msg_name = "inventory_item_offered_rlv";
         }
-        host.act(Action::ImSystemMessage { session: NULL_ID, name: msg_name.to_owned(), args: rlv_args });
+        host.act(Action::ImSystemMessage {
+            session: NULL_ID,
+            name: msg_name.to_owned(),
+            args: rlv_args,
+        });
     } else if host.im_session_name(&session_id).is_some() {
-        host.act(Action::ImSystemMessage { session: session_id, name: message_name.to_owned(), args });
+        host.act(Action::ImSystemMessage {
+            session: session_id,
+            name: message_name.to_owned(),
+            args,
+        });
     } else if let Some(user) = host.avatar_user_name(to) {
         let file = if host.setting_bool("UseLegacyIMLogNames") {
             match find_bytes(&user, b" Resident") {
@@ -311,7 +388,13 @@ pub fn log_inventory_offer(host: &mut dyn Host, to: &Uuid, im_session: &Uuid, na
         };
         let template = host.trans(&format!("{message_name}-im"), &[]);
         let from = host.trans("SECOND_LIFE", &[]);
-        host.act(Action::ImLogToFile { file, from, id: *im_session, template, args });
+        host.act(Action::ImLogToFile {
+            file,
+            from,
+            id: *im_session,
+            template,
+            args,
+        });
     }
 }
 
@@ -322,7 +405,10 @@ fn beam_and_unmute(host: &mut dyn Host, to: &Uuid) {
     if host.have_floater_tools() {
         host.act(Action::FloaterToolsDirty);
     }
-    host.act(Action::MuteAutoRemove { id: *to, reason: AR_INVENTORY });
+    host.act(Action::MuteAutoRemove {
+        id: *to,
+        reason: AR_INVENTORY,
+    });
 }
 
 fn pack_offer(host: &mut dyn Host, to: &Uuid, message: Vec<u8>, txn: Uuid, bucket: Vec<u8>) {
@@ -347,7 +433,12 @@ fn pack_offer(host: &mut dyn Host, to: &Uuid, message: Vec<u8>, txn: Uuid, bucke
 
 /// `LLGiveInventory::commitGiveInventoryItem` (RLVa's variant returning
 /// whether it gave).
-pub fn commit_give_item(host: &mut dyn Host, to: &Uuid, item: &ModelItem, im_session: &Uuid) -> bool {
+pub fn commit_give_item(
+    host: &mut dyn Host,
+    to: &Uuid,
+    item: &ModelItem,
+    im_session: &Uuid,
+) -> bool {
     if rlv_share_blocked(host, to) {
         return false;
     }
@@ -368,7 +459,12 @@ pub fn commit_give_item(host: &mut dyn Host, to: &Uuid, item: &ModelItem, im_ses
 /// `LLGiveInventory::doGiveInventoryItem(to, item, im_session)`: a copyable
 /// item is given at once; an uncopyable one asks first (`CannotCopyWarning`)
 /// and the call reports false.
-pub fn give_item(host: &mut dyn Host, to: &Uuid, item: Option<&ModelItem>, im_session: &Uuid) -> bool {
+pub fn give_item(
+    host: &mut dyn Host,
+    to: &Uuid,
+    item: Option<&ModelItem>,
+    im_session: &Uuid,
+) -> bool {
     if !is_give_acceptable(host, item) {
         return false;
     }
@@ -380,15 +476,31 @@ pub fn give_item(host: &mut dyn Host, to: &Uuid, item: Option<&ModelItem>, im_se
         insert(&mut subs, "ITEMS", Value::String(item_name(host, item)));
         let mut payload = Value::Undefined;
         insert(&mut payload, "agent_id", Value::Uuid(*to));
-        insert(&mut payload, "items", Value::Array(vec![Value::Uuid(item.id)]));
-        notify(host, "CannotCopyWarning", subs, payload, Some(Handler::CopyProtectedItem));
+        insert(
+            &mut payload,
+            "items",
+            Value::Array(vec![Value::Uuid(item.id)]),
+        );
+        notify(
+            host,
+            "CannotCopyWarning",
+            subs,
+            payload,
+            Some(Handler::CopyProtectedItem),
+        );
         false
     }
 }
 
 /// `LLGiveInventory::doGiveInventoryCategory(to, cat, im_session,
 /// success_notification)`.
-pub fn give_category(host: &mut dyn Host, to: &Uuid, cat: Option<&ModelCat>, im_session: &Uuid, success_notification: &[u8]) -> bool {
+pub fn give_category(
+    host: &mut dyn Host,
+    to: &Uuid,
+    cat: Option<&ModelCat>,
+    im_session: &Uuid,
+    success_notification: &[u8],
+) -> bool {
     let Some(cat) = cat else { return false };
     if !host.avatar_valid() {
         return false;
@@ -399,13 +511,25 @@ pub fn give_category(host: &mut dyn Host, to: &Uuid, cat: Option<&ModelCat>, im_
     collect_descendents(host, &cat.id, &mut collector, &mut cats, &mut items);
     let complete = cats.iter().all(|c| host.is_category_complete(&c.id));
     if !complete {
-        notify(host, "IncompleteInventory", Value::Undefined, Value::Undefined, None);
+        notify(
+            host,
+            "IncompleteInventory",
+            Value::Undefined,
+            Value::Undefined,
+            None,
+        );
         give_successful = false;
     }
     let count = items.len() + cats.len();
     let limit = host.max_inventory_items_transfer();
     if count as i64 > limit as i64 {
-        notify(host, "TooManyItems", Value::Undefined, Value::Undefined, None);
+        notify(
+            host,
+            "TooManyItems",
+            Value::Undefined,
+            Value::Undefined,
+            None,
+        );
         give_successful = false;
     } else if count == 0 {
         notify(host, "NoItems", Value::Undefined, Value::Undefined, None);
@@ -415,14 +539,28 @@ pub fn give_category(host: &mut dyn Host, to: &Uuid, cat: Option<&ModelCat>, im_
             give_successful = commit_give_category(host, to, cat, im_session);
         } else {
             let mut args = Value::Undefined;
-            insert(&mut args, "COUNT", Value::String(collector.count_no_copy.to_string().into_bytes()));
+            insert(
+                &mut args,
+                "COUNT",
+                Value::String(collector.count_no_copy.to_string().into_bytes()),
+            );
             let mut payload = Value::Undefined;
             insert(&mut payload, "agent_id", Value::Uuid(*to));
             insert(&mut payload, "folder_id", Value::Uuid(cat.id));
             if !success_notification.is_empty() {
-                insert(&mut payload, "success_notification", Value::String(success_notification.to_vec()));
+                insert(
+                    &mut payload,
+                    "success_notification",
+                    Value::String(success_notification.to_vec()),
+                );
             }
-            notify(host, "CannotCopyCountItems", args, payload, Some(Handler::CopyProtectedCategory));
+            notify(
+                host,
+                "CannotCopyCountItems",
+                args,
+                payload,
+                Some(Handler::CopyProtectedCategory),
+            );
             give_successful = false;
         }
     }
@@ -433,7 +571,12 @@ pub fn give_category(host: &mut dyn Host, to: &Uuid, cat: Option<&ModelCat>, im_
 /// is the root, then the sub-categories in collection order (each with the
 /// root's type byte), then the items (each with its own type byte), 17 bytes
 /// an entry; the count excludes the root.
-pub fn commit_give_category(host: &mut dyn Host, to: &Uuid, cat: &ModelCat, im_session: &Uuid) -> bool {
+pub fn commit_give_category(
+    host: &mut dyn Host,
+    to: &Uuid,
+    cat: &ModelCat,
+    im_session: &Uuid,
+) -> bool {
     if rlv_share_blocked(host, to) {
         return false;
     }
@@ -446,7 +589,13 @@ pub fn commit_give_category(host: &mut dyn Host, to: &Uuid, cat: &ModelCat, im_s
     let count = items.len() + cats.len();
     let limit = host.max_inventory_items_transfer();
     if count as i64 > limit as i64 {
-        notify(host, "TooManyItems", Value::Undefined, Value::Undefined, None);
+        notify(
+            host,
+            "TooManyItems",
+            Value::Undefined,
+            Value::Undefined,
+            None,
+        );
         return false;
     }
     if count == 0 {
@@ -474,13 +623,21 @@ pub fn commit_give_category(host: &mut dyn Host, to: &Uuid, cat: &ModelCat, im_s
 
 fn blocked_share(host: &mut dyn Host, agent: &Uuid) {
     let mut args = Value::Undefined;
-    insert(&mut args, "RECIPIENT", Value::String(host.slurl("agent", agent, b"completename")));
+    insert(
+        &mut args,
+        "RECIPIENT",
+        Value::String(host.slurl("agent", agent, b"completename")),
+    );
     host.act(Action::RlvNotifyBlockedShare { args });
 }
 
 /// `LLGiveInventory::handleCopyProtectedItem`: on Yes, every listed item
 /// still in the model is given and deleted locally.
-pub fn handle_copy_protected_item(host: &mut dyn Host, notification: &Value, response: &Value) -> bool {
+pub fn handle_copy_protected_item(
+    host: &mut dyn Host,
+    notification: &Value,
+    response: &Value,
+) -> bool {
     let option = selected_option(notification, response);
     let payload = get(notification, "payload");
     let mut give_successful = true;
@@ -499,7 +656,13 @@ pub fn handle_copy_protected_item(host: &mut dyn Host, notification: &Value, res
                         host.act(Action::NotifyObservers);
                     }
                     None => {
-                        notify(host, "CannotGiveItem", Value::Undefined, Value::Undefined, None);
+                        notify(
+                            host,
+                            "CannotGiveItem",
+                            Value::Undefined,
+                            Value::Undefined,
+                            None,
+                        );
                         give_successful = false;
                     }
                 }
@@ -511,7 +674,13 @@ pub fn handle_copy_protected_item(host: &mut dyn Host, notification: &Value, res
             notify(host, &name, Value::Undefined, Value::Undefined, None);
         }
     } else {
-        notify(host, "TransactionCancelled", Value::Undefined, Value::Undefined, None);
+        notify(
+            host,
+            "TransactionCancelled",
+            Value::Undefined,
+            Value::Undefined,
+            None,
+        );
         give_successful = false;
     }
     give_successful
@@ -520,15 +689,31 @@ pub fn handle_copy_protected_item(host: &mut dyn Host, notification: &Value, res
 /// `LLGiveInventory::handleCopyProtectedCategory`: on Yes the folder is given
 /// (with the count checks again) and its uncopyable items are deleted
 /// locally whatever the give did.
-pub fn handle_copy_protected_category(host: &mut dyn Host, notification: &Value, response: &Value) -> bool {
+pub fn handle_copy_protected_category(
+    host: &mut dyn Host,
+    notification: &Value,
+    response: &Value,
+) -> bool {
     let option = selected_option(notification, response);
     let payload = get(notification, "payload");
     if option != 0 {
-        notify(host, "TransactionCancelled", Value::Undefined, Value::Undefined, None);
+        notify(
+            host,
+            "TransactionCancelled",
+            Value::Undefined,
+            Value::Undefined,
+            None,
+        );
         return false;
     }
     let Some(cat) = host.category(&as_uuid(get(payload, "folder_id"))) else {
-        notify(host, "CannotGiveCategory", Value::Undefined, Value::Undefined, None);
+        notify(
+            host,
+            "CannotGiveCategory",
+            Value::Undefined,
+            Value::Undefined,
+            None,
+        );
         return false;
     };
     let agent = as_uuid(get(payload, "agent_id"));
@@ -572,7 +757,13 @@ pub fn answer(host: &mut dyn Host, handler: Handler, notification: &Value, respo
 /// loop stops; copyable items are given one IM each; the uncopyable ones
 /// are collected into one `CannotCopyWarning` and the avatar loop stops.
 /// `selected` must be sorted (a `std::set<LLUUID>`).
-pub fn share(host: &mut dyn Host, avatars: &[Uuid], notification: &Value, response: &Value, selected: &[Uuid]) {
+pub fn share(
+    host: &mut dyn Host,
+    avatars: &[Uuid],
+    notification: &Value,
+    response: &Value,
+    selected: &[Uuid],
+) {
     let option = selected_option(notification, response);
     if option == 1 || selected.is_empty() {
         return;
@@ -607,23 +798,46 @@ pub fn share(host: &mut dyn Host, avatars: &[Uuid], notification: &Value, respon
             let mut payload = Value::Undefined;
             insert(&mut payload, "agent_id", Value::Uuid(*avatar));
             insert(&mut payload, "items", Value::Array(noncopy));
-            insert(&mut payload, "success_notification", Value::string("ItemsShared"));
-            notify(host, "CannotCopyWarning", subs, payload, Some(Handler::CopyProtectedItem));
+            insert(
+                &mut payload,
+                "success_notification",
+                Value::string("ItemsShared"),
+            );
+            notify(
+                host,
+                "CannotCopyWarning",
+                subs,
+                payload,
+                Some(Handler::CopyProtectedItem),
+            );
             shared = false;
             break;
         }
     }
     if shared {
         host.act(Action::FloaterHide("avatar_picker"));
-        notify(host, "ItemsShared", Value::Undefined, Value::Undefined, None);
+        notify(
+            host,
+            "ItemsShared",
+            Value::Undefined,
+            Value::Undefined,
+            None,
+        );
     }
 }
 
 // --------------------------------------------------------- drag and drop
 
 /// `LLToolDragAndDrop::willObjectAcceptInventory(obj, item, type)`.
-pub fn will_object_accept(host: &dyn Host, obj: Option<&ViewerObject>, item: Option<&ModelItem>, dad_type: i32) -> Acceptance {
-    let (Some(item), Some(obj)) = (item, obj) else { return Acceptance::No };
+pub fn will_object_accept(
+    host: &dyn Host,
+    obj: Option<&ViewerObject>,
+    item: Option<&ModelItem>,
+    dad_type: i32,
+) -> Acceptance {
+    let (Some(item), Some(obj)) = (item, obj) else {
+        return Acceptance::No;
+    };
     if !item.finished && dad_type != DAD_CATEGORY {
         return Acceptance::No;
     }
@@ -651,7 +865,8 @@ pub fn will_object_accept(host: &dyn Host, obj: Option<&ViewerObject>, item: Opt
     let perm = &item.perm;
     let agent = host.agent_id();
     let modify = obj.perm_modify || obj.flag_allow_inventory_add;
-    let transfer = (obj.perm_you_owner && perm.owner == agent) || perm.allow_operation_by(PERM_TRANSFER, &agent, &NULL_ID);
+    let transfer = (obj.perm_you_owner && perm.owner == agent)
+        || perm.allow_operation_by(PERM_TRANSFER, &agent, &NULL_ID);
     let volume = obj.pcode == LL_PCODE_VOLUME;
     let attached = obj.is_attachment;
     let unrestricted = (perm.base & PERM_ITEM_UNRESTRICTED) == PERM_ITEM_UNRESTRICTED;
@@ -659,7 +874,8 @@ pub fn will_object_accept(host: &dyn Host, obj: Option<&ViewerObject>, item: Opt
     if host.rlv_enabled() {
         if host.rlv_locked_attachment(&obj.root) {
             return Acceptance::NoLocked;
-        } else if (host.rlv_has_behaviour(RlvBehaviour::Unsit) || host.rlv_has_behaviour(RlvBehaviour::SitTp))
+        } else if (host.rlv_has_behaviour(RlvBehaviour::Unsit)
+            || host.rlv_has_behaviour(RlvBehaviour::SitTp))
             && host.avatar_valid()
             && host.avatar_sitting()
             && host.avatar_root() == Some(obj.root)
@@ -698,9 +914,21 @@ pub const FILTERTYPE_DATE: u64 = 0x1 << 3;
 /// is sticky**: once an item passed, a later one that passes neither test
 /// keeps it). On a drop, a move asks first (`warn_move_inventory`) and a
 /// copy goes through `MoveInventoryFromObject`'s forced OK.
-pub fn world_to_agent(host: &mut dyn Host, object_id: &Uuid, category_id: &Uuid, drop: bool, mut filter: Option<&mut dyn ItemFilter>) -> bool {
-    let Some(object) = host.object(object_id) else { return false };
-    let contents: Vec<TaskObject> = host.object_inventory(object_id).into_iter().filter(|o| o.ty != AssetType::CATEGORY).collect();
+pub fn world_to_agent(
+    host: &mut dyn Host,
+    object_id: &Uuid,
+    category_id: &Uuid,
+    drop: bool,
+    mut filter: Option<&mut dyn ItemFilter>,
+) -> bool {
+    let Some(object) = host.object(object_id) else {
+        return false;
+    };
+    let contents: Vec<TaskObject> = host
+        .object_inventory(object_id)
+        .into_iter()
+        .filter(|o| o.ty != AssetType::CATEGORY)
+        .collect();
     if contents.is_empty() {
         return false;
     }
@@ -733,11 +961,21 @@ pub fn world_to_agent(host: &mut dyn Host, object_id: &Uuid, category_id: &Uuid,
         }
     }
     if drop && accept {
-        let mv = MoveInv { object_id: *object_id, category_id: *category_id, moves: contents.iter().map(|o| (*category_id, o.id)).collect() };
+        let mv = MoveInv {
+            object_id: *object_id,
+            category_id: *category_id,
+            moves: contents.iter().map(|o| (*category_id, o.id)).collect(),
+        };
         if is_move {
             host.act(Action::WarnMoveInventory(mv));
-        } else if let Some((notification, response)) = force_response(host, "MoveInventoryFromObject", 0) {
-            host.act(Action::MoveTaskInventory { notification, response, mv });
+        } else if let Some((notification, response)) =
+            force_response(host, "MoveInventoryFromObject", 0)
+        {
+            host.act(Action::MoveTaskInventory {
+                notification,
+                response,
+                mv,
+            });
         }
     }
     accept
@@ -770,7 +1008,15 @@ impl Cargo {
 
 /// `show_object_sharing_confirmation(name, inv_item, dest, dest_agent,
 /// session)`: the `ShareItemsConfirmation` question.
-pub fn show_object_sharing_confirmation(host: &mut dyn Host, name: &[u8], item_id: &Uuid, item_name: &[u8], dest: &[u8], dest_agent: &Uuid, session: &Uuid) {
+pub fn show_object_sharing_confirmation(
+    host: &mut dyn Host,
+    name: &[u8],
+    item_id: &Uuid,
+    item_name: &[u8],
+    dest: &[u8],
+    dest_agent: &Uuid,
+    session: &Uuid,
+) {
     let mut subs = Value::Undefined;
     insert(&mut subs, "RESIDENTS", Value::String(name.to_vec()));
     insert(&mut subs, "ITEMS", Value::String(item_name.to_vec()));
@@ -779,7 +1025,13 @@ pub fn show_object_sharing_confirmation(host: &mut dyn Host, name: &[u8], item_i
     insert(&mut payload, "item_id", Value::Uuid(*item_id));
     insert(&mut payload, "session_id", Value::Uuid(*session));
     insert(&mut payload, "d&d_dest", Value::String(dest.to_vec()));
-    notify(host, "ShareItemsConfirmation", subs, payload, Some(Handler::DragGiveInventory));
+    notify(
+        host,
+        "ShareItemsConfirmation",
+        subs,
+        payload,
+        Some(Handler::DragGiveInventory),
+    );
 }
 
 /// `LLToolDragAndDrop::handleGiveDragAndDrop(dest_agent, session, drop,
@@ -787,36 +1039,57 @@ pub fn show_object_sharing_confirmation(host: &mut dyn Host, name: &[u8], item_i
 /// `ACCEPT_NO_LOCKED`; a giveable item or any folder in the model
 /// `ACCEPT_YES_COPY_SINGLE`, and a drop asks `ShareItemsConfirmation` (the
 /// name from the IM session, the cache, or a lookup).
-pub fn give_drag_and_drop(host: &mut dyn Host, dest_agent: &Uuid, session: &Uuid, drop: bool, cargo_type: i32, cargo: &Cargo, dest: &Value) -> (bool, Acceptance) {
+pub fn give_drag_and_drop(
+    host: &mut dyn Host,
+    dest_agent: &Uuid,
+    session: &Uuid,
+    drop: bool,
+    cargo_type: i32,
+    cargo: &Cargo,
+    dest: &Value,
+) -> (bool, Acceptance) {
     if rlv_share_blocked(host, dest_agent) {
         return (true, Acceptance::NoLocked);
     }
     let accept = match cargo_type {
-        DAD_TEXTURE | DAD_SOUND | DAD_LANDMARK | DAD_SCRIPT | DAD_OBJECT | DAD_NOTECARD | DAD_CLOTHING | DAD_BODYPART | DAD_ANIMATION
-        | DAD_GESTURE | DAD_CALLINGCARD | DAD_MESH | DAD_CATEGORY | DAD_SETTINGS | DAD_MATERIAL => {
+        DAD_TEXTURE | DAD_SOUND | DAD_LANDMARK | DAD_SCRIPT | DAD_OBJECT | DAD_NOTECARD
+        | DAD_CLOTHING | DAD_BODYPART | DAD_ANIMATION | DAD_GESTURE | DAD_CALLINGCARD
+        | DAD_MESH | DAD_CATEGORY | DAD_SETTINGS | DAD_MATERIAL => {
             let id = cargo.id();
             let as_item = match cargo {
                 Cargo::Item(i) => Some(i),
                 Cargo::Category(_) => None,
             };
-            if host.category(&id).is_some() || (host.item(&id).is_some() && is_give_acceptable(host, as_item)) {
+            if host.category(&id).is_some()
+                || (host.item(&id).is_some() && is_give_acceptable(host, as_item))
+            {
                 if drop {
                     let dest_str = as_string(dest);
                     let item_name = cargo.name(host);
                     match host.im_session_name(session) {
                         None => {
                             match host.avatar_user_name(dest_agent) {
-                                Some(n) => show_object_sharing_confirmation(host, &n, &id, &item_name, &dest_str, dest_agent, &NULL_ID),
+                                Some(n) => show_object_sharing_confirmation(
+                                    host, &n, &id, &item_name, &dest_str, dest_agent, &NULL_ID,
+                                ),
                                 None => host.act(Action::AvatarNameLookup {
                                     id: *dest_agent,
-                                    then: NameThen::ShareConfirmation { item_id: id, item_name, dest: dest_str },
+                                    then: NameThen::ShareConfirmation {
+                                        item_id: id,
+                                        item_name,
+                                        dest: dest_str,
+                                    },
                                 }),
                             }
                             return (true, Acceptance::YesCopySingle);
                         }
                         Some(session_name) => {
-                            let dest_name = host.avatar_complete_name(dest_agent).unwrap_or(session_name);
-                            show_object_sharing_confirmation(host, &dest_name, &id, &item_name, &dest_str, dest_agent, session);
+                            let dest_name = host
+                                .avatar_complete_name(dest_agent)
+                                .unwrap_or(session_name);
+                            show_object_sharing_confirmation(
+                                host, &dest_name, &id, &item_name, &dest_str, dest_agent, session,
+                            );
                         }
                     }
                 }
@@ -855,7 +1128,13 @@ pub fn drag_give_inventory_cb(host: &mut dyn Host, notification: &Value, respons
         if as_string(get(payload, "d&d_dest")) == b"avatarpicker" {
             host.act(Action::FloaterHide("avatar_picker"));
         }
-        notify(host, "ItemsShared", Value::Undefined, Value::Undefined, None);
+        notify(
+            host,
+            "ItemsShared",
+            Value::Undefined,
+            Value::Undefined,
+            None,
+        );
     }
 }
 
@@ -881,13 +1160,21 @@ pub struct DragState {
 /// The `dad3dGiveInventory*` handlers for a drop on an avatar in world:
 /// kind 0 `dad3dGiveInventoryObject`, 1 `dad3dGiveInventory`, 2
 /// `dad3dGiveInventoryCategory`; `obj` is the avatar's object id.
-pub fn dad3d_give(host: &mut dyn Host, kind: i32, tool: &DragState, obj: Option<&Uuid>, drop: bool) -> Acceptance {
+pub fn dad3d_give(
+    host: &mut dyn Host,
+    kind: i32,
+    tool: &DragState,
+    obj: Option<&Uuid>,
+    drop: bool,
+) -> Acceptance {
     match kind {
         0 => {
             if tool.source != DragSource::Agent {
                 return Acceptance::No;
             }
-            let Some(item) = tool.item.as_ref().filter(|i| i.finished) else { return Acceptance::No };
+            let Some(item) = tool.item.as_ref().filter(|i| i.finished) else {
+                return Acceptance::No;
+            };
             if !can_transfer(host, item) {
                 return Acceptance::No;
             }
@@ -909,7 +1196,9 @@ pub fn dad3d_give(host: &mut dyn Host, kind: i32, tool: &DragState, obj: Option<
             if tool.source != DragSource::Agent {
                 return Acceptance::No;
             }
-            let Some(item) = tool.item.as_ref().filter(|i| i.finished) else { return Acceptance::No };
+            let Some(item) = tool.item.as_ref().filter(|i| i.finished) else {
+                return Acceptance::No;
+            };
             if !is_give_acceptable(host, Some(item)) {
                 return Acceptance::No;
             }
@@ -930,7 +1219,9 @@ pub fn dad3d_give(host: &mut dyn Host, kind: i32, tool: &DragState, obj: Option<
                 }
             }
             if let (true, Some(o)) = (drop, obj) {
-                let Some(cat) = tool.cat.as_ref() else { return Acceptance::No };
+                let Some(cat) = tool.cat.as_ref() else {
+                    return Acceptance::No;
+                };
                 give_category(host, o, Some(cat), &NULL_ID, b"");
             }
             Acceptance::YesSingle
