@@ -31,8 +31,12 @@ recording is unchanged but for the headers' commit. Re-recorded again for
 the fix of finding 9 (approved 2026-10-28): `AISUpdate::parseItem()` no
 longer counts a created item of no asset type, which `addItem()` refuses,
 as a new descendant of its folder (the folder's delta entry is still made,
-with 0, as for an updated item). Only s15h reaches it. The fixtures are never
-edited by hand: change the recorder or `gen_cases.py` and regenerate.
+with 0, as for an updated item). Only s15h reaches it. Re-recorded once more
+for the AIS depth cap (approved 2026-10-29): `InvokeAISCommandCoro` sets a
+256-level LLSD depth limit on its adapter, so an over-deep reply reaches the
+coroutine as an unparsable one (`../adapter` records that); every output is
+unchanged but its header. The fixtures are never edited by hand: change the
+recorder or `gen_cases.py` and regenerate.
 
 This directory is identical, byte for byte, in the viewer
 (`indra/newview/tests/fixtures/inventory/ais/update`) and in the crate
