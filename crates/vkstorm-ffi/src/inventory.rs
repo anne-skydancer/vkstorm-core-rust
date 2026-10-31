@@ -70,7 +70,7 @@ thread_local! {
     static LAST_ERROR: RefCell<CString> = RefCell::new(CString::default());
 }
 
-fn set_error(message: impl Into<Vec<u8>>) {
+pub(crate) fn set_error(message: impl Into<Vec<u8>>) {
     let c = CString::new(message).unwrap_or_default();
     LAST_ERROR.with(|e| *e.borrow_mut() = c);
 }
@@ -83,7 +83,7 @@ pub extern "C" fn vks_inv_last_error() -> *const c_char {
 }
 
 /// Runs `f`, turning a panic into `fail` with the error text set.
-fn guard<T>(fail: T, f: impl FnOnce() -> T) -> T {
+pub(crate) fn guard<T>(fail: T, f: impl FnOnce() -> T) -> T {
     match catch_unwind(AssertUnwindSafe(f)) {
         Ok(v) => v,
         Err(_) => {
@@ -93,7 +93,7 @@ fn guard<T>(fail: T, f: impl FnOnce() -> T) -> T {
     }
 }
 
-unsafe fn bytes<'a>(p: *const u8, len: usize) -> &'a [u8] {
+pub(crate) unsafe fn bytes<'a>(p: *const u8, len: usize) -> &'a [u8] {
     if p.is_null() || len == 0 {
         &[]
     } else {
@@ -103,7 +103,7 @@ unsafe fn bytes<'a>(p: *const u8, len: usize) -> &'a [u8] {
 
 /// A UUID argument (16 bytes, `LLUUID::mData`), copied so that it may alias
 /// a record the call writes; null reads as the null UUID.
-unsafe fn uuid_arg(p: *const u8) -> Uuid {
+pub(crate) unsafe fn uuid_arg(p: *const u8) -> Uuid {
     if p.is_null() {
         [0; 16]
     } else {
