@@ -1,7 +1,9 @@
 //! Parse-event receivers. The parsers stream their results as events in
 //! document order; [`ValueBuilder`] turns them into a [`Value`] tree and
 //! [`FlatSink`] into the flat, tagged node buffer the viewer's C ABI hands to
-//! C++ for construction of its own `LLSD` objects.
+//! C++ for construction of its own `LLSD` objects. [`flat_from_value`] and
+//! [`value_from_flat_parts`] convert between that buffer and a [`Value`], for
+//! the C ABI calls that take an `LLSD` value from C++ or return one.
 
 use std::collections::BTreeMap;
 
@@ -290,75 +292,359 @@ impl Sink for FlatSink {
     }
 }
 
-/// Rebuilds a [`Value`] from a flat document (used by tests to check the
-/// buffer the viewer consumes).
+/// Rebuilds a [`Value`] from a flat document: [`value_from_flat_parts`] over
+/// its nodes and arena.
 pub fn value_from_flat(doc: &FlatDoc, policy: KeyPolicy) -> Option<Value> {
+    value_from_flat_parts(&doc.nodes, &doc.bytes, policy)
+}
+
+/// Rebuilds a [`Value`] from a node buffer and its byte arena (the layout of
+/// [`FlatNode`]): the inverse of [`flat_from_value`] and of a [`FlatSink`].
+///
+/// This is how the viewer's C ABI takes an `LLSD` value from C++ without
+/// coercing it: the C++ side flattens its tree into this layout and the Rust
+/// side rebuilds the tree. `policy` decides a repeated map key.
+///
+/// The buffer must hold exactly one well-formed value; otherwise the result
+/// is `None`: no nodes, an unknown kind, a byte range outside the arena, a
+/// UUID that is not 16 bytes, a key where a value belongs or a value where a
+/// key belongs, a container whose entries run past the last node, or nodes
+/// after the root value. The `pad` bytes are ignored. The walk is iterative,
+/// so the depth is bounded by memory only.
+pub fn value_from_flat_parts(nodes: &[FlatNode], bytes: &[u8], policy: KeyPolicy) -> Option<Value> {
+    /// An open container: a map or an array, the entries still to come, and
+    /// for a map whether its next node is a key.
+    struct Open {
+        map: bool,
+        left: u32,
+        want_key: bool,
+    }
     let mut b = ValueBuilder::new(policy);
-    let mut i = 0;
-    let bytes = |n: &FlatNode| -> &[u8] {
-        let o = n.payload as usize;
-        &doc.bytes[o..o + n.len as usize]
-    };
-    // Explicit stack of remaining-entries counts for the open containers.
-    let mut remaining: Vec<(u8, u32)> = Vec::new();
-    while i < doc.nodes.len() {
-        let n = &doc.nodes[i];
-        i += 1;
+    let mut open: Vec<Open> = Vec::new();
+    let mut done = false;
+    for n in nodes {
+        if done {
+            return None;
+        }
+        let data = || -> Option<&[u8]> {
+            let start = usize::try_from(n.payload).ok()?;
+            let end = start.checked_add(usize::try_from(n.len).ok()?)?;
+            bytes.get(start..end)
+        };
+        let in_map_wanting_key = matches!(open.last(), Some(o) if o.map && o.want_key);
+        if n.kind == kind::KEY {
+            if !in_map_wanting_key {
+                return None;
+            }
+            b.key(data()?);
+            if let Some(o) = open.last_mut() {
+                o.want_key = false;
+            }
+            continue;
+        }
+        if in_map_wanting_key {
+            return None;
+        }
         match n.kind {
             kind::UNDEF => b.undef(),
             kind::BOOLEAN => b.boolean(n.payload != 0),
             kind::INTEGER => b.integer(n.payload as i64 as i32),
             kind::REAL => b.real(f64::from_bits(n.payload)),
-            kind::STRING => b.string(bytes(n)),
-            kind::UUID => {
-                let mut u = [0u8; 16];
-                u.copy_from_slice(bytes(n));
-                b.uuid(&u)
-            }
+            kind::STRING => b.string(data()?),
+            kind::UUID => b.uuid(data()?.try_into().ok()?),
             kind::DATE => b.date(f64::from_bits(n.payload)),
-            kind::URI => b.uri(bytes(n)),
-            kind::BINARY => b.binary(bytes(n)),
-            kind::KEY => {
-                b.key(bytes(n));
-                continue;
-            }
-            kind::MAP => {
-                b.begin_map();
-                remaining.push((kind::MAP, n.len));
-                if n.len == 0 {
-                    b.end_map();
-                    remaining.pop();
+            kind::URI => b.uri(data()?),
+            kind::BINARY => b.binary(data()?),
+            kind::MAP | kind::ARRAY => {
+                let map = n.kind == kind::MAP;
+                if map {
+                    b.begin_map();
                 } else {
+                    b.begin_array();
+                }
+                if n.len > 0 {
+                    open.push(Open {
+                        map,
+                        left: n.len,
+                        want_key: map,
+                    });
                     continue;
                 }
-            }
-            kind::ARRAY => {
-                b.begin_array();
-                remaining.push((kind::ARRAY, n.len));
-                if n.len == 0 {
-                    b.end_array();
-                    remaining.pop();
+                if map {
+                    b.end_map();
                 } else {
-                    continue;
+                    b.end_array();
                 }
             }
             _ => return None,
         }
         // A value completed: close every container that just became full.
-        while let Some((k, left)) = remaining.last_mut() {
-            *left -= 1;
-            if *left == 0 {
-                let k = *k;
-                remaining.pop();
-                if k == kind::MAP {
-                    b.end_map();
-                } else {
-                    b.end_array();
-                }
-            } else {
+        loop {
+            let Some(o) = open.last_mut() else {
+                done = true;
                 break;
+            };
+            o.left -= 1;
+            o.want_key = o.map;
+            if o.left > 0 {
+                break;
+            }
+            let map = o.map;
+            open.pop();
+            if map {
+                b.end_map();
+            } else {
+                b.end_array();
             }
         }
     }
-    b.finish()
+    if done { b.finish() } else { None }
+}
+
+/// The events of a value that is not a container.
+fn emit_scalar<S: Sink>(sink: &mut S, v: &Value) {
+    match v {
+        Value::Undefined => sink.undef(),
+        Value::Boolean(b) => sink.boolean(*b),
+        Value::Integer(i) => sink.integer(*i),
+        Value::Real(r) => sink.real(*r),
+        Value::String(s) => sink.string(s),
+        Value::Uuid(u) => sink.uuid(u),
+        Value::Date(d) => sink.date(*d),
+        Value::Uri(u) => sink.uri(u),
+        Value::Binary(b) => sink.binary(b),
+        Value::Map(_) | Value::Array(_) => unreachable!("flat_from_value walks the containers"),
+    }
+}
+
+/// Flattens a [`Value`] into a [`FlatDoc`]: the events a parser delivering
+/// the value would send, into a [`FlatSink`], so the buffer is the one
+/// `vks_llsd_parse` hands to C++ for the same document. Map entries come in
+/// key order.
+///
+/// This is how the viewer's C ABI returns an `LLSD` value to C++. The walk is
+/// iterative, so the depth is bounded by memory only.
+pub fn flat_from_value(value: &Value) -> FlatDoc {
+    enum Frame<'a> {
+        Map(std::collections::btree_map::Iter<'a, Vec<u8>, Value>),
+        Array(std::slice::Iter<'a, Value>),
+    }
+    let mut sink = FlatSink::new();
+    let mut stack: Vec<Frame<'_>> = Vec::new();
+    let mut next = Some(value);
+    loop {
+        if let Some(v) = next.take() {
+            match v {
+                Value::Map(m) => {
+                    sink.begin_map();
+                    stack.push(Frame::Map(m.iter()));
+                }
+                Value::Array(a) => {
+                    sink.begin_array();
+                    stack.push(Frame::Array(a.iter()));
+                }
+                scalar => emit_scalar(&mut sink, scalar),
+            }
+        }
+        match stack.last_mut() {
+            None => break,
+            Some(Frame::Map(entries)) => match entries.next() {
+                Some((k, v)) => {
+                    sink.key(k);
+                    next = Some(v);
+                }
+                None => {
+                    stack.pop();
+                    sink.end_map();
+                }
+            },
+            Some(Frame::Array(entries)) => match entries.next() {
+                Some(v) => next = Some(v),
+                None => {
+                    stack.pop();
+                    sink.end_array();
+                }
+            },
+        }
+    }
+    sink.finish()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{Format, Limits, Reader, SliceSource, XmlMode, parse_into};
+
+    fn node(kind: u8, len: u32, payload: u64) -> FlatNode {
+        FlatNode {
+            kind,
+            pad: [0; 3],
+            len,
+            payload,
+        }
+    }
+
+    fn same_nodes(a: &[FlatNode], b: &[FlatNode]) -> bool {
+        a.len() == b.len()
+            && a.iter()
+                .zip(b)
+                .all(|(x, y)| x.kind == y.kind && x.len == y.len && x.payload == y.payload)
+    }
+
+    fn sample() -> Value {
+        let mut inner = BTreeMap::new();
+        inner.insert(b"nul\0key".to_vec(), Value::String(b"a\0b\xff".to_vec()));
+        inner.insert(b"".to_vec(), Value::map());
+        inner.insert(b"empty array".to_vec(), Value::array());
+        let mut root = BTreeMap::new();
+        root.insert(b"undef".to_vec(), Value::Undefined);
+        root.insert(b"bool".to_vec(), Value::Boolean(true));
+        root.insert(b"int".to_vec(), Value::Integer(i32::MIN));
+        root.insert(
+            b"real".to_vec(),
+            Value::Real(f64::from_bits(0x7ff8_0000_dead_beef)),
+        );
+        root.insert(b"string".to_vec(), Value::String(Vec::new()));
+        root.insert(b"uuid".to_vec(), Value::Uuid([0xab; 16]));
+        root.insert(b"date".to_vec(), Value::Date(-1.5));
+        root.insert(b"uri".to_vec(), Value::Uri(b"http://x/\0".to_vec()));
+        root.insert(b"binary".to_vec(), Value::Binary((0..=255).collect()));
+        root.insert(b"map".to_vec(), Value::Map(inner));
+        root.insert(
+            b"array".to_vec(),
+            Value::Array(vec![
+                Value::Integer(1),
+                Value::Array(vec![Value::Undefined]),
+                Value::map(),
+            ]),
+        );
+        Value::Map(root)
+    }
+
+    #[test]
+    fn round_trip() {
+        let values = [
+            sample(),
+            Value::Undefined,
+            Value::Integer(7),
+            Value::map(),
+            Value::array(),
+            Value::Binary(Vec::new()),
+        ];
+        for v in values {
+            let doc = flat_from_value(&v);
+            assert_eq!(value_from_flat(&doc, KeyPolicy::LastWins), Some(v.clone()));
+            assert_eq!(value_from_flat(&doc, KeyPolicy::FirstWins), Some(v));
+        }
+    }
+
+    #[test]
+    fn matches_the_parser_buffer() {
+        let text: &[u8] = br#"{'a':[i1,r2.5,'x',u01234567-89ab-cdef-0123-456789abcdef,d"2026-10-31T00:00:00Z",!,true,b16"00ff",l"u"],'b':{},'c':[]}"#;
+        let mut src = SliceSource::new(text);
+        let mut reader = Reader::with_prefix(&[], &mut src);
+        let mut sink = FlatSink::new();
+        assert!(
+            parse_into(
+                Format::Notation,
+                &mut reader,
+                &mut sink,
+                Limits::UNLIMITED,
+                XmlMode::Parse
+            ) > 0
+        );
+        let parsed = sink.finish();
+        let v = value_from_flat(&parsed, KeyPolicy::FirstWins).unwrap();
+        let doc = flat_from_value(&v);
+        assert!(same_nodes(&doc.nodes, &parsed.nodes));
+        assert_eq!(doc.bytes, parsed.bytes);
+    }
+
+    #[test]
+    fn deep_nesting() {
+        // On a large stack: the walks are iterative, but Value's comparison
+        // (and, without a custom Drop, its drop) recurse.
+        std::thread::Builder::new()
+            .stack_size(1 << 30)
+            .spawn(|| {
+                let depth = 50_000;
+                let mut v = Value::Integer(1);
+                for i in 0..depth {
+                    v = if i % 2 == 0 {
+                        Value::Array(vec![v])
+                    } else {
+                        let mut m = BTreeMap::new();
+                        m.insert(b"k".to_vec(), v);
+                        Value::Map(m)
+                    };
+                }
+                let doc = flat_from_value(&v);
+                // One node per container, one key node per map, the leaf.
+                assert_eq!(doc.nodes.len(), depth + depth / 2 + 1);
+                assert_eq!(value_from_flat(&doc, KeyPolicy::LastWins), Some(v));
+            })
+            .unwrap()
+            .join()
+            .unwrap();
+    }
+
+    #[test]
+    fn repeated_keys_follow_the_policy() {
+        let bytes = b"kk";
+        let nodes = [
+            node(kind::MAP, 2, 0),
+            node(kind::KEY, 1, 0),
+            node(kind::INTEGER, 0, 1),
+            node(kind::KEY, 1, 1),
+            node(kind::INTEGER, 0, 2),
+        ];
+        let one = |i| {
+            let mut m = BTreeMap::new();
+            m.insert(b"k".to_vec(), Value::Integer(i));
+            Value::Map(m)
+        };
+        assert_eq!(
+            value_from_flat_parts(&nodes, bytes, KeyPolicy::FirstWins),
+            Some(one(1))
+        );
+        assert_eq!(
+            value_from_flat_parts(&nodes, bytes, KeyPolicy::LastWins),
+            Some(one(2))
+        );
+    }
+
+    #[test]
+    fn malformed_buffers_are_refused() {
+        let bytes = [0u8; 16];
+        let none = |nodes: &[FlatNode]| {
+            value_from_flat_parts(nodes, &bytes, KeyPolicy::LastWins).is_none()
+        };
+        // No value, or more than one.
+        assert!(none(&[]));
+        assert!(none(&[node(kind::UNDEF, 0, 0), node(kind::UNDEF, 0, 0)]));
+        // An unknown kind.
+        assert!(none(&[node(12, 0, 0)]));
+        // Bytes outside the arena, and an offset that overflows.
+        assert!(none(&[node(kind::STRING, 17, 0)]));
+        assert!(none(&[node(kind::STRING, 1, 16)]));
+        assert!(none(&[node(kind::BINARY, 2, u64::MAX)]));
+        // A UUID of the wrong length.
+        assert!(none(&[node(kind::UUID, 15, 0)]));
+        // Keys outside maps, a value where a key belongs, a key where a value
+        // belongs.
+        assert!(none(&[node(kind::KEY, 1, 0)]));
+        assert!(none(&[node(kind::ARRAY, 1, 0), node(kind::KEY, 1, 0)]));
+        assert!(none(&[node(kind::MAP, 1, 0), node(kind::INTEGER, 0, 0)]));
+        assert!(none(&[
+            node(kind::MAP, 1, 0),
+            node(kind::KEY, 1, 0),
+            node(kind::KEY, 1, 0),
+            node(kind::UNDEF, 0, 0)
+        ]));
+        // Containers that run past the last node.
+        assert!(none(&[node(kind::ARRAY, 2, 0), node(kind::UNDEF, 0, 0)]));
+        assert!(none(&[node(kind::MAP, 1, 0), node(kind::KEY, 1, 0)]));
+        // Well formed, for contrast.
+        assert!(!none(&[node(kind::ARRAY, 1, 0), node(kind::UUID, 16, 0)]));
+    }
 }
