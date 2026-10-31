@@ -298,7 +298,7 @@ const _: () = {
     }
 };
 
-unsafe fn object_from(v: &VksInvObject) -> Object {
+pub(crate) unsafe fn object_from(v: &VksInvObject) -> Object {
     Object {
         id: v.id,
         parent: v.parent,
@@ -311,7 +311,7 @@ unsafe fn object_from(v: &VksInvObject) -> Object {
     }
 }
 
-fn object_view(o: &Object) -> VksInvObject {
+pub(crate) fn object_view(o: &Object) -> VksInvObject {
     VksInvObject {
         id: o.id,
         parent: o.parent,
