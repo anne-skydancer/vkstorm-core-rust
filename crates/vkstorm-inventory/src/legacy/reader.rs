@@ -33,7 +33,13 @@ impl<'a> Stream<'a> {
     /// stream as it is handed to a reader, which may already be past its
     /// end or failed (`fail` here is the `failbit` alone).
     pub fn with_state(data: &'a [u8], eof: bool, fail: bool, bad: bool) -> Stream<'a> {
-        Stream { data, pos: 0, eof, fail, bad }
+        Stream {
+            data,
+            pos: 0,
+            eof,
+            fail,
+            bad,
+        }
     }
 
     /// `rdstate()` as its three bits: `eofbit`, `failbit` and `badbit`.
