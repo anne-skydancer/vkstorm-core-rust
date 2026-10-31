@@ -1860,8 +1860,8 @@ impl Run {
         let env = self.env.clone();
         self.model_changed = true;
         if f.foreground {
-            if let Some(Value::Array(items)) = f.value.as_ref().map(|v| get(v, "items").clone()) {
-                for it in &items {
+            if let Some(Value::Array(items)) = f.value.as_ref().map(|v| get(v, "items")) {
+                for it in items {
                     self.model.legacy_item(it, None);
                 }
             }
@@ -1883,8 +1883,8 @@ impl Run {
             self.drain();
         } else if f.status == 200 {
             // FetchItemHttpHandler::processData: the items into the model
-            if let Some(Value::Array(items)) = f.value.as_ref().map(|v| get(v, "items").clone()) {
-                for it in &items {
+            if let Some(Value::Array(items)) = f.value.as_ref().map(|v| get(v, "items")) {
+                for it in items {
                     self.model.legacy_item(it, None);
                 }
             }
@@ -1895,8 +1895,8 @@ impl Run {
     /// `processData()`'s model writes (scaffolding for the C++ applier) with
     /// the scheduler's part: a recursive category goes back to the queue.
     fn legacy_process_data(&mut self, handler: u64, v: &Value) {
-        let Value::Array(folders) = get(v, "folders").clone() else { return };
-        for f in &folders {
+        let Value::Array(folders) = get(v, "folders") else { return };
+        for f in folders {
             let parent_id = as_uuid(get(f, "folder_id"));
             let owner_id = as_uuid(get(f, "owner_id"));
             let version = as_integer(get(f, "version"));

@@ -456,7 +456,7 @@ fn offerinfo_llsd() {
 fn forced_response_index() {
     let mut out = Out::default();
     for name in ["UserGiveItem", "UserGiveItemLegacy", "ObjectGiveItem", "OwnObjectGiveItem"] {
-        if let Some(Value::Array(form)) = notification_form(name) {
+        if let Some(Value::Array(form)) = &notification_form(name) {
             for (i, e) in form.iter().enumerate() {
                 let n = String::from_utf8_lossy(&vkstorm_inventory::llsd::coerce::as_string(vkstorm_inventory::llsd::coerce::get(e, "name"))).into_owned();
                 let idx = vkstorm_inventory::llsd::coerce::as_integer(vkstorm_inventory::llsd::coerce::get(e, "index"));
@@ -464,8 +464,8 @@ fn forced_response_index() {
             }
         }
     }
-    let form = match notification_form("UserGiveItem") {
-        Some(Value::Array(a)) => a,
+    let form = match &notification_form("UserGiveItem") {
+        Some(Value::Array(a)) => a.clone(),
         _ => unreachable!(),
     };
     let describe = |i: i32| -> String {

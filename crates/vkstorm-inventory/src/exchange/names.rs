@@ -4,6 +4,8 @@
 //! (`lluuid.cpp`), and the text readers the bucket parsers use (`atoi`,
 //! `istream >> S32`, boost's `char_separator` with kept empty tokens).
 
+use std::ffi::c_long;
+
 use crate::perms::Uuid;
 use crate::text::{is_space, trim};
 
@@ -156,11 +158,12 @@ pub fn parse_uuid(buf: &[u8]) -> Option<Uuid> {
     uuid_validate(t).then(|| vkstorm_llsd::text::uuid_set(t))
 }
 
-/// `atoi` on a C string: leading white space, a sign, decimal digits,
-/// saturating at the 32-bit range (MSVC and glibc then agree on the low
-/// byte the callers keep).
-pub fn atoi(s: &[u8]) -> i32 {
-    let s = &s[..s.iter().position(|&c| c == 0).unwrap_or(s.len())];
+/// `strtol(s, NULL, 10)` on a C string: leading white space, a sign,
+/// decimal digits, saturating at the platform's `long` range. `long` is 32
+/// bits with MSVC (LLP64) and 64 bits with glibc on x86-64 Linux (LP64), as
+/// [`c_long`] is.
+pub fn strtol(s: &[u8]) -> c_long {
+    let s = c_str(s);
     let mut i = 0;
     while i < s.len() && is_space(s[i]) {
         i += 1;
@@ -170,13 +173,31 @@ pub fn atoi(s: &[u8]) -> i32 {
         neg = s[i] == b'-';
         i += 1;
     }
-    let mut v: i64 = 0;
+    // Past any `long`; the cap keeps the accumulator from overflowing.
+    const CAP: i128 = 1 << 80;
+    let mut v: i128 = 0;
     while i < s.len() && s[i].is_ascii_digit() {
-        v = (v * 10 + (s[i] - b'0') as i64).min(1 << 40);
+        v = (v * 10 + (s[i] - b'0') as i128).min(CAP);
         i += 1;
     }
     let v = if neg { -v } else { v };
-    v.clamp(i32::MIN as i64, i32::MAX as i64) as i32
+    v.clamp(c_long::MIN as i128, c_long::MAX as i128) as c_long
+}
+
+/// `atol` on a C string: `strtol(s, NULL, 10)` in both runtimes (glibc
+/// `stdlib/atol.c`; MSVC documents `LONG_MAX`/`LONG_MIN` on overflow).
+pub fn atol(s: &[u8]) -> c_long {
+    strtol(s)
+}
+
+/// `atoi` on a C string. glibc's is `(int) strtol(s, NULL, 10)`
+/// (`stdlib/atoi.c`): saturated at the 64-bit `long` range, then cut to
+/// the low 32 bits (GCC's documented conversion), so `"4294967297"` is 1.
+/// MSVC's saturates at the `int` range (`INT_MAX`/`INT_MIN` on overflow,
+/// per its `atoi` documentation), which with a 32-bit `long` is the same
+/// cast.
+pub fn atoi(s: &[u8]) -> i32 {
+    strtol(s) as i32
 }
 
 /// `std::stringstream(s) >> S32`: `None` when the stream is at its end
@@ -252,5 +273,51 @@ mod tests {
         assert_eq!(stream_read_s32(b""), None);
         assert_eq!(stream_read_s32(b"99999999999"), Some(i32::MAX));
         assert_eq!(atoi(b"x"), 0);
+    }
+
+    /// The `strtol` text rules, the same on both platforms.
+    #[test]
+    fn atoi_text_rules() {
+        assert_eq!(atoi(b""), 0);
+        assert_eq!(atoi(b"  \t\n\x0b\x0c\r42"), 42);
+        assert_eq!(atoi(b"+7x"), 7);
+        assert_eq!(atoi(b"-7 8"), -7);
+        assert_eq!(atoi(b"- 7"), 0);
+        assert_eq!(atoi(b"--7"), 0);
+        assert_eq!(atoi(b"0x10"), 0);
+        assert_eq!(atoi(b"12\x0034"), 12);
+        assert_eq!(atoi(b"2147483647"), i32::MAX);
+        assert_eq!(atoi(b"-2147483648"), i32::MIN);
+        assert_eq!(atoi(b"300") as u8, 44);
+    }
+
+    /// Out of the `int` range: MSVC saturates there.
+    #[cfg(windows)]
+    #[test]
+    fn atoi_overflow_msvc() {
+        assert_eq!(atoi(b"2147483648"), i32::MAX);
+        assert_eq!(atoi(b"-2147483649"), i32::MIN);
+        assert_eq!(atoi(b"4294967297"), i32::MAX);
+        assert_eq!(atoi(b"99999999999999999999"), i32::MAX);
+        assert_eq!(atoi(b"-99999999999999999999"), i32::MIN);
+        assert_eq!(atoi(b"4294967297") as u8, 0xff);
+        assert_eq!(atol(b"4294967297"), i32::MAX);
+    }
+
+    /// Out of the `int` range: glibc saturates at the `long` range and keeps
+    /// the low 32 bits.
+    #[cfg(not(windows))]
+    #[test]
+    fn atoi_overflow_glibc() {
+        assert_eq!(atoi(b"2147483648"), i32::MIN);
+        assert_eq!(atoi(b"-2147483649"), i32::MAX);
+        assert_eq!(atoi(b"4294967297"), 1);
+        assert_eq!(atoi(b"9223372036854775807"), -1);
+        assert_eq!(atoi(b"99999999999999999999"), -1);
+        assert_eq!(atoi(b"-9223372036854775808"), 0);
+        assert_eq!(atoi(b"-99999999999999999999"), 0);
+        assert_eq!(atoi(b"4294967297") as u8, 1);
+        assert_eq!(atol(b"4294967297"), 4294967297);
+        assert_eq!(atol(b"99999999999999999999"), i64::MAX);
     }
 }
