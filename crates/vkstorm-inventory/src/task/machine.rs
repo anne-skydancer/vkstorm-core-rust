@@ -27,9 +27,15 @@ use crate::message::ItemBlock;
 use crate::perms::{NULL_ID, Uuid};
 use crate::types::AssetType;
 
+/// What the decisions take as entries: a [`TaskEntry`] they can copy and
+/// make from the entries they create.
+pub trait TaskKey: TaskEntry + Clone + From<Entry> {}
+
+impl<T: TaskEntry + Clone + From<Entry>> TaskKey for T {}
+
 /// The object during one decision: the view's state, changed as the
 /// actions change it, and the actions so far.
-struct Work<'a, E: TaskEntry> {
+struct Work<'a, E: TaskKey> {
     id: Uuid,
     local_id: u32,
     st: TaskState,
@@ -40,7 +46,7 @@ struct Work<'a, E: TaskEntry> {
     out: Vec<Action>,
 }
 
-impl<'a, E: TaskEntry> Work<'a, E> {
+impl<'a, E: TaskKey> Work<'a, E> {
     fn new(view: &TaskView<'_, E>, env: &'a Env<'a>) -> Work<'a, E> {
         Work {
             id: view.id,
@@ -341,21 +347,21 @@ fn task_item_with_transaction(item: &ViewerItem, object_id: &Uuid) -> ViewerItem
 }
 
 /// `requestInventory`.
-pub fn request_inventory<E: TaskEntry>(view: &TaskView<'_, E>, env: &Env<'_>) -> Vec<Action> {
+pub fn request_inventory<E: TaskKey>(view: &TaskView<'_, E>, env: &Env<'_>) -> Vec<Action> {
     let mut w = Work::new(view, env);
     w.request_inventory();
     w.finish()
 }
 
 /// `dirtyInventory`.
-pub fn dirty_inventory<E: TaskEntry>(view: &TaskView<'_, E>, env: &Env<'_>) -> Vec<Action> {
+pub fn dirty_inventory<E: TaskKey>(view: &TaskView<'_, E>, env: &Env<'_>) -> Vec<Action> {
     let mut w = Work::new(view, env);
     w.dirty_inventory();
     w.finish()
 }
 
 /// `deleteInventoryItem` (no message).
-pub fn delete_inventory_item<E: TaskEntry>(
+pub fn delete_inventory_item<E: TaskKey>(
     view: &TaskView<'_, E>,
     env: &Env<'_>,
     item_id: &Uuid,
@@ -376,7 +382,7 @@ pub fn delete_inventory_item<E: TaskEntry>(
 /// serials set, and a file name that scrubs to empty mocks up the
 /// `Contents` drop target, otherwise the file is requested
 /// ([`Action::RequestXfer`], continued by [`xfer_requested`]).
-pub fn reply_task_inventory<E: TaskEntry>(
+pub fn reply_task_inventory<E: TaskKey>(
     view: &TaskView<'_, E>,
     env: &Env<'_>,
     serial: i16,
@@ -420,7 +426,7 @@ pub fn reply_task_inventory<E: TaskEntry>(
 /// The rest of `processTaskInv` once `requestFile` returned `new_id`: a
 /// transfer in progress is replaced by a new one (the old one aborted),
 /// otherwise the state becomes `XFER` with the new id.
-pub fn xfer_requested<E: TaskEntry>(
+pub fn xfer_requested<E: TaskKey>(
     view: &TaskView<'_, E>,
     env: &Env<'_>,
     new_id: u64,
@@ -446,7 +452,7 @@ pub fn xfer_requested<E: TaskEntry>(
 /// records the serial and loads the file; a successful load then takes the
 /// assets of the items (not `AT_CATEGORY`) out of the pending list, front to
 /// back, while it is not empty.
-pub fn xfer_completed<E: TaskEntry>(
+pub fn xfer_completed<E: TaskKey>(
     view: &TaskView<'_, E>,
     env: &Env<'_>,
     serial: i16,
@@ -482,7 +488,7 @@ pub fn xfer_completed<E: TaskEntry>(
 
 /// `loadTaskInvFile(filename)` with the cache file's bytes (`None` when it
 /// cannot be opened): whether it loaded, and the actions.
-pub fn load_task_inv_file<E: TaskEntry>(
+pub fn load_task_inv_file<E: TaskKey>(
     view: &TaskView<'_, E>,
     env: &Env<'_>,
     filename: &[u8],
@@ -499,7 +505,7 @@ pub fn load_task_inv_file<E: TaskEntry>(
 /// the serial is not 0 and the object has contents, which never holds
 /// here: `fetchInventoryFromServer` deleted them; README "Recorded
 /// quirks").
-pub fn cap_fetch_begin<E: TaskEntry>(view: &TaskView<'_, E>, env: &Env<'_>) -> Vec<Action> {
+pub fn cap_fetch_begin<E: TaskKey>(view: &TaskView<'_, E>, env: &Env<'_>) -> Vec<Action> {
     let mut w = Work::new(view, env);
     let cap = env.region.map_or("", |r| r.request_task_inventory);
     let mut url = format!("{cap}?task_id={}", uuid_string(&w.id));
@@ -522,7 +528,7 @@ pub fn cap_fetch_begin<E: TaskEntry>(view: &TaskView<'_, E>, env: &Env<'_>) -> V
 ///
 /// The entries of `contents` come back as [`Action::PushFront`]s; see
 /// [`cap_fetch_reply_summary`] for a caller that decodes them itself.
-pub fn cap_fetch_reply<E: TaskEntry>(
+pub fn cap_fetch_reply<E: TaskKey>(
     view: &TaskView<'_, E>,
     env: &Env<'_>,
     success: bool,
@@ -568,7 +574,7 @@ pub struct CapReply {
 /// carries out by pushing each element of `contents` that is a map with
 /// `item_id` to the front, in reply order, as
 /// `LLViewerInventoryItem::unpackMessage(LLSD)` reads it.
-pub fn cap_fetch_reply_summary<E: TaskEntry>(
+pub fn cap_fetch_reply_summary<E: TaskKey>(
     view: &TaskView<'_, E>,
     env: &Env<'_>,
     success: bool,
@@ -598,7 +604,7 @@ pub fn cap_fetch_reply_summary<E: TaskEntry>(
 
 /// `fetchInventoryDelayedCoro` after its timeout, for an object
 /// `gObjectList` still has: the request is released and fetched again.
-pub fn delayed_fetch_due<E: TaskEntry>(view: &TaskView<'_, E>, env: &Env<'_>) -> Vec<Action> {
+pub fn delayed_fetch_due<E: TaskKey>(view: &TaskView<'_, E>, env: &Env<'_>) -> Vec<Action> {
     let mut w = Work::new(view, env);
     w.set_request(RequestState::Stopped);
     w.fetch_inventory_from_server();
@@ -609,7 +615,7 @@ pub fn delayed_fetch_due<E: TaskEntry>(view: &TaskView<'_, E>, env: &Env<'_>) ->
 /// task copy of the item (sliced to the viewer's fields, the object as
 /// parent, the item's transaction id), then the local update with the
 /// owner guess.
-pub fn update_inventory<E: TaskEntry>(
+pub fn update_inventory<E: TaskKey>(
     view: &TaskView<'_, E>,
     env: &Env<'_>,
     item: &ViewerItem,
@@ -624,7 +630,7 @@ pub fn update_inventory<E: TaskEntry>(
 
 /// `updateInventoryLocal(item, key)`: the local update only (no message,
 /// no transaction id), as not new.
-pub fn update_inventory_local<E: TaskEntry>(
+pub fn update_inventory_local<E: TaskKey>(
     view: &TaskView<'_, E>,
     env: &Env<'_>,
     item: &Item,
@@ -638,7 +644,7 @@ pub fn update_inventory_local<E: TaskEntry>(
 
 /// `updateViewerInventoryAsset(item, new_asset)`: a copy of the item with
 /// the new asset, updated locally by item id, as not new.
-pub fn update_viewer_inventory_asset<E: TaskEntry>(
+pub fn update_viewer_inventory_asset<E: TaskKey>(
     view: &TaskView<'_, E>,
     env: &Env<'_>,
     item: &ViewerItem,
@@ -654,7 +660,7 @@ pub fn update_viewer_inventory_asset<E: TaskEntry>(
 /// `updateMaterialInventory(item, key, is_new)`: textures and materials
 /// only, not already present or pending, with a region; the asset is added
 /// to the pending list, then [`update_inventory`].
-pub fn update_material_inventory<E: TaskEntry>(
+pub fn update_material_inventory<E: TaskKey>(
     view: &TaskView<'_, E>,
     env: &Env<'_>,
     item: &ViewerItem,
@@ -682,7 +688,7 @@ pub fn update_material_inventory<E: TaskEntry>(
 /// `removeInventory(item_id)`: the item's property floaters closed, then
 /// (with a region) `RemoveTaskInventory`, the first entry with the id
 /// erased, and the expected serial raised.
-pub fn remove_inventory<E: TaskEntry>(
+pub fn remove_inventory<E: TaskKey>(
     view: &TaskView<'_, E>,
     env: &Env<'_>,
     item_id: &Uuid,
@@ -717,7 +723,7 @@ pub fn remove_inventory<E: TaskEntry>(
 /// `moveInventory(folder_id, item_id)`: (with a region)
 /// `MoveTaskInventory`; an item the agent may not copy leaves the contents
 /// and raises the expected serial.
-pub fn move_inventory<E: TaskEntry>(
+pub fn move_inventory<E: TaskKey>(
     view: &TaskView<'_, E>,
     env: &Env<'_>,
     folder_id: &Uuid,
@@ -748,7 +754,7 @@ pub fn move_inventory<E: TaskEntry>(
 /// `saveScript(item, active, is_new, template_id)`: (with a region)
 /// `RezScript` with the task copy of the item and, for an item without an
 /// asset and a template, `NewScriptInfo`; then the local update by item id.
-pub fn save_script<E: TaskEntry>(
+pub fn save_script<E: TaskKey>(
     view: &TaskView<'_, E>,
     env: &Env<'_>,
     item: &ViewerItem,
@@ -780,7 +786,7 @@ pub fn save_script<E: TaskEntry>(
 /// `createInventoryItem`: without a region or without the
 /// `CreateTaskInventoryItem` capability the callback fails at once;
 /// otherwise the coroutine posts the body ([`super::create::create_body`]).
-pub fn create_inventory_item<E: TaskEntry>(
+pub fn create_inventory_item<E: TaskKey>(
     view: &TaskView<'_, E>,
     env: &Env<'_>,
     req: &CreateRequest<'_>,
@@ -810,7 +816,7 @@ pub fn create_item_succeeded(http_ok: bool, result: &Value) -> bool {
 /// `createInventoryItemCoro` after the reply: on success, for the object
 /// when `gObjectList` has it (`view`), the expected serial is raised and
 /// the contents are made dirty and requested again; then the callback.
-pub fn create_item_completed<E: TaskEntry>(
+pub fn create_item_completed<E: TaskKey>(
     view: Option<&TaskView<'_, E>>,
     env: &Env<'_>,
     success: bool,

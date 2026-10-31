@@ -76,10 +76,10 @@ pub mod message;
 pub use create::CreateRequest;
 pub use llsd::LocalizedNames;
 pub use machine::{
-    CapReply, cap_fetch_begin, cap_fetch_reply, cap_fetch_reply_summary, create_inventory_item,
-    create_item_completed, create_item_succeeded, delayed_fetch_due, delete_inventory_item,
-    dirty_inventory, load_task_inv_file, move_inventory, remove_inventory, reply_task_inventory,
-    request_inventory, save_script, update_inventory, update_inventory_local,
+    CapReply, TaskKey, cap_fetch_begin, cap_fetch_reply, cap_fetch_reply_summary,
+    create_inventory_item, create_item_completed, create_item_succeeded, delayed_fetch_due,
+    delete_inventory_item, dirty_inventory, load_task_inv_file, move_inventory, remove_inventory,
+    reply_task_inventory, request_inventory, save_script, update_inventory, update_inventory_local,
     update_material_inventory, update_viewer_inventory_asset, xfer_completed, xfer_requested,
 };
 pub use message::Outgoing;
@@ -292,9 +292,10 @@ impl Entry {
 ///
 /// [`Entry`] is the full record. A caller that keeps the entries itself (the
 /// viewer, whose `mInventory` stays C++) passes a lighter key per entry
-/// instead; the entries the decisions create cross as [`Entry`] in
-/// [`Action::PushFront`] and become keys through `From<Entry>`.
-pub trait TaskEntry: Clone + From<Entry> {
+/// instead. The lookups take any `TaskEntry`; the decisions also need
+/// `Clone + From<Entry>`, since the entries they create cross as [`Entry`]
+/// in [`Action::PushFront`] and join their working copy of the list.
+pub trait TaskEntry {
     /// `getUUID`.
     fn id(&self) -> Uuid;
     /// `getType`.
