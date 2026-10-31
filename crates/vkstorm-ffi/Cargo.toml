@@ -25,6 +25,7 @@ vkstorm-assets = { path = "../vkstorm-assets", optional = true }
 # The viewer links its prebuilt libcurl; the music player calls it by symbol.
 vkstorm-audio = { path = "../vkstorm-audio", optional = true, features = ["curl-symbols"] }
 vkstorm-vorbis = { path = "../vkstorm-vorbis", optional = true }
+vkstorm-inventory = { path = "../vkstorm-inventory", optional = true }
 
 [features]
 default = []
@@ -37,8 +38,9 @@ messages = ["dep:vkstorm-messages"]
 http = ["dep:vkstorm-http"]
 assets = ["dep:vkstorm-assets"]
 audio = ["dep:vkstorm-audio", "dep:vkstorm-vorbis"]
+inventory = ["dep:vkstorm-inventory"]
 # Every rung: the build the vkstorm-rust line links.
-full = ["j2c", "llsd", "volume", "image", "messages", "http", "assets", "audio"]
+full = ["j2c", "llsd", "volume", "image", "messages", "http", "assets", "audio", "inventory"]
 # OpenSim grid support (the viewer's CMake OPENSIM option): the legacy UDP
-# paths of the crates that carry them.
-opensim = ["vkstorm-assets?/opensim"]
+# paths of the crates that carry them, and the OpenSim-only inventory rules.
+opensim = ["vkstorm-assets?/opensim", "vkstorm-inventory?/opensim"]

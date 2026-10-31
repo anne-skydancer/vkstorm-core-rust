@@ -450,6 +450,16 @@ pub fn pack_viewer_category(
     pack_category(builder, keys, &category.category)
 }
 
+/// A folder block as it travels: every value already in its wire type, the
+/// name as `getStringFast` returns it (unsanitised).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FolderBlock {
+    pub folder_id: Uuid,
+    pub parent_id: Uuid,
+    pub ty: i8,
+    pub name: Vec<u8>,
+}
+
 /// `LLInventoryCategory::unpackMessage(msg, block, block_num)`: the id,
 /// parent, preferred type (`S8`, sign extended) and name (through
 /// `replaceNonstandardASCII(' ')` only: not trimmed, `|` kept). The type,
@@ -462,16 +472,24 @@ pub fn unpack_category(
     keys: &FolderBlockKeys,
     category: &mut Category,
 ) -> Result<(), GetError> {
-    let id = get_fixed::<16>(reader, block, block_num, keys.folder_id)?;
-    let parent = get_fixed::<16>(reader, block, block_num, keys.parent_id)?;
-    let ty = get_fixed::<1>(reader, block, block_num, keys.ty)?[0] as i8;
-    let mut name = get_string(reader, block, block_num, keys.name)?;
-    replace_nonstandard_ascii(&mut name, b' ');
-    category.object.id = id;
-    category.object.parent = parent;
-    category.preferred_type = FolderType(i32::from(ty));
-    category.object.name = name;
+    let b = FolderBlock {
+        folder_id: get_fixed::<16>(reader, block, block_num, keys.folder_id)?,
+        parent_id: get_fixed::<16>(reader, block, block_num, keys.parent_id)?,
+        ty: get_fixed::<1>(reader, block, block_num, keys.ty)?[0] as i8,
+        name: get_string(reader, block, block_num, keys.name)?,
+    };
+    apply_folder_block(&b, category);
     Ok(())
+}
+
+/// The assignments of `LLInventoryCategory::unpackMessage` from a read
+/// block (see [`unpack_category`]).
+pub fn apply_folder_block(b: &FolderBlock, category: &mut Category) {
+    category.object.id = b.folder_id;
+    category.object.parent = b.parent_id;
+    category.preferred_type = FolderType(i32::from(b.ty));
+    category.object.name.clone_from(&b.name);
+    replace_nonstandard_ascii(&mut category.object.name, b' ');
 }
 
 // ---------------------------------------------------------------------------
@@ -566,7 +584,14 @@ pub fn unpack_sale(
 ) -> Result<(), GetError> {
     let ty = get_fixed::<1>(reader, block, block_num, keys.sale_type)?[0];
     let price = i32::from_le_bytes(get_fixed::<4>(reader, block, block_num, keys.sale_price)?);
-    sale.sale_type = SaleType(i32::from(ty));
-    sale.price = clamp_price(price);
+    apply_sale_fields(ty, price, sale);
     Ok(())
+}
+
+/// The assignments of [`unpack_sale`] from the read `SaleType` and
+/// `SalePrice` values: the type as `U8`, the price clamped to
+/// `0..=S32_MAX`.
+pub fn apply_sale_fields(sale_type: u8, sale_price: i32, sale: &mut SaleInfo) {
+    sale.sale_type = SaleType(i32::from(sale_type));
+    sale.price = clamp_price(sale_price);
 }

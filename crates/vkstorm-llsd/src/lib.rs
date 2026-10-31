@@ -26,7 +26,10 @@ pub mod xml;
 
 pub use format::{Format, Formatter, Options, Out};
 pub use reader::{Reader, SliceSource, Source};
-pub use sink::{FlatDoc, FlatNode, FlatSink, KeyPolicy, Sink, ValueBuilder};
+pub use sink::{
+    FlatDoc, FlatNode, FlatSink, KeyPolicy, Sink, ValueBuilder, flat_from_value, value_from_flat,
+    value_from_flat_parts,
+};
 pub use text::FloatField;
 pub use value::Value;
 

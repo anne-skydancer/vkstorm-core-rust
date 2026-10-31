@@ -94,7 +94,15 @@ pub fn mask_to_string(mask: PermissionMask, is_open_sim: bool) -> String {
 /// The fields are public and set raw, as the viewer's `setMask*` and
 /// `yesReallySetOwner` set them: nothing is fixed until a rule runs. The
 /// rules are the C++ member functions of the same names.
+///
+/// The layout is the C++ object's: its data members in their declaration
+/// order (`mCreator`, `mOwner`, `mLastOwner`, `mGroup`, `mMaskBase`,
+/// `mMaskOwner`, `mMaskEveryone`, `mMaskGroup`, `mMaskNextOwner`,
+/// `mIsGroupOwned`), 88 bytes with alignment 4. `LLPermissions` has no
+/// virtual functions and no base class, so the C ABI (`vkstorm-ffi`) reads and
+/// writes the viewer's objects in place. Keep the field order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(C)]
 pub struct Permissions {
     /// `mCreator`.
     pub creator: Uuid,
@@ -108,15 +116,31 @@ pub struct Permissions {
     pub base: PermissionMask,
     /// `mMaskOwner`.
     pub owner_mask: PermissionMask,
-    /// `mMaskGroup`.
-    pub group_mask: PermissionMask,
     /// `mMaskEveryone`.
     pub everyone: PermissionMask,
+    /// `mMaskGroup`.
+    pub group_mask: PermissionMask,
     /// `mMaskNextOwner`.
     pub next: PermissionMask,
     /// `mIsGroupOwned`.
     pub group_owned: bool,
 }
+
+// The C++ layout of `LLPermissions` (see `Permissions`).
+const _: () = {
+    use std::mem::{align_of, offset_of, size_of};
+    assert!(size_of::<Permissions>() == 88 && align_of::<Permissions>() == 4);
+    assert!(offset_of!(Permissions, creator) == 0);
+    assert!(offset_of!(Permissions, owner) == 16);
+    assert!(offset_of!(Permissions, last_owner) == 32);
+    assert!(offset_of!(Permissions, group) == 48);
+    assert!(offset_of!(Permissions, base) == 64);
+    assert!(offset_of!(Permissions, owner_mask) == 68);
+    assert!(offset_of!(Permissions, everyone) == 72);
+    assert!(offset_of!(Permissions, group_mask) == 76);
+    assert!(offset_of!(Permissions, next) == 80);
+    assert!(offset_of!(Permissions, group_owned) == 84);
+};
 
 impl Default for Permissions {
     /// `LLPermissions::LLPermissions()`: [`Permissions::DEFAULT`].

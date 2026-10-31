@@ -15,13 +15,25 @@ pub fn clamp_price(price: i32) -> i32 {
 /// The fields are public and may hold any value, as the C++ object can (a
 /// sale type outside `0..FS_COUNT`, a negative price from a raw store or
 /// from [`accumulate`](Self::accumulate)).
+///
+/// The layout is the C++ object's (`mSaleType`, an `int`-sized enum, then
+/// `mSalePrice`; 8 bytes, alignment 4, no virtual functions), so the C ABI
+/// reads and writes the viewer's objects in place. Keep the field order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[repr(C)]
 pub struct SaleInfo {
     /// `mSaleType`.
     pub sale_type: SaleType,
     /// `mSalePrice`.
     pub price: i32,
 }
+
+// The C++ layout of `LLSaleInfo` (see `SaleInfo`).
+const _: () = {
+    use std::mem::{align_of, offset_of, size_of};
+    assert!(size_of::<SaleInfo>() == 8 && align_of::<SaleInfo>() == 4);
+    assert!(offset_of!(SaleInfo, sale_type) == 0 && offset_of!(SaleInfo, price) == 4);
+};
 
 impl Default for SaleInfo {
     /// `LLSaleInfo::LLSaleInfo()`: [`SaleInfo::DEFAULT`].
