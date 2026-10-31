@@ -173,8 +173,23 @@ pub enum Action {
     /// [`BackgroundFetch::ais_complete`]. The scheduler only issues commands
     /// the command layer will not refuse ([`AisFetch::refusal`]).
     IssueAis { ticket: u64, command: AisFetch },
-    /// Call a caller's `nullary_func_t`.
+    /// Call a caller's `nullary_func_t`, then [`BackgroundFetch::resume`].
+    /// The C++ calls it first thing in the completion lambda, and the
+    /// callback may call back into the scheduler, so the scheduler stops
+    /// here: it is always the last action of its list, and the rest of the
+    /// completion (and of the call that issued the command, when it
+    /// completed at once) runs in `resume`, after the callback.
     Callback { token: CallerToken },
+    /// `markFetchStarted()` found the fetch inactive: `mFetchStartTimer.reset()`.
+    FetchStarted,
+    /// The first time the bulk fetch is complete with every recursive folder
+    /// fetched: `mInitialFetchDuration = mFetchStartTimer.getElapsedTimeF32()`.
+    InitialFetchDuration,
+    /// `bulkFetch()` sent a batch: `mFetchTimer.reset()` (read only by the
+    /// `#ifdef OPENSIM` UDP loop).
+    FetchTimerReset,
+    /// A warning the C++ logs (`LL_WARNS`), with the id it names.
+    Warn { warning: Warning, id: Uuid },
     /// `LLNotificationsUtil::add(name)`
     Notify { name: &'static str },
     /// `mFoldersFetchedSignal()` (the fetch completion callback).
@@ -197,6 +212,49 @@ pub enum Action {
     LegacyPump { notify_observers: bool },
     /// `gInventory.notifyObservers()` (a legacy handler off Second Life).
     NotifyObservers,
+}
+
+/// The warnings of the C++ scheduler ([`Action::Warn`]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(i32)]
+pub enum Warning {
+    /// `incrFetchCount()`: "Inventory fetch count fell below zero (0)."
+    /// (`LL_WARNS_ONCE`); the id is null.
+    FetchCountBelowZero = 1,
+    /// `onAISFolderCalback()`: "Unexpected folder response for <id>".
+    UnexpectedFolderResponse = 2,
+    /// `onAISFolderCalback()`: "Failed to download folder: <id> Requesting
+    /// known content separately".
+    FolderDownloadFailed = 3,
+    /// `fetchFolderAndLinks()`'s lambda: "Failed to fetch category links <id>".
+    CategoryLinksFailed = 4,
+    /// `BGFolderHttpHandler::processFailure()` on a 403: "Failed to get AIS2
+    /// cap"; the id is null.
+    NoAis2Cap = 5,
+}
+
+/// The rest of a completion, or of the call that issued it, after an
+/// [`Action::Callback`] ([`BackgroundFetch::resume`]).
+#[derive(Clone, Debug, PartialEq, Eq)]
+enum Resume {
+    /// `fetchCOF`'s lambda after `callback()`.
+    Cof { response_id: Uuid },
+    /// `fetchFolderAndLinks`'s lambda after `callback()`.
+    FolderAndLinks { category: Uuid, response_id: Uuid },
+    /// The end of `fetchCOF` / `fetchFolderAndLinks` after their AIS call
+    /// completed at once: `markFetchStarted()`, `mFolderFetchActive`, the
+    /// idle callback.
+    Tail,
+}
+
+/// What [`BackgroundFetch::ais_call`] did.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum AisCall {
+    Issued,
+    /// Refused: the completion ran at once, inside the call.
+    Completed,
+    /// Refused, and the completion stopped at a caller's callback.
+    Yielded,
 }
 
 /// What an AIS command's completion does.
@@ -268,6 +326,10 @@ pub struct BackgroundFetch {
     force_fetch_set: BTreeSet<Uuid>,
     expected_folder_ids: Vec<Uuid>,
     idle_registered: bool,
+    initial_fetch_duration_captured: bool,
+    /// The continuations of the open [`Action::Callback`]s, innermost last;
+    /// each frame runs in order on [`BackgroundFetch::resume`].
+    resume: Vec<Vec<Resume>>,
 
     next_ticket: u64,
     pending: BTreeMap<u64, Pending>,
@@ -319,6 +381,51 @@ impl BackgroundFetch {
     /// Whether `backgroundFetchCB` is in the idle callbacks.
     pub fn idle_registered(&self) -> bool {
         self.idle_registered
+    }
+
+    /// `mBackgroundFetchActive`: the idle callback has work (the first test
+    /// of `backgroundFetch()`).
+    pub fn background_fetch_active(&self) -> bool {
+        self.background_fetch_active
+    }
+
+    /// `markFetchStarted()`
+    fn mark_fetch_started(&mut self) {
+        if !self.background_fetch_active {
+            self.actions.push(Action::FetchStarted);
+        }
+        self.background_fetch_active = true;
+    }
+
+    /// The bulk fetch is complete: the initial fetch duration, the first
+    /// time every recursive folder is fetched, and the fetch goes inactive.
+    fn bulk_fetch_complete(&mut self) {
+        if self.all_recursive_folders_fetched && !self.initial_fetch_duration_captured {
+            self.initial_fetch_duration_captured = true;
+            self.actions.push(Action::InitialFetchDuration);
+        }
+        self.background_fetch_active = false;
+    }
+
+    fn warn(&mut self, warning: Warning, id: Uuid) {
+        self.actions.push(Action::Warn { warning, id });
+    }
+
+    // ---- the folder queue, for the `#ifdef OPENSIM` UDP loop ---------------
+
+    /// `mFetchFolderQueue.front()`
+    pub fn folder_queue_front(&self) -> Option<QueueEntry> {
+        self.fetch_folder_queue.front().copied()
+    }
+
+    /// `mFetchFolderQueue.pop_front()`
+    pub fn folder_queue_pop_front(&mut self) {
+        self.fetch_folder_queue.pop_front();
+    }
+
+    /// `mFetchFolderQueue.push_back(entry)`
+    pub fn folder_queue_push_back(&mut self, entry: QueueEntry) {
+        self.fetch_folder_queue.push_back(entry);
     }
 
     // ---- predicates ------------------------------------------------------
@@ -408,6 +515,7 @@ impl BackgroundFetch {
     pub fn incr_fetch_count(&mut self, fetching: i32) {
         self.fetch_count += fetching;
         if self.fetch_count < 0 {
+            self.warn(Warning::FetchCountBelowZero, NULL_ID);
             self.fetch_count = 0;
         }
     }
@@ -457,7 +565,7 @@ impl BackgroundFetch {
         let cat = cx.model.category(&id);
         let ais = cx.env.ais_available;
         if cat.is_some() || (id == NULL_ID && !self.is_everything_fetched()) {
-            self.background_fetch_active = true;
+            self.mark_fetch_started();
             self.folder_fetch_active = true;
             let recursion_type = if recursive {
                 FetchType::Recursive
@@ -540,7 +648,7 @@ impl BackgroundFetch {
             .front()
             .is_none_or(|f| f.id != cat_id)
         {
-            self.background_fetch_active = true;
+            self.mark_fetch_started();
             self.folder_fetch_active = true;
             if forced {
                 // check if already requested
@@ -564,7 +672,7 @@ impl BackgroundFetch {
             .front()
             .is_none_or(|f| f.id != item_id)
         {
-            self.background_fetch_active = true;
+            self.mark_fetch_started();
             if forced {
                 if self.force_fetch_set.insert(item_id) {
                     self.fetch_item_queue
@@ -592,7 +700,7 @@ impl BackgroundFetch {
         }
         self.incr_fetch_folder_count(1);
         self.expected_folder_ids.push(cat_id);
-        self.ais_call(
+        let call = self.ais_call(
             cx,
             AisFetch::FetchCategoryLinks {
                 category_id: cat_id,
@@ -602,8 +710,24 @@ impl BackgroundFetch {
                 callback,
             },
         );
-        // start idle loop to track completion
-        self.background_fetch_active = true;
+        self.issue_tail(call);
+    }
+
+    /// The end of `fetchCOF` and `fetchFolderAndLinks`: start the idle loop
+    /// to track completion, at once or after the callback of a completion
+    /// that ran inside the call.
+    fn issue_tail(&mut self, call: AisCall) {
+        if call == AisCall::Yielded {
+            if let Some(frame) = self.resume.last_mut() {
+                frame.push(Resume::Tail);
+                return;
+            }
+        }
+        self.tail();
+    }
+
+    fn tail(&mut self) {
+        self.mark_fetch_started();
         self.folder_fetch_active = true;
         self.add_idle();
     }
@@ -616,15 +740,13 @@ impl BackgroundFetch {
         }
         self.incr_fetch_folder_count(1);
         self.expected_folder_ids.push(cat_id);
-        self.ais_call(cx, AisFetch::FetchCof, Completion::Cof { callback });
-        self.background_fetch_active = true;
-        self.folder_fetch_active = true;
-        self.add_idle();
+        let call = self.ais_call(cx, AisFetch::FetchCof, Completion::Cof { callback });
+        self.issue_tail(call);
     }
 
     /// `findLostItems()`
     pub fn find_lost_items(&mut self) {
-        self.background_fetch_active = true;
+        self.mark_fetch_started();
         self.folder_fetch_active = true;
         self.fetch_folder_queue
             .push_back(entry(NULL_ID, FetchType::Recursive, true));
@@ -638,7 +760,7 @@ impl BackgroundFetch {
         }
         self.folder_fetch_active = false;
         if self.is_bulk_fetch_processing_complete() {
-            self.background_fetch_active = false;
+            self.bulk_fetch_complete();
         }
         // For now only informs about initial fetch being done
         self.actions.push(Action::FetchCompleted);
@@ -646,15 +768,18 @@ impl BackgroundFetch {
 
     // ---- AIS commands ----------------------------------------------------
 
-    fn ais_call(&mut self, cx: &mut Ctx<'_>, command: AisFetch, completion: Completion) -> bool {
+    fn ais_call(&mut self, cx: &mut Ctx<'_>, command: AisFetch, completion: Completion) -> AisCall {
         if command
             .refusal(cx.env.inventory_cap, cx.env.library_cap)
             .is_some()
         {
             // No capability, or an empty subset: the completion with null,
             // at once, inside this call (the re-entrancy of s17).
-            self.complete(cx, completion, NULL_ID);
-            return false;
+            return if self.complete(cx, completion, NULL_ID) {
+                AisCall::Yielded
+            } else {
+                AisCall::Completed
+            };
         }
         let ticket = self.next_ticket;
         self.next_ticket += 1;
@@ -666,7 +791,7 @@ impl BackgroundFetch {
             },
         );
         self.actions.push(Action::IssueAis { ticket, command });
-        true
+        AisCall::Issued
     }
 
     /// The command's completion was called (`InvokeAISCommandCoro` after the
@@ -693,7 +818,9 @@ impl BackgroundFetch {
         self.pending.get(&ticket).map(|p| &p.command)
     }
 
-    fn complete(&mut self, cx: &mut Ctx<'_>, completion: Completion, response_id: Uuid) {
+    /// Runs a completion; true when it stopped at a caller's callback
+    /// ([`Action::Callback`]; the rest is in [`resume`](Self::resume)).
+    fn complete(&mut self, cx: &mut Ctx<'_>, completion: Completion, response_id: Uuid) -> bool {
         match completion {
             Completion::Folder {
                 request,
@@ -707,9 +834,48 @@ impl BackgroundFetch {
                 self.incr_fetch_count(-1);
             }
             Completion::Cof { callback } => {
+                let rest = Resume::Cof { response_id };
                 if let Some(token) = callback {
-                    self.actions.push(Action::Callback { token });
+                    return self.yield_to(token, rest);
                 }
+                self.run_resume(cx, rest);
+            }
+            Completion::FolderAndLinks { category, callback } => {
+                let rest = Resume::FolderAndLinks {
+                    category,
+                    response_id,
+                };
+                if let Some(token) = callback {
+                    return self.yield_to(token, rest);
+                }
+                self.run_resume(cx, rest);
+            }
+        }
+        false
+    }
+
+    /// Stops at a caller's callback: the C++ runs it, then [`resume`](Self::resume).
+    fn yield_to(&mut self, token: CallerToken, rest: Resume) -> bool {
+        self.actions.push(Action::Callback { token });
+        self.resume.push(vec![rest]);
+        true
+    }
+
+    /// The rest of the completion (and of the call that issued it) whose
+    /// [`Action::Callback`] the caller has just run. Does nothing when no
+    /// callback is open.
+    pub fn resume(&mut self, cx: &mut Ctx<'_>) {
+        let Some(frame) = self.resume.pop() else {
+            return;
+        };
+        for rest in frame {
+            self.run_resume(cx, rest);
+        }
+    }
+
+    fn run_resume(&mut self, cx: &mut Ctx<'_>, rest: Resume) {
+        match rest {
+            Resume::Cof { response_id } => {
                 let cat_id = cx.model.current_outfit_id();
                 self.on_ais_folder_callback(cx, cat_id, response_id, FetchType::Default);
                 if response_id != NULL_ID {
@@ -719,17 +885,22 @@ impl BackgroundFetch {
                     if base != NULL_ID {
                         let cat = cx.model.category(&base);
                         if cat.is_none_or(|c| c.version == VERSION_UNKNOWN) {
+                            // no_op: never stops at a callback
                             self.fetch_folder_and_links(cx, base, None);
                         }
                     }
                 }
             }
-            Completion::FolderAndLinks { category, callback } => {
-                if let Some(token) = callback {
-                    self.actions.push(Action::Callback { token });
+            Resume::FolderAndLinks {
+                category,
+                response_id,
+            } => {
+                if response_id == NULL_ID {
+                    self.warn(Warning::CategoryLinksFailed, category);
                 }
                 self.on_ais_folder_callback(cx, category, response_id, FetchType::Default);
             }
+            Resume::Tail => self.tail(),
         }
     }
 
@@ -783,8 +954,10 @@ impl BackgroundFetch {
             .position(|e| *e == request_id)
         {
             self.expected_folder_ids.remove(pos);
+        } else {
+            // ais shouldn't respond twice (llassert, a warning)
+            self.warn(Warning::UnexpectedFolderResponse, request_id);
         }
-        // else: "ais shouldn't respond twice" (llassert, a warning)
 
         if request_id == NULL_ID {
             // orphans, no other actions needed
@@ -803,7 +976,7 @@ impl BackgroundFetch {
                     true,
                 ));
             } else if fetch_type == FetchType::FolderAndContent {
-                // "Failed to download folder ... Requesting known content separately"
+                self.warn(Warning::FolderDownloadFailed, request_id);
                 self.fetch_folder_queue.push_back(entry(
                     request_id,
                     FetchType::ContentRecursive,
@@ -943,7 +1116,7 @@ impl BackgroundFetch {
         }
 
         if self.is_bulk_fetch_processing_complete() {
-            self.background_fetch_active = false;
+            self.bulk_fetch_complete();
         }
     }
 
@@ -1269,7 +1442,8 @@ impl BackgroundFetch {
                     self.legacy_item_post(cx.env.cap_fl2.clone(), body.to_xml(), "Library Item");
                 }
             }
-            // mFetchTimer.reset(): read only by the OPENSIM UDP loop
+            // read only by the OPENSIM UDP loop
+            self.actions.push(Action::FetchTimerReset);
         } else if self.is_bulk_fetch_processing_complete() {
             self.set_all_folders_fetched();
         }
@@ -1345,7 +1519,7 @@ impl BackgroundFetch {
                 return;
             }
             if cx.env.cap_fid2.is_empty() {
-                // "Failed to get AIS2 cap"
+                self.warn(Warning::NoAis2Cap, NULL_ID);
                 return;
             }
             let Some(h) = self.legacy.get(&handler).cloned() else {

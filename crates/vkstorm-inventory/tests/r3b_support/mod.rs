@@ -1859,7 +1859,12 @@ impl Run {
     }
 
     fn drain(&mut self) {
-        for a in self.sched.take_actions() {
+        let actions = self.sched.take_actions();
+        let n = actions.len();
+        for (i, a) in actions.into_iter().enumerate() {
+            if matches!(a, Action::Callback { .. }) && i + 1 != n {
+                self.fail(format!("a callback is not the last action ({i} of {n})"));
+            }
             match a {
                 Action::IssueAis { ticket, command } => {
                     match build_ais(&command.to_command(), &NULL_ID, &self.ais_caps) {
@@ -1872,10 +1877,22 @@ impl Run {
                 Action::Callback { token } => {
                     let tag = self.tokens.get(&token).cloned().unwrap_or_default();
                     self.note(&format!("callback {tag}"));
+                    // the rest of the completion, after the callback
+                    let env = self.env.clone();
+                    {
+                        let mut cx = Ctx::new(&mut self.model, &env);
+                        self.sched.resume(&mut cx);
+                    }
+                    self.drain();
                 }
                 Action::Notify { name } => self.note(&format!("notify {name}")),
                 Action::FetchCompleted => self.note("fetch.completed"),
-                Action::AddIdle | Action::NotifyObservers => {}
+                Action::AddIdle
+                | Action::NotifyObservers
+                | Action::FetchStarted
+                | Action::InitialFetchDuration
+                | Action::FetchTimerReset
+                | Action::Warn { .. } => {}
                 Action::LegacyPost {
                     handler,
                     folder,
