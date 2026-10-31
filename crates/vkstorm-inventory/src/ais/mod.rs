@@ -11,7 +11,11 @@
 //!   update: the HTTP status of a result, the error branch (410 and 403),
 //!   the 403 alert flag as explicit state, and the completion callback ids;
 //! - [`command`]: the requests the `AISAPI` command functions build
-//!   (capability, method, URL, bodies, the coroutine's arguments).
+//!   (capability, method, URL, bodies, the coroutine's arguments);
+//! - [`reply`]: what the coroutine adapter makes of the HTTP response (the
+//!   result map with its `http_result` block, the 499, the depth cap), for
+//!   the viewer's AIS-only adapter variant, which hands the raw body over
+//!   instead of building a C++ `LLSD` tree.
 //!
 //! What stays C++: the coroutine plumbing (`LLCoros`, `LLCoprocedureManager`
 //! and its "AIS" pool with `EnqueueAISCommand`/`onIdle`, the
@@ -26,10 +30,12 @@
 //! specification; `tests/r3a_*.rs` replay it.
 
 pub mod command;
+pub mod reply;
 pub mod result;
 pub mod update;
 
 pub use command::{CapKind, Command, CommandType, Method, Refusal, Request};
+pub use reply::{AIS_MAX_REPLY_DEPTH, Reply, Response, WORKER_THRESHOLD, adapter_result};
 pub use result::{
     AlertState, CommandContext, CommandResult, HttpStatus, begin, callback_ids, error_branch,
     process_result,
