@@ -23,6 +23,7 @@
 //! a folder's version), called only for the ids a rule needs (a link's
 //! target, an item's parent outside the skeleton).
 
+use std::collections::BTreeMap;
 use std::ffi::c_void;
 use std::ptr;
 
@@ -32,7 +33,8 @@ use vkstorm_inventory::item::Item;
 use vkstorm_inventory::login::{CacheInput, LoadPlan, Skeleton, SkeletonEntry};
 use vkstorm_inventory::model::ModelLookup;
 use vkstorm_inventory::perms::Uuid;
-use vkstorm_inventory::types::AssetType;
+use vkstorm_inventory::types::{AssetType, FolderType};
+use vkstorm_inventory::validate::{self, QaRandom, SnapCategory, SnapItem, Snapshot};
 
 use crate::inventory::{
     VksInvBytes, VksInvCategory, VksInvItem, VksInvRecords, bytes, category_from, category_view,
@@ -495,5 +497,348 @@ const _: () = {
         assert!(size_of::<VksInvSkeletonEntry>() == 64);
         assert!(size_of::<VksInvCacheInput>() == 32);
         assert!(size_of::<VksInvLoginFolder>() == 128);
+    }
+};
+
+// ---------------------------------------------------------------------------
+// validate()
+
+/// A folder as `validate()` reads it.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct VksInvSnapCategory {
+    pub id: Uuid,
+    pub parent: Uuid,
+    /// `LLFolderType::EType`, any value.
+    pub preferred_type: i32,
+    pub version: i32,
+    pub descendent_count: i32,
+}
+
+/// An item as `validate()` reads it: the stored type (`getActualType`) and
+/// the stored asset id.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct VksInvSnapItem {
+    pub id: Uuid,
+    pub parent: Uuid,
+    pub asset: Uuid,
+    pub asset_type: i32,
+}
+
+/// A map entry: the key and the record index (`-1` for a null pointer).
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct VksInvSnapEntry {
+    pub key: Uuid,
+    pub index: i64,
+}
+
+/// A child vector of a parent-to-children map: `count` record indices
+/// (`-1` for a null pointer) from `first` in the snapshot's `children`.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct VksInvSnapTree {
+    pub parent: Uuid,
+    pub first: usize,
+    pub count: usize,
+}
+
+/// The model as `validate()` reads it. Object identity (the C++ compares
+/// pointers) is the record index. The map entries come in the order the C++
+/// iterates the maps (the standard library's `unordered_map` order).
+#[repr(C)]
+pub struct VksInvSnapshot {
+    pub root: Uuid,
+    pub library_root: Uuid,
+    pub categories: *const VksInvSnapCategory,
+    pub category_count: usize,
+    pub items: *const VksInvSnapItem,
+    pub item_count: usize,
+    pub category_map: *const VksInvSnapEntry,
+    pub category_map_count: usize,
+    pub item_map: *const VksInvSnapEntry,
+    pub item_map_count: usize,
+    pub category_tree: *const VksInvSnapTree,
+    pub category_tree_count: usize,
+    pub item_tree: *const VksInvSnapTree,
+    pub item_tree_count: usize,
+    pub children: *const i64,
+    pub children_count: usize,
+    /// `mBacklinkMMap`: (target, link) pairs, 32 bytes each.
+    pub backlinks: *const u8,
+    pub backlink_count: usize,
+    /// The keys of `mCategoryLock` and `mItemLock` set to true, 16 bytes
+    /// each.
+    pub category_locks: *const u8,
+    pub category_lock_count: usize,
+    pub item_locks: *const u8,
+    pub item_lock_count: usize,
+    /// `mLastItem` as an item index, `-1` for none.
+    pub last_item: i64,
+    /// `LLGridManager::isInOpenSim()` (read by OpenSim builds only).
+    pub in_open_sim: bool,
+}
+
+/// One `mWarnings` entry.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct VksInvWarning {
+    pub key: VksInvBytes,
+    pub count: u32,
+}
+
+/// What `validate()` returns (`LLInventoryValidationInfo`) and leaves
+/// behind (`mLastItem`). Every pointer points into the block and lives
+/// until `vks_inv_validation_free`.
+#[repr(C)]
+pub struct VksInvValidationView {
+    pub initialized: bool,
+    pub warning_count: i32,
+    /// `mWarnings`, in key order.
+    pub warnings: *const VksInvWarning,
+    pub warnings_count: usize,
+    pub loop_count: i32,
+    pub orphaned_count: i32,
+    pub fatal_error_count: i32,
+    pub fatal_no_root_folder: bool,
+    pub fatal_system_duplicate: i32,
+    pub fatal_no_library_root_folder: bool,
+    pub fatal_qa_debug_mode: bool,
+    /// Folder types, in order.
+    pub missing_required_system_folders: *const i32,
+    pub missing_count: usize,
+    pub duplicate_required_system_folders: *const i32,
+    pub duplicate_count: usize,
+    /// `mLog`'s text.
+    pub log: VksInvBytes,
+    /// `mLastItem` afterwards, an item index or `-1`.
+    pub last_item: i64,
+}
+
+/// A validation result.
+pub struct VksInvValidation {
+    _keys: Vec<Vec<u8>>,
+    _warnings: Vec<VksInvWarning>,
+    _missing: Vec<i32>,
+    _duplicate: Vec<i32>,
+    _log: Vec<u8>,
+    view: VksInvValidationView,
+}
+
+/// The engine of `QAModeFakeSystemFolderIssues`: the
+/// `std::default_random_engine` of this build's standard library (`mt19937`
+/// with MSVC, `minstd_rand0` with libstdc++). Its state carries over between
+/// calls, as the C++ function-static engine's did.
+pub struct VksInvQaRandom {
+    random: QaRandom,
+}
+
+/// A new engine in its initial state. Never null.
+#[unsafe(no_mangle)]
+pub extern "C" fn vks_inv_qa_random_new() -> *mut VksInvQaRandom {
+    Box::into_raw(Box::new(VksInvQaRandom {
+        random: QaRandom::native(),
+    }))
+}
+
+/// Releases an engine. Null is ignored.
+///
+/// # Safety
+/// `r` must come from `vks_inv_qa_random_new` and not be used afterwards.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn vks_inv_qa_random_free(r: *mut VksInvQaRandom) {
+    if !r.is_null() {
+        drop(unsafe { Box::from_raw(r) });
+    }
+}
+
+fn index(i: i64, len: usize) -> Option<usize> {
+    usize::try_from(i).ok().filter(|&i| i < len)
+}
+
+unsafe fn snapshot_from(s: &VksInvSnapshot) -> Snapshot {
+    let categories: Vec<SnapCategory> = unsafe { views(s.categories, s.category_count) }
+        .iter()
+        .map(|c| SnapCategory {
+            id: c.id,
+            parent: c.parent,
+            preferred_type: FolderType(c.preferred_type),
+            version: c.version,
+            descendent_count: c.descendent_count,
+        })
+        .collect();
+    let items: Vec<SnapItem> = unsafe { views(s.items, s.item_count) }
+        .iter()
+        .map(|i| SnapItem {
+            id: i.id,
+            parent: i.parent,
+            asset_type: AssetType(i.asset_type),
+            asset: i.asset,
+        })
+        .collect();
+    let (nc, ni) = (categories.len(), items.len());
+    let cat_entries = unsafe { views(s.category_map, s.category_map_count) };
+    let item_entries = unsafe { views(s.item_map, s.item_map_count) };
+    let children = unsafe { views(s.children, s.children_count) };
+    let tree = |trees: &[VksInvSnapTree], len: usize| -> BTreeMap<Uuid, Vec<Option<usize>>> {
+        trees
+            .iter()
+            .map(|t| {
+                let kids = children
+                    .get(t.first..t.first.saturating_add(t.count))
+                    .unwrap_or(&[]);
+                (t.parent, kids.iter().map(|&k| index(k, len)).collect())
+            })
+            .collect()
+    };
+    let uuids =
+        |p: *const u8, n: usize| -> Vec<Uuid> { unsafe { views(p as *const Uuid, n) }.to_vec() };
+    let pairs = uuids(s.backlinks, s.backlink_count.saturating_mul(2));
+    Snapshot {
+        root: s.root,
+        library_root: s.library_root,
+        category_map: cat_entries
+            .iter()
+            .map(|e| (e.key, index(e.index, nc)))
+            .collect(),
+        item_map: item_entries
+            .iter()
+            .filter_map(|e| index(e.index, ni).map(|i| (e.key, i)))
+            .collect(),
+        category_order: cat_entries.iter().map(|e| e.key).collect(),
+        item_order: item_entries
+            .iter()
+            .filter(|e| index(e.index, ni).is_some())
+            .map(|e| e.key)
+            .collect(),
+        category_tree: tree(unsafe { views(s.category_tree, s.category_tree_count) }, nc),
+        item_tree: tree(unsafe { views(s.item_tree, s.item_tree_count) }, ni),
+        backlinks: pairs.chunks_exact(2).map(|p| (p[0], p[1])).collect(),
+        category_locks: uuids(s.category_locks, s.category_lock_count)
+            .into_iter()
+            .collect(),
+        item_locks: uuids(s.item_locks, s.item_lock_count).into_iter().collect(),
+        last_item: index(s.last_item, ni),
+        categories,
+        items,
+    }
+}
+
+/// `LLInventoryModel::validate()` over a snapshot of the model. `qa` is the
+/// engine to draw from when `QAModeFakeSystemFolderIssues` is set, null
+/// otherwise. Null on a panic (including map orders that do not name exactly
+/// the map keys).
+///
+/// # Safety
+/// `snapshot` must be valid with readable arrays; `qa` null or from
+/// `vks_inv_qa_random_new`.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn vks_inv_validate(
+    snapshot: *const VksInvSnapshot,
+    qa: *mut VksInvQaRandom,
+) -> *mut VksInvValidation {
+    guard(ptr::null_mut(), || {
+        let Some(s) = (unsafe { snapshot.as_ref() }) else {
+            return ptr::null_mut();
+        };
+        let snap = unsafe { snapshot_from(s) };
+        let qa = unsafe { qa.as_mut() }.map(|q| &mut q.random);
+        let v = validate::validate(
+            &snap,
+            validate::Options {
+                qa,
+                in_open_sim: s.in_open_sim,
+            },
+        );
+        let info = v.info;
+        let keys: Vec<Vec<u8>> = info
+            .warnings
+            .keys()
+            .map(|k| k.as_bytes().to_vec())
+            .collect();
+        let warnings: Vec<VksInvWarning> = keys
+            .iter()
+            .zip(info.warnings.values())
+            .map(|(k, &count)| VksInvWarning {
+                key: VksInvBytes::of(k),
+                count,
+            })
+            .collect();
+        let missing: Vec<i32> = info
+            .missing_required_system_folders
+            .iter()
+            .copied()
+            .collect();
+        let duplicate: Vec<i32> = info
+            .duplicate_required_system_folders
+            .iter()
+            .copied()
+            .collect();
+        let log = info.log.into_bytes();
+        let view = VksInvValidationView {
+            initialized: info.initialized,
+            warning_count: info.warning_count,
+            warnings: warnings.as_ptr(),
+            warnings_count: warnings.len(),
+            loop_count: info.loop_count,
+            orphaned_count: info.orphaned_count,
+            fatal_error_count: info.fatal_error_count,
+            fatal_no_root_folder: info.fatal_no_root_folder,
+            fatal_system_duplicate: info.fatal_system_duplicate,
+            fatal_no_library_root_folder: info.fatal_no_library_root_folder,
+            fatal_qa_debug_mode: info.fatal_qa_debug_mode,
+            missing_required_system_folders: missing.as_ptr(),
+            missing_count: missing.len(),
+            duplicate_required_system_folders: duplicate.as_ptr(),
+            duplicate_count: duplicate.len(),
+            log: VksInvBytes::of(&log),
+            last_item: v.last_item.map_or(-1, |i| i as i64),
+        };
+        Box::into_raw(Box::new(VksInvValidation {
+            _keys: keys,
+            _warnings: warnings,
+            _missing: missing,
+            _duplicate: duplicate,
+            _log: log,
+            view,
+        }))
+    })
+}
+
+/// The view of a validation result.
+///
+/// # Safety
+/// `v` must come from `vks_inv_validate` and be live.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn vks_inv_validation_view(
+    v: *const VksInvValidation,
+) -> *const VksInvValidationView {
+    match unsafe { v.as_ref() } {
+        Some(v) => &v.view,
+        None => ptr::null(),
+    }
+}
+
+/// Releases a validation result. Null is ignored.
+///
+/// # Safety
+/// `v` must come from `vks_inv_validate` and not be used afterwards.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn vks_inv_validation_free(v: *mut VksInvValidation) {
+    if !v.is_null() {
+        drop(unsafe { Box::from_raw(v) });
+    }
+}
+
+const _: () = {
+    use std::mem::size_of;
+    if size_of::<usize>() == 8 {
+        assert!(size_of::<VksInvSnapCategory>() == 44);
+        assert!(size_of::<VksInvSnapItem>() == 52);
+        assert!(size_of::<VksInvSnapEntry>() == 24);
+        assert!(size_of::<VksInvSnapTree>() == 32);
+        assert!(size_of::<VksInvSnapshot>() == 208);
+        assert!(size_of::<VksInvWarning>() == 24);
     }
 };

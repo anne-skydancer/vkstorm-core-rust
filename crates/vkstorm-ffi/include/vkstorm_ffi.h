@@ -1600,7 +1600,7 @@ VksInvRecords* vks_inv_notecard_export(const VksInvItem* items, size_t count, co
                                        size_t text_len);
 
 /* ---- Inventory R2: the cache file and the login load (rung seven) ------ *
- * LLInventoryModel::loadFromFile, saveToFile and loadSkeleton
+ * LLInventoryModel::loadFromFile, saveToFile, loadSkeleton and validate
  * (newview/llinventorymodel.cpp). The cache file's bytes are parsed and
  * written in Rust: no C++ LLSD tree is built. Records cross as the R1 flat
  * views (VksInvItem, VksInvCategory with owner and version). The model stays
@@ -1708,10 +1708,105 @@ VksInvLoginPlan* vks_inv_skeleton_load(VksInvSkeleton* skeleton, const VksInvCac
 const VksInvLoginPlanView* vks_inv_login_plan_view(const VksInvLoginPlan* p);
 void vks_inv_login_plan_free(VksInvLoginPlan* p);
 
+/* LLInventoryModel::validate() over a snapshot of the model. Records are
+ * identified by index (the C++ compares pointers); map entries carry the
+ * record index (-1: a null pointer) and come in the order the C++ iterates
+ * the maps (unordered_map order, per standard library). A tree's children
+ * are `count` indices from `first` in `children` (-1: null). backlinks:
+ * (target, link) pairs, 32 bytes each; locks: the keys set to true, 16 bytes
+ * each; last_item: mLastItem as an item index or -1. qa: the
+ * QAModeFakeSystemFolderIssues engine (vks_inv_qa_random_new: this build's
+ * std::default_random_engine, state kept between calls), or null when the
+ * setting is off. The result: LLInventoryValidationInfo's fields, mWarnings
+ * in key order, the folder type sets in order, mLog's text and mLastItem
+ * afterwards. Free with vks_inv_validation_free. Null on a panic. */
+typedef struct VksInvSnapCategory {
+    uint8_t id[16];
+    uint8_t parent[16];
+    int32_t preferred_type;
+    int32_t version;
+    int32_t descendent_count;
+} VksInvSnapCategory;
+typedef struct VksInvSnapItem {
+    uint8_t id[16];
+    uint8_t parent[16];
+    uint8_t asset[16];
+    int32_t asset_type; /* getActualType() */
+} VksInvSnapItem;
+typedef struct VksInvSnapEntry {
+    uint8_t key[16];
+    int64_t index;
+} VksInvSnapEntry;
+typedef struct VksInvSnapTree {
+    uint8_t parent[16];
+    size_t first;
+    size_t count;
+} VksInvSnapTree;
+typedef struct VksInvSnapshot {
+    uint8_t root[16];
+    uint8_t library_root[16];
+    const VksInvSnapCategory* categories;
+    size_t category_count;
+    const VksInvSnapItem* items;
+    size_t item_count;
+    const VksInvSnapEntry* category_map;
+    size_t category_map_count;
+    const VksInvSnapEntry* item_map;
+    size_t item_map_count;
+    const VksInvSnapTree* category_tree;
+    size_t category_tree_count;
+    const VksInvSnapTree* item_tree;
+    size_t item_tree_count;
+    const int64_t* children;
+    size_t children_count;
+    const uint8_t* backlinks;
+    size_t backlink_count;
+    const uint8_t* category_locks;
+    size_t category_lock_count;
+    const uint8_t* item_locks;
+    size_t item_lock_count;
+    int64_t last_item;
+    bool in_open_sim;
+} VksInvSnapshot;
+typedef struct VksInvWarning {
+    VksInvBytes key;
+    uint32_t count;
+} VksInvWarning;
+typedef struct VksInvValidation VksInvValidation;
+typedef struct VksInvValidationView {
+    bool initialized;
+    int32_t warning_count;
+    const VksInvWarning* warnings;
+    size_t warnings_count;
+    int32_t loop_count;
+    int32_t orphaned_count;
+    int32_t fatal_error_count;
+    bool fatal_no_root_folder;
+    int32_t fatal_system_duplicate;
+    bool fatal_no_library_root_folder;
+    bool fatal_qa_debug_mode;
+    const int32_t* missing_required_system_folders;
+    size_t missing_count;
+    const int32_t* duplicate_required_system_folders;
+    size_t duplicate_count;
+    VksInvBytes log;
+    int64_t last_item;
+} VksInvValidationView;
+typedef struct VksInvQaRandom VksInvQaRandom;
+
+VksInvQaRandom* vks_inv_qa_random_new(void);
+void vks_inv_qa_random_free(VksInvQaRandom* r);
+VksInvValidation* vks_inv_validate(const VksInvSnapshot* snapshot, VksInvQaRandom* qa);
+const VksInvValidationView* vks_inv_validation_view(const VksInvValidation* v);
+void vks_inv_validation_free(VksInvValidation* v);
+
 #ifdef __cplusplus
 static_assert(sizeof(void*) != 8 ||
                   (sizeof(VksInvModelHost) == 24 && sizeof(VksInvSkeletonEntry) == 64 &&
-                   sizeof(VksInvCacheInput) == 32 && sizeof(VksInvLoginFolder) == 128),
+                   sizeof(VksInvCacheInput) == 32 && sizeof(VksInvLoginFolder) == 128 &&
+                   sizeof(VksInvSnapCategory) == 44 && sizeof(VksInvSnapItem) == 52 &&
+                   sizeof(VksInvSnapEntry) == 24 && sizeof(VksInvSnapTree) == 32 &&
+                   sizeof(VksInvSnapshot) == 208 && sizeof(VksInvWarning) == 24),
               "inventory R2 layout");
 #endif
 
