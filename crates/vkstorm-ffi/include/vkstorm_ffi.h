@@ -1633,6 +1633,10 @@ typedef struct VksInvCacheView {
     size_t item_count;
     const uint8_t* cats_to_update;
     size_t cats_to_update_count;
+    /* The names of the items dropped for a null id, in file order (the C++
+     * logged "Ignoring inventory with null item id: <name>"). */
+    const VksInvBytes* null_id_names;
+    size_t null_id_count;
 } VksInvCacheView;
 
 VksInvCache* vks_inv_cache_decode(const uint8_t* data, size_t len, bool in_open_sim, const VksInvModelHost* model);
@@ -1711,6 +1715,11 @@ typedef struct VksInvLoginPlanView {
     size_t good_link_count;
     size_t bad_link_count;
     size_t recovered_link_count;
+    /* The cache file was read and was obsolete (log why from its bytes),
+     * and the names of the items dropped for a null id. */
+    bool cache_obsolete;
+    const VksInvBytes* null_id_names;
+    size_t null_id_count;
 } VksInvLoginPlanView;
 
 VksInvSkeleton* vks_inv_skeleton_import(const uint8_t* owner, const VksInvSkeletonEntry* entries, size_t count);
@@ -1827,7 +1836,10 @@ typedef struct VksInvWarning {
  *   SYSTEM_FOLDER_NOT_FOUND, CANNOT_CREATE_SYSTEM_FOLDER: a folder type
  *   EXCESS_COPIES_*, EXTRA_FOLDERS_ELSEWHERE: a folder type, b count
  *   LOCKS: a folder locks, b item locks
- *   UNKNOWN_DESCENDENT_COUNTS, UNKNOWN_VERSIONS: a count */
+ *   UNKNOWN_DESCENDENT_COUNTS, UNKNOWN_VERSIONS: a count
+ *   ANCESTOR_MISSING: id object (getObjectTopmostAncestor's warnings)
+ *   ANCESTOR_LOOP, ANCESTOR_PARENT_MISSING: id object, id2 parent
+ *   SUITCASE_LOOP, SUITCASE_PARENT_MISSING: id folder, id2 parent (OpenSim) */
 #define VKS_INV_VEV_NO_ROOT_FOLDER 1u
 #define VKS_INV_VEV_NO_LIBRARY_ROOT_FOLDER 2u
 #define VKS_INV_VEV_UNEXPECTED_SIZES 3u
@@ -1868,6 +1880,11 @@ typedef struct VksInvWarning {
 #define VKS_INV_VEV_LOCKS 38u
 #define VKS_INV_VEV_UNKNOWN_DESCENDENT_COUNTS 39u
 #define VKS_INV_VEV_UNKNOWN_VERSIONS 40u
+#define VKS_INV_VEV_ANCESTOR_MISSING 41u
+#define VKS_INV_VEV_ANCESTOR_LOOP 42u
+#define VKS_INV_VEV_ANCESTOR_PARENT_MISSING 43u
+#define VKS_INV_VEV_SUITCASE_LOOP 44u
+#define VKS_INV_VEV_SUITCASE_PARENT_MISSING 45u
 typedef struct VksInvValidationEvent {
     uint32_t kind;
     int64_t cat;
@@ -1916,7 +1933,7 @@ static_assert(sizeof(void*) != 8 ||
                    sizeof(VksInvSnapEntry) == 40 && sizeof(VksInvSnapTree) == 32 &&
                    sizeof(VksInvSnapRef) == 24 && sizeof(VksInvSnapshot) == 224 &&
                    sizeof(VksInvWarning) == 24 && sizeof(VksInvValidationEvent) == 80 &&
-                   sizeof(VksInvLoginPlanView) == 152),
+                   sizeof(VksInvLoginPlanView) == 176),
               "inventory R2 layout");
 #endif
 

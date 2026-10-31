@@ -119,6 +119,10 @@ pub struct VksInvCacheView {
     /// bytes each, in UUID order.
     pub cats_to_update: *const u8,
     pub cats_to_update_count: usize,
+    /// The names of the items dropped for a null id, in file order (the
+    /// C++ logged "Ignoring inventory with null item id: {name}").
+    pub null_id_names: *const VksInvBytes,
+    pub null_id_count: usize,
 }
 
 /// A decoded cache file.
@@ -128,6 +132,7 @@ pub struct VksInvCache {
     item_views: Vec<VksInvItem>,
     category_views: Vec<VksInvCategory>,
     cats_to_update: Vec<u8>,
+    null_id_names: Vec<VksInvBytes>,
     view: VksInvCacheView,
 }
 
@@ -164,16 +169,26 @@ pub unsafe extern "C" fn vks_inv_cache_decode(
                 item_count: item_views.len(),
                 cats_to_update: cats_to_update.as_ptr(),
                 cats_to_update_count: decoded.cats_to_update.len(),
+                null_id_names: ptr::null(),
+                null_id_count: decoded.null_id_names.len(),
             },
             _decoded: decoded,
             item_views,
             category_views,
             cats_to_update,
+            null_id_names: Vec::new(),
         });
         // The vectors moved with their heap buffers; the pointers hold.
         block.view.items = block.item_views.as_ptr();
         block.view.categories = block.category_views.as_ptr();
         block.view.cats_to_update = block.cats_to_update.as_ptr();
+        block.null_id_names = block
+            ._decoded
+            .null_id_names
+            .iter()
+            .map(|n| VksInvBytes::of(n))
+            .collect();
+        block.view.null_id_names = block.null_id_names.as_ptr();
         Box::into_raw(block)
     })
 }
@@ -426,6 +441,11 @@ pub struct VksInvLoginPlanView {
     pub good_link_count: usize,
     pub bad_link_count: usize,
     pub recovered_link_count: usize,
+    /// The cache file was read and was obsolete (the viewer logs why from
+    /// its bytes), and the names of the items dropped for a null id.
+    pub cache_obsolete: bool,
+    pub null_id_names: *const VksInvBytes,
+    pub null_id_count: usize,
 }
 
 /// A login plan.
@@ -438,6 +458,7 @@ pub struct VksInvLoginPlan {
     _folders_to_update: Vec<usize>,
     _possibly_broken: Vec<VksInvItem>,
     _invalidated: Vec<u8>,
+    _null_id_names: Vec<VksInvBytes>,
     view: VksInvLoginPlanView,
 }
 
@@ -490,6 +511,11 @@ pub unsafe extern "C" fn vks_inv_skeleton_load(
             .collect();
         let possibly_broken: Vec<VksInvItem> = plan.possibly_broken.iter().map(item_view).collect();
         let invalidated: Vec<u8> = plan.invalidated.iter().flatten().copied().collect();
+        let null_id_names: Vec<VksInvBytes> = plan
+            .null_id_names
+            .iter()
+            .map(|n| VksInvBytes::of(n))
+            .collect();
         let view = VksInvLoginPlanView {
             rv: plan.rv,
             folders: folder_views.as_ptr(),
@@ -511,6 +537,9 @@ pub unsafe extern "C" fn vks_inv_skeleton_load(
             good_link_count: plan.good_link_count,
             bad_link_count: plan.bad_link_count,
             recovered_link_count: plan.recovered_link_count,
+            cache_obsolete: plan.cache_obsolete,
+            null_id_names: null_id_names.as_ptr(),
+            null_id_count: null_id_names.len(),
         };
         Box::into_raw(Box::new(VksInvLoginPlan {
             _plan: plan,
@@ -520,6 +549,7 @@ pub unsafe extern "C" fn vks_inv_skeleton_load(
             _folders_to_update: folders_to_update,
             _possibly_broken: possibly_broken,
             _invalidated: invalidated,
+            _null_id_names: null_id_names,
             view,
         }))
     })
@@ -921,6 +951,11 @@ pub mod vev {
     pub const LOCKS: u32 = 38;
     pub const UNKNOWN_DESCENDENT_COUNTS: u32 = 39;
     pub const UNKNOWN_VERSIONS: u32 = 40;
+    pub const ANCESTOR_MISSING: u32 = 41;
+    pub const ANCESTOR_LOOP: u32 = 42;
+    pub const ANCESTOR_PARENT_MISSING: u32 = 43;
+    pub const SUITCASE_LOOP: u32 = 44;
+    pub const SUITCASE_PARENT_MISSING: u32 = 45;
 }
 
 fn event_view(e: &Event) -> VksInvValidationEvent {
@@ -943,6 +978,19 @@ fn event_view(e: &Event) -> VksInvValidationEvent {
             (v.a, v.b) = (cats as i64, trees as i64);
         }
         Event::NullCat => v.kind = vev::NULL_CAT,
+        Event::AncestorMissing { object } => (v.kind, v.id) = (vev::ANCESTOR_MISSING, object),
+        Event::AncestorLoop { object, parent } => {
+            (v.kind, v.id, v.id2) = (vev::ANCESTOR_LOOP, object, parent);
+        }
+        Event::AncestorParentMissing { object, parent } => {
+            (v.kind, v.id, v.id2) = (vev::ANCESTOR_PARENT_MISSING, object, parent);
+        }
+        Event::SuitcaseLoop { cat, parent } => {
+            (v.kind, v.id, v.id2) = (vev::SUITCASE_LOOP, cat, parent);
+        }
+        Event::SuitcaseParentMissing { cat, parent } => {
+            (v.kind, v.id, v.id2) = (vev::SUITCASE_PARENT_MISSING, cat, parent);
+        }
         Event::CatIdMismatch { key, cat } => {
             (v.kind, v.id, v.cat) = (vev::CAT_ID_MISMATCH, key, ix(cat));
         }
@@ -1181,6 +1229,6 @@ const _: () = {
         assert!(size_of::<VksInvSnapshot>() == 224);
         assert!(size_of::<VksInvWarning>() == 24);
         assert!(size_of::<VksInvValidationEvent>() == 80);
-        assert!(size_of::<VksInvLoginPlanView>() == 152);
+        assert!(size_of::<VksInvLoginPlanView>() == 176);
     }
 };
