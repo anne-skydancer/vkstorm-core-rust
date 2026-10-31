@@ -70,7 +70,7 @@ thread_local! {
     static LAST_ERROR: RefCell<CString> = RefCell::new(CString::default());
 }
 
-fn set_error(message: impl Into<Vec<u8>>) {
+pub(crate) fn set_error(message: impl Into<Vec<u8>>) {
     let c = CString::new(message).unwrap_or_default();
     LAST_ERROR.with(|e| *e.borrow_mut() = c);
 }
@@ -83,7 +83,7 @@ pub extern "C" fn vks_inv_last_error() -> *const c_char {
 }
 
 /// Runs `f`, turning a panic into `fail` with the error text set.
-fn guard<T>(fail: T, f: impl FnOnce() -> T) -> T {
+pub(crate) fn guard<T>(fail: T, f: impl FnOnce() -> T) -> T {
     match catch_unwind(AssertUnwindSafe(f)) {
         Ok(v) => v,
         Err(_) => {
@@ -93,7 +93,7 @@ fn guard<T>(fail: T, f: impl FnOnce() -> T) -> T {
     }
 }
 
-unsafe fn bytes<'a>(p: *const u8, len: usize) -> &'a [u8] {
+pub(crate) unsafe fn bytes<'a>(p: *const u8, len: usize) -> &'a [u8] {
     if p.is_null() || len == 0 {
         &[]
     } else {
@@ -103,7 +103,7 @@ unsafe fn bytes<'a>(p: *const u8, len: usize) -> &'a [u8] {
 
 /// A UUID argument (16 bytes, `LLUUID::mData`), copied so that it may alias
 /// a record the call writes; null reads as the null UUID.
-unsafe fn uuid_arg(p: *const u8) -> Uuid {
+pub(crate) unsafe fn uuid_arg(p: *const u8) -> Uuid {
     if p.is_null() {
         [0; 16]
     } else {
@@ -146,14 +146,14 @@ pub struct VksInvBytes {
 }
 
 impl VksInvBytes {
-    fn of(b: &[u8]) -> VksInvBytes {
+    pub(crate) fn of(b: &[u8]) -> VksInvBytes {
         VksInvBytes {
             ptr: b.as_ptr(),
             len: b.len(),
         }
     }
 
-    unsafe fn get<'a>(&self) -> &'a [u8] {
+    pub(crate) unsafe fn get<'a>(&self) -> &'a [u8] {
         unsafe { bytes(self.ptr, self.len) }
     }
 }
@@ -324,7 +324,7 @@ fn object_view(o: &Object) -> VksInvObject {
     }
 }
 
-unsafe fn item_from(v: &VksInvItem) -> Item {
+pub(crate) unsafe fn item_from(v: &VksInvItem) -> Item {
     Item {
         object: unsafe { object_from(&v.object) },
         description: unsafe { v.description.get() }.to_vec(),
@@ -358,7 +358,7 @@ fn item_scalars(v: &VksInvItem) -> Item {
     }
 }
 
-fn item_view(i: &Item) -> VksInvItem {
+pub(crate) fn item_view(i: &Item) -> VksInvItem {
     VksInvItem {
         object: object_view(&i.object),
         perms: i.permissions,
@@ -370,7 +370,7 @@ fn item_view(i: &Item) -> VksInvItem {
     }
 }
 
-unsafe fn category_from(v: &VksInvCategory) -> ViewerCategory {
+pub(crate) unsafe fn category_from(v: &VksInvCategory) -> ViewerCategory {
     ViewerCategory {
         category: Category {
             object: unsafe { object_from(&v.object) },
@@ -381,7 +381,7 @@ unsafe fn category_from(v: &VksInvCategory) -> ViewerCategory {
     }
 }
 
-fn category_view(c: &ViewerCategory) -> VksInvCategory {
+pub(crate) fn category_view(c: &ViewerCategory) -> VksInvCategory {
     VksInvCategory {
         object: object_view(&c.category.object),
         preferred_type: c.category.preferred_type.0,
@@ -431,7 +431,7 @@ impl VksInvRecords {
         }
     }
 
-    fn text(text: Vec<u8>) -> VksInvRecords {
+    pub(crate) fn text(text: Vec<u8>) -> VksInvRecords {
         VksInvRecords {
             text,
             ..VksInvRecords::new(true)
@@ -500,7 +500,7 @@ pub unsafe extern "C" fn vks_inv_records_free(r: *mut VksInvRecords) {
 }
 
 /// A result block from `f`, or null when it panics.
-fn records(f: impl FnOnce() -> Option<VksInvRecords>) -> *mut VksInvRecords {
+pub(crate) fn records(f: impl FnOnce() -> Option<VksInvRecords>) -> *mut VksInvRecords {
     guard(ptr::null_mut(), || {
         f().map_or(ptr::null_mut(), VksInvRecords::into_raw)
     })
