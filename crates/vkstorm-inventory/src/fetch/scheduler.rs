@@ -455,6 +455,11 @@ impl BackgroundFetch {
         self.library_fetch_started() && !self.library_fetch_completed(model)
     }
 
+    /// `mRecursiveMarketplaceFetchStarted`
+    pub fn marketplace_fetch_started(&self) -> bool {
+        self.recursive_marketplace_fetch_started
+    }
+
     pub fn inventory_fetch_started(&self) -> bool {
         self.recursive_inventory_fetch_started
     }
