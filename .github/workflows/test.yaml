@@ -13,7 +13,9 @@ permissions:
   contents: read
 
 jobs:
-  # The workspace is kept in rustfmt's default style (no rustfmt.toml).
+  # The workspace is kept in rustfmt's default style (no rustfmt.toml),
+  # except vkstorm-openjp2, which keeps its upstream openjp2 crate's
+  # tab_spaces=2 (crates/vkstorm-openjp2/rustfmt.toml).
   # Run `cargo fmt --all` before committing.
   fmt:
     runs-on: ubuntu-26.04
