@@ -1409,3 +1409,134 @@ pub unsafe extern "C" fn vks_inv_task_is_asset_in_inventory(
         )
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn view(entries: &[VksInvTaskEntry]) -> VksInvTaskView {
+        VksInvTaskView {
+            id: [7; 16],
+            local_id: 42,
+            serial: 0,
+            expected: 0,
+            request: VKS_INV_TASK_REQUEST_PENDING,
+            xfer_id: 0,
+            dirty: false,
+            has_inventory: true,
+            has_listeners: true,
+            entries: entries.as_ptr(),
+            entry_count: entries.len(),
+            pending: ptr::null(),
+            pending_count: 0,
+        }
+    }
+
+    fn env() -> VksInvTaskEnv {
+        VksInvTaskEnv {
+            agent: [1; 16],
+            session: [2; 16],
+            group: [3; 16],
+            has_region: true,
+            cap_request_task_inventory: ZERO_BYTES,
+            cap_create_task_inventory_item: ZERO_BYTES,
+            you_owner: true,
+            has_selection: false,
+            selection_owner: [0; 16],
+            selection_group: [0; 16],
+        }
+    }
+
+    unsafe fn kinds(r: *mut VksInvTaskResult) -> Vec<u32> {
+        let v = unsafe { &*vks_inv_task_result_view(r) };
+        let a = unsafe { slice::from_raw_parts(v.actions, v.action_count) };
+        a.iter().map(|a| a.kind).collect()
+    }
+
+    /// A task file crosses whole and comes back as records, in the order
+    /// the loader pushes them (file order), followed by the notification.
+    #[test]
+    fn load_file_returns_records_in_push_order() {
+        let file = b"\tinv_object\t0\n\t{\n\t\tobj_id\t00000000-0000-0000-0000-000000000007\n\t\tparent_id\t00000000-0000-0000-0000-000000000000\n\t\ttype\tcategory\n\t\tname\tContents|\n\t}\n\tinv_item\t0\n\t{\n\t\titem_id\t00000000-0000-0000-0000-000000000009\n\t\tparent_id\t00000000-0000-0000-0000-000000000007\n\t\ttype\tnotecard\n\t\tinv_type\tnotecard\n\t\tname\tNote|\n\t\tdesc\t|\n\t}\n";
+        let v = view(&[]);
+        let e = env();
+        let name = b"task.inv";
+        unsafe {
+            let r = vks_inv_task_load_file(
+                &v,
+                &e,
+                name.as_ptr(),
+                name.len(),
+                true,
+                file.as_ptr(),
+                file.len(),
+            );
+            assert!(!r.is_null());
+            let rv = &*vks_inv_task_result_view(r);
+            assert!(rv.ok);
+            assert_eq!(rv.object_count, 1);
+            assert_eq!(rv.item_count, 1);
+            assert_eq!(
+                kinds(r),
+                vec![
+                    VKS_INV_TASK_RESET_INVENTORY,
+                    VKS_INV_TASK_PUSH_FRONT_OBJECT,
+                    VKS_INV_TASK_PUSH_FRONT_ITEM,
+                    VKS_INV_TASK_REMOVE_CACHE_FILE,
+                    VKS_INV_TASK_NOTIFY_LISTENERS,
+                    VKS_INV_TASK_SET_XFER_ID,
+                    VKS_INV_TASK_SET_REQUEST_STATE,
+                ]
+            );
+            let item = &*rv.items;
+            assert_eq!(item.item.object.name.get(), b"Note");
+            assert!(item.complete);
+            vks_inv_task_result_free(r);
+
+            let r =
+                vks_inv_task_load_file(&v, &e, name.as_ptr(), name.len(), false, ptr::null(), 0);
+            assert!(!(*vks_inv_task_result_view(r)).ok);
+            assert!(kinds(r).is_empty());
+            vks_inv_task_result_free(r);
+        }
+    }
+
+    /// The lookups read the keys: first match, the item rules.
+    #[test]
+    fn lookups_over_keys() {
+        let perms = Permissions::default();
+        let key = |id: u8, t: i32, item: bool, asset: u8| VksInvTaskEntry {
+            id: [id; 16],
+            asset_type: t,
+            is_item: item,
+            asset: [asset; 16],
+            perms: if item { &perms } else { ptr::null() },
+        };
+        let entries = [
+            key(1, 8, false, 0),
+            key(2, 7, true, 9),
+            key(2, 7, true, 10),
+            key(3, 7, false, 9),
+        ];
+        unsafe {
+            let find = |kind, id: u8, t| {
+                vks_inv_task_find(entries.as_ptr(), entries.len(), kind, [id; 16].as_ptr(), t)
+            };
+            assert_eq!(find(VKS_INV_TASK_FIND_OBJECT, 2, 0), 1);
+            assert_eq!(find(VKS_INV_TASK_FIND_ITEM, 1, 0), -1);
+            assert_eq!(find(VKS_INV_TASK_FIND_ITEM_BY_ASSET, 10, 0), 2);
+            assert_eq!(find(VKS_INV_TASK_FIND_ITEM_BY_ASSET_AND_TYPE, 9, 7), 1);
+            assert_eq!(find(VKS_INV_TASK_FIND_ROOT, 0, 0), 3);
+            assert_eq!(
+                vks_inv_task_count_of_type(entries.as_ptr(), entries.len(), 7),
+                3
+            );
+            let mut out = [0usize; 4];
+            assert_eq!(
+                vks_inv_task_contents(entries.as_ptr(), entries.len(), out.as_mut_ptr()),
+                3
+            );
+            assert_eq!(&out[..3], &[1, 2, 3]);
+        }
+    }
+}
