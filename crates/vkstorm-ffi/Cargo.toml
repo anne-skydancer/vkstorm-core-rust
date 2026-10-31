@@ -38,7 +38,7 @@ messages = ["dep:vkstorm-messages"]
 http = ["dep:vkstorm-http"]
 assets = ["dep:vkstorm-assets"]
 audio = ["dep:vkstorm-audio", "dep:vkstorm-vorbis"]
-inventory = ["dep:vkstorm-inventory"]
+inventory = ["dep:vkstorm-inventory", "dep:vkstorm-llsd"]
 # Every rung: the build the vkstorm-rust line links.
 full = ["j2c", "llsd", "volume", "image", "messages", "http", "assets", "audio", "inventory"]
 # OpenSim grid support (the viewer's CMake OPENSIM option): the legacy UDP

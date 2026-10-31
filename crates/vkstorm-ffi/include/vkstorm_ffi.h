@@ -1599,6 +1599,269 @@ VksInvRecords* vks_inv_notecard_import(const uint8_t* data, size_t len, int32_t 
 VksInvRecords* vks_inv_notecard_export(const VksInvItem* items, size_t count, const uint8_t* text,
                                        size_t text_len);
 
+/* ---- Inventory R4a: object contents (task inventory) ------------------- */
+/* src/inventory_r4a.rs over vkstorm-inventory's task module: the decisions
+ * of LLViewerObject's task-inventory code (the request and serial state
+ * machine, the task file loader, the capability reply, the local mutations
+ * with the owner guess and the messages they send, createInventoryItem) and
+ * the lookups over the contents. The object's state stays C++.
+ *
+ * A decision takes the object's state (VksInvTaskView, with one
+ * VksInvTaskEntry key per entry of mInventory, front to back, as the C++
+ * getters return them) and the outside inputs (VksInvTaskEnv), and returns a
+ * VksInvTaskResult block: the actions to carry out in order, the entries to
+ * push as records (VksInvTaskItem, VksInvObject) and the messages to send
+ * as records (VksInvTaskMessage; the C++ keeps the add*Fast field I/O).
+ * Read it with vks_inv_task_result_view, free it with
+ * vks_inv_task_result_free; null means failure (vks_inv_last_error).
+ *
+ * Decisions that need an answer from the C++ continue in a second call:
+ * VKS_INV_TASK_REQUEST_XFER (vks_inv_task_xfer_requested with the id
+ * requestFile returned), VKS_INV_TASK_LAUNCH_CAP_FETCH (the coroutine calls
+ * vks_inv_task_cap_fetch_begin while gObjectList has the object, then
+ * vks_inv_task_cap_fetch_reply after the VKS_INV_TASK_HTTP_GET reply),
+ * VKS_INV_TASK_LAUNCH_DELAYED_FETCH (vks_inv_task_delayed_fetch_due after
+ * the timeout) and VKS_INV_TASK_LAUNCH_CREATE
+ * (vks_inv_task_create_item_completed after the POST reply).
+ *
+ * The task file crosses whole: the bytes as the loader's text-mode stream
+ * reads them (on Windows after CRLF -> LF, ending at a Ctrl-Z). The
+ * capability reply's entries are an LLSD form and stay C++ (decoded by
+ * LLViewerInventoryItem::unpackMessage(LLSD) where the decision says
+ * VKS_INV_TASK_PUSH_FRONT_REPLY_CONTENTS); the create request's params and
+ * POST body cross as binary LLSD. */
+
+typedef struct VksInvTaskEntry
+{
+    uint8_t id[16];
+    int32_t asset_type;       /* getType(), any value */
+    bool is_item;             /* an LLViewerInventoryItem */
+    uint8_t asset[16];        /* getAssetUUID() of an item */
+    const VksInvPerms* perms; /* getPermissions() of an item, in place; null otherwise */
+} VksInvTaskEntry;
+
+/* mInvRequestState (EInventoryRequestState's values). */
+#define VKS_INV_TASK_REQUEST_STOPPED 0
+#define VKS_INV_TASK_REQUEST_WAIT 1
+#define VKS_INV_TASK_REQUEST_PENDING 2
+#define VKS_INV_TASK_XFER 3
+
+typedef struct VksInvTaskView
+{
+    uint8_t id[16]; /* mID */
+    uint32_t local_id;
+    int16_t serial;                 /* mInventorySerialNum */
+    int16_t expected;               /* mExpectedInventorySerialNum */
+    int32_t request;                /* mInvRequestState */
+    uint64_t xfer_id;               /* mInvRequestXFerId */
+    bool dirty;                     /* mInventoryDirty */
+    bool has_inventory;             /* mInventory != NULL */
+    bool has_listeners;             /* !mInventoryCallbacks.empty() */
+    const VksInvTaskEntry* entries; /* mInventory, front to back */
+    size_t entry_count;
+    const uint8_t* pending; /* mPendingInventoryItemsIDs, 16 bytes each */
+    size_t pending_count;
+} VksInvTaskView;
+
+typedef struct VksInvTaskEnv
+{
+    uint8_t agent[16]; /* gAgent: getID, getSessionID, getGroupID */
+    uint8_t session[16];
+    uint8_t group[16];
+    bool has_region;                            /* mRegionp != NULL */
+    VksInvBytes cap_request_task_inventory;     /* empty: none */
+    VksInvBytes cap_create_task_inventory_item; /* empty: none */
+    bool you_owner;                             /* permYouOwner() */
+    bool has_selection; /* LLSelectMgr::findObjectPermissions(this) != NULL */
+    uint8_t selection_owner[16];
+    uint8_t selection_group[16];
+} VksInvTaskEnv;
+
+/* An LLViewerInventoryItem. */
+typedef struct VksInvTaskItem
+{
+    VksInvItem item;
+    uint8_t transaction[16]; /* mTransactionID */
+    bool complete;           /* mIsComplete */
+    bool running;            /* mIsRunning */
+    bool faulted;            /* mIsFaulted */
+} VksInvTaskItem;
+
+/* Action kinds; the fields each uses follow it. */
+#define VKS_INV_TASK_SET_SERIAL 1                 /* value */
+#define VKS_INV_TASK_SET_EXPECTED 2               /* value */
+#define VKS_INV_TASK_SET_REQUEST_STATE 3          /* value */
+#define VKS_INV_TASK_SET_XFER_ID 4                /* id */
+#define VKS_INV_TASK_SET_DIRTY 5                  /* value */
+#define VKS_INV_TASK_DELETE_INVENTORY 6           /* clear, delete mInventory, NULL */
+#define VKS_INV_TASK_RESET_INVENTORY 7            /* clear, or a new empty list */
+#define VKS_INV_TASK_PUSH_FRONT_ITEM 8            /* value: index into items */
+#define VKS_INV_TASK_PUSH_FRONT_OBJECT 9          /* value: index into objects */
+#define VKS_INV_TASK_PUSH_FRONT_REPLY_CONTENTS 10 /* each contents element with item_id */
+#define VKS_INV_TASK_ERASE 11                     /* value: index into mInventory */
+#define VKS_INV_TASK_PENDING_PUSH 12              /* uuid */
+#define VKS_INV_TASK_PENDING_ERASE 13             /* value: index */
+#define VKS_INV_TASK_NOTIFY_LISTENERS 14          /* doInventoryCallback's listener loop */
+#define VKS_INV_TASK_SEND 15                      /* value: index into messages */
+#define VKS_INV_TASK_LAUNCH_CAP_FETCH 16
+#define VKS_INV_TASK_HTTP_GET 17              /* text: url */
+#define VKS_INV_TASK_LAUNCH_DELAYED_FETCH 18  /* seconds */
+#define VKS_INV_TASK_REQUEST_XFER 19          /* text: file name, value: serial */
+#define VKS_INV_TASK_ABORT_XFER 20            /* id */
+#define VKS_INV_TASK_REMOVE_CACHE_FILE 21     /* text: file name */
+#define VKS_INV_TASK_HIDE_FLOATER 22          /* text: name; value 0: key uuid; 1: {id: uuid, object: uuid2} */
+#define VKS_INV_TASK_LAUNCH_CREATE 23         /* text: url, text2: the POST body, binary LLSD */
+#define VKS_INV_TASK_CREATE_CALLBACK 24       /* value: success */
+#define VKS_INV_TASK_CREATE_FAILED 25         /* text: message */
+
+typedef struct VksInvTaskAction
+{
+    uint32_t kind;
+    int32_t value;
+    uint64_t id;
+    double seconds;
+    VksInvBytes text;
+    VksInvBytes text2;
+    uint8_t uuid[16];
+    uint8_t uuid2[16];
+} VksInvTaskAction;
+
+/* Message kinds. */
+#define VKS_INV_TASK_MSG_REQUEST_TASK_INVENTORY 1
+#define VKS_INV_TASK_MSG_UPDATE_TASK_INVENTORY 2
+#define VKS_INV_TASK_MSG_REMOVE_TASK_INVENTORY 3
+#define VKS_INV_TASK_MSG_MOVE_TASK_INVENTORY 4
+#define VKS_INV_TASK_MSG_REZ_SCRIPT 5
+
+/* Every value the C++ sender adds; item: LLViewerInventoryItem::packMessage's
+ * block (the transaction id in the asset slot, the CRC computed). Unused
+ * fields are zero. Sent reliably to the region's host. */
+typedef struct VksInvTaskMessage
+{
+    uint32_t kind;
+    uint32_t local_id;
+    uint8_t agent[16];
+    uint8_t session[16];
+    uint8_t group[16];
+    uint8_t folder_id[16];
+    uint8_t item_id[16];
+    uint8_t template_id[16];
+    uint8_t key;
+    bool enabled;
+    bool has_template; /* RezScript's NewScriptInfo block */
+    VksInvItemBlock item;
+} VksInvTaskMessage;
+
+typedef struct VksInvTaskResult VksInvTaskResult;
+
+typedef struct VksInvTaskResultView
+{
+    const VksInvTaskAction* actions;
+    size_t action_count;
+    const VksInvTaskItem* items;
+    size_t item_count;
+    const VksInvObject* objects;
+    size_t object_count;
+    const VksInvTaskMessage* messages;
+    size_t message_count;
+    bool ok; /* loadTaskInvFile's result; the create verdict */
+} VksInvTaskResultView;
+
+/* 64-bit sizes, asserted on both sides. */
+#define VKS_INV_TASK_ENTRY_SIZE 48
+#define VKS_INV_TASK_VIEW_SIZE 80
+#define VKS_INV_TASK_ENV_SIZE 128
+#define VKS_INV_TASK_ITEM_SIZE 256
+#define VKS_INV_TASK_ACTION_SIZE 88
+#define VKS_INV_TASK_MESSAGE_SIZE 280
+
+const VksInvTaskResultView* vks_inv_task_result_view(const VksInvTaskResult* r);
+void vks_inv_task_result_free(VksInvTaskResult* r);
+
+/* The decisions (the LLViewerObject members of the same name). Ids are 16
+ * bytes; strings and files are borrowed for the call. */
+VksInvTaskResult* vks_inv_task_request_inventory(const VksInvTaskView* view, const VksInvTaskEnv* env);
+VksInvTaskResult* vks_inv_task_dirty_inventory(const VksInvTaskView* view, const VksInvTaskEnv* env);
+VksInvTaskResult* vks_inv_task_delete_inventory_item(const VksInvTaskView* view, const VksInvTaskEnv* env,
+                                                     const uint8_t* item_id);
+/* processTaskInv for a found object: Serial and Filename (unscrubbed). */
+VksInvTaskResult* vks_inv_task_reply(const VksInvTaskView* view, const VksInvTaskEnv* env, int16_t serial,
+                                     const uint8_t* filename, size_t len);
+VksInvTaskResult* vks_inv_task_xfer_requested(const VksInvTaskView* view, const VksInvTaskEnv* env,
+                                              uint64_t new_id);
+/* processTaskInvFile for a found object; file: the cache file as the
+ * text-mode stream reads it, has_file false when it does not open. */
+VksInvTaskResult* vks_inv_task_xfer_completed(const VksInvTaskView* view, const VksInvTaskEnv* env,
+                                              int16_t serial, const uint8_t* filename, size_t filename_len,
+                                              int32_t error_code, bool has_file, const uint8_t* file,
+                                              size_t file_len);
+/* loadTaskInvFile; ok is its result. */
+VksInvTaskResult* vks_inv_task_load_file(const VksInvTaskView* view, const VksInvTaskEnv* env,
+                                         const uint8_t* filename, size_t filename_len, bool has_file,
+                                         const uint8_t* file, size_t file_len);
+VksInvTaskResult* vks_inv_task_cap_fetch_begin(const VksInvTaskView* view, const VksInvTaskEnv* env);
+/* serial: result["inventory_serial"].asInteger(); has_contents: result.has("contents"). */
+VksInvTaskResult* vks_inv_task_cap_fetch_reply(const VksInvTaskView* view, const VksInvTaskEnv* env,
+                                               bool success, int32_t http_status, int32_t serial,
+                                               bool has_contents);
+VksInvTaskResult* vks_inv_task_delayed_fetch_due(const VksInvTaskView* view, const VksInvTaskEnv* env);
+/* The items as their getters return them, except update_viewer_inventory_asset
+ * (its fields: it copies the item). */
+VksInvTaskResult* vks_inv_task_update_inventory(const VksInvTaskView* view, const VksInvTaskEnv* env,
+                                                const VksInvTaskItem* item, uint8_t key, bool is_new);
+VksInvTaskResult* vks_inv_task_update_inventory_local(const VksInvTaskView* view, const VksInvTaskEnv* env,
+                                                      const VksInvItem* item, uint8_t key);
+VksInvTaskResult* vks_inv_task_update_viewer_inventory_asset(const VksInvTaskView* view,
+                                                             const VksInvTaskEnv* env,
+                                                             const VksInvTaskItem* item,
+                                                             const uint8_t* new_asset);
+VksInvTaskResult* vks_inv_task_update_material_inventory(const VksInvTaskView* view, const VksInvTaskEnv* env,
+                                                         const VksInvTaskItem* item, uint8_t key, bool is_new);
+VksInvTaskResult* vks_inv_task_remove_inventory(const VksInvTaskView* view, const VksInvTaskEnv* env,
+                                                const uint8_t* item_id);
+VksInvTaskResult* vks_inv_task_move_inventory(const VksInvTaskView* view, const VksInvTaskEnv* env,
+                                              const uint8_t* folder_id, const uint8_t* item_id);
+VksInvTaskResult* vks_inv_task_save_script(const VksInvTaskView* view, const VksInvTaskEnv* env,
+                                           const VksInvTaskItem* item, bool active, bool is_new,
+                                           const uint8_t* template_id);
+/* params: binary LLSD, has_params false for an undefined LLSD. */
+VksInvTaskResult* vks_inv_task_create_inventory_item(const VksInvTaskView* view, const VksInvTaskEnv* env,
+                                                     int32_t asset_type, int32_t inventory_type, uint8_t sub_type,
+                                                     const uint8_t* name, size_t name_len,
+                                                     const uint8_t* description, size_t description_len,
+                                                     const VksInvPerms* perms, bool has_params,
+                                                     const uint8_t* params, size_t params_len);
+/* view null when gObjectList no longer has the object; result_success:
+ * result["success"].asBoolean(). ok is the verdict. */
+VksInvTaskResult* vks_inv_task_create_item_completed(const VksInvTaskView* view, const VksInvTaskEnv* env,
+                                                     bool http_ok, bool result_success);
+
+/* The lookups over mInventory's keys: the index found, -1 for none. */
+#define VKS_INV_TASK_FIND_OBJECT 1                 /* getInventoryObject(id) */
+#define VKS_INV_TASK_FIND_ITEM 2                   /* getInventoryItem(id) */
+#define VKS_INV_TASK_FIND_ITEM_BY_ASSET 3          /* getInventoryItemByAsset(id) */
+#define VKS_INV_TASK_FIND_ITEM_BY_ASSET_AND_TYPE 4 /* getInventoryItemByAsset(id, type) */
+#define VKS_INV_TASK_FIND_ROOT 5                   /* getInventoryRoot() */
+int64_t vks_inv_task_find(const VksInvTaskEntry* entries, size_t count, uint32_t kind, const uint8_t* id,
+                          int32_t asset_type);
+size_t vks_inv_task_count_of_type(const VksInvTaskEntry* entries, size_t count, int32_t asset_type);
+/* getInventoryContents: the indices into out (room for count); returns how many. */
+size_t vks_inv_task_contents(const VksInvTaskEntry* entries, size_t count, size_t* out);
+bool vks_inv_task_is_asset_in_inventory(const VksInvTaskEntry* entries, size_t count, bool has_inventory,
+                                        const uint8_t* pending, size_t pending_count, const uint8_t* asset,
+                                        int32_t asset_type);
+
+#ifdef __cplusplus
+static_assert(sizeof(void*) != 8 ||
+                  (sizeof(VksInvTaskEntry) == VKS_INV_TASK_ENTRY_SIZE &&
+                   sizeof(VksInvTaskView) == VKS_INV_TASK_VIEW_SIZE &&
+                   sizeof(VksInvTaskEnv) == VKS_INV_TASK_ENV_SIZE &&
+                   sizeof(VksInvTaskItem) == VKS_INV_TASK_ITEM_SIZE &&
+                   sizeof(VksInvTaskAction) == VKS_INV_TASK_ACTION_SIZE &&
+                   sizeof(VksInvTaskMessage) == VKS_INV_TASK_MESSAGE_SIZE),
+              "task inventory layout");
+#endif
+
 #ifdef __cplusplus
 }
 
