@@ -870,29 +870,30 @@ impl TextureCache {
     /// `purgeAllTextures`.
     fn purge_all_textures(&self, s: &mut HeaderState, purge_directories: bool) {
         if !s.read_only {
-            let mut delete_contents = true;
+            // Windows can be slow deleting a huge texture cache: on a full
+            // purge the directory is renamed and left for a background thread
+            // of the viewer to delete.
             #[cfg(windows)]
-            {
-                // Windows can be slow deleting a huge texture cache: on a full
-                // purge the directory is renamed and left for a background
-                // thread of the viewer to delete.
-                if purge_directories {
-                    let new_name = format!(
-                        "{}{}{}.old_texturecache",
-                        s.paths.parent_dir,
-                        s.paths.delim,
-                        uuid_to_string(&pseudo_random_uuid())
-                    );
-                    let mut old_purge = true;
-                    if files::is_dir(&s.paths.textures_dir) {
-                        old_purge = !files::rename(&s.paths.textures_dir, &new_name);
-                    }
-                    if old_purge {
-                        ll_warns!("Rename of {} to {} failed", s.paths.textures_dir, new_name);
-                    }
-                    delete_contents = old_purge;
+            let delete_contents = if purge_directories {
+                let new_name = format!(
+                    "{}{}{}.old_texturecache",
+                    s.paths.parent_dir,
+                    s.paths.delim,
+                    uuid_to_string(&pseudo_random_uuid())
+                );
+                let mut old_purge = true;
+                if files::is_dir(&s.paths.textures_dir) {
+                    old_purge = !files::rename(&s.paths.textures_dir, &new_name);
                 }
-            }
+                if old_purge {
+                    ll_warns!("Rename of {} to {} failed", s.paths.textures_dir, new_name);
+                }
+                old_purge
+            } else {
+                true
+            };
+            #[cfg(not(windows))]
+            let delete_contents = true;
             if delete_contents {
                 for c in SUBDIRS.iter() {
                     let dirname = format!("{}{}{}", s.paths.textures_dir, s.paths.delim, *c as char);

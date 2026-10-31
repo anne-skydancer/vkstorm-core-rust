@@ -224,7 +224,7 @@ fn run_script(root: &Path) -> Vec<(String, Snapshot)> {
 
 fn read_fixture(bytes: &[u8]) -> Vec<(String, Snapshot)> {
     let mut pos = 0usize;
-    let mut u32 = |pos: &mut usize| {
+    let u32 = |pos: &mut usize| {
         let v = u32::from_le_bytes(bytes[*pos..*pos + 4].try_into().unwrap());
         *pos += 4;
         v
