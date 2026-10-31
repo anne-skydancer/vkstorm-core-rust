@@ -1599,6 +1599,241 @@ VksInvRecords* vks_inv_notecard_import(const uint8_t* data, size_t len, int32_t 
 VksInvRecords* vks_inv_notecard_export(const VksInvItem* items, size_t count, const uint8_t* text,
                                        size_t text_len);
 
+/* ---- Inventory R3b: background fetch scheduling ------------------------- */
+/* src/inventory_r3b.rs over vkstorm-inventory's fetch module: the decisions
+ * of LLInventoryModelBackgroundFetch (the folder and item queues, the AIS
+ * dispatch loop with its concurrency limit and frame budget, the AIS
+ * completions, the legacy capability batches with their 403 split and
+ * re-queue, the public fetch state). The C++ keeps the model, the HTTP
+ * requests (AISAPI, LLInventoryModel::requestPost) and the legacy reply
+ * applier (BGFolderHttpHandler::processData's model writes).
+ *
+ * The C++ holds one VksInvFetch and calls it at each entry point. Every
+ * effect on the outside comes back as an operation list (VksInvFetchOps,
+ * null when there is none): read it with vks_inv_fetch_ops_view, carry the
+ * operations out in order, free it with vks_inv_fetch_ops_free. An
+ * operation that leads back into the scheduler (an AIS completion, a legacy
+ * handler) is a new call with its own list; the lists never share storage.
+ *
+ * The model is read through VksInvFetchHost, in the C++ order:
+ * child_categories is getDirectDescendentsOf's category array in model
+ * order (std::unordered_map order: per standard library). The host
+ * functions must not call into the scheduler. total_seconds is
+ * LLTimer::getTotalSeconds(), read where bulkFetchViaAis reads it (the
+ * frame budget). UUIDs are 16 bytes (LLUUID::mData); a null pointer is the
+ * null UUID.
+ *
+ * Operations (VksInvFetchOp, fields by kind):
+ * - ISSUE_AIS: call the AISAPI fetch function code (AISAPI::COMMAND_TYPE:
+ *   FETCHITEM 9 FetchItem(id, library ? LIBRARY : INVENTORY),
+ *   FETCHCATEGORYCHILDREN 10 FetchCategoryChildren(id, type, recursive,
+ *   depth), FETCHCATEGORYSUBSET 12 FetchCategorySubset(id, children, type,
+ *   recursive, depth), FETCHCOF 13 FetchCOF, FETCHORPHANS 14 FetchOrphans,
+ *   FETCHCATEGORYLINKS 15 FetchCategoryLinks(id)) with a completion that
+ *   calls vks_inv_fetch_ais_complete(ticket, its id). The scheduler issues
+ *   no command the function would refuse at once.
+ * - CALLBACK: run the caller's callback `ticket` (the token the C++ passed
+ *   to vks_inv_fetch_cof / _folder_and_links), then call
+ *   vks_inv_fetch_resume. Always the last operation of its list.
+ * - NOTIFY: LLNotificationsUtil::add(text).
+ * - FETCH_COMPLETED: the fetch completion signal (setAllFoldersFetched).
+ * - ADD_IDLE: gIdleCallbacks.addFunction(backgroundFetchCB).
+ * - LEGACY_POST: requestPost(false, text, body, a new BGFolderHttpHandler
+ *   (code 1) or BGItemHttpHandler (code 0) for handler `ticket`, label);
+ *   body is the LLSD XML requestPostWithLLSD would write. The handler's
+ *   destructor calls vks_inv_fetch_legacy_released.
+ * - LEGACY_PUMP: gInventory.handleResponses(false), then notifyObservers()
+ *   when code is 1, then vks_inv_fetch_after_pump.
+ * - NOTIFY_OBSERVERS: gInventory.notifyObservers().
+ * - FETCH_STARTED: mFetchStartTimer.reset() (markFetchStarted).
+ * - INITIAL_FETCH_DURATION: mInitialFetchDuration = the start timer's
+ *   elapsed time.
+ * - FETCH_TIMER_RESET: mFetchTimer.reset() (a legacy batch was sent; read
+ *   by the OPENSIM UDP loop).
+ * - WARN: log warning code (VKS_INV_FETCH_WARN_*) naming id. */
+typedef struct VksInvFetch VksInvFetch;
+typedef struct VksInvFetchOps VksInvFetchOps;
+typedef struct VksInvFetchState VksInvFetchState;
+
+typedef struct VksInvFetchCategory
+{
+    int32_t version;
+    int32_t preferred_type; /* LLFolderType::EType */
+    uint8_t owner_id[16];
+} VksInvFetchCategory;
+
+typedef struct VksInvFetchItem
+{
+    bool    complete;       /* isFinished() */
+    uint8_t owner_id[16];
+} VksInvFetchItem;
+
+/* VksInvFetchHost.model_id */
+#define VKS_INV_FETCH_ROOT           0 /* getRootFolderID() */
+#define VKS_INV_FETCH_LIBRARY_ROOT   1 /* getLibraryRootFolderID() */
+#define VKS_INV_FETCH_LIBRARY_OWNER  2 /* getLibraryOwnerID() */
+#define VKS_INV_FETCH_MARKETPLACE    3 /* getMarketplaceListingsUUID() */
+#define VKS_INV_FETCH_CURRENT_OUTFIT 4 /* findCategoryUUIDForType(FT_CURRENT_OUTFIT) */
+#define VKS_INV_FETCH_BASE_OUTFIT    5 /* LLAppearanceMgr::getBaseOutfitUUID() */
+
+typedef struct VksInvFetchHost
+{
+    void* ctx;
+    void    (*model_id)(void* ctx, int32_t which, uint8_t* out);
+    bool    (*category)(void* ctx, const uint8_t* id, VksInvFetchCategory* out);
+    /* the count, *ids -> count x 16 bytes valid until the next call; -1: no array */
+    ptrdiff_t (*child_categories)(void* ctx, const uint8_t* id, const uint8_t** ids);
+    bool    (*item)(void* ctx, const uint8_t* id, VksInvFetchItem* out);
+    bool    (*is_object_descendent_of)(void* ctx, const uint8_t* obj, const uint8_t* cat);
+    int32_t (*get_fetching)(void* ctx, const uint8_t* id);    /* of a category the model has */
+    void    (*set_fetching)(void* ctx, const uint8_t* id, int32_t state);
+    void    (*set_version)(void* ctx, const uint8_t* id, int32_t version);
+    double  (*total_seconds)(void* ctx);
+} VksInvFetchHost;
+
+/* The environment of a call; the capability URLs are read by the legacy
+ * path only (empty: no capability) and borrowed for the call. */
+typedef struct VksInvFetchEnv
+{
+    uint8_t     agent_id[16];
+    bool        use_http_inventory;
+    bool        ais_available;          /* AISAPI::isAvailable() */
+    bool        region;
+    bool        capabilities_received;
+    bool        disconnected;           /* gDisconnected */
+    bool        exiting;                /* LLApp::isExiting() */
+    bool        in_second_life;
+    bool        past_wearables_wait;    /* startup state > STATE_WEARABLES_WAIT */
+    bool        inventory_cap;          /* AISAPI::getInvCap() not empty */
+    bool        library_cap;            /* AISAPI::getLibCap() not empty */
+    uint32_t    pool_size_ais;          /* PoolSizeAIS */
+    int32_t     batch_size_ais3;        /* BatchSizeAIS3 */
+    uint32_t    sort_order;             /* InventorySortOrder */
+    VksInvBytes cap_fid2;               /* FetchInventoryDescendents2 */
+    VksInvBytes cap_fld2;               /* FetchLibDescendents2 */
+    VksInvBytes cap_fi2;                /* FetchInventory2 */
+    VksInvBytes cap_fl2;                /* FetchLib2 */
+} VksInvFetchEnv;
+
+#define VKS_INV_FETCH_OP_ISSUE_AIS              1
+#define VKS_INV_FETCH_OP_CALLBACK               2
+#define VKS_INV_FETCH_OP_NOTIFY                 3
+#define VKS_INV_FETCH_OP_FETCH_COMPLETED        4
+#define VKS_INV_FETCH_OP_ADD_IDLE               5
+#define VKS_INV_FETCH_OP_LEGACY_POST            6
+#define VKS_INV_FETCH_OP_LEGACY_PUMP            7
+#define VKS_INV_FETCH_OP_NOTIFY_OBSERVERS       8
+#define VKS_INV_FETCH_OP_FETCH_STARTED          9
+#define VKS_INV_FETCH_OP_INITIAL_FETCH_DURATION 10
+#define VKS_INV_FETCH_OP_FETCH_TIMER_RESET      11
+#define VKS_INV_FETCH_OP_WARN                   12
+
+/* WARN codes */
+#define VKS_INV_FETCH_WARN_FETCH_COUNT_BELOW_ZERO 1 /* LL_WARNS_ONCE in incrFetchCount */
+#define VKS_INV_FETCH_WARN_UNEXPECTED_FOLDER      2 /* "Unexpected folder response for " id */
+#define VKS_INV_FETCH_WARN_FOLDER_FAILED          3 /* "Failed to download folder: " id " Requesting known content separately" */
+#define VKS_INV_FETCH_WARN_CATEGORY_LINKS_FAILED  4 /* "Failed to fetch category links " id */
+#define VKS_INV_FETCH_WARN_NO_AIS2_CAP            5 /* "Failed to get AIS2 cap" */
+
+typedef struct VksInvFetchOp
+{
+    int32_t     kind;       /* VKS_INV_FETCH_OP_* */
+    int32_t     code;       /* ISSUE_AIS: command; WARN: warning; LEGACY_POST: folder; LEGACY_PUMP: notify */
+    uint64_t    ticket;     /* ISSUE_AIS: ticket; CALLBACK: token; LEGACY_POST: handler */
+    uint8_t     id[16];
+    bool        library;
+    bool        recursive;
+    int32_t     depth;
+    VksInvBytes children;   /* FETCHCATEGORYSUBSET: len / 16 UUIDs */
+    VksInvBytes text;       /* NOTIFY: name; LEGACY_POST: URL */
+    VksInvBytes body;       /* LEGACY_POST */
+    VksInvBytes label;      /* LEGACY_POST */
+} VksInvFetchOp;
+
+const VksInvFetchOp* vks_inv_fetch_ops_view(const VksInvFetchOps* ops, size_t* count);
+void vks_inv_fetch_ops_free(VksInvFetchOps* ops);
+
+VksInvFetch* vks_inv_fetch_new(void);
+void vks_inv_fetch_free(VksInvFetch* f);
+
+/* The entry points of LLInventoryModelBackgroundFetch. token 0 is no_op. */
+VksInvFetchOps* vks_inv_fetch_start(VksInvFetch* f, const VksInvFetchHost* host, const VksInvFetchEnv* env,
+                                    const uint8_t* id, bool recursive);
+VksInvFetchOps* vks_inv_fetch_schedule_folder(VksInvFetch* f, const uint8_t* id, bool forced);
+VksInvFetchOps* vks_inv_fetch_schedule_item(VksInvFetch* f, const uint8_t* id, bool forced);
+VksInvFetchOps* vks_inv_fetch_folder_and_links(VksInvFetch* f, const VksInvFetchHost* host,
+                                               const VksInvFetchEnv* env, const uint8_t* id, uint64_t token);
+VksInvFetchOps* vks_inv_fetch_cof(VksInvFetch* f, const VksInvFetchHost* host, const VksInvFetchEnv* env,
+                                  uint64_t token);
+VksInvFetchOps* vks_inv_fetch_find_lost_items(VksInvFetch* f);
+VksInvFetchOps* vks_inv_fetch_set_all_folders_fetched(VksInvFetch* f);
+/* incrFetchCount (folder false) / incrFetchFolderCount */
+VksInvFetchOps* vks_inv_fetch_incr_count(VksInvFetch* f, int32_t n, bool folder);
+/* addRequestAtFront (front) / addRequestAtBack */
+void vks_inv_fetch_add_request(VksInvFetch* f, const uint8_t* id, bool recursive, bool is_category, bool front);
+
+/* The idle callback: vks_inv_fetch_active first (mBackgroundFetchActive,
+ * cheap), then vks_inv_fetch_idle with an environment. */
+bool vks_inv_fetch_active(const VksInvFetch* f);
+VksInvFetchOps* vks_inv_fetch_idle(VksInvFetch* f, const VksInvFetchHost* host, const VksInvFetchEnv* env);
+VksInvFetchOps* vks_inv_fetch_after_pump(VksInvFetch* f, const VksInvFetchHost* host, const VksInvFetchEnv* env);
+VksInvFetchOps* vks_inv_fetch_resume(VksInvFetch* f, const VksInvFetchHost* host, const VksInvFetchEnv* env);
+VksInvFetchOps* vks_inv_fetch_ais_complete(VksInvFetch* f, const VksInvFetchHost* host, const VksInvFetchEnv* env,
+                                           uint64_t ticket, const uint8_t* id);
+
+/* The legacy handlers (BGFolderHttpHandler, BGItemHttpHandler). */
+bool vks_inv_fetch_legacy_is_recursive(const VksInvFetch* f, uint64_t handler, const uint8_t* id);
+VksInvFetchOps* vks_inv_fetch_legacy_data_done(VksInvFetch* f, const VksInvFetchHost* host,
+                                               const VksInvFetchEnv* env);
+VksInvFetchOps* vks_inv_fetch_legacy_http_failure(VksInvFetch* f, const VksInvFetchHost* host,
+                                                  const VksInvFetchEnv* env, uint64_t handler, int32_t status);
+VksInvFetchOps* vks_inv_fetch_legacy_reply_failure(VksInvFetch* f, const VksInvFetchHost* host,
+                                                   const VksInvFetchEnv* env, uint64_t handler);
+VksInvFetchOps* vks_inv_fetch_legacy_released(VksInvFetch* f, uint64_t handler);
+
+/* The public state. */
+#define VKS_INV_FETCH_BG_ACTIVE       1u   /* mBackgroundFetchActive */
+#define VKS_INV_FETCH_FOLDER_ACTIVE   2u   /* folderFetchActive() */
+#define VKS_INV_FETCH_INV_STARTED     4u   /* inventoryFetchStarted() */
+#define VKS_INV_FETCH_LIB_STARTED     8u   /* libraryFetchStarted() */
+#define VKS_INV_FETCH_MKT_STARTED     16u  /* mRecursiveMarketplaceFetchStarted */
+#define VKS_INV_FETCH_EVERYTHING      32u  /* isEverythingFetched() */
+#define VKS_INV_FETCH_BULK_COMPLETE   64u  /* isBulkFetchProcessingComplete() */
+#define VKS_INV_FETCH_FOLDER_COMPLETE 128u /* isFolderFetchProcessingComplete() */
+uint32_t vks_inv_fetch_flags(const VksInvFetch* f);
+bool vks_inv_fetch_queue_has_no_descendents_of(const VksInvFetch* f, const VksInvFetchHost* host,
+                                               const uint8_t* cat);
+
+/* The folder queue for the OPENSIM UDP loop of backgroundFetch(). */
+typedef struct VksInvFetchEntry
+{
+    uint8_t id[16];
+    bool    is_category;
+    int32_t fetch_type;     /* EFetchType */
+} VksInvFetchEntry;
+bool vks_inv_fetch_folder_front(const VksInvFetch* f, VksInvFetchEntry* out);
+void vks_inv_fetch_folder_pop_front(VksInvFetch* f);
+void vks_inv_fetch_folder_push_back(VksInvFetch* f, const VksInvFetchEntry* entry);
+
+/* The private state (the R3b recorder's scheduler lines). */
+typedef struct VksInvFetchStateView
+{
+    uint32_t                flags;          /* VKS_INV_FETCH_* */
+    int32_t                 fetch_count;
+    int32_t                 folder_fetch_count;
+    const VksInvFetchEntry* folder_queue;
+    size_t                  folder_queue_len;
+    const VksInvFetchEntry* item_queue;
+    size_t                  item_queue_len;
+    const uint8_t*          expected;       /* expected_len x 16 bytes, in order */
+    size_t                  expected_len;
+    const uint8_t*          forced;         /* forced_len x 16 bytes, LLUUID order */
+    size_t                  forced_len;
+} VksInvFetchStateView;
+VksInvFetchState* vks_inv_fetch_state(const VksInvFetch* f);
+VksInvFetchStateView vks_inv_fetch_state_view(const VksInvFetchState* st);
+void vks_inv_fetch_state_free(VksInvFetchState* st);
+
 #ifdef __cplusplus
 }
 
