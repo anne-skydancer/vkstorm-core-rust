@@ -102,10 +102,20 @@ struct Parser<'r, 'a, S: Sink> {
     content: Vec<u8>,
     current_key: Vec<u8>,
     parse_count: i32,
+    /// `Limits::max_depth`: a value may sit inside at most `max_depth - 1`
+    /// containers (the binary and notation parsers' rule); -1 is unlimited.
+    max_depth: i32,
+    /// A value broke `max_depth`: the document is unparsable.
+    too_deep: bool,
 }
 
 /// Parses one XML document from `r` into `sink`.
-pub fn parse<S: Sink>(r: &mut Reader<'_>, sink: &mut S, mode: XmlMode) -> i32 {
+///
+/// `max_depth` is `Limits::max_depth`. The C++ XML parser never limited
+/// depth and the viewer's XML callers pass -1; a caller that sets it gets a
+/// parse failure for a value nested `max_depth` containers deep or more, as
+/// from the binary and notation parsers.
+pub fn parse<S: Sink>(r: &mut Reader<'_>, sink: &mut S, mode: XmlMode, max_depth: i32) -> i32 {
     let mut p = Parser {
         r,
         sink,
@@ -124,6 +134,8 @@ pub fn parse<S: Sink>(r: &mut Reader<'_>, sink: &mut S, mode: XmlMode) -> i32 {
         content: Vec::new(),
         current_key: Vec::new(),
         parse_count: 0,
+        max_depth,
+        too_deep: false,
     };
     match p.run(mode) {
         Ok(n) => n,
@@ -558,6 +570,9 @@ impl<S: Sink> Parser<'_, '_, S> {
         self.seen_root = true;
         let name_copy = self.names[s..s + l].to_vec();
         let element = self.start_element(&name_copy);
+        if self.too_deep {
+            return Err(());
+        }
         if self_closing {
             self.names.truncate(s);
             if self.open.is_empty() {
@@ -729,6 +744,12 @@ impl<S: Sink> Parser<'_, '_, S> {
                 return None;
             }
         }
+        // The open containers are all maps and arrays here (a value inside a
+        // scalar element was skipped above).
+        if self.max_depth >= 0 && self.cstack.len() as i64 >= i64::from(self.max_depth) {
+            self.too_deep = true;
+            return None;
+        }
         self.parse_count += 1;
         match element {
             Element::Map => {
@@ -799,5 +820,68 @@ impl<S: Sink> Parser<'_, '_, S> {
             Element::Llsd | Element::Key => {}
         }
         self.content.clear();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{Format, Limits, PARSE_FAILURE, parse};
+
+    /// `levels` nested containers (maps and arrays alternating, outermost a
+    /// map) around one integer.
+    fn nested(levels: usize) -> Vec<u8> {
+        let mut s = b"<?xml version=\"1.0\" ?><llsd>".to_vec();
+        for i in 0..levels {
+            s.extend_from_slice(if i % 2 == 0 {
+                b"<map><key>k</key>"
+            } else {
+                b"<array>"
+            });
+        }
+        s.extend_from_slice(b"<integer>7</integer>");
+        for i in (0..levels).rev() {
+            s.extend_from_slice(if i % 2 == 0 { b"</map>" } else { b"</array>" });
+        }
+        s.extend_from_slice(b"</llsd>\n");
+        s
+    }
+
+    fn limits(max_depth: i32) -> Limits {
+        Limits {
+            max_bytes: None,
+            max_depth,
+        }
+    }
+
+    #[test]
+    fn max_depth_limits_nesting_as_binary_does() {
+        // A value inside `max_depth - 1` containers parses; one more fails.
+        for max in [1, 2, 3, 256] {
+            let ok = nested(max as usize - 1);
+            let deep = nested(max as usize);
+            assert!(parse(Format::Xml, &ok, limits(max)).0 > 0, "{max}");
+            assert_eq!(parse(Format::Xml, &deep, limits(max)).0, PARSE_FAILURE);
+            // The binary parser draws the line at the same place.
+            let (_, v) = parse(Format::Xml, &ok, Limits::UNLIMITED);
+            let bin = crate::format(Format::Binary, &v.unwrap(), Default::default()).0;
+            assert!(parse(Format::Binary, &bin, limits(max)).0 > 0);
+            let (_, v) = parse(Format::Xml, &deep, Limits::UNLIMITED);
+            let bin = crate::format(Format::Binary, &v.unwrap(), Default::default()).0;
+            assert_eq!(parse(Format::Binary, &bin, limits(max)).0, PARSE_FAILURE);
+        }
+        // An empty container counts as a value, not as a level.
+        let empty = b"<llsd><array><array></array></array></llsd>\n";
+        assert!(parse(Format::Xml, empty, limits(2)).0 > 0);
+        assert_eq!(parse(Format::Xml, empty, limits(1)).0, PARSE_FAILURE);
+        // 0 fails every value; -1 (the viewer's XML callers) never limits.
+        assert_eq!(parse(Format::Xml, &nested(0), limits(0)).0, PARSE_FAILURE);
+        assert!(parse(Format::Xml, &nested(100_000), Limits::UNLIMITED).0 > 0);
+    }
+
+    #[test]
+    fn skipped_elements_do_not_count() {
+        // A value inside a scalar element is ignored, so it adds no level.
+        let doc = b"<llsd><array><string><map><key>a</key><integer>1</integer></map></string></array></llsd>\n";
+        assert!(parse(Format::Xml, doc, limits(2)).0 > 0);
     }
 }

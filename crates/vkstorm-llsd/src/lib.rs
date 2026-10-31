@@ -106,7 +106,7 @@ pub fn parse_into<S: Sink>(
     match format {
         Format::Notation => notation::parse(r, sink, limits),
         Format::Binary => binary::parse(r, sink, limits),
-        Format::Xml => xml::parse(r, sink, xml_mode),
+        Format::Xml => xml::parse(r, sink, xml_mode, limits.max_depth),
     }
 }
 
