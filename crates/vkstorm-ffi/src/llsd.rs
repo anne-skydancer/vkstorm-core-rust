@@ -129,7 +129,8 @@ pub unsafe extern "C" fn vks_llsd_parse(
 /// The document's nodes (16 bytes each) and their count.
 ///
 /// # Safety
-/// `d` must come from `vks_llsd_parse` and be live.
+/// `d` must come from `vks_llsd_parse` (or a call of a later rung returning
+/// a document) and be live.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn vks_llsd_doc_nodes(d: *const VksLlsdDoc, count: *mut usize) -> *const vkstorm_llsd::FlatNode {
     let d = unsafe { &*d };
@@ -142,7 +143,8 @@ pub unsafe extern "C" fn vks_llsd_doc_nodes(d: *const VksLlsdDoc, count: *mut us
 /// The document's byte arena and its length.
 ///
 /// # Safety
-/// `d` must come from `vks_llsd_parse` and be live.
+/// `d` must come from `vks_llsd_parse` (or a call of a later rung returning
+/// a document) and be live.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn vks_llsd_doc_bytes(d: *const VksLlsdDoc, len: *mut usize) -> *const u8 {
     let d = unsafe { &*d };
@@ -152,10 +154,54 @@ pub unsafe extern "C" fn vks_llsd_doc_bytes(d: *const VksLlsdDoc, len: *mut usiz
     d.doc.bytes.as_ptr()
 }
 
+/// An LLSD value handed in by C++: a node buffer and byte arena in the
+/// layout of a parsed document (`FlatNode`), which the viewer builds from its
+/// own `LLSD` without coercing anything. The calls of later rungs that take
+/// an `LLSD` value read it with [`value_from_c`].
+#[repr(C)]
+pub struct VksLlsdFlat {
+    pub nodes: *const vkstorm_llsd::FlatNode,
+    pub node_count: usize,
+    pub bytes: *const u8,
+    pub byte_len: usize,
+}
+
+/// The value C++ handed in: undefined for a null pointer or no nodes, `None`
+/// for a malformed buffer (see `vkstorm_llsd::value_from_flat_parts`).
+///
+/// # Safety
+/// `flat`, unless null, must point to a `VksLlsdFlat` whose arrays are
+/// readable for their counts.
+#[cfg_attr(not(feature = "inventory"), allow(dead_code))]
+pub(crate) unsafe fn value_from_c(flat: *const VksLlsdFlat) -> Option<vkstorm_llsd::Value> {
+    if flat.is_null() {
+        return Some(vkstorm_llsd::Value::Undefined);
+    }
+    let f = unsafe { &*flat };
+    if f.nodes.is_null() || f.node_count == 0 {
+        return Some(vkstorm_llsd::Value::Undefined);
+    }
+    let nodes = unsafe { slice::from_raw_parts(f.nodes, f.node_count) };
+    let arena = unsafe { bytes(f.bytes, f.byte_len) };
+    // Keys are unique in a C++ map, so the policy never decides anything.
+    vkstorm_llsd::value_from_flat_parts(nodes, arena, vkstorm_llsd::KeyPolicy::LastWins)
+}
+
+/// A document for C++ holding `value`, as `vks_llsd_parse` returns one: read
+/// with `vks_llsd_doc_nodes`/`vks_llsd_doc_bytes` (the viewer's `buildLLSD`),
+/// freed with `vks_llsd_doc_free`.
+#[cfg_attr(not(feature = "inventory"), allow(dead_code))]
+pub(crate) fn doc_from_value(value: &vkstorm_llsd::Value) -> *mut VksLlsdDoc {
+    Box::into_raw(Box::new(VksLlsdDoc {
+        doc: vkstorm_llsd::flat_from_value(value),
+    }))
+}
+
 /// Releases a document. Null is ignored.
 ///
 /// # Safety
-/// `d` must come from `vks_llsd_parse` and not be used afterwards.
+/// `d` must come from `vks_llsd_parse` (or a call of a later rung returning
+/// a document) and not be used afterwards.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn vks_llsd_doc_free(d: *mut VksLlsdDoc) {
     if !d.is_null() {

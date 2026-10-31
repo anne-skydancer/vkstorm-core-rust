@@ -601,6 +601,7 @@ dependencies = [
  "vkstorm-audio",
  "vkstorm-http",
  "vkstorm-image",
+ "vkstorm-inventory",
  "vkstorm-j2c",
  "vkstorm-llsd",
  "vkstorm-messages",

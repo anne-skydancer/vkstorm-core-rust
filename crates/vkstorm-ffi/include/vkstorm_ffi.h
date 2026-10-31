@@ -1,13 +1,13 @@
 /**
  * @file vkstorm_ffi.h
- * @brief C ABI exported by the Rust crate indra/rust/vkstorm-ffi.
+ * @brief C ABI exported by the Rust crate vkstorm-ffi (vkstorm-core-rust,
+ * crates/vkstorm-ffi), shipped to the viewer as the vkstorm-ffi package.
  *
- * Keep in step with indra/rust/vkstorm-ffi/src/lib.rs (JPEG 2000 and
- * LLSD), indra/rust/vkstorm-ffi/src/volume.rs (the prim mesher),
- * indra/rust/vkstorm-ffi/src/image.rs (PNG, TGA, BMP, DXT),
- * indra/rust/vkstorm-ffi/src/messages.rs (message templates, data packers)
- * indra/rust/vkstorm-ffi/src/http.rs (the HTTP layer), assets.rs (the asset
- * pipeline) and audio.rs (the audio engine).
+ * Keep in step with crates/vkstorm-ffi/src: j2c.rs (JPEG 2000), llsd.rs
+ * (LLSD), volume.rs (the prim mesher), image.rs (PNG, TGA, BMP, DXT),
+ * messages.rs (message templates, data packers), http.rs (the HTTP layer),
+ * assets.rs (the asset pipeline), audio.rs (the audio engine) and
+ * inventory.rs (the inventory data model).
  *
  * $LicenseInfo:firstyear=2026&license=viewerlgpl$
  * Vulkanstorm Viewer Source Code
@@ -20,6 +20,9 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#ifndef __cplusplus
+#include <stdbool.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -132,6 +135,20 @@ VksLlsdDoc* vks_llsd_parse(int32_t format, const VksLlsdSource* src, const uint8
 const VksLlsdNode* vks_llsd_doc_nodes(const VksLlsdDoc* d, size_t* count);
 const uint8_t* vks_llsd_doc_bytes(const VksLlsdDoc* d, size_t* len);
 void vks_llsd_doc_free(VksLlsdDoc* d);
+
+/* An LLSD value handed to a later rung's call: the viewer flattens its LLSD
+ * into a node buffer and arena in VksLlsdNode layout (a map's len entries as
+ * key node, value subtree pairs; an array's as subtrees), uncoerced. The
+ * buffer holds exactly one value; a malformed one fails the call. A null
+ * VksLlsdFlat (or no nodes) is undefined. Documents those calls return are
+ * read and freed as parse results are. */
+typedef struct VksLlsdFlat
+{
+    const VksLlsdNode* nodes;
+    size_t node_count;
+    const uint8_t* bytes;
+    size_t byte_len;
+} VksLlsdFlat;
 
 /* Formatting: one formatter per document, driven in document order. */
 typedef void (*VksLlsdWrite)(void* ctx, const uint8_t* data, size_t len);
@@ -1282,11 +1299,381 @@ int32_t  vks_music_transition_state(VksAudio* a, uint32_t serial);
 int32_t  vks_music_set_spatial_layout(VksAudio* a, int32_t layout);
 int32_t  vks_music_stats(VksAudio* a, VksMusicStats* out, VksAudioStrFn cb, void* user);
 
+/* ---- The inventory data model (rung seven, sub-rung R1) ---------------- */
+/* src/inventory.rs over vkstorm-inventory: LLPermissions,
+ * LLAggregatePermissions, LLSaleInfo, the LLInventoryObject, LLInventoryItem
+ * and LLInventoryCategory records (CRCs, name and description rules, legacy
+ * text, LLSD and message blocks) and LLNotecard's text. Needs the llsd rung.
+ *
+ * Records.
+ * - VksInvPerms, VksInvSale and VksInvAggregate have the exact layout of
+ *   LLPermissions, LLSaleInfo and LLAggregatePermissions (no virtual
+ *   functions, no base class), so the C++ passes reinterpret_cast<const
+ *   VksInvPerms*>(this) with no copy; the calls read and write the object in
+ *   place. The C++ classes static_assert the VKS_INV_*_SIZE and
+ *   VKS_INV_PERMS_OFFSET_* constants below (offsetof from inside the class),
+ *   the Rust side asserts the same numbers.
+ * - Items, categories and objects are virtual classes: the C++ fills a
+ *   VksInvItem / VksInvCategory / VksInvObject view whose VksInvBytes borrow
+ *   its own std::string data for the length of the call.
+ * - Results that allocate come back as a VksInvRecords block: read it with
+ *   vks_inv_records_view (one struct with every array, the text and the
+ *   scalar results; the strings of its records point into the block), free
+ *   it with vks_inv_records_free. Null means failure (vks_inv_last_error).
+ * - UUID arguments are 16 bytes (LLUUID::mData), copied before a record is
+ *   written, so they may point into it; a null pointer is the null UUID.
+ *
+ * LLSD. Values go in raw, as a VksLlsdFlat the viewer flattens from its
+ * LLSD (no coercion on the C++ side: the Rust side reproduces each
+ * platform's own asInteger/asString/...); a null VksLlsdFlat is undefined.
+ * Values come back as a VksLlsdDoc (the same buildLLSD as a parse result,
+ * freed with vks_llsd_doc_free); null means a malformed input buffer or a
+ * failure. The *_fill_llsd calls fill an existing value ("into", as
+ * asLLSD(LLSD&) and ll_fill_sd_from_permissions do), or a new one for null.
+ *
+ * Legacy text. A reader takes the whole REST of the C++ stream as one window
+ * (data, len): its end is the stream's end-of-file. The caller has read the
+ * block's header line (e.g. "inv_item\t0"). VksInvStream.state holds the
+ * stream's rdstate() bits on entry; on return it holds the state afterwards
+ * and consumed the bytes read from the window, so the caller clears the
+ * stream, seeks to its start position + consumed (or, for a stream it has
+ * read whole, continues from window + consumed), then setstate(state). The
+ * window is the bytes as the C++ stream delivers them: for a file opened in
+ * Windows text mode (llifstream), after CRLF -> LF translation and with the
+ * stream ending at a Ctrl-Z; a binary-mode read of the same file is not the
+ * same input. The import calls never write the C++ object: the record in the
+ * result block is the object afterwards.
+ *
+ * Message blocks. The C++ keeps the add*Fast/get*Fast field I/O; Rust makes
+ * the decisions: VksInvItemBlock is the ItemData wire record (CRC included),
+ * VksInvFolderBlock the FolderData one. LLPermissions pack/unpackMessage and
+ * LLSaleInfo::packMessage are field I/O on the in-place records and stay C++;
+ * vks_inv_sale_unpack_wire and vks_inv_aggregate_from_u8/to_u8 hold the rest.
+ *
+ * Every call catches panics (null / false / 0 / no change, text in
+ * vks_inv_last_error). The in-place permission, sale and aggregate calls do
+ * not allocate. */
+
+typedef struct VksInvPerms
+{
+    uint8_t creator[16];
+    uint8_t owner[16];
+    uint8_t last_owner[16];
+    uint8_t group[16];
+    uint32_t base_mask;
+    uint32_t owner_mask;
+    uint32_t everyone_mask; /* LLPermissions order: everyone before group */
+    uint32_t group_mask;
+    uint32_t next_owner_mask;
+    bool is_group_owned;
+} VksInvPerms;
+
+#define VKS_INV_PERMS_SIZE 88
+#define VKS_INV_PERMS_OFFSET_CREATOR 0
+#define VKS_INV_PERMS_OFFSET_OWNER 16
+#define VKS_INV_PERMS_OFFSET_LAST_OWNER 32
+#define VKS_INV_PERMS_OFFSET_GROUP 48
+#define VKS_INV_PERMS_OFFSET_BASE 64
+#define VKS_INV_PERMS_OFFSET_OWNER_MASK 68
+#define VKS_INV_PERMS_OFFSET_EVERYONE 72
+#define VKS_INV_PERMS_OFFSET_GROUP_MASK 76
+#define VKS_INV_PERMS_OFFSET_NEXT_OWNER 80
+#define VKS_INV_PERMS_OFFSET_GROUP_OWNED 84
+
+typedef struct VksInvSale
+{
+    int32_t sale_type; /* LLSaleInfo::EForSale, any value */
+    int32_t sale_price;
+} VksInvSale;
+
+#define VKS_INV_SALE_SIZE 8
+
+typedef struct VksInvAggregate
+{
+    uint8_t bits[3]; /* copy, modify, transfer: AP_EMPTY..AP_ALL */
+} VksInvAggregate;
+
+#define VKS_INV_AGGREGATE_SIZE 3
+
+typedef struct VksInvBytes
+{
+    const uint8_t* ptr; /* anything when len is 0 */
+    size_t len;
+} VksInvBytes;
+
+typedef struct VksInvObject
+{
+    uint8_t id[16];
+    uint8_t parent[16];
+    uint8_t thumbnail[16];
+    int32_t asset_type; /* LLAssetType::EType, any value */
+    bool favorite;
+    int64_t creation_date; /* time_t */
+    VksInvBytes name;
+    VksInvBytes runtime; /* mRuntime, empty for none */
+} VksInvObject;
+
+typedef struct VksInvItem
+{
+    VksInvObject object;
+    VksInvPerms perms;
+    uint8_t asset[16];
+    VksInvSale sale;
+    int32_t inv_type; /* LLInventoryType::EType, any value */
+    uint32_t flags;
+    VksInvBytes description;
+} VksInvItem;
+
+/* owner and version: LLViewerInventoryCategory's (the viewer variants of the
+ * cache LLSD calls); the base-class calls carry them through unchanged. */
+typedef struct VksInvCategory
+{
+    VksInvObject object;
+    int32_t preferred_type; /* LLFolderType::EType, any value */
+    uint8_t owner[16];
+    int32_t version;
+} VksInvCategory;
+
+#define VKS_INV_STREAM_EOF 1u
+#define VKS_INV_STREAM_FAIL 2u
+#define VKS_INV_STREAM_BAD 4u
+
+typedef struct VksInvStream
+{
+    size_t consumed; /* out */
+    uint32_t state;  /* in: rdstate(); out: the state afterwards */
+} VksInvStream;
+
+/* asset: the AssetID slot, or TransactionID (LLViewerInventoryItem). */
+typedef struct VksInvItemBlock
+{
+    uint8_t item_id[16];
+    uint8_t folder_id[16];
+    uint8_t creator_id[16];
+    uint8_t owner_id[16];
+    uint8_t group_id[16];
+    uint32_t base_mask;
+    uint32_t owner_mask;
+    uint32_t group_mask;
+    uint32_t everyone_mask;
+    uint32_t next_owner_mask;
+    bool group_owned;
+    int8_t asset_type;
+    int8_t inv_type;
+    uint8_t sale_type;
+    uint8_t asset[16];
+    uint32_t flags;
+    int32_t sale_price;
+    int32_t creation_date;
+    uint32_t crc;
+    VksInvBytes name;        /* as getStringFast read it */
+    VksInvBytes description;
+} VksInvItemBlock;
+
+typedef struct VksInvFolderBlock
+{
+    uint8_t folder_id[16];
+    uint8_t parent_id[16];
+    int8_t preferred_type;
+    VksInvBytes name; /* as getStringFast read it */
+} VksInvFolderBlock;
+
+/* 64-bit sizes, asserted on both sides. */
+#define VKS_INV_OBJECT_SIZE 96
+#define VKS_INV_ITEM_SIZE 232
+#define VKS_INV_CATEGORY_SIZE 120
+#define VKS_INV_ITEM_BLOCK_SIZE 168
+#define VKS_INV_FOLDER_BLOCK_SIZE 56
+
+typedef struct VksInvRecords VksInvRecords;
+
+typedef struct VksInvRecordsView
+{
+    const VksInvItem* items;
+    size_t item_count;
+    const VksInvCategory* categories;
+    size_t category_count;
+    const VksInvObject* objects;
+    size_t object_count;
+    VksInvBytes text;     /* a legacy export, a notecard's text */
+    bool ok;              /* the C++ function's bool result (success, CRC verdict) */
+    VksInvStream stream;  /* the legacy readers' stream */
+    int32_t version;      /* LLNotecard */
+    int32_t embedded_version;
+} VksInvRecordsView;
+
+const char* vks_inv_last_error(void);
+const VksInvRecordsView* vks_inv_records_view(const VksInvRecords* r);
+void vks_inv_records_free(VksInvRecords* r);
+
+/* LLPermissions, in place. allowModifyBy/allowCopyBy/allowMoveBy are
+ * allow_operation_by with PERM_MODIFY/PERM_COPY/PERM_MOVE (null group for the
+ * one-argument forms). get_ownership leaves its outputs alone when it returns
+ * false; safe_owner returns false for an unowned record, where the C++ logs
+ * and returns a random UUID itself. */
+void vks_inv_perms_init(VksInvPerms* p, const uint8_t* creator, const uint8_t* owner,
+                        const uint8_t* last_owner, const uint8_t* group);
+void vks_inv_perms_init_masks(VksInvPerms* p, uint32_t base, uint32_t owner, uint32_t everyone,
+                              uint32_t group, uint32_t next);
+void vks_inv_perms_init_masks_for_type(VksInvPerms* p, int32_t inv_type);
+bool vks_inv_perms_get_ownership(const VksInvPerms* p, uint8_t* owner_out, bool* is_group_owned);
+bool vks_inv_perms_safe_owner(const VksInvPerms* p, uint8_t* out);
+uint32_t vks_inv_perms_crc32(const VksInvPerms* p);
+void vks_inv_perms_fix(VksInvPerms* p);
+void vks_inv_perms_fix_fair_use(VksInvPerms* p);
+void vks_inv_perms_fix_ownership(VksInvPerms* p);
+void vks_inv_perms_accumulate(VksInvPerms* p, const VksInvPerms* perm);
+bool vks_inv_perms_set_owner_and_group(VksInvPerms* p, const uint8_t* agent, const uint8_t* owner,
+                                       const uint8_t* group, bool is_atomic);
+void vks_inv_perms_set_last_owner(VksInvPerms* p, const uint8_t* last_owner);
+void vks_inv_perms_yes_really_set_owner(VksInvPerms* p, const uint8_t* owner, bool group_owned);
+bool vks_inv_perms_deed_to_group(VksInvPerms* p, const uint8_t* agent, const uint8_t* group);
+bool vks_inv_perms_set_base_bits(VksInvPerms* p, const uint8_t* agent, bool set, uint32_t bits);
+bool vks_inv_perms_set_owner_bits(VksInvPerms* p, const uint8_t* agent, bool set, uint32_t bits);
+bool vks_inv_perms_set_group_bits(VksInvPerms* p, const uint8_t* agent, const uint8_t* group, bool set,
+                                  uint32_t bits);
+bool vks_inv_perms_set_everyone_bits(VksInvPerms* p, const uint8_t* agent, const uint8_t* group, bool set,
+                                     uint32_t bits);
+bool vks_inv_perms_set_next_owner_bits(VksInvPerms* p, const uint8_t* agent, const uint8_t* group, bool set,
+                                       uint32_t bits);
+bool vks_inv_perms_allow_operation_by(const VksInvPerms* p, uint32_t op, const uint8_t* requester,
+                                      const uint8_t* group);
+bool vks_inv_perms_allow_transfer_to(const VksInvPerms* p, const uint8_t* agent);
+bool vks_inv_perms_allow_export_by(const VksInvPerms* p, const uint8_t* agent);
+/* Defined only in an opensim build. */
+bool vks_inv_perms_allow_open_sim_export_by(const VksInvPerms* p, const uint8_t* agent);
+bool vks_inv_perms_equal(const VksInvPerms* a, const VksInvPerms* b);
+/* mask_to_string into (buf, cap) (see vks_ffi_string); 6 bytes suffice. The
+ * export column needs an opensim build and is_open_sim. */
+size_t vks_inv_mask_to_string(uint32_t mask, bool is_open_sim, char* buf, size_t cap);
+
+/* LLPermissions: LLSD and legacy text. import_llsd is importLLSD over p
+ * (ll_permissions_from_sd: over LLPermissions::DEFAULT); the *_llsd calls
+ * returning bool leave p unchanged on false. import_legacy writes p and
+ * stream and returns importLegacyStream's result (false only on a failure,
+ * nothing written). */
+VksLlsdDoc* vks_inv_perms_fill_llsd(const VksInvPerms* p, const VksLlsdFlat* into);
+bool vks_inv_perms_import_llsd(VksInvPerms* p, const VksLlsdFlat* sd);
+VksLlsdDoc* vks_inv_perms_pack_message_llsd(const VksInvPerms* p);
+bool vks_inv_perms_unpack_message_llsd(VksInvPerms* p, const VksLlsdFlat* sd);
+bool vks_inv_perms_import_legacy(VksInvPerms* p, const uint8_t* data, size_t len, VksInvStream* stream);
+VksInvRecords* vks_inv_perms_export_legacy(const VksInvPerms* p);
+
+/* LLAggregatePermissions, in place. */
+uint8_t vks_inv_aggregate_value(const VksInvAggregate* a, uint32_t bit);
+uint8_t vks_inv_aggregate_to_u8(const VksInvAggregate* a);
+void vks_inv_aggregate_from_u8(VksInvAggregate* a, uint8_t byte);
+bool vks_inv_aggregate_is_empty(const VksInvAggregate* a);
+void vks_inv_aggregate_mask(VksInvAggregate* a, uint32_t mask);
+void vks_inv_aggregate_merge(VksInvAggregate* a, const VksInvAggregate* other);
+
+/* LLSaleInfo, in place. unpack_wire: unpackMessage/unpackMultiMessage from
+ * the read SaleType (U8) and SalePrice (S32). from_llsd and import_legacy
+ * also write has_perm_mask and perm_mask as the C++ does. */
+uint32_t vks_inv_sale_crc32(const VksInvSale* s);
+void vks_inv_sale_set_price(VksInvSale* s, int32_t price);
+void vks_inv_sale_accumulate(VksInvSale* s, const VksInvSale* other);
+void vks_inv_sale_unpack_wire(VksInvSale* s, uint8_t sale_type, int32_t sale_price);
+VksLlsdDoc* vks_inv_sale_fill_llsd(const VksInvSale* s, const VksLlsdFlat* into);
+bool vks_inv_sale_from_llsd(VksInvSale* s, const VksLlsdFlat* sd, bool* has_perm_mask, uint32_t* perm_mask);
+bool vks_inv_sale_from_sd(VksInvSale* out, const VksLlsdFlat* sd);
+VksLlsdDoc* vks_inv_sale_pack_message_llsd(const VksInvSale* s);
+bool vks_inv_sale_unpack_message_llsd(VksInvSale* s, const VksLlsdFlat* sd);
+bool vks_inv_sale_import_legacy(VksInvSale* s, const uint8_t* data, size_t len, bool* has_perm_mask,
+                                uint32_t* perm_mask, VksInvStream* stream);
+VksInvRecords* vks_inv_sale_export_legacy(const VksInvSale* s);
+
+/* Names and descriptions. correct_* write into (buf, cap) as vks_ffi_string
+ * expects (a name is at most 63 bytes; a description keeps its length).
+ * rename / set_description: true when the field changes, the new value in
+ * (buf, cap) and its length in *out_len; VKS_INV_NAME_BUF bytes hold any
+ * name, desc_len + 1 any description. */
+#define VKS_INV_NAME_BUF 64
+size_t vks_inv_correct_name(const uint8_t* name, size_t len, char* buf, size_t cap);
+size_t vks_inv_correct_description(const uint8_t* desc, size_t len, char* buf, size_t cap);
+bool vks_inv_rename(const uint8_t* current, size_t current_len, const uint8_t* name, size_t name_len, char* buf,
+                    size_t cap, size_t* out_len);
+bool vks_inv_set_description(const uint8_t* current, size_t current_len, const uint8_t* desc, size_t desc_len,
+                             char* buf, size_t cap, size_t* out_len);
+
+/* LLInventoryObject. A null stream is a good one. */
+VksInvRecords* vks_inv_object_import_legacy(const VksInvObject* obj, const uint8_t* data, size_t len,
+                                            const VksInvStream* stream);
+VksInvRecords* vks_inv_object_export_legacy(const VksInvObject* obj);
+
+/* LLInventoryItem. crc32, slam_bits (the flags after
+ * accumulatePermissionSlamBits) and to_block read no string and do not
+ * allocate. to_block: the block packMessage sends, slot null for the asset
+ * id (LLInventoryItem) or the transaction id (LLViewerInventoryItem); its
+ * strings borrow the item's. apply_block: unpackMessage of a read block,
+ * ok = the CRC verdict. from_llsd: fromLLSD(sd, is_new) with
+ * in_open_sim = LLPermissions::getIsInOpenSim(). create_sd:
+ * ll_create_sd_from_inventory_item. */
+uint32_t vks_inv_item_crc32(const VksInvItem* item);
+uint32_t vks_inv_item_slam_bits(const VksInvItem* item, const VksInvItem* old_item);
+bool vks_inv_item_to_block(const VksInvItem* item, const uint8_t* slot, VksInvItemBlock* out);
+VksInvRecords* vks_inv_item_apply_block(const VksInvItem* item, const VksInvItemBlock* block);
+VksInvRecords* vks_inv_item_import_legacy(const VksInvItem* item, const uint8_t* data, size_t len,
+                                          const VksInvStream* stream);
+VksInvRecords* vks_inv_item_export_legacy(const VksInvItem* item, bool include_asset_key);
+VksLlsdDoc* vks_inv_item_fill_llsd(const VksInvItem* item, const VksLlsdFlat* into);
+VksInvRecords* vks_inv_item_from_llsd(const VksInvItem* item, const VksLlsdFlat* sd, bool is_new,
+                                      bool in_open_sim);
+VksLlsdDoc* vks_inv_item_create_sd(const VksInvItem* item);
+
+/* LLInventoryCategory and LLViewerInventoryCategory. viewer selects the
+ * LLViewerInventoryCategory override of exportLLSD / importLLSD (owner_id,
+ * version). from_create_sd: ll_create_category_from_sd. apply_block:
+ * unpackMessage of a read folder block. */
+#define VKS_INV_CAT_AS_LLSD 0    /* asLLSD */
+#define VKS_INV_CAT_AIS_CREATE 1 /* asAISCreateCatLLSD */
+#define VKS_INV_CAT_CREATE_SD 2  /* ll_create_sd_from_inventory_category */
+VksInvRecords* vks_inv_category_import_legacy(const VksInvCategory* cat, const uint8_t* data, size_t len,
+                                              const VksInvStream* stream);
+VksInvRecords* vks_inv_category_export_legacy(const VksInvCategory* cat);
+VksLlsdDoc* vks_inv_category_to_llsd(const VksInvCategory* cat, int32_t form);
+VksLlsdDoc* vks_inv_category_export_llsd(const VksInvCategory* cat, bool viewer, const VksLlsdFlat* into);
+VksInvRecords* vks_inv_category_from_llsd(const VksInvCategory* cat, const VksLlsdFlat* sd);
+VksInvRecords* vks_inv_category_import_llsd_map(const VksInvCategory* cat, const VksLlsdFlat* sd, bool viewer);
+VksInvRecords* vks_inv_category_from_create_sd(const VksLlsdFlat* sd);
+VksInvRecords* vks_inv_category_apply_block(const VksInvCategory* cat, const VksInvFolderBlock* block);
+
+/* LLNotecard. import: importStream of a notecard with mMaxText max_text and
+ * the given versions; the result's items are to be appended to mItems (also
+ * on failure), version/embedded_version replace the notecard's, and on ok
+ * the text replaces mText. export: exportStream of the items and text. */
+VksInvRecords* vks_inv_notecard_import(const uint8_t* data, size_t len, int32_t max_text, int32_t version,
+                                       int32_t embedded_version, const VksInvStream* stream);
+VksInvRecords* vks_inv_notecard_export(const VksInvItem* items, size_t count, const uint8_t* text,
+                                       size_t text_len);
+
 #ifdef __cplusplus
 }
 
 #include <string>
 #include <vector>
+
+/* The inventory records' layout (the Rust side asserts the same numbers). */
+static_assert(sizeof(VksInvPerms) == VKS_INV_PERMS_SIZE && alignof(VksInvPerms) == 4, "VksInvPerms layout");
+static_assert(offsetof(VksInvPerms, owner) == VKS_INV_PERMS_OFFSET_OWNER &&
+              offsetof(VksInvPerms, last_owner) == VKS_INV_PERMS_OFFSET_LAST_OWNER &&
+              offsetof(VksInvPerms, group) == VKS_INV_PERMS_OFFSET_GROUP &&
+              offsetof(VksInvPerms, base_mask) == VKS_INV_PERMS_OFFSET_BASE &&
+              offsetof(VksInvPerms, owner_mask) == VKS_INV_PERMS_OFFSET_OWNER_MASK &&
+              offsetof(VksInvPerms, everyone_mask) == VKS_INV_PERMS_OFFSET_EVERYONE &&
+              offsetof(VksInvPerms, group_mask) == VKS_INV_PERMS_OFFSET_GROUP_MASK &&
+              offsetof(VksInvPerms, next_owner_mask) == VKS_INV_PERMS_OFFSET_NEXT_OWNER &&
+              offsetof(VksInvPerms, is_group_owned) == VKS_INV_PERMS_OFFSET_GROUP_OWNED,
+              "VksInvPerms offsets");
+static_assert(sizeof(VksInvSale) == VKS_INV_SALE_SIZE && sizeof(VksInvAggregate) == VKS_INV_AGGREGATE_SIZE,
+              "VksInvSale, VksInvAggregate layout");
+static_assert(sizeof(bool) == 1, "bool is one byte in the inventory records");
+static_assert(sizeof(void*) != 8 ||
+                  (sizeof(VksInvObject) == VKS_INV_OBJECT_SIZE && sizeof(VksInvItem) == VKS_INV_ITEM_SIZE &&
+                   sizeof(VksInvCategory) == VKS_INV_CATEGORY_SIZE &&
+                   sizeof(VksInvItemBlock) == VKS_INV_ITEM_BLOCK_SIZE &&
+                   sizeof(VksInvFolderBlock) == VKS_INV_FOLDER_BLOCK_SIZE),
+              "inventory view layout");
 
 /* The string a vks_* function writes into (buf, cap). Those functions write
  * at most cap - 1 bytes and a NUL and return the string's full length;

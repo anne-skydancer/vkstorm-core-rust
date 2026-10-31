@@ -16,7 +16,11 @@
 //! - rung four, `http`: the HTTP layer via `vkstorm-http`;
 //! - rung five, `assets`: the asset pipeline via `vkstorm-assets`;
 //! - rung six, `audio`: the audio engine, sound asset decoding and parcel
-//!   music via `vkstorm-audio`.
+//!   music via `vkstorm-audio`;
+//! - rung seven, `inventory`: the inventory data model (sub-rung R1:
+//!   permissions, sale info, item, category and object records, their
+//!   legacy text, LLSD and message block forms, notecards) via
+//!   `vkstorm-inventory` (`vks_inv_*`). It needs `llsd`, which it enables.
 //!
 //! The header declares every rung's functions; a build without a rung simply
 //! does not define them, so a viewer must not call a rung it has not adopted.
@@ -29,6 +33,8 @@ mod audio;
 mod http;
 #[cfg(feature = "image")]
 mod image;
+#[cfg(feature = "inventory")]
+mod inventory;
 #[cfg(feature = "j2c")]
 mod j2c;
 #[cfg(feature = "llsd")]
