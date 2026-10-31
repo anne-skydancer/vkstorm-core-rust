@@ -20,7 +20,8 @@
 //! - rung seven, `inventory`: the inventory data model (sub-rung R1:
 //!   permissions, sale info, item, category and object records, their
 //!   legacy text and message block forms, notecards) via
-//!   `vkstorm-inventory` (`vks_inv_*`).
+//!   `vkstorm-inventory` (`vks_inv_*`); sub-rung R4b: inventory offers and
+//!   giving (`vks_inv_r4b_*`).
 //!
 //! The header declares every rung's functions; a build without a rung simply
 //! does not define them, so a viewer must not call a rung it has not adopted.
@@ -35,6 +36,8 @@ mod http;
 mod image;
 #[cfg(feature = "inventory")]
 mod inventory;
+#[cfg(feature = "inventory")]
+mod inventory_r4b;
 #[cfg(feature = "j2c")]
 mod j2c;
 #[cfg(feature = "llsd")]

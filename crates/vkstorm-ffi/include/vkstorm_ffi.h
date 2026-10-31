@@ -1599,6 +1599,456 @@ VksInvRecords* vks_inv_notecard_import(const uint8_t* data, size_t len, int32_t 
 VksInvRecords* vks_inv_notecard_export(const VksInvItem* items, size_t count, const uint8_t* text,
                                        size_t text_len);
 
+
+/* ---- Inventory R4b: offers and giving (rung seven, sub-rung R4b) ------- */
+/* src/inventory_r4b.rs over vkstorm-inventory's exchange module: received
+ * inventory offers (LLIMProcessing::processNewMessage for IM_INVENTORY_OFFERED,
+ * IM_TASK_INVENTORY_OFFERED, IM_GROUP_NOTICE and IM_GROUP_NOTICE_REQUESTED,
+ * inventory_offer_handler, the ReadOfflineMsgs message loop, LLOfferInfo's
+ * responses, callbacks and LLSD form, the offer throttle) and giving
+ * (LLGiveInventory, the give and drop collect functors and predicates,
+ * willObjectAcceptInventory, move_inv_category_world_to_agent,
+ * handleGiveDragAndDrop, the dad3dGiveInventory* handlers, the share
+ * dialog's callback).
+ *
+ * Rust decides; the viewer keeps its state and does the work. A call reads
+ * the viewer through VksInvR4bHost.query and tells it what to do through
+ * VksInvR4bHost.act, one action at a time, in the order the C++ did it. The
+ * executor carries each action out before act returns, so the queries after
+ * it see its effect (a mute removed, an item deleted). An action may run
+ * C++ that calls back into these functions (a name lookup answering at once
+ * that shows the share confirmation): every call is re-entrant.
+ *
+ * The offer a call works on is a C++ LLOfferInfo: the caller passes its
+ * fields (VksInvOffer); VKS_INV_R4B_A_OFFER_NEW makes a new one the current
+ * offer, VKS_INV_R4B_A_OFFER_UPDATE writes the current offer's fields,
+ * VKS_INV_R4B_A_OFFER_DELETE deletes it.
+ *
+ * Strings are bytes (VksInvBytes, borrowed for the length of the call or of
+ * the action). LLSD crosses as binary LLSD without a header (LLSDSerialize::
+ * toBinary / fromBinary); an empty VksInvBytes is undefined. UUIDs are 16
+ * bytes (LLUUID::mData); a null pointer is the null UUID.
+ *
+ * Queries. query(ctx, q, out) answers q->code (VKS_INV_R4B_Q_*) with its
+ * arguments in q. A scalar answer (bool 0/1, U32, S32, a found flag) is the
+ * return value; bytes, records and LLSD go to `out` through
+ * vks_inv_r4b_out_* during the query (Rust copies them before the query
+ * returns).
+ *
+ * Every call catches panics (false / ACCEPT_NO / nothing, text in
+ * vks_inv_last_error). */
+
+typedef struct VksInvNetHost
+{
+    uint8_t ip[4]; /* LLHost::mIP as it lies in memory (network order) */
+    uint32_t port;
+} VksInvNetHost;
+
+/* LLOfferInfo's fields. */
+typedef struct VksInvOffer
+{
+    int32_t im; /* EInstantMessage, any value */
+    uint8_t from_id[16];
+    bool from_group;
+    bool from_object;
+    uint8_t transaction_id[16];
+    uint8_t folder_id[16];
+    uint8_t object_id[16];
+    int32_t type; /* LLAssetType::EType, any value */
+    VksInvBytes from_name;
+    VksInvBytes desc;
+    VksInvNetHost host;
+    bool persist;
+} VksInvOffer;
+
+/* An inventory item as the model holds it (LLViewerInventoryItem): the
+ * stored type (getActualType), the stored asset id (a link's target), the
+ * stored name and the item's own permissions (the LLInventoryItem members,
+ * not the link-following viewer getters), isFinished(). */
+typedef struct VksInvR4bItem
+{
+    uint8_t id[16];
+    uint8_t parent[16];
+    int32_t type;
+    uint8_t asset[16];
+    VksInvBytes name;
+    VksInvPerms perms;
+    bool finished;
+} VksInvR4bItem;
+
+/* A category: the preferred type and the stored name. */
+typedef struct VksInvR4bCat
+{
+    uint8_t id[16];
+    uint8_t parent[16];
+    int32_t preferred;
+    VksInvBytes name;
+} VksInvR4bCat;
+
+/* LLViewerObject as the drop tests see it; root: getRootEdit()'s id. */
+typedef struct VksInvR4bViewerObject
+{
+    uint8_t id[16];
+    bool perm_modify;
+    bool flag_allow_inventory_add;
+    bool perm_you_owner;
+    uint8_t pcode;
+    bool is_attachment;
+    uint8_t root[16];
+} VksInvR4bViewerObject;
+
+/* One entry of an object's inventory; has_perms false for an object that is
+ * not an LLInventoryItem. */
+typedef struct VksInvR4bTaskObject
+{
+    uint8_t id[16];
+    int32_t type;
+    bool has_perms;
+    VksInvPerms perms;
+} VksInvR4bTaskObject;
+
+/* An instant message.
+ * - VKS_INV_R4B_A_SEND_RELIABLE: the ImprovedInstantMessage fields as they
+ *   are added; from_agent_name and message hold the exact field data
+ *   addStringFast adds (the bytes and a NUL, nothing for an empty
+ *   std::string), bucket the BinaryBucket.
+ * - VKS_INV_R4B_A_PACK_IM: pack_instant_message's arguments: agent_id is
+ *   from_id, the strings as passed, bucket before its truncation, has_bucket
+ *   false for the default EMPTY_BINARY_BUCKET.
+ * - VKS_INV_R4B_A_POST_TO_MAIN_CORO: processNewMessage's arguments of an
+ *   offline message: agent_id is from_id, to_agent_id to_id, the strings and
+ *   the bucket as received. */
+typedef struct VksInvR4bIm
+{
+    uint8_t agent_id[16];
+    uint8_t session_id[16];
+    bool from_group;
+    uint8_t to_agent_id[16];
+    uint32_t parent_estate_id;
+    uint8_t region_id[16];
+    float position[3];
+    uint8_t offline;
+    int32_t dialog;
+    uint8_t id[16];
+    uint32_t timestamp;
+    VksInvBytes from_agent_name;
+    VksInvBytes message;
+    VksInvBytes bucket;
+    bool has_bucket;
+} VksInvR4bIm;
+
+/* LLMoveInv: its object, category and (category, item) move list. */
+typedef struct VksInvR4bMove
+{
+    uint8_t object_id[16];
+    uint8_t category_id[16];
+    const uint8_t* pairs; /* count pairs of two 16-byte ids */
+    size_t count;
+} VksInvR4bMove;
+
+/* Query codes. Arguments in brackets; "-> ..." answers through out. */
+enum
+{
+    VKS_INV_R4B_Q_AGENT_ID = 1,           /* -> 16 bytes */
+    VKS_INV_R4B_Q_AGENT_SESSION_ID,       /* -> 16 bytes */
+    VKS_INV_R4B_Q_AGENT_GROUP_ID,         /* gAgent.getGroupID() -> 16 bytes */
+    VKS_INV_R4B_Q_AGENT_POSITION,         /* getPositionAgent() -> 3 floats (12 bytes) */
+    VKS_INV_R4B_Q_AGENT_REGION_HOST,      /* -> a VksInvNetHost (8 bytes) */
+    VKS_INV_R4B_Q_IS_DO_NOT_DISTURB,
+    VKS_INV_R4B_Q_HAVE_AVATAR,            /* gAgentAvatarp != NULL */
+    VKS_INV_R4B_Q_AVATAR_VALID,           /* isAgentAvatarValid() */
+    VKS_INV_R4B_Q_AVATAR_FULLNAME,        /* -> bytes */
+    VKS_INV_R4B_Q_IS_WEARING_ATTACHMENT,  /* [id] gAgentAvatarp->isWearingAttachment */
+    VKS_INV_R4B_Q_IS_WEARING_ITEM,        /* [id] gAgentWearables.isWearingItem */
+    VKS_INV_R4B_Q_IS_GESTURE_ACTIVE,      /* [id] */
+    VKS_INV_R4B_Q_AVATAR_SITTING,
+    VKS_INV_R4B_Q_AVATAR_ROOT,            /* found -> 16 bytes (gAgentAvatarp->getRoot()'s id) */
+    VKS_INV_R4B_Q_SETTING_BOOL,           /* [text name] */
+    VKS_INV_R4B_Q_SETTING_U32,            /* [text name] */
+    VKS_INV_R4B_Q_AUTORESPONSE_TEXT,      /* [id from] -> bytes */
+    VKS_INV_R4B_Q_TRANS,                  /* [text key, list] LLTrans::getString -> bytes */
+    VKS_INV_R4B_Q_SLURL_LOCATION,         /* [text url] LLSLURL(url).getLocationString() -> bytes */
+    VKS_INV_R4B_Q_RLV_ANONYM,             /* [text name] RlvStrings::getAnonym(name) -> bytes */
+    VKS_INV_R4B_Q_RLV_ANONYM_AVATAR,      /* [id] found -> bytes (the cached avatar name's anonym) */
+    VKS_INV_R4B_Q_SLURL,                  /* [text command, id, text2 verb] getSLURLString() -> bytes */
+    VKS_INV_R4B_Q_APP_TITLE,              /* getSecondLifeTitle() -> bytes */
+    VKS_INV_R4B_Q_TRIM_RESIDENT_SURNAME,  /* LLAvatarName::trimResidentSurname() */
+    VKS_INV_R4B_Q_RLV_ENABLED,
+    VKS_INV_R4B_Q_RLV_CAN_SHOW_NAME,      /* [id] RlvActions::canShowName(SNC_DEFAULT, id) */
+    VKS_INV_R4B_Q_RLV_CAN_GIVE_INVENTORY, /* [id] */
+    VKS_INV_R4B_Q_RLV_IS_NEARBY,          /* [id] RlvUtil::isNearbyAgent */
+    VKS_INV_R4B_Q_RLV_HAS_OPEN_IM,        /* [id] RlvUIEnabler::hasOpenIM */
+    VKS_INV_R4B_Q_RLV_HAS_OPEN_PROFILE,   /* [id] RlvUIEnabler::hasOpenProfile */
+    VKS_INV_R4B_Q_RLV_FORBID_GIVE_TO_RLV, /* RlvSettings::getForbidGiveToRLV() */
+    VKS_INV_R4B_Q_RLV_HAS_SHARED_ROOT,    /* RlvInventory::getSharedRoot() != NULL */
+    VKS_INV_R4B_Q_RLV_SHARED_ROOT_ID,     /* -> 16 bytes */
+    VKS_INV_R4B_Q_RLV_LOCKED_ATTACHMENT,  /* [id root object] gRlvAttachmentLocks.isLockedAttachment */
+    VKS_INV_R4B_Q_RLV_HAS_BEHAVIOUR,      /* [number: 0 unsit, 1 sittp] */
+    VKS_INV_R4B_Q_IS_MUTED,               /* [id, text name, number flags] LLMuteList::isMuted */
+    VKS_INV_R4B_Q_AVATAR_USER_NAME,       /* [id] found -> bytes (LLAvatarNameCache::get, getUserName) */
+    VKS_INV_R4B_Q_AVATAR_COMPLETE_NAME,   /* [id] found -> bytes (getCompleteName) */
+    VKS_INV_R4B_Q_GROUP_NAME,             /* [id] found -> bytes (gCacheName->getGroupName) */
+    VKS_INV_R4B_Q_FIND_ID_BY_NAME,        /* [text legacy name] -> 16 bytes */
+    VKS_INV_R4B_Q_NOTIFICATION_LIVE,      /* [id] LLNotifications::find(id) != NULL */
+    VKS_INV_R4B_Q_NOTIFICATION_FORM,      /* [text template] found -> binary LLSD (the form's asLLSD) */
+    VKS_INV_R4B_Q_ITEM,                   /* [id] found -> one VksInvR4bItem */
+    VKS_INV_R4B_Q_CATEGORY,               /* [id] found -> one VksInvR4bCat */
+    VKS_INV_R4B_Q_CHILDREN,               /* [id parent] -> its categories, then its items, in model order */
+    VKS_INV_R4B_Q_IS_CATEGORY_COMPLETE,   /* [id] */
+    VKS_INV_R4B_Q_FIND_CATEGORY_FOR_TYPE, /* [number LLFolderType] -> 16 bytes */
+    VKS_INV_R4B_Q_GENERATE_UUID,          /* LLUUID::generate() -> 16 bytes */
+    VKS_INV_R4B_Q_NOW,                    /* LLDate::now() -> one double (8 bytes) */
+    VKS_INV_R4B_Q_FRAME_TIME,             /* the frame timer's clock (seconds) -> one double */
+    VKS_INV_R4B_Q_STARTUP_STARTED,        /* getStartupState() >= STATE_STARTED */
+    VKS_INV_R4B_Q_IM_SESSION_NAME,        /* [id] found -> bytes (LLIMModel::findIMSession's mName) */
+    VKS_INV_R4B_Q_MAX_ITEMS_TRANSFER,     /* LLWorld::getMaxInventoryItemsTransfer() */
+    VKS_INV_R4B_Q_OBJECT,                 /* [id] found -> one VksInvR4bViewerObject */
+    VKS_INV_R4B_Q_OBJECT_INVENTORY,       /* [id] -> every VksInvR4bTaskObject of its inventory, in order */
+    VKS_INV_R4B_Q_HAVE_FLOATER_TOOLS,     /* gFloaterTools != NULL */
+    VKS_INV_R4B_Q_OBSERVER_NEW,           /* [number kind (VKS_INV_R4B_OBS_*), id, id2, text from_name,
+                                             flag manual] new <observer> -> its handle (>= 0) */
+    VKS_INV_R4B_Q_OBSERVER_START,         /* [number handle] startFetch(); isFinished() */
+    VKS_INV_R4B_Q_FILTER_CHECK,           /* [number index into VKS_INV_R4B_Q_OBJECT_INVENTORY's list]
+                                             world_to_agent's filter: check(item) */
+};
+
+/* Observer kinds (VKS_INV_R4B_Q_OBSERVER_NEW). */
+enum
+{
+    VKS_INV_R4B_OBS_FETCH_ITEMS = 0,       /* LLInventoryFetchItemsObserver(id) */
+    VKS_INV_R4B_OBS_OPEN_AGENT_OFFER,      /* LLOpenAgentOffer(id, from_name, manual) */
+    VKS_INV_R4B_OBS_DISCARD_AGENT_OFFER,   /* LLDiscardAgentOffer(folder id, object id2) */
+    VKS_INV_R4B_OBS_RLV_AGENT_OFFER,       /* RlvGiveToRLVAgentOffer(folder id) */
+    VKS_INV_R4B_OBS_RLV_TASK_OFFER,        /* RlvGiveToRLVTaskOffer(transaction id) */
+    VKS_INV_R4B_OBS_OPEN_TASK_GROUP_OFFER, /* LLOpenTaskGroupOffer */
+};
+
+typedef struct VksInvR4bQuery
+{
+    uint32_t code;
+    const uint8_t* id;
+    const uint8_t* id2;
+    VksInvBytes text;
+    VksInvBytes text2;
+    int32_t number;
+    bool flag;
+    const VksInvBytes* list; /* VKS_INV_R4B_Q_TRANS: key, value, key, value... (keys sorted) */
+    size_t list_len;         /* entries: twice the pairs */
+} VksInvR4bQuery;
+
+typedef struct VksInvR4bOut VksInvR4bOut;
+void vks_inv_r4b_out_bytes(VksInvR4bOut* out, const uint8_t* data, size_t len);
+void vks_inv_r4b_out_item(VksInvR4bOut* out, const VksInvR4bItem* item);
+void vks_inv_r4b_out_cat(VksInvR4bOut* out, const VksInvR4bCat* cat);
+void vks_inv_r4b_out_object(VksInvR4bOut* out, const VksInvR4bViewerObject* obj);
+void vks_inv_r4b_out_task_object(VksInvR4bOut* out, const VksInvR4bTaskObject* obj);
+
+/* Action kinds, with the slots each uses. */
+enum
+{
+    VKS_INV_R4B_A_OFFER_NEW = 1,           /* offer: new LLOfferInfo, now the current offer */
+    VKS_INV_R4B_A_OFFER_UPDATE,            /* offer: the current offer's fields */
+    VKS_INV_R4B_A_OFFER_DELETE,            /* delete the current offer */
+    VKS_INV_R4B_A_SEND_RELIABLE,           /* im; number[0] 0: msg->sendReliable(host),
+                                              1: gAgent.sendReliableMessage() */
+    VKS_INV_R4B_A_PACK_IM,                 /* im: pack_instant_message(gMessageSystem, ...) */
+    VKS_INV_R4B_A_SEND_PACKED_TO_REGION,   /* gAgent.sendReliableMessage() */
+    VKS_INV_R4B_A_NOTIFY,                  /* text[0] name, sd[0] substitutions, sd[1] payload,
+                                              number[0] handler (VKS_INV_R4B_H_*):
+                                              LLNotificationsUtil::add */
+    VKS_INV_R4B_A_NOTIFY_POSTPONED,        /* text[0] name, sd[0], sd[1], flag[0] offer_from_agent,
+                                              id[0] from, flag[1] is_group; the current offer is
+                                              the responder (LLPostponedOfferNotification) */
+    VKS_INV_R4B_A_FORCE_RESPOND,           /* text[0] name, sd[0] response: the temporary
+                                              notification of LLNotifications::forceResponse */
+    VKS_INV_R4B_A_AVATAR_NAME_LOOKUP,      /* id[0], then: LLAvatarNameCache::get(id, callback) */
+    VKS_INV_R4B_A_GROUP_NAME_LOOKUP,       /* id[0], then: gCacheName->getGroup(id, callback) */
+    VKS_INV_R4B_A_CACHE_NAME_GET,          /* id[0], flag[0] is_group, then: gCacheName->get */
+    VKS_INV_R4B_A_OBSERVER_DONE,           /* number[0] handle: observer->done() */
+    VKS_INV_R4B_A_OBSERVER_ADD,            /* number[0] handle: gInventory.addObserver(observer) */
+    VKS_INV_R4B_A_OBSERVER_DROP,           /* number[0] handle: delete observer */
+    VKS_INV_R4B_A_RECENT_PEOPLE_ADD,       /* id[0] */
+    VKS_INV_R4B_A_FIRST_USE_NEW_INVENTORY,
+    VKS_INV_R4B_A_NEARBY_CHAT,             /* text[0]: FSCommon::report_to_nearby_chat */
+    VKS_INV_R4B_A_UI_SOUND,                /* text[0]: make_ui_sound */
+    VKS_INV_R4B_A_INVENTORY_PANEL_SELECT,  /* flag[0] auto_open, id[0] */
+    VKS_INV_R4B_A_GROUP_PANEL_SHOW_NOTICE, /* text[0] subject, text[1] message, id[0] group,
+                                              flag[0] has_inventory, text[2] inventory name,
+                                              flag[1]: the current offer goes to the panel */
+    VKS_INV_R4B_A_RLV_SEND_NOTIFICATION,   /* text[0] */
+    VKS_INV_R4B_A_RLV_NOTIFY_BLOCKED_SHARE,/* sd[0] args */
+    VKS_INV_R4B_A_POST_TO_MAIN_CORO,       /* im, host sender, sd[0] metadata, id[0] aux id:
+                                              postToMainCoro(processNewMessage(...)) */
+    VKS_INV_R4B_A_HUD_BEAM,                /* id[0] target */
+    VKS_INV_R4B_A_FLOATER_TOOLS_DIRTY,
+    VKS_INV_R4B_A_MUTE_AUTO_REMOVE,        /* id[0], number[0] reason: LLMuteList::autoRemove */
+    VKS_INV_R4B_A_IM_SYSTEM_MESSAGE,       /* id[0] session, text[0] name, sd[0] args */
+    VKS_INV_R4B_A_IM_LOG_TO_FILE,          /* text[0] file, text[1] from, id[0], text[2] template,
+                                              sd[0] args */
+    VKS_INV_R4B_A_DELETE_OBJECT,           /* id[0]: gInventory.deleteObject */
+    VKS_INV_R4B_A_NOTIFY_OBSERVERS,
+    VKS_INV_R4B_A_FLOATER_HIDE,            /* text[0] */
+    VKS_INV_R4B_A_WARN_MOVE_INVENTORY,     /* move */
+    VKS_INV_R4B_A_MOVE_TASK_INVENTORY,     /* sd[0] notification, sd[1] response, move */
+};
+
+/* What runs when a name lookup answers (number[1] of the lookups). */
+enum
+{
+    VKS_INV_R4B_THEN_OFFER_MUTE_AVATAR = 0, /* inventory_offer_mute_avatar_callback */
+    VKS_INV_R4B_THEN_OFFER_MUTE_GROUP,      /* inventory_offer_mute_callback */
+    VKS_INV_R4B_THEN_SYSTEM_MESSAGE_TIP,    /* text[1] format, text[2] message: a SystemMessageTip
+                                               of llformat(format, name) + message */
+    VKS_INV_R4B_THEN_GROUP_NOTICE,          /* text[1] sender, text[2] subject, text[3] message,
+                                               sd[1] payload, number[2] timestamp:
+                                               notification_group_name_cb */
+    VKS_INV_R4B_THEN_SHARE_CONFIRMATION,    /* id[1] item, text[1] item name, text[2] dest:
+                                               vks_inv_r4b_share_confirmation with the name */
+    VKS_INV_R4B_THEN_AUTO_UNMUTE_NOTICE,    /* number[2] reason: notify_automute_callback */
+};
+
+/* Notification response handlers (number[0] of VKS_INV_R4B_A_NOTIFY). */
+enum
+{
+    VKS_INV_R4B_H_NONE = 0,
+    VKS_INV_R4B_H_COPY_PROTECTED_ITEM,     /* LLGiveInventory::handleCopyProtectedItem */
+    VKS_INV_R4B_H_COPY_PROTECTED_CATEGORY, /* LLGiveInventory::handleCopyProtectedCategory */
+    VKS_INV_R4B_H_DRAG_GIVE_INVENTORY,     /* give_inventory_cb (lltooldraganddrop.cpp) */
+};
+
+typedef struct VksInvR4bAction
+{
+    uint32_t kind;
+    int32_t number[3];
+    bool flag[2];
+    uint8_t id[2][16];
+    VksInvBytes text[4];
+    VksInvBytes sd[2];
+    const VksInvOffer* offer;
+    const VksInvR4bIm* im;
+    VksInvNetHost host;
+    const VksInvR4bMove* move;
+} VksInvR4bAction;
+
+/* The offer throttle's state (gThrottleTimer's expiry on the frame clock and
+ * check_offer_throttle's statics), owned by the caller. */
+typedef struct VksInvR4bThrottle
+{
+    double expiry;
+    uint32_t count;
+    bool logged;
+} VksInvR4bThrottle;
+
+typedef struct VksInvR4bHost
+{
+    void* ctx;
+    int64_t (*query)(void* ctx, const VksInvR4bQuery* q, VksInvR4bOut* out);
+    void (*act)(void* ctx, const VksInvR4bAction* a);
+    VksInvR4bThrottle* throttle; /* read and written by check_offer_throttle */
+} VksInvR4bHost;
+
+/* Offers (W6). receive_im: processNewMessage's case for dialogs 4, 9, 32
+ * and 37 (other dialogs do nothing), from its raw arguments: name as
+ * received; buffer the bytes the bucket was copied into (process_improved_im's
+ * U8[MTUBYTES], or the offline message's vector; the legacy C-string reads
+ * stop at its end); bucket_size the declared size. */
+void vks_inv_r4b_receive_im(const VksInvR4bHost* host, const uint8_t* from_id, bool from_group, int32_t dialog,
+                            const uint8_t* session_id, uint32_t timestamp, const uint8_t* name, size_t name_len,
+                            const uint8_t* message, size_t message_len, const uint8_t* buffer, size_t buffer_len,
+                            int32_t bucket_size, const VksInvNetHost* sender, const uint8_t* aux_id);
+/* The ReadOfflineMsgs loop over its validated messages array (binary LLSD). */
+void vks_inv_r4b_receive_offline(const VksInvR4bHost* host, const uint8_t* messages, size_t len);
+/* LLOfferInfo: `offer` is the call's current offer. */
+void vks_inv_r4b_respond(const VksInvR4bHost* host, const VksInvOffer* offer, const uint8_t* notification,
+                         size_t notification_len, const uint8_t* response, size_t response_len);
+void vks_inv_r4b_force_response(const VksInvR4bHost* host, const VksInvOffer* offer, int32_t response);
+void vks_inv_r4b_send_receive_response(const VksInvR4bHost* host, const VksInvOffer* offer, bool accept,
+                                       const uint8_t* folder);
+void vks_inv_r4b_send_auto_receive_response(const VksInvR4bHost* host, const VksInvOffer* offer);
+void vks_inv_r4b_send_decline_response(const VksInvR4bHost* host, const VksInvOffer* offer);
+/* asLLSD and LLOfferInfo(LLSD) / fromLLSD: a block with the binary LLSD
+ * (bytes) or the offer (its strings in the block). */
+typedef struct VksInvR4bBlock VksInvR4bBlock;
+typedef struct VksInvR4bBlockView
+{
+    VksInvBytes bytes;
+    VksInvOffer offer;
+} VksInvR4bBlockView;
+VksInvR4bBlock* vks_inv_r4b_offer_as_llsd(const VksInvOffer* offer);
+VksInvR4bBlock* vks_inv_r4b_offer_from_llsd(const uint8_t* sd, size_t len);
+const VksInvR4bBlockView* vks_inv_r4b_block_view(const VksInvR4bBlock* b);
+void vks_inv_r4b_block_free(VksInvR4bBlock* b);
+bool vks_inv_r4b_check_offer_throttle(const VksInvR4bHost* host, const uint8_t* from_name, size_t len,
+                                      bool check_only);
+
+/* Giving (W7). A null record pointer is a null C++ pointer. */
+bool vks_inv_r4b_give_item(const VksInvR4bHost* host, const uint8_t* to, const VksInvR4bItem* item,
+                           const uint8_t* im_session);
+bool vks_inv_r4b_give_category(const VksInvR4bHost* host, const uint8_t* to, const VksInvR4bCat* cat,
+                               const uint8_t* im_session, const uint8_t* success_notification, size_t len);
+/* The answer to a notification posted with a handler (VKS_INV_R4B_H_*). */
+void vks_inv_r4b_answer(const VksInvR4bHost* host, int32_t handler, const uint8_t* notification,
+                        size_t notification_len, const uint8_t* response, size_t response_len);
+/* The share dialog's callback; avatars and selected are arrays of 16-byte ids. */
+void vks_inv_r4b_share(const VksInvR4bHost* host, const uint8_t* avatars, size_t avatar_count,
+                       const uint8_t* notification, size_t notification_len, const uint8_t* response,
+                       size_t response_len, const uint8_t* selected, size_t selected_count);
+bool vks_inv_r4b_is_give_acceptable(const VksInvR4bHost* host, const VksInvR4bItem* item);
+bool vks_inv_r4b_is_group_give_acceptable(const VksInvR4bHost* host, const VksInvR4bItem* item);
+bool vks_inv_r4b_transfer_commonly_allowed(const VksInvR4bHost* host, const VksInvR4bItem* item);
+/* The give and drop collect functors; *count: countNoCopy() for the
+ * counting ones, -1 for the others. */
+enum
+{
+    VKS_INV_R4B_F_GIVEABLE = 0,
+    VKS_INV_R4B_F_UNCOPYABLE,
+    VKS_INV_R4B_F_DROPPABLE_TRANSFER,
+    VKS_INV_R4B_F_DROPPABLE_NO_TRANSFER,
+    VKS_INV_R4B_F_DROP_COPYABLE,
+};
+bool vks_inv_r4b_collect_functor(const VksInvR4bHost* host, int32_t functor, const VksInvR4bCat* cat,
+                                 const VksInvR4bItem* item, int32_t* count);
+/* EAcceptance values. */
+int32_t vks_inv_r4b_will_object_accept(const VksInvR4bHost* host, const VksInvR4bViewerObject* obj,
+                                       const VksInvR4bItem* item, int32_t dad_type);
+/* filter_types: the filter's getFilterTypes(), or -1 for no filter (then
+ * VKS_INV_R4B_Q_FILTER_CHECK is never asked). */
+bool vks_inv_r4b_world_to_agent(const VksInvR4bHost* host, const uint8_t* object_id, const uint8_t* category_id,
+                                bool drop, int64_t filter_types);
+/* handleGiveDragAndDrop: the cargo is the item or the category (one of them
+ * non-null) the cargo type names; dest is binary LLSD; *accept gets the
+ * EAcceptance. */
+bool vks_inv_r4b_give_drag_and_drop(const VksInvR4bHost* host, const uint8_t* dest_agent, const uint8_t* session,
+                                    bool drop, int32_t cargo_type, const VksInvR4bItem* item,
+                                    const VksInvR4bCat* cat, const uint8_t* dest, size_t dest_len,
+                                    int32_t* accept);
+/* dad3dGiveInventoryObject (kind 0), dad3dGiveInventory (1),
+ * dad3dGiveInventoryCategory (2): source the tool's ESource, item and cat
+ * locateInventory's answer, obj the avatar's object id (null for none). */
+int32_t vks_inv_r4b_dad3d_give(const VksInvR4bHost* host, int32_t kind, int32_t source, const VksInvR4bItem* item,
+                               const VksInvR4bCat* cat, const uint8_t* obj, bool drop);
+/* show_object_sharing_confirmation (get_name_cb's body), for
+ * VKS_INV_R4B_THEN_SHARE_CONFIRMATION once the name is known. */
+void vks_inv_r4b_share_confirmation(const VksInvR4bHost* host, const uint8_t* name, size_t name_len,
+                                    const uint8_t* item_id, const uint8_t* item_name, size_t item_name_len,
+                                    const uint8_t* dest, size_t dest_len, const uint8_t* dest_agent,
+                                    const uint8_t* session);
+
+/* 64-bit sizes, asserted on both sides. */
+#define VKS_INV_NET_HOST_SIZE 8
+#define VKS_INV_OFFER_SIZE 128
+#define VKS_INV_R4B_ITEM_SIZE 168
+#define VKS_INV_R4B_CAT_SIZE 56
+#define VKS_INV_R4B_VIEWER_OBJECT_SIZE 37
+#define VKS_INV_R4B_TASK_OBJECT_SIZE 112
+#define VKS_INV_R4B_IM_SIZE 168
+#define VKS_INV_R4B_MOVE_SIZE 48
+#define VKS_INV_R4B_QUERY_SIZE 80
+#define VKS_INV_R4B_ACTION_SIZE 184
+#define VKS_INV_R4B_THROTTLE_SIZE 16
+#define VKS_INV_R4B_HOST_SIZE 32
+#define VKS_INV_R4B_BLOCK_VIEW_SIZE 144
+
 #ifdef __cplusplus
 }
 
@@ -1626,6 +2076,18 @@ static_assert(sizeof(void*) != 8 ||
                    sizeof(VksInvItemBlock) == VKS_INV_ITEM_BLOCK_SIZE &&
                    sizeof(VksInvFolderBlock) == VKS_INV_FOLDER_BLOCK_SIZE),
               "inventory view layout");
+static_assert(sizeof(void*) != 8 ||
+                  (sizeof(VksInvNetHost) == VKS_INV_NET_HOST_SIZE && sizeof(VksInvOffer) == VKS_INV_OFFER_SIZE &&
+                   sizeof(VksInvR4bItem) == VKS_INV_R4B_ITEM_SIZE && sizeof(VksInvR4bCat) == VKS_INV_R4B_CAT_SIZE &&
+                   sizeof(VksInvR4bViewerObject) == VKS_INV_R4B_VIEWER_OBJECT_SIZE &&
+                   sizeof(VksInvR4bTaskObject) == VKS_INV_R4B_TASK_OBJECT_SIZE &&
+                   sizeof(VksInvR4bIm) == VKS_INV_R4B_IM_SIZE && sizeof(VksInvR4bMove) == VKS_INV_R4B_MOVE_SIZE &&
+                   sizeof(VksInvR4bQuery) == VKS_INV_R4B_QUERY_SIZE &&
+                   sizeof(VksInvR4bAction) == VKS_INV_R4B_ACTION_SIZE &&
+                   sizeof(VksInvR4bThrottle) == VKS_INV_R4B_THROTTLE_SIZE &&
+                   sizeof(VksInvR4bHost) == VKS_INV_R4B_HOST_SIZE &&
+                   sizeof(VksInvR4bBlockView) == VKS_INV_R4B_BLOCK_VIEW_SIZE),
+              "inventory R4b layout");
 
 /* The string a vks_* function writes into (buf, cap). Those functions write
  * at most cap - 1 bytes and a NUL and return the string's full length;
