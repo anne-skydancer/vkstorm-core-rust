@@ -136,20 +136,6 @@ const VksLlsdNode* vks_llsd_doc_nodes(const VksLlsdDoc* d, size_t* count);
 const uint8_t* vks_llsd_doc_bytes(const VksLlsdDoc* d, size_t* len);
 void vks_llsd_doc_free(VksLlsdDoc* d);
 
-/* An LLSD value handed to a later rung's call: the viewer flattens its LLSD
- * into a node buffer and arena in VksLlsdNode layout (a map's len entries as
- * key node, value subtree pairs; an array's as subtrees), uncoerced. The
- * buffer holds exactly one value; a malformed one fails the call. A null
- * VksLlsdFlat (or no nodes) is undefined. Documents those calls return are
- * read and freed as parse results are. */
-typedef struct VksLlsdFlat
-{
-    const VksLlsdNode* nodes;
-    size_t node_count;
-    const uint8_t* bytes;
-    size_t byte_len;
-} VksLlsdFlat;
-
 /* Formatting: one formatter per document, driven in document order. */
 typedef void (*VksLlsdWrite)(void* ctx, const uint8_t* data, size_t len);
 typedef struct VksLlsdFormatter VksLlsdFormatter;
@@ -1303,7 +1289,10 @@ int32_t  vks_music_stats(VksAudio* a, VksMusicStats* out, VksAudioStrFn cb, void
 /* src/inventory.rs over vkstorm-inventory: LLPermissions,
  * LLAggregatePermissions, LLSaleInfo, the LLInventoryObject, LLInventoryItem
  * and LLInventoryCategory records (CRCs, name and description rules, legacy
- * text, LLSD and message blocks) and LLNotecard's text. Needs the llsd rung.
+ * text and message blocks) and LLNotecard's text. Their LLSD forms (asLLSD,
+ * fromLLSD, the category cache import and export, the permission and sale
+ * LLSD messages) stay C++ until R2 and R3a stop building C++ LLSD trees:
+ * flattening a C++ tree across this ABI cost more than the rules saved.
  *
  * Records.
  * - VksInvPerms, VksInvSale and VksInvAggregate have the exact layout of
@@ -1322,14 +1311,6 @@ int32_t  vks_music_stats(VksAudio* a, VksMusicStats* out, VksAudioStrFn cb, void
  *   it with vks_inv_records_free. Null means failure (vks_inv_last_error).
  * - UUID arguments are 16 bytes (LLUUID::mData), copied before a record is
  *   written, so they may point into it; a null pointer is the null UUID.
- *
- * LLSD. Values go in raw, as a VksLlsdFlat the viewer flattens from its
- * LLSD (no coercion on the C++ side: the Rust side reproduces each
- * platform's own asInteger/asString/...); a null VksLlsdFlat is undefined.
- * Values come back as a VksLlsdDoc (the same buildLLSD as a parse result,
- * freed with vks_llsd_doc_free); null means a malformed input buffer or a
- * failure. The *_fill_llsd calls fill an existing value ("into", as
- * asLLSD(LLSD&) and ll_fill_sd_from_permissions do), or a new one for null.
  *
  * Legacy text. A reader takes the whole REST of the C++ stream as one window
  * (data, len): its end is the stream's end-of-file. The caller has read the
@@ -1424,8 +1405,8 @@ typedef struct VksInvItem
     VksInvBytes description;
 } VksInvItem;
 
-/* owner and version: LLViewerInventoryCategory's (the viewer variants of the
- * cache LLSD calls); the base-class calls carry them through unchanged. */
+/* owner and version: LLViewerInventoryCategory's; no call reads them (the
+ * cache LLSD forms stayed C++), the calls carry them through unchanged. */
 typedef struct VksInvCategory
 {
     VksInvObject object;
@@ -1547,15 +1528,8 @@ bool vks_inv_perms_equal(const VksInvPerms* a, const VksInvPerms* b);
  * export column needs an opensim build and is_open_sim. */
 size_t vks_inv_mask_to_string(uint32_t mask, bool is_open_sim, char* buf, size_t cap);
 
-/* LLPermissions: LLSD and legacy text. import_llsd is importLLSD over p
- * (ll_permissions_from_sd: over LLPermissions::DEFAULT); the *_llsd calls
- * returning bool leave p unchanged on false. import_legacy writes p and
- * stream and returns importLegacyStream's result (false only on a failure,
- * nothing written). */
-VksLlsdDoc* vks_inv_perms_fill_llsd(const VksInvPerms* p, const VksLlsdFlat* into);
-bool vks_inv_perms_import_llsd(VksInvPerms* p, const VksLlsdFlat* sd);
-VksLlsdDoc* vks_inv_perms_pack_message_llsd(const VksInvPerms* p);
-bool vks_inv_perms_unpack_message_llsd(VksInvPerms* p, const VksLlsdFlat* sd);
+/* LLPermissions: legacy text. import_legacy writes p and stream and returns
+ * importLegacyStream's result (false only on a failure, nothing written). */
 bool vks_inv_perms_import_legacy(VksInvPerms* p, const uint8_t* data, size_t len, VksInvStream* stream);
 VksInvRecords* vks_inv_perms_export_legacy(const VksInvPerms* p);
 
@@ -1568,17 +1542,12 @@ void vks_inv_aggregate_mask(VksInvAggregate* a, uint32_t mask);
 void vks_inv_aggregate_merge(VksInvAggregate* a, const VksInvAggregate* other);
 
 /* LLSaleInfo, in place. unpack_wire: unpackMessage/unpackMultiMessage from
- * the read SaleType (U8) and SalePrice (S32). from_llsd and import_legacy
- * also write has_perm_mask and perm_mask as the C++ does. */
+ * the read SaleType (U8) and SalePrice (S32). import_legacy also writes
+ * has_perm_mask and perm_mask as the C++ does. */
 uint32_t vks_inv_sale_crc32(const VksInvSale* s);
 void vks_inv_sale_set_price(VksInvSale* s, int32_t price);
 void vks_inv_sale_accumulate(VksInvSale* s, const VksInvSale* other);
 void vks_inv_sale_unpack_wire(VksInvSale* s, uint8_t sale_type, int32_t sale_price);
-VksLlsdDoc* vks_inv_sale_fill_llsd(const VksInvSale* s, const VksLlsdFlat* into);
-bool vks_inv_sale_from_llsd(VksInvSale* s, const VksLlsdFlat* sd, bool* has_perm_mask, uint32_t* perm_mask);
-bool vks_inv_sale_from_sd(VksInvSale* out, const VksLlsdFlat* sd);
-VksLlsdDoc* vks_inv_sale_pack_message_llsd(const VksInvSale* s);
-bool vks_inv_sale_unpack_message_llsd(VksInvSale* s, const VksLlsdFlat* sd);
 bool vks_inv_sale_import_legacy(VksInvSale* s, const uint8_t* data, size_t len, bool* has_perm_mask,
                                 uint32_t* perm_mask, VksInvStream* stream);
 VksInvRecords* vks_inv_sale_export_legacy(const VksInvSale* s);
@@ -1606,9 +1575,7 @@ VksInvRecords* vks_inv_object_export_legacy(const VksInvObject* obj);
  * allocate. to_block: the block packMessage sends, slot null for the asset
  * id (LLInventoryItem) or the transaction id (LLViewerInventoryItem); its
  * strings borrow the item's. apply_block: unpackMessage of a read block,
- * ok = the CRC verdict. from_llsd: fromLLSD(sd, is_new) with
- * in_open_sim = LLPermissions::getIsInOpenSim(). create_sd:
- * ll_create_sd_from_inventory_item. */
+ * ok = the CRC verdict. */
 uint32_t vks_inv_item_crc32(const VksInvItem* item);
 uint32_t vks_inv_item_slam_bits(const VksInvItem* item, const VksInvItem* old_item);
 bool vks_inv_item_to_block(const VksInvItem* item, const uint8_t* slot, VksInvItemBlock* out);
@@ -1616,30 +1583,11 @@ VksInvRecords* vks_inv_item_apply_block(const VksInvItem* item, const VksInvItem
 VksInvRecords* vks_inv_item_import_legacy(const VksInvItem* item, const uint8_t* data, size_t len,
                                           const VksInvStream* stream);
 VksInvRecords* vks_inv_item_export_legacy(const VksInvItem* item, bool include_asset_key);
-VksLlsdDoc* vks_inv_item_fill_llsd(const VksInvItem* item, const VksLlsdFlat* into);
-VksInvRecords* vks_inv_item_from_llsd(const VksInvItem* item, const VksLlsdFlat* sd, bool is_new,
-                                      bool in_open_sim);
-VksLlsdDoc* vks_inv_item_create_sd(const VksInvItem* item);
 
-/* LLInventoryCategory and LLViewerInventoryCategory. viewer selects the
- * LLViewerInventoryCategory override of exportLLSD / importLLSD (owner_id,
- * version); import_llsd is one key of importLLSD (ok: the C++ result), for
- * an importLLSDMap that keeps its virtual dispatch per key.
- * from_create_sd: ll_create_category_from_sd. apply_block: unpackMessage of
- * a read folder block. */
-#define VKS_INV_CAT_AS_LLSD 0    /* asLLSD */
-#define VKS_INV_CAT_AIS_CREATE 1 /* asAISCreateCatLLSD */
-#define VKS_INV_CAT_CREATE_SD 2  /* ll_create_sd_from_inventory_category */
+/* LLInventoryCategory. apply_block: unpackMessage of a read folder block. */
 VksInvRecords* vks_inv_category_import_legacy(const VksInvCategory* cat, const uint8_t* data, size_t len,
                                               const VksInvStream* stream);
 VksInvRecords* vks_inv_category_export_legacy(const VksInvCategory* cat);
-VksLlsdDoc* vks_inv_category_to_llsd(const VksInvCategory* cat, int32_t form);
-VksLlsdDoc* vks_inv_category_export_llsd(const VksInvCategory* cat, bool viewer, const VksLlsdFlat* into);
-VksInvRecords* vks_inv_category_from_llsd(const VksInvCategory* cat, const VksLlsdFlat* sd);
-VksInvRecords* vks_inv_category_import_llsd_map(const VksInvCategory* cat, const VksLlsdFlat* sd, bool viewer);
-VksInvRecords* vks_inv_category_import_llsd(const VksInvCategory* cat, const uint8_t* label, size_t label_len,
-                                            const VksLlsdFlat* value, bool viewer);
-VksInvRecords* vks_inv_category_from_create_sd(const VksLlsdFlat* sd);
 VksInvRecords* vks_inv_category_apply_block(const VksInvCategory* cat, const VksInvFolderBlock* block);
 
 /* LLNotecard. import: importStream of a notecard with mMaxText max_text and

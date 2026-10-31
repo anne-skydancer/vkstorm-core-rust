@@ -19,8 +19,8 @@
 //!   music via `vkstorm-audio`;
 //! - rung seven, `inventory`: the inventory data model (sub-rung R1:
 //!   permissions, sale info, item, category and object records, their
-//!   legacy text, LLSD and message block forms, notecards) via
-//!   `vkstorm-inventory` (`vks_inv_*`). It needs `llsd`, which it enables.
+//!   legacy text and message block forms, notecards) via
+//!   `vkstorm-inventory` (`vks_inv_*`).
 //!
 //! The header declares every rung's functions; a build without a rung simply
 //! does not define them, so a viewer must not call a rung it has not adopted.

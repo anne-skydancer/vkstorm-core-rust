@@ -1,8 +1,14 @@
 //! Rung seven, sub-rung R1: the inventory data model via `vkstorm-inventory`
 //! (`vks_inv_*`): `LLPermissions`, `LLAggregatePermissions`, `LLSaleInfo`,
 //! the item, category and object records with their CRCs, name and
-//! description rules, legacy text, LLSD and message block forms, and
+//! description rules, legacy text and message block forms, and
 //! `LLNotecard`'s text.
+//!
+//! The `LLSD` forms of these classes (`asLLSD`, `fromLLSD`, the category
+//! cache import and export, the permission and sale `LLSD` messages) stay
+//! C++ in the viewer until R2 and R3a stop building C++ `LLSD` trees:
+//! flattening a C++ tree across this ABI cost more than the rules saved.
+//! The crate keeps their logic for R2 and R3a.
 //!
 //! How records cross:
 //!
@@ -18,10 +24,6 @@
 //!   records of the same types whose strings point into the block, a text
 //!   buffer and the call's scalar results, read through one
 //!   [`VksInvRecordsView`] and freed with `vks_inv_records_free`.
-//! - An `LLSD` value goes in raw, as a [`VksLlsdFlat`] buffer the viewer
-//!   builds from its tree, so the crate applies each platform's own
-//!   coercions; an `LLSD` result comes back as a [`VksLlsdDoc`], which the
-//!   viewer turns into its tree as it does a parse result.
 //! - Legacy text readers take the rest of the C++ stream as one window and
 //!   report the bytes consumed and the stream state ([`VksInvStream`]).
 //! - Message blocks cross as wire records ([`VksInvItemBlock`],
@@ -60,9 +62,6 @@ use vkstorm_inventory::perms::{Permissions, Uuid, mask_to_string};
 use vkstorm_inventory::sale::SaleInfo;
 use vkstorm_inventory::text;
 use vkstorm_inventory::types::{AssetType, FolderType, InventoryType};
-use vkstorm_llsd::Value;
-
-use crate::llsd::{VksLlsdDoc, VksLlsdFlat, doc_from_value, value_from_c};
 
 // ---------------------------------------------------------------------------
 // Errors and argument helpers
@@ -92,15 +91,6 @@ fn guard<T>(fail: T, f: impl FnOnce() -> T) -> T {
             fail
         }
     }
-}
-
-/// An `LLSD` argument, or `None` with the error text set.
-unsafe fn llsd_arg(sd: *const VksLlsdFlat) -> Option<Value> {
-    let v = unsafe { value_from_c(sd) };
-    if v.is_none() {
-        set_error("malformed LLSD node buffer");
-    }
-    v
 }
 
 unsafe fn bytes<'a>(p: *const u8, len: usize) -> &'a [u8] {
@@ -200,8 +190,8 @@ pub struct VksInvItem {
 }
 
 /// The `LLInventoryCategory` fields, and the `LLViewerInventoryCategory`
-/// owner and version its cache LLSD carries (ignored by the base class
-/// calls).
+/// owner and version its cache LLSD carries (no call reads them since the
+/// LLSD forms stayed C++; they are carried through unchanged).
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct VksInvCategory {
@@ -400,15 +390,6 @@ fn category_view(c: &ViewerCategory) -> VksInvCategory {
     }
 }
 
-/// The base-class part of a category result: owner and version as given.
-fn with_category(v: &VksInvCategory, category: Category) -> ViewerCategory {
-    ViewerCategory {
-        category,
-        owner: v.owner,
-        version: v.version,
-    }
-}
-
 /// A result block: the records and text a call returns, and their view.
 pub struct VksInvRecords {
     items: Vec<Item>,
@@ -522,14 +503,6 @@ pub unsafe extern "C" fn vks_inv_records_free(r: *mut VksInvRecords) {
 fn records(f: impl FnOnce() -> Option<VksInvRecords>) -> *mut VksInvRecords {
     guard(ptr::null_mut(), || {
         f().map_or(ptr::null_mut(), VksInvRecords::into_raw)
-    })
-}
-
-/// An LLSD result from `f`, or null when it panics or an argument was
-/// malformed.
-fn llsd_result(f: impl FnOnce() -> Option<Value>) -> *mut VksLlsdDoc {
-    guard(ptr::null_mut(), || {
-        f().map_or(ptr::null_mut(), |v| doc_from_value(&v))
     })
 }
 
@@ -937,75 +910,7 @@ pub unsafe extern "C" fn vks_inv_mask_to_string(
 }
 
 // ---------------------------------------------------------------------------
-// LLPermissions: LLSD and legacy text
-
-/// `ll_fill_sd_from_permissions(into, perm)`; with a null `into`,
-/// `ll_create_sd_from_permissions(perm)`. Returns the filled value.
-///
-/// # Safety
-/// `p` must be valid; `into`, unless null, a valid buffer.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_perms_fill_llsd(
-    p: *const VksInvPerms,
-    into: *const VksLlsdFlat,
-) -> *mut VksLlsdDoc {
-    llsd_result(|| {
-        let mut sd = unsafe { llsd_arg(into) }?;
-        unsafe { (*p).fill_llsd(&mut sd) };
-        Some(sd)
-    })
-}
-
-/// `LLPermissions::importLLSD(sd)` over `p`. False, `p` unchanged, for a
-/// malformed buffer or a failure.
-///
-/// # Safety
-/// `p` must be valid; `sd`, unless null (undefined), a valid buffer.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_perms_import_llsd(
-    p: *mut VksInvPerms,
-    sd: *const VksLlsdFlat,
-) -> bool {
-    guard(false, || {
-        let Some(sd) = (unsafe { llsd_arg(sd) }) else {
-            return false;
-        };
-        let mut perms = unsafe { *p };
-        perms.import_llsd(&sd);
-        unsafe { *p = perms };
-        true
-    })
-}
-
-/// `LLPermissions::packMessage()` (the hyphenated LLSD form).
-///
-/// # Safety
-/// `p` must be valid.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_perms_pack_message_llsd(p: *const VksInvPerms) -> *mut VksLlsdDoc {
-    llsd_result(|| Some(unsafe { (*p).pack_message_llsd() }))
-}
-
-/// `LLPermissions::unpackMessage(LLSD)` over `p`. False, `p` unchanged, for
-/// a malformed buffer or a failure.
-///
-/// # Safety
-/// `p` must be valid; `sd`, unless null (undefined), a valid buffer.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_perms_unpack_message_llsd(
-    p: *mut VksInvPerms,
-    sd: *const VksLlsdFlat,
-) -> bool {
-    guard(false, || {
-        let Some(sd) = (unsafe { llsd_arg(sd) }) else {
-            return false;
-        };
-        let mut perms = unsafe { *p };
-        perms.unpack_message_llsd(&sd);
-        unsafe { *p = perms };
-        true
-    })
-}
+// LLPermissions: legacy text
 
 /// `LLPermissions::importLegacyStream` into `p`, over the rest of the C++
 /// stream (`data`, `len`; the `permissions 0` line already read). Fills
@@ -1156,101 +1061,6 @@ pub unsafe extern "C" fn vks_inv_sale_unpack_wire(
 ) {
     guard((), || unsafe {
         apply_sale_fields(sale_type, sale_price, &mut *s)
-    })
-}
-
-/// `LLSaleInfo::asLLSD(into)`; with a null `into`, `asLLSD()`,
-/// `operator LLSD()` and `ll_create_sd_from_sale_info`. Returns the filled
-/// value.
-///
-/// # Safety
-/// `s` must be valid; `into`, unless null, a valid buffer.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_sale_fill_llsd(
-    s: *const VksInvSale,
-    into: *const VksLlsdFlat,
-) -> *mut VksLlsdDoc {
-    llsd_result(|| {
-        let mut sd = unsafe { llsd_arg(into) }?;
-        unsafe { (*s).fill_llsd(&mut sd) };
-        Some(sd)
-    })
-}
-
-/// `LLSaleInfo::fromLLSD(sd, has_perm_mask, perm_mask)` over `s`. Returns
-/// the C++ result (true); false, everything unchanged, for a malformed
-/// buffer or a failure.
-///
-/// # Safety
-/// Every pointer must be valid; `sd` may be null (undefined).
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_sale_from_llsd(
-    s: *mut VksInvSale,
-    sd: *const VksLlsdFlat,
-    has_perm_mask: *mut bool,
-    perm_mask: *mut u32,
-) -> bool {
-    guard(false, || {
-        let Some(sd) = (unsafe { llsd_arg(sd) }) else {
-            return false;
-        };
-        let (mut sale, mut has, mut mask) = unsafe { (*s, *has_perm_mask, *perm_mask) };
-        let ok = sale.from_llsd(&sd, &mut has, &mut mask);
-        unsafe {
-            *s = sale;
-            *has_perm_mask = has;
-            *perm_mask = mask;
-        }
-        ok
-    })
-}
-
-/// `ll_sale_info_from_sd(sd)` into `out`. False, `out` unchanged, for a
-/// malformed buffer or a failure.
-///
-/// # Safety
-/// `out` must be valid; `sd`, unless null (undefined), a valid buffer.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_sale_from_sd(
-    out: *mut VksInvSale,
-    sd: *const VksLlsdFlat,
-) -> bool {
-    guard(false, || {
-        let Some(sd) = (unsafe { llsd_arg(sd) }) else {
-            return false;
-        };
-        unsafe { *out = SaleInfo::from_sd(&sd) };
-        true
-    })
-}
-
-/// `LLSaleInfo::packMessage()` (the hyphenated LLSD form).
-///
-/// # Safety
-/// `s` must be valid.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_sale_pack_message_llsd(s: *const VksInvSale) -> *mut VksLlsdDoc {
-    llsd_result(|| Some(unsafe { (*s).pack_message_llsd() }))
-}
-
-/// `LLSaleInfo::unpackMessage(LLSD)` over `s`. False, `s` unchanged, for a
-/// malformed buffer or a failure.
-///
-/// # Safety
-/// `s` must be valid; `sd`, unless null (undefined), a valid buffer.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_sale_unpack_message_llsd(
-    s: *mut VksInvSale,
-    sd: *const VksLlsdFlat,
-) -> bool {
-    guard(false, || {
-        let Some(sd) = (unsafe { llsd_arg(sd) }) else {
-            return false;
-        };
-        let mut sale = unsafe { *s };
-        sale.unpack_message_llsd(&sd);
-        unsafe { *s = sale };
-        true
     })
 }
 
@@ -1617,55 +1427,6 @@ pub unsafe extern "C" fn vks_inv_item_export_legacy(
     })
 }
 
-/// `LLInventoryItem::asLLSD(into)`; with a null `into`, `asLLSD()`. Returns
-/// the filled value.
-///
-/// # Safety
-/// `item` must be valid with its strings readable; `into`, unless null, a
-/// valid buffer.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_item_fill_llsd(
-    item: *const VksInvItem,
-    into: *const VksLlsdFlat,
-) -> *mut VksLlsdDoc {
-    llsd_result(|| {
-        let mut sd = unsafe { llsd_arg(into) }?;
-        unsafe { item_from(&*item) }.fill_llsd(&mut sd);
-        Some(sd)
-    })
-}
-
-/// `LLInventoryItem::fromLLSD(sd, is_new)` over `item`; `in_open_sim` is
-/// `LLPermissions::getIsInOpenSim()`. One item, `ok` the C++ result. Null
-/// for a malformed buffer or a failure.
-///
-/// # Safety
-/// `item` must be valid with its strings readable; `sd`, unless null
-/// (undefined), a valid buffer.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_item_from_llsd(
-    item: *const VksInvItem,
-    sd: *const VksLlsdFlat,
-    is_new: bool,
-    in_open_sim: bool,
-) -> *mut VksInvRecords {
-    records(|| {
-        let sd = unsafe { llsd_arg(sd) }?;
-        let mut i = unsafe { item_from(&*item) };
-        let ok = i.from_llsd(&sd, is_new, in_open_sim);
-        Some(VksInvRecords::item(ok, i))
-    })
-}
-
-/// `ll_create_sd_from_inventory_item(item)` (undefined for `AT_NONE`).
-///
-/// # Safety
-/// `item` must be valid with its strings readable.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_item_create_sd(item: *const VksInvItem) -> *mut VksLlsdDoc {
-    llsd_result(|| Some(unsafe { item_from(&*item) }.create_sd()))
-}
-
 // ---------------------------------------------------------------------------
 // LLInventoryCategory and LLViewerInventoryCategory
 
@@ -1704,157 +1465,6 @@ pub unsafe extern "C" fn vks_inv_category_export_legacy(
             .category
             .export_legacy_stream(&mut out);
         Some(VksInvRecords::text(out))
-    })
-}
-
-/// The category LLSD forms of [`vks_inv_category_to_llsd`].
-pub const VKS_INV_CAT_AS_LLSD: i32 = 0;
-pub const VKS_INV_CAT_AIS_CREATE: i32 = 1;
-pub const VKS_INV_CAT_CREATE_SD: i32 = 2;
-
-/// A category's LLSD: `VKS_INV_CAT_AS_LLSD` (`asLLSD`),
-/// `VKS_INV_CAT_AIS_CREATE` (`asAISCreateCatLLSD`) or
-/// `VKS_INV_CAT_CREATE_SD` (`ll_create_sd_from_inventory_category`,
-/// undefined for `AT_NONE`). Null for another form or a failure.
-///
-/// # Safety
-/// `cat` must be valid with its strings readable.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_category_to_llsd(
-    cat: *const VksInvCategory,
-    form: i32,
-) -> *mut VksLlsdDoc {
-    llsd_result(|| {
-        let c = unsafe { category_from(&*cat) }.category;
-        match form {
-            VKS_INV_CAT_AS_LLSD => Some(c.to_llsd()),
-            VKS_INV_CAT_AIS_CREATE => Some(c.to_ais_create_llsd()),
-            VKS_INV_CAT_CREATE_SD => Some(c.create_sd()),
-            _ => {
-                set_error("unknown category LLSD form");
-                None
-            }
-        }
-    })
-}
-
-/// `exportLLSD(into)`: the base class's, or with `viewer` the
-/// `LLViewerInventoryCategory` override (adds `owner_id` and `version`);
-/// a null `into` is a new value. Returns the filled value.
-///
-/// # Safety
-/// `cat` must be valid with its strings readable; `into`, unless null, a
-/// valid buffer.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_category_export_llsd(
-    cat: *const VksInvCategory,
-    viewer: bool,
-    into: *const VksLlsdFlat,
-) -> *mut VksLlsdDoc {
-    llsd_result(|| {
-        let mut sd = unsafe { llsd_arg(into) }?;
-        let c = unsafe { category_from(&*cat) };
-        if viewer {
-            c.export_llsd(&mut sd);
-        } else {
-            c.category.export_llsd(&mut sd);
-        }
-        Some(sd)
-    })
-}
-
-/// `LLInventoryCategory::fromLLSD(sd)` over `cat`: one category, `ok` the
-/// C++ result. Null for a malformed buffer or a failure.
-///
-/// # Safety
-/// `cat` must be valid with its strings readable; `sd`, unless null
-/// (undefined), a valid buffer.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_category_from_llsd(
-    cat: *const VksInvCategory,
-    sd: *const VksLlsdFlat,
-) -> *mut VksInvRecords {
-    records(|| {
-        let sd = unsafe { llsd_arg(sd) }?;
-        let v = unsafe { &*cat };
-        let mut c = unsafe { category_from(v) }.category;
-        let ok = c.from_llsd(&sd);
-        Some(VksInvRecords::category(ok, with_category(v, c)))
-    })
-}
-
-/// `importLLSDMap(sd)` over `cat`, through the base class's `importLLSD`,
-/// or with `viewer` the `LLViewerInventoryCategory` override (`owner_id`,
-/// `version`): one category, `ok` the C++ result. Null for a malformed
-/// buffer or a failure.
-///
-/// # Safety
-/// As [`vks_inv_category_from_llsd`].
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_category_import_llsd_map(
-    cat: *const VksInvCategory,
-    sd: *const VksLlsdFlat,
-    viewer: bool,
-) -> *mut VksInvRecords {
-    records(|| {
-        let sd = unsafe { llsd_arg(sd) }?;
-        let mut c = unsafe { category_from(&*cat) };
-        let ok = if viewer {
-            c.import_llsd_map(&sd)
-        } else {
-            c.category.import_llsd_map(&sd)
-        };
-        Some(VksInvRecords::category(ok, c))
-    })
-}
-
-/// `importLLSD(label, value)` over `cat`: one key, through the base class's
-/// `importLLSD`, or with `viewer` the `LLViewerInventoryCategory` override
-/// (`owner_id`, `version`): one category, `ok` the C++ result (true when the
-/// key was handled; `favorite` is applied but returns false, as in C++).
-/// For a C++ `importLLSDMap` that keeps its virtual dispatch per key. Null
-/// for a malformed buffer or a failure.
-///
-/// # Safety
-/// `cat` must be valid with its strings readable; `label` readable for
-/// `label_len` bytes; `value`, unless null (undefined), a valid buffer.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_category_import_llsd(
-    cat: *const VksInvCategory,
-    label: *const u8,
-    label_len: usize,
-    value: *const VksLlsdFlat,
-    viewer: bool,
-) -> *mut VksInvRecords {
-    records(|| {
-        let value = unsafe { llsd_arg(value) }?;
-        let label = unsafe { bytes(label, label_len) };
-        let mut c = unsafe { category_from(&*cat) };
-        let ok = if viewer {
-            c.import_llsd(label, &value)
-        } else {
-            c.category.import_llsd(label, &value)
-        };
-        Some(VksInvRecords::category(ok, c))
-    })
-}
-
-/// `ll_create_category_from_sd(sd)`: one category (owner null, version
-/// `VERSION_UNKNOWN`). Null for a malformed buffer or a failure.
-///
-/// # Safety
-/// `sd`, unless null (undefined), must be a valid buffer.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_category_from_create_sd(
-    sd: *const VksLlsdFlat,
-) -> *mut VksInvRecords {
-    records(|| {
-        let sd = unsafe { llsd_arg(sd) }?;
-        let c = ViewerCategory {
-            category: Category::from_create_sd(&sd),
-            ..ViewerCategory::default()
-        };
-        Some(VksInvRecords::category(true, c))
     })
 }
 
