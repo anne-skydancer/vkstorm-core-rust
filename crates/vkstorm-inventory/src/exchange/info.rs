@@ -4,7 +4,7 @@
 use vkstorm_llsd::Value;
 
 use crate::llsd::coerce::{as_boolean, as_integer, as_string, as_uuid, get, insert};
-use crate::perms::{Uuid, NULL_ID};
+use crate::perms::{NULL_ID, Uuid};
 use crate::types::AssetType;
 
 use super::im::IM_NOTHING_SPECIAL;
@@ -26,14 +26,23 @@ impl NetHost {
     /// see [`atol`]); without a colon, port 0.
     pub fn parse(s: &[u8]) -> NetHost {
         match s.iter().position(|&c| c == b':') {
-            None => NetHost { ip: ip_string_to_u32(s), port: 0 },
-            Some(i) => NetHost { ip: ip_string_to_u32(&s[..i]), port: atol(&s[i + 1..]) as u32 },
+            None => NetHost {
+                ip: ip_string_to_u32(s),
+                port: 0,
+            },
+            Some(i) => NetHost {
+                ip: ip_string_to_u32(&s[..i]),
+                port: atol(&s[i + 1..]) as u32,
+            },
         }
     }
 
     /// `getIPandPort()`: `inet_ntoa` of the address, `:`, the port (`%u`).
     pub fn ip_and_port(&self) -> String {
-        format!("{}.{}.{}.{}:{}", self.ip[0], self.ip[1], self.ip[2], self.ip[3], self.port)
+        format!(
+            "{}.{}.{}.{}:{}",
+            self.ip[0], self.ip[1], self.ip[2], self.ip[3], self.port
+        )
     }
 }
 
@@ -47,7 +56,11 @@ fn c_str(s: &[u8]) -> &[u8] {
 /// `255.255.255.255` (whose `inet_addr` value is `INADDR_NONE`).
 fn ip_string_to_u32(s: &[u8]) -> [u8; 4] {
     let s = c_str(s);
-    inet_addr(s).unwrap_or(if s == b"255.255.255.255" { [255; 4] } else { [0; 4] })
+    inet_addr(s).unwrap_or(if s == b"255.255.255.255" {
+        [255; 4]
+    } else {
+        [0; 4]
+    })
 }
 
 /// `inet_addr`: one to four parts separated by dots, each decimal, octal
@@ -62,13 +75,14 @@ fn inet_addr(s: &[u8]) -> Option<[u8; 4]> {
         if part.is_empty() || parts.len() == 4 {
             return None;
         }
-        let (digits, radix) = if part.len() > 1 && part[0] == b'0' && (part[1] == b'x' || part[1] == b'X') {
-            (&part[2..], 16)
-        } else if part.len() > 1 && part[0] == b'0' {
-            (&part[1..], 8)
-        } else {
-            (part, 10)
-        };
+        let (digits, radix) =
+            if part.len() > 1 && part[0] == b'0' && (part[1] == b'x' || part[1] == b'X') {
+                (&part[2..], 16)
+            } else if part.len() > 1 && part[0] == b'0' {
+                (&part[1..], 8)
+            } else {
+                (part, 10)
+            };
         let mut v: u64 = 0;
         for &c in digits {
             let d = (c as char).to_digit(radix)? as u64;
@@ -88,7 +102,11 @@ fn inet_addr(s: &[u8]) -> Option<[u8; 4]> {
             }
             addr |= p << (24 - 8 * i);
         } else {
-            let max = if n == 1 { u32::MAX as u64 } else { (1u64 << (8 * (4 - i))) - 1 };
+            let max = if n == 1 {
+                u32::MAX as u64
+            } else {
+                (1u64 << (8 * (4 - i))) - 1
+            };
             if p > max {
                 return None;
             }
@@ -193,7 +211,11 @@ impl OfferInfo {
         insert(&mut sd, "type", Value::string(self.ty.lookup()));
         insert(&mut sd, "from_name", Value::String(self.from_name.clone()));
         insert(&mut sd, "description", Value::String(self.desc.clone()));
-        insert(&mut sd, "sender", Value::String(self.host.ip_and_port().into_bytes()));
+        insert(
+            &mut sd,
+            "sender",
+            Value::String(self.host.ip_and_port().into_bytes()),
+        );
         insert(&mut sd, "persist", Value::Boolean(self.persist));
         sd
     }
@@ -205,11 +227,20 @@ mod tests {
 
     #[test]
     fn hosts() {
-        assert_eq!(NetHost::parse(b"10.0.0.9:13005").ip_and_port(), "10.0.0.9:13005");
+        assert_eq!(
+            NetHost::parse(b"10.0.0.9:13005").ip_and_port(),
+            "10.0.0.9:13005"
+        );
         assert_eq!(NetHost::parse(b"10.0.0.9").ip_and_port(), "10.0.0.9:0");
         assert_eq!(NetHost::parse(b"garbage:xx").ip_and_port(), "0.0.0.0:0");
-        assert_eq!(NetHost::parse(b"localhost:13000").ip_and_port(), "0.0.0.0:13000");
-        assert_eq!(NetHost::parse(b"255.255.255.255:65535").ip_and_port(), "255.255.255.255:65535");
+        assert_eq!(
+            NetHost::parse(b"localhost:13000").ip_and_port(),
+            "0.0.0.0:13000"
+        );
+        assert_eq!(
+            NetHost::parse(b"255.255.255.255:65535").ip_and_port(),
+            "255.255.255.255:65535"
+        );
         assert_eq!(NetHost::parse(b"").ip_and_port(), "0.0.0.0:0");
     }
 

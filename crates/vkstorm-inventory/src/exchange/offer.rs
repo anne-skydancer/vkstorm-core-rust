@@ -13,17 +13,21 @@
 
 use vkstorm_llsd::Value;
 
-use crate::llsd::coerce::{as_binary, as_integer, as_real, as_string, as_uuid, get, has, insert, is_integer};
-use crate::perms::{Uuid, NULL_ID};
+use crate::llsd::coerce::{
+    as_binary, as_integer, as_real, as_string, as_uuid, get, has, insert, is_integer,
+};
+use crate::perms::{NULL_ID, Uuid};
 use crate::text::trim;
 use crate::types::{AssetType, FolderType};
 
-use super::host::{string_field, Action, Host, ImPacket, NameThen, ObserverKind, OfflineMessage, PackArgs, Route};
+use super::host::{
+    Action, Host, ImPacket, NameThen, ObserverKind, OfflineMessage, PackArgs, Route, string_field,
+};
 use super::im::*;
 use super::info::{NetHost, OfferInfo};
 use super::names::{
-    build_legacy_name, c_str, clean_full_name, find_bytes, is_linden, parse_uuid, rfind_bytes, stream_read_s32, uri_escape,
-    uuid_validate, PipeTokens,
+    PipeTokens, build_legacy_name, c_str, clean_full_name, find_bytes, is_linden, parse_uuid,
+    rfind_bytes, stream_read_s32, uri_escape, uuid_validate,
 };
 use super::notify::{force_response as notify_force_response, selected_option};
 use super::throttle::check_offer_throttle;
@@ -66,7 +70,11 @@ fn cat(parts: &[&[u8]]) -> Vec<u8> {
 /// `LLAgentUI::buildFullname`: the avatar's full name when it is valid, else
 /// empty.
 pub fn build_fullname(host: &dyn Host) -> Vec<u8> {
-    if host.avatar_valid() { host.avatar_fullname() } else { Vec::new() }
+    if host.avatar_valid() {
+        host.avatar_fullname()
+    } else {
+        Vec::new()
+    }
 }
 
 /// The RLVa name check the offer code repeats (`fRlvCanShowName`): RLVa off,
@@ -84,9 +92,13 @@ fn rlv_can_show_name(host: &dyn Host, id: &Uuid) -> bool {
 pub fn is_give_to_rlv_offer(host: &dyn Host, info: &OfferInfo) -> bool {
     if !host.rlv_forbid_give_to_rlv() && host.rlv_has_shared_root() {
         if info.from_object {
-            info.im == IM_TASK_INVENTORY_OFFERED && info.ty == AssetType::CATEGORY && find_bytes(&info.desc, RLV_PUTINV_PREFIX) == Some(1)
+            info.im == IM_TASK_INVENTORY_OFFERED
+                && info.ty == AssetType::CATEGORY
+                && find_bytes(&info.desc, RLV_PUTINV_PREFIX) == Some(1)
         } else {
-            info.im == IM_INVENTORY_OFFERED && info.ty == AssetType::CATEGORY && find_bytes(&info.desc, RLV_PUTINV_PREFIX) == Some(0)
+            info.im == IM_INVENTORY_OFFERED
+                && info.ty == AssetType::CATEGORY
+                && find_bytes(&info.desc, RLV_PUTINV_PREFIX) == Some(0)
         }
     } else {
         false
@@ -113,17 +125,33 @@ pub fn sanitized_description(desc: &[u8]) -> Vec<u8> {
 // ------------------------------------------------------------- responses
 
 /// `LLOfferInfo::sendReceiveResponse(accept, destination_folder_id)`.
-pub fn send_receive_response(host: &mut dyn Host, info: &mut OfferInfo, accept: bool, folder: &Uuid) {
+pub fn send_receive_response(
+    host: &mut dyn Host,
+    info: &mut OfferInfo,
+    accept: bool,
+    folder: &Uuid,
+) {
     if info.im == IM_INVENTORY_OFFERED && rlv_can_show_name(host, &info.from_id) {
         host.act(Action::RecentPeopleAdd(info.from_id));
     }
     if info.transaction_id == NULL_ID {
         return;
     }
-    let im = if info.im == IM_GROUP_NOTICE_REQUESTED { IM_GROUP_NOTICE } else { info.im };
-    let (dialog, bucket) = if accept { (im + 1, folder.to_vec()) } else { (im + 2, vec![0]) };
+    let im = if info.im == IM_GROUP_NOTICE_REQUESTED {
+        IM_GROUP_NOTICE
+    } else {
+        info.im
+    };
+    let (dialog, bucket) = if accept {
+        (im + 1, folder.to_vec())
+    } else {
+        (im + 2, vec![0])
+    };
     let packet = response_packet(host, info, dialog, bucket);
-    host.act(Action::SendReliable { packet, route: Route::Host(info.host) });
+    host.act(Action::SendReliable {
+        packet,
+        route: Route::Host(info.host),
+    });
     info.transaction_id = NULL_ID;
     sync(host, info);
 }
@@ -161,7 +189,10 @@ pub fn send_auto_receive_response(host: &mut dyn Host, info: &mut OfferInfo) {
 pub fn send_decline_response(host: &mut dyn Host, info: &mut OfferInfo) {
     let trash = host.find_category_for_type(FolderType::TRASH);
     let packet = response_packet(host, info, info.im + 2, trash.to_vec());
-    host.act(Action::SendReliable { packet, route: Route::Host(info.host) });
+    host.act(Action::SendReliable {
+        packet,
+        route: Route::Host(info.host),
+    });
 }
 
 /// `send_do_not_disturb_message(msg, from_id, session_id)`.
@@ -217,8 +248,12 @@ pub fn respond(host: &mut dyn Host, info: &mut OfferInfo, notification: &Value, 
     let name = as_string(get(notification, "name"));
     let live = host.notification_live(&as_uuid(get(notification, "id")));
     match name.as_slice() {
-        b"ObjectGiveItem" | b"OwnObjectGiveItem" => inventory_task_offer_callback(host, info, notification, response, live),
-        b"UserGiveItem" | b"UserGiveItemLegacy" => inventory_offer_callback(host, info, notification, response, live),
+        b"ObjectGiveItem" | b"OwnObjectGiveItem" => {
+            inventory_task_offer_callback(host, info, notification, response, live)
+        }
+        b"UserGiveItem" | b"UserGiveItemLegacy" => {
+            inventory_offer_callback(host, info, notification, response, live)
+        }
         _ => {}
     }
 }
@@ -230,31 +265,65 @@ fn start_observer(host: &mut dyn Host, kind: ObserverKind) -> (super::host::Obse
 }
 
 fn give_to_rlv_agent_offer(host: &mut dyn Host, info: &OfferInfo) {
-    if host.rlv_enabled() && !host.rlv_forbid_give_to_rlv() && info.ty == AssetType::CATEGORY && find_bytes(&info.desc, RLV_PUTINV_PREFIX) == Some(0) {
-        let (o, finished) = start_observer(host, ObserverKind::RlvGiveToRlvAgentOffer { folder: info.object_id });
-        host.act(if finished { Action::ObserverDone(o) } else { Action::ObserverAdd(o) });
+    if host.rlv_enabled()
+        && !host.rlv_forbid_give_to_rlv()
+        && info.ty == AssetType::CATEGORY
+        && find_bytes(&info.desc, RLV_PUTINV_PREFIX) == Some(0)
+    {
+        let (o, finished) = start_observer(
+            host,
+            ObserverKind::RlvGiveToRlvAgentOffer {
+                folder: info.object_id,
+            },
+        );
+        host.act(if finished {
+            Action::ObserverDone(o)
+        } else {
+            Action::ObserverAdd(o)
+        });
     }
 }
 
 fn system_message_tip(host: &mut dyn Host, message: Vec<u8>) {
     let mut args = Value::Undefined;
     insert(&mut args, "MESSAGE", Value::String(message));
-    host.act(Action::Notify { name: "SystemMessageTip".to_owned(), substitutions: args, payload: Value::Undefined, handler: None });
+    host.act(Action::Notify {
+        name: "SystemMessageTip".to_owned(),
+        substitutions: args,
+        payload: Value::Undefined,
+        handler: None,
+    });
 }
 
 /// `LLOfferInfo::inventory_offer_callback` (agent offers and group notices,
 /// and every forced response). `live` is whether the notification is in the
 /// store (`LLNotifications::find`), which a Mute needs to look the sender up.
-pub fn inventory_offer_callback(host: &mut dyn Host, info: &mut OfferInfo, notification: &Value, response: &Value, live: bool) {
+pub fn inventory_offer_callback(
+    host: &mut dyn Host,
+    info: &mut OfferInfo,
+    notification: &Value,
+    response: &Value,
+    live: bool,
+) {
     let button = selected_option(notification, response);
     let catp = host.category(&info.object_id).is_some();
-    let itemp = if catp { None } else { host.item(&info.object_id) };
+    let itemp = if catp {
+        None
+    } else {
+        host.item(&info.object_id)
+    };
 
     if button == IOR_MUTE && live {
         if info.from_group {
-            host.act(Action::GroupNameLookup { id: info.from_id, then: NameThen::OfferMuteGroup });
+            host.act(Action::GroupNameLookup {
+                id: info.from_id,
+                then: NameThen::OfferMuteGroup,
+            });
         } else {
-            host.act(Action::AvatarNameLookup { id: info.from_id, then: NameThen::OfferMuteAvatar });
+            host.act(Action::AvatarNameLookup {
+                id: info.from_id,
+                then: NameThen::OfferMuteAvatar,
+            });
         }
     }
 
@@ -269,7 +338,11 @@ pub fn inventory_offer_callback(host: &mut dyn Host, info: &mut OfferInfo, notif
                 give_to_rlv_agent_offer(host, info);
                 let (o, _) = start_observer(
                     host,
-                    ObserverKind::OpenAgentOffer { id: info.object_id, from_name: chat_history.clone(), manual: true },
+                    ObserverKind::OpenAgentOffer {
+                        id: info.object_id,
+                        from_name: chat_history.clone(),
+                        manual: true,
+                    },
                 );
                 if catp || itemp.as_ref().is_some_and(|i| i.finished) {
                     host.act(Action::ObserverDone(o));
@@ -289,14 +362,23 @@ pub fn inventory_offer_callback(host: &mut dyn Host, info: &mut OfferInfo, notif
         },
         IOR_ACCEPT | IOR_ACCEPT_SILENT => {
             if check_offer_throttle(host, &info.from_name, true) {
-                let log_message = cat(&[b" ", &host.trans("InvOfferGaveYou", &[]), b" ", &sanitized_description(&info.desc), &host.trans(".", &[])]);
+                let log_message = cat(&[
+                    b" ",
+                    &host.trans("InvOfferGaveYou", &[]),
+                    b" ",
+                    &sanitized_description(&info.desc),
+                    &host.trans(".", &[]),
+                ]);
                 let sep = info.from_name.iter().position(|&c| c == b'|');
                 let parsed = sep.and_then(|s| parse_uuid(&info.from_name[..s]).map(|id| (s, id)));
                 match parsed {
                     Some((s, id)) if info.from_name.len() > s + 1 => {
                         host.act(Action::AvatarNameLookup {
                             id,
-                            then: NameThen::SystemMessageTip { format: info.from_name[s + 1..].to_vec(), message: log_message },
+                            then: NameThen::SystemMessageTip {
+                                format: info.from_name[s + 1..].to_vec(),
+                                message: log_message,
+                            },
                         });
                     }
                     _ => system_message_tip(host, cat(&[&chat_history, &log_message])),
@@ -312,7 +394,10 @@ pub fn inventory_offer_callback(host: &mut dyn Host, info: &mut OfferInfo, notif
                     send_auto_receive_response(host, info);
                 }
                 if host.setting_bool("ShowInInventory") {
-                    host.act(Action::InventoryPanelSelect { auto_open: true, id: info.object_id });
+                    host.act(Action::InventoryPanelSelect {
+                        auto_open: true,
+                        id: info.object_id,
+                    });
                 }
             }
         }
@@ -324,22 +409,37 @@ pub fn inventory_offer_callback(host: &mut dyn Host, info: &mut OfferInfo, notif
                 accept_to_trash = false;
             }
             if info.object_id != NULL_ID {
-                let (o, _) = start_observer(host, ObserverKind::DiscardAgentOffer { folder: info.folder_id, object: info.object_id });
-                if (catp && host.is_category_complete(&info.object_id)) || itemp.as_ref().is_some_and(|i| i.finished) {
+                let (o, _) = start_observer(
+                    host,
+                    ObserverKind::DiscardAgentOffer {
+                        folder: info.folder_id,
+                        object: info.object_id,
+                    },
+                );
+                if (catp && host.is_category_complete(&info.object_id))
+                    || itemp.as_ref().is_some_and(|i| i.finished)
+                {
                     host.act(Action::ObserverDone(o));
                 } else {
                     opener = Some(o);
                 }
-            } else if info.im == IM_GROUP_NOTICE && host.setting_bool("FSDismissGroupNoticeAttachmentsToTrash") {
+            } else if info.im == IM_GROUP_NOTICE
+                && host.setting_bool("FSDismissGroupNoticeAttachmentsToTrash")
+            {
                 let trash = host.find_category_for_type(FolderType::TRASH);
                 send_receive_response(host, info, accept_to_trash, &trash);
             }
-            if host.setting_bool("FSUseLegacyInventoryAcceptMessages") && button == IOR_DECLINE && info.im == IM_INVENTORY_OFFERED {
+            if host.setting_bool("FSUseLegacyInventoryAcceptMessages")
+                && button == IOR_DECLINE
+                && info.im == IM_INVENTORY_OFFERED
+            {
                 send_decline_response(host, info);
             }
         }
         _ => {
-            if info.im == IM_GROUP_NOTICE && host.setting_bool("FSDismissGroupNoticeAttachmentsToTrash") {
+            if info.im == IM_GROUP_NOTICE
+                && host.setting_bool("FSDismissGroupNoticeAttachmentsToTrash")
+            {
                 let trash = host.find_category_for_type(FolderType::TRASH);
                 send_receive_response(host, info, true, &trash);
             }
@@ -356,13 +456,25 @@ pub fn inventory_offer_callback(host: &mut dyn Host, info: &mut OfferInfo, notif
 
 /// `LLOfferInfo::inventory_task_offer_callback` (object offers answered
 /// through their notification).
-pub fn inventory_task_offer_callback(host: &mut dyn Host, info: &mut OfferInfo, notification: &Value, response: &Value, live: bool) {
+pub fn inventory_task_offer_callback(
+    host: &mut dyn Host,
+    info: &mut OfferInfo,
+    notification: &Value,
+    response: &Value,
+    live: bool,
+) {
     let button = selected_option(notification, response);
     if button == 2 && live {
         if info.from_group {
-            host.act(Action::GroupNameLookup { id: info.from_id, then: NameThen::OfferMuteGroup });
+            host.act(Action::GroupNameLookup {
+                id: info.from_id,
+                then: NameThen::OfferMuteGroup,
+            });
         } else {
-            host.act(Action::AvatarNameLookup { id: info.from_id, then: NameThen::OfferMuteAvatar });
+            host.act(Action::AvatarNameLookup {
+                id: info.from_id,
+                then: NameThen::OfferMuteAvatar,
+            });
         }
     }
 
@@ -370,24 +482,47 @@ pub fn inventory_task_offer_callback(host: &mut dyn Host, info: &mut OfferInfo, 
         let quot = host.trans("'", &[]);
         if info.from_group {
             match host.group_name(&info.from_id) {
-                Some(group_name) => cat(&[&info.from_name, b" ", &host.trans("InvOfferOwnedByGroup", &[]), b" ", &quot, &group_name, &quot]),
-                None => cat(&[&info.from_name, b" ", &host.trans("InvOfferOwnedByUnknownGroup", &[])]),
+                Some(group_name) => cat(&[
+                    &info.from_name,
+                    b" ",
+                    &host.trans("InvOfferOwnedByGroup", &[]),
+                    b" ",
+                    &quot,
+                    &group_name,
+                    &quot,
+                ]),
+                None => cat(&[
+                    &info.from_name,
+                    b" ",
+                    &host.trans("InvOfferOwnedByUnknownGroup", &[]),
+                ]),
             }
         } else {
             let mut name_slurl = host.slurl("agent", &info.from_id, b"about");
             if !rlv_can_show_name(host, &info.from_id) {
                 name_slurl = host.slurl("agent", &info.from_id, b"rlvanonym");
             }
-            cat(&[&info.from_name, b" ", &host.trans("InvOfferOwnedBy", &[]), b" ", &name_slurl])
+            cat(&[
+                &info.from_name,
+                b" ",
+                &host.trans("InvOfferOwnedBy", &[]),
+                b" ",
+                &name_slurl,
+            ])
         }
     } else {
         info.from_name.clone()
     };
 
     let give_to_rlv = |host: &dyn Host, info: &OfferInfo| {
-        host.rlv_enabled() && info.im == IM_TASK_INVENTORY_OFFERED && info.ty == AssetType::CATEGORY && find_bytes(&info.desc, RLV_PUTINV_PREFIX) == Some(1)
+        host.rlv_enabled()
+            && info.im == IM_TASK_INVENTORY_OFFERED
+            && info.ty == AssetType::CATEGORY
+            && find_bytes(&info.desc, RLV_PUTINV_PREFIX) == Some(1)
     };
-    let rlv_object_name = |info: &OfferInfo| find_bytes(&info.desc, b"'  ( http://").map(|i| info.desc[1..i.max(1)].to_vec());
+    let rlv_object_name = |info: &OfferInfo| {
+        find_bytes(&info.desc, b"'  ( http://").map(|i| info.desc[1..i.max(1)].to_vec())
+    };
 
     let destination;
     let mut accept = true;
@@ -399,15 +534,27 @@ pub fn inventory_task_offer_callback(host: &mut dyn Host, info: &mut OfferInfo, 
                     info.folder_id = root;
                     sync(host, info);
                 }
-                let o = host.observer_new(ObserverKind::RlvGiveToRlvTaskOffer { transaction: info.transaction_id });
+                let o = host.observer_new(ObserverKind::RlvGiveToRlvTaskOffer {
+                    transaction: info.transaction_id,
+                });
                 host.act(Action::ObserverAdd(o));
             } else if let Some(name) = rlv_object_name(info) {
-                host.act(Action::RlvSendNotification(cat(&[b"accepted_in_inv inv_offer ", &name])));
+                host.act(Action::RlvSendNotification(cat(&[
+                    b"accepted_in_inv inv_offer ",
+                    &name,
+                ])));
             }
         }
         destination = info.folder_id;
         if check_offer_throttle(host, &info.from_name, true) {
-            let log = cat(&[&chat_history, b" ", &host.trans("InvOfferGaveYou", &[]), b" ", &sanitized_description(&info.desc), &host.trans(".", &[])]);
+            let log = cat(&[
+                &chat_history,
+                b" ",
+                &host.trans("InvOfferGaveYou", &[]),
+                b" ",
+                &sanitized_description(&info.desc),
+                &host.trans(".", &[]),
+            ]);
             system_message_tip(host, log);
         }
     } else {
@@ -417,11 +564,20 @@ pub fn inventory_task_offer_callback(host: &mut dyn Host, info: &mut OfferInfo, 
         destination = host.find_category_for_type(FolderType::TRASH);
         if give_to_rlv(host, info) {
             if let Some(name) = rlv_object_name(info) {
-                host.act(Action::RlvSendNotification(cat(&[b"declined inv_offer ", &name])));
+                host.act(Action::RlvSendNotification(cat(&[
+                    b"declined inv_offer ",
+                    &name,
+                ])));
             }
         }
         if host.setting_bool("LogInventoryDecline") {
-            let log = host.trans("InvOfferDecline", &[("DESC", info.desc.clone()), ("NAME", info.from_name.clone())]);
+            let log = host.trans(
+                "InvOfferDecline",
+                &[
+                    ("DESC", info.desc.clone()),
+                    ("NAME", info.from_name.clone()),
+                ],
+            );
             system_message_tip(host, log);
         }
         if accept && host.is_muted(&info.from_id, &info.from_name, 0) {
@@ -487,7 +643,9 @@ pub fn receive_im(host: &mut dyn Host, im: &ImArgs<'_>) {
 
     match im.dialog {
         IM_GROUP_NOTICE | IM_GROUP_NOTICE_REQUESTED => group_notice(host, im, &name, original_name),
-        IM_INVENTORY_OFFERED | IM_TASK_INVENTORY_OFFERED => inventory_offered(host, im, name, is_muted, is_do_not_disturb),
+        IM_INVENTORY_OFFERED | IM_TASK_INVENTORY_OFFERED => {
+            inventory_offered(host, im, name, is_muted, is_do_not_disturb)
+        }
         _ => {}
     }
 }
@@ -500,7 +658,13 @@ pub fn legacy_task_type(buffer: &[u8]) -> Option<i32> {
     stream_read_s32(t)
 }
 
-fn inventory_offered(host: &mut dyn Host, im: &ImArgs<'_>, name: Vec<u8>, is_muted: bool, is_do_not_disturb: bool) {
+fn inventory_offered(
+    host: &mut dyn Host,
+    im: &ImArgs<'_>,
+    name: Vec<u8>,
+    is_muted: bool,
+    is_do_not_disturb: bool,
+) {
     let mut info = OfferInfo::default();
     host.act(Action::OfferNew(info.clone()));
     if im.dialog == IM_INVENTORY_OFFERED {
@@ -528,7 +692,11 @@ fn inventory_offered(host: &mut dyn Host, im: &ImArgs<'_>, name: Vec<u8>, is_mut
     info.from_id = im.from_id;
     info.from_group = im.from_group;
     info.folder_id = host.find_category_for_type(FolderType::from_asset_type(info.ty));
-    info.transaction_id = if im.session_id != NULL_ID { im.session_id } else { im.aux_id };
+    info.transaction_id = if im.session_id != NULL_ID {
+        im.session_id
+    } else {
+        im.aux_id
+    };
     info.from_name = name;
     info.desc = im.message.to_vec();
     info.host = im.sender;
@@ -627,7 +795,11 @@ fn group_notice(host: &mut dyn Host, im: &ImArgs<'_>, name: &[u8], mut original_
         insert(&mut payload, "sender_name", Value::String(name.to_vec()));
         insert(&mut payload, "sender_id", Value::Uuid(agent_id));
         insert(&mut payload, "group_id", Value::Uuid(group_id));
-        insert(&mut payload, "inventory_name", Value::String(item_name.clone()));
+        insert(
+            &mut payload,
+            "inventory_name",
+            Value::String(item_name.clone()),
+        );
         insert(&mut payload, "received_time", Value::Date(host.now()));
         if let Some(o) = &info {
             insert(&mut payload, "inventory_offer", o.as_llsd());
@@ -635,7 +807,13 @@ fn group_notice(host: &mut dyn Host, im: &ImArgs<'_>, name: &[u8], mut original_
         host.act(Action::CacheNameGet {
             id: group_id,
             is_group: true,
-            then: NameThen::GroupNotice { sender: name.to_vec(), subject: subject.clone(), message: message.clone(), payload, timestamp: im.timestamp },
+            then: NameThen::GroupNotice {
+                sender: name.to_vec(),
+                subject: subject.clone(),
+                message: message.clone(),
+                payload,
+                timestamp: im.timestamp,
+            },
         });
     }
 
@@ -661,12 +839,15 @@ fn group_notice(host: &mut dyn Host, im: &ImArgs<'_>, name: &[u8], mut original_
 /// waits for the answer), the do-not-disturb reply, the `UserGiveItem`
 /// notification or the auto-accept log, and the opener.
 pub fn inventory_offer_handler(host: &mut dyn Host, info: &mut OfferInfo) {
-    if host.is_muted(&info.from_id, &info.from_name, 0) || host.is_muted(&NULL_ID, &info.from_name, 0) {
+    if host.is_muted(&info.from_id, &info.from_name, 0)
+        || host.is_muted(&NULL_ID, &info.from_name, 0)
+    {
         force_response(host, info, IOR_MUTE);
         return;
     }
 
-    let auto_accept = host.setting_bool("AutoAcceptNewInventory") && (!host.rlv_enabled() || !is_give_to_rlv_offer(host, info));
+    let auto_accept = host.setting_bool("AutoAcceptNewInventory")
+        && (!host.rlv_enabled() || !is_give_to_rlv_offer(host, info));
 
     let mut msg = info.desc.clone();
     let indx = find_bytes(&msg, b" ( http://slurl.com/secondlife/")
@@ -683,39 +864,82 @@ pub fn inventory_offer_handler(host: &mut dyn Host, info: &mut OfferInfo) {
 
     let typestr = info.ty.lookup_human_readable().unwrap_or("");
     if !typestr.is_empty() {
-        insert(&mut args, "OBJECTTYPE", Value::String(host.trans(typestr, &[])));
+        insert(
+            &mut args,
+            "OBJECTTYPE",
+            Value::String(host.trans(typestr, &[])),
+        );
     } else {
         insert(&mut args, "OBJECTTYPE", Value::string(""));
         force_response(host, info, IOR_DECLINE);
         return;
     }
 
-    let object_id = if info.object_id == NULL_ID { uuid_from_string(&msg) } else { info.object_id };
+    let object_id = if info.object_id == NULL_ID {
+        uuid_from_string(&msg)
+    } else {
+        info.object_id
+    };
 
     insert(&mut payload, "from_id", Value::Uuid(info.from_id));
     insert(&mut payload, "object_id", Value::Uuid(object_id));
-    insert(&mut payload, "give_inventory_notification", Value::Boolean(false));
-    insert(&mut args, "OBJECTFROMNAME", Value::String(info.from_name.clone()));
+    insert(
+        &mut payload,
+        "give_inventory_notification",
+        Value::Boolean(false),
+    );
+    insert(
+        &mut args,
+        "OBJECTFROMNAME",
+        Value::String(info.from_name.clone()),
+    );
     insert(&mut args, "NAME", Value::String(info.from_name.clone()));
     if info.from_group {
-        insert(&mut args, "NAME_SLURL", Value::String(host.slurl("group", &info.from_id, b"about")));
+        insert(
+            &mut args,
+            "NAME_SLURL",
+            Value::String(host.slurl("group", &info.from_id, b"about")),
+        );
     } else {
-        insert(&mut args, "NAME_LABEL", Value::String(host.slurl("agent", &info.from_id, b"completename")));
-        insert(&mut args, "NAME_SLURL", Value::String(host.slurl("agent", &info.from_id, b"about")));
+        insert(
+            &mut args,
+            "NAME_LABEL",
+            Value::String(host.slurl("agent", &info.from_id, b"completename")),
+        );
+        insert(
+            &mut args,
+            "NAME_SLURL",
+            Value::String(host.slurl("agent", &info.from_id, b"about")),
+        );
     }
     let verb = cat(&[b"select?name=", &uri_escape(&msg)]);
-    insert(&mut args, "ITEM_SLURL", Value::String(host.slurl("inventory", &info.object_id, &verb)));
+    insert(
+        &mut args,
+        "ITEM_SLURL",
+        Value::String(host.slurl("inventory", &info.object_id, &verb)),
+    );
 
     let posted = !auto_accept;
     if info.from_object && !auto_accept {
-        if host.rlv_enabled() && !host.rlv_can_show_name(&info.from_id) && host.rlv_is_nearby(&info.from_id) {
+        if host.rlv_enabled()
+            && !host.rlv_can_show_name(&info.from_id)
+            && host.rlv_is_nearby(&info.from_id)
+        {
             insert(&mut payload, "rlv_shownames", Value::Boolean(true));
-            insert(&mut args, "NAME_SLURL", Value::String(host.slurl("agent", &info.from_id, b"rlvanonym")));
+            insert(
+                &mut args,
+                "NAME_SLURL",
+                Value::String(host.slurl("agent", &info.from_id, b"rlvanonym")),
+            );
         }
         insert(&mut args, "ITEM_SLURL", Value::String(msg.clone()));
         info.persist = true;
         sync(host, info);
-        let name = if info.from_id == host.agent_id() { "OwnObjectGiveItem" } else { "ObjectGiveItem" };
+        let name = if info.from_id == host.agent_id() {
+            "OwnObjectGiveItem"
+        } else {
+            "ObjectGiveItem"
+        };
         host.act(Action::NotifyPostponed {
             name: name.to_owned(),
             substitutions: args,
@@ -732,15 +956,28 @@ pub fn inventory_offer_handler(host: &mut dyn Host, info: &mut OfferInfo) {
                 None => host.rlv_anonym(&info.from_name),
             };
             insert(&mut args, "NAME", Value::String(anon));
-            insert(&mut args, "NAME_SLURL", Value::String(host.slurl("agent", &info.from_id, b"rlvanonym")));
+            insert(
+                &mut args,
+                "NAME_SLURL",
+                Value::String(host.slurl("agent", &info.from_id, b"rlvanonym")),
+            );
         }
         info.persist = true;
         sync(host, info);
         let legacy = host.setting_bool("FSUseLegacyInventoryAcceptMessages");
-        let name = if legacy { "UserGiveItemLegacy" } else { "UserGiveItem" };
+        let name = if legacy {
+            "UserGiveItemLegacy"
+        } else {
+            "UserGiveItem"
+        };
 
-        let (fetch, finished) = start_observer(host, ObserverKind::FetchItems { id: info.object_id });
-        host.act(if finished { Action::ObserverDone(fetch) } else { Action::ObserverAdd(fetch) });
+        let (fetch, finished) =
+            start_observer(host, ObserverKind::FetchItems { id: info.object_id });
+        host.act(if finished {
+            Action::ObserverDone(fetch)
+        } else {
+            Action::ObserverAdd(fetch)
+        });
 
         if auto_accept || !host.setting_bool("FSUseLegacyInventoryAcceptMessages") {
             send_auto_receive_response(host, info);
@@ -751,7 +988,11 @@ pub fn inventory_offer_handler(host: &mut dyn Host, info: &mut OfferInfo) {
         }
 
         if !auto_accept {
-            insert(&mut payload, "give_inventory_notification", Value::Boolean(true));
+            insert(
+                &mut payload,
+                "give_inventory_notification",
+                Value::Boolean(true),
+            );
             host.act(Action::NotifyPostponed {
                 name: name.to_owned(),
                 substitutions: args,
@@ -760,7 +1001,9 @@ pub fn inventory_offer_handler(host: &mut dyn Host, info: &mut OfferInfo) {
                 from_id: info.from_id,
                 is_group: false,
             });
-        } else if host.setting_bool("FSLogAutoAcceptInventoryToChat") || host.setting_bool("FSShowAutoAcceptInventoryInNotifications") {
+        } else if host.setting_bool("FSLogAutoAcceptInventoryToChat")
+            || host.setting_bool("FSShowAutoAcceptInventoryInNotifications")
+        {
             let object_type = host.trans(typestr, &[]);
             let (message_type, chat_args) = if info.from_object {
                 let mut str_pos = Vec::new();
@@ -777,17 +1020,39 @@ pub fn inventory_offer_handler(host: &mut dyn Host, info: &mut OfferInfo) {
                     &uri_escape(&info.from_name),
                     b"&owner=",
                     &uuid_text(&info.from_id),
-                    if info.from_group { b"&groupowned=true" } else { b"" },
+                    if info.from_group {
+                        b"&groupowned=true"
+                    } else {
+                        b""
+                    },
                     &str_pos,
                     b" ",
                     &info.from_name,
                     b"]",
                 ]);
-                ("InvOfferAutoAcceptObject", vec![("DESC", msg.clone()), ("OBJECT_NAME", object_name), ("OBJECT_TYPE", object_type)])
+                (
+                    "InvOfferAutoAcceptObject",
+                    vec![
+                        ("DESC", msg.clone()),
+                        ("OBJECT_NAME", object_name),
+                        ("OBJECT_TYPE", object_type),
+                    ],
+                )
             } else {
-                let verb: &[u8] = if rlv_can_show_name(host, &info.from_id) { b"inspect" } else { b"rlvanonym" };
+                let verb: &[u8] = if rlv_can_show_name(host, &info.from_id) {
+                    b"inspect"
+                } else {
+                    b"rlvanonym"
+                };
                 let name_slurl = host.slurl("agent", &info.from_id, verb);
-                ("InvOfferAutoAcceptUser", vec![("DESC", msg.clone()), ("OBJECT_TYPE", object_type), ("USER_NAME", name_slurl)])
+                (
+                    "InvOfferAutoAcceptUser",
+                    vec![
+                        ("DESC", msg.clone()),
+                        ("OBJECT_TYPE", object_type),
+                        ("USER_NAME", name_slurl),
+                    ],
+                )
             };
             let inv_offer_message = host.trans(message_type, &chat_args);
             if host.setting_bool("FSLogAutoAcceptInventoryToChat") {
@@ -796,17 +1061,30 @@ pub fn inventory_offer_handler(host: &mut dyn Host, info: &mut OfferInfo) {
             if host.setting_bool("FSShowAutoAcceptInventoryInNotifications") {
                 let mut a = Value::Undefined;
                 insert(&mut a, "MESSAGE", Value::String(inv_offer_message));
-                host.act(Action::Notify { name: "IMSystemMessageTip".to_owned(), substitutions: a, payload: Value::Undefined, handler: None });
+                host.act(Action::Notify {
+                    name: "IMSystemMessageTip".to_owned(),
+                    substitutions: a,
+                    payload: Value::Undefined,
+                    handler: None,
+                });
             }
             host.act(Action::UiSound("UISndInventoryOffer"));
         }
 
         if auto_accept && host.setting_bool("ShowNewInventory") {
             let catp = host.category(&info.object_id).is_some();
-            let itemp = if catp { None } else { host.item(&info.object_id) };
+            let itemp = if catp {
+                None
+            } else {
+                host.item(&info.object_id)
+            };
             let (o, _) = start_observer(
                 host,
-                ObserverKind::OpenAgentOffer { id: info.object_id, from_name: info.from_name.clone(), manual: false },
+                ObserverKind::OpenAgentOffer {
+                    id: info.object_id,
+                    from_name: info.from_name.clone(),
+                    manual: false,
+                },
             );
             if catp || itemp.is_some_and(|i| i.finished) {
                 host.act(Action::ObserverDone(o));
@@ -843,15 +1121,27 @@ pub fn receive_offline(host: &mut dyn Host, messages: &Value) {
             } as f32;
             [at(0), at(1), at(2)]
         } else {
-            [as_real(get(m, "local_x")) as f32, as_real(get(m, "local_y")) as f32, as_real(get(m, "local_z")) as f32]
+            [
+                as_real(get(m, "local_x")) as f32,
+                as_real(get(m, "local_y")) as f32,
+                as_real(get(m, "local_z")) as f32,
+            ]
         };
-        let bucket = if has(m, "binary_bucket") { as_binary(get(m, "binary_bucket")).to_vec() } else { vec![0] };
+        let bucket = if has(m, "binary_bucket") {
+            as_binary(get(m, "binary_bucket")).to_vec()
+        } else {
+            vec![0]
+        };
         let from_group = if is_integer(get(m, "from_group")) {
             as_integer(get(m, "from_group")) != 0
         } else {
             as_string(get(m, "from_group")) == b"Y"
         };
-        let metadata = if has(m, "metadata") { get(m, "metadata").clone() } else { Value::Undefined };
+        let metadata = if has(m, "metadata") {
+            get(m, "metadata").clone()
+        } else {
+            Value::Undefined
+        };
         let dialog = as_integer(get(m, "dialog"));
         let mut session_id = as_uuid(get(m, "transaction-id"));
         if session_id == NULL_ID && dialog == IM_FROM_TASK {
@@ -861,13 +1151,21 @@ pub fn receive_offline(host: &mut dyn Host, messages: &Value) {
             from_id: as_uuid(get(m, "from_agent_id")),
             from_group,
             to_id: as_uuid(get(m, "to_agent_id")),
-            offline: if has(m, "offline") { as_integer(get(m, "offline")) as u8 } else { IM_OFFLINE },
+            offline: if has(m, "offline") {
+                as_integer(get(m, "offline")) as u8
+            } else {
+                IM_OFFLINE
+            },
             dialog,
             session_id,
             timestamp: as_integer(get(m, "timestamp")) as u32,
             name: as_string(get(m, "from_agent_name")),
             message: as_string(get(m, "message")),
-            parent_estate_id: if has(m, "parent_estate_id") { as_integer(get(m, "parent_estate_id")) as u32 } else { 1 },
+            parent_estate_id: if has(m, "parent_estate_id") {
+                as_integer(get(m, "parent_estate_id")) as u32
+            } else {
+                1
+            },
             region_id: as_uuid(get(m, "region_id")),
             position,
             bucket,

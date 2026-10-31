@@ -18,7 +18,7 @@ use super::command::CommandType;
 use super::update::{Model, ParseContext, ParsedUpdate};
 use crate::llsd::coerce::{as_integer, as_uuid, get, has};
 use crate::llsd::item::entry;
-use crate::perms::{Uuid, NULL_ID};
+use crate::perms::{NULL_ID, Uuid};
 
 /// `HttpCoroutineAdapter::HTTP_RESULTS`: the key of the adapter's status map.
 pub const HTTP_RESULTS: &str = "http_result";
@@ -56,7 +56,10 @@ impl HttpStatus {
     /// `HttpStatus(int http_status)`: success for 200-299, else
     /// `HE_REPLY_ERROR` (1).
     pub fn http(code: u16) -> HttpStatus {
-        HttpStatus { kind: code, status: if (200..=299).contains(&code) { 0 } else { 1 } }
+        HttpStatus {
+            kind: code,
+            status: if (200..=299).contains(&code) { 0 } else { 1 },
+        }
     }
 
     /// `operator bool`: the status is 0.
@@ -122,10 +125,19 @@ pub fn process_result<M: Model + ?Sized>(
 ) -> CommandResult {
     let status = begin(&mut result);
     let status = error_branch(ctx, &result, status, alert, model);
-    let parse_ctx = ParseContext { command: ctx.command, agent_id: ctx.agent_id, in_open_sim: ctx.in_open_sim };
+    let parse_ctx = ParseContext {
+        command: ctx.command,
+        agent_id: ctx.agent_id,
+        in_open_sim: ctx.in_open_sim,
+    };
     let update = ParsedUpdate::parse(&result, &ctx.body, &parse_ctx, model);
     let callbacks = callback_ids(&result, ctx.command);
-    CommandResult { result, status, update, callbacks }
+    CommandResult {
+        result,
+        status,
+        update,
+        callbacks,
+    }
 }
 
 /// `httpResults = result[HTTP_RESULTS]` on the coroutine's non-const
@@ -241,7 +253,9 @@ pub fn callback_ids(result: &Value, command: CommandType) -> Vec<Uuid> {
             }
         }
         CommandType::CopyInventory | CommandType::CreateInventory => {
-            if has(result, "_created_categories") && array_ids(get(result, "_created_categories"), &mut ids) {
+            if has(result, "_created_categories")
+                && array_ids(get(result, "_created_categories"), &mut ids)
+            {
                 needs_callback = false;
             }
             if has(result, "_created_items") && array_ids(get(result, "_created_items"), &mut ids) {
@@ -301,7 +315,8 @@ mod tests {
             false
         }
         fn on_object_deleted_from_server(&mut self, id: &Uuid, a: bool, b: bool, c: bool) {
-            self.calls.push(format!("onObjectDeletedFromServer {} {a} {b} {c}", id[0]));
+            self.calls
+                .push(format!("onObjectDeletedFromServer {} {a} {b} {c}", id[0]));
         }
         fn notify(&mut self, name: &'static str) {
             self.calls.push(name.into());
@@ -321,19 +336,39 @@ mod tests {
     }
 
     fn ctx(command: CommandType, body: Value) -> CommandContext {
-        CommandContext { command, target_id: [0xa0; 16], body, agent_id: [0x0a; 16], in_open_sim: false }
+        CommandContext {
+            command,
+            target_id: [0xa0; 16],
+            body,
+            agent_id: [0x0a; 16],
+            in_open_sim: false,
+        }
     }
 
     #[test]
     fn gone_item_is_refetched_and_deleted() {
         let mut item = ItemRecord::default();
         item.item.object.parent = [0xc0; 16];
-        let mut m = Log { item: Some(item), ..Log::default() };
+        let mut m = Log {
+            item: Some(item),
+            ..Log::default()
+        };
         let c = ctx(CommandType::RemoveItem, Value::Undefined);
         let r = process_result(&c, status_map(410, 1), &mut AlertState::default(), &mut m);
-        let want = ["getItem", "fetchDescendentsOf 192", "onObjectDeletedFromServer 160 true true true", "AISUpdate"];
+        let want = [
+            "getItem",
+            "fetchDescendentsOf 192",
+            "onObjectDeletedFromServer 160 true true true",
+            "AISUpdate",
+        ];
         assert_eq!(m.calls, want);
-        assert_eq!(r.status, HttpStatus { kind: 410, status: 1 });
+        assert_eq!(
+            r.status,
+            HttpStatus {
+                kind: 410,
+                status: 1
+            }
+        );
         assert_eq!(r.callbacks, [NULL_ID]);
         assert!(r.update.apply_ops().len() == 3 && !r.update.stopped);
     }
@@ -348,11 +383,19 @@ mod tests {
             let c = ctx(CommandType::FetchCategoryChildren, body.clone());
             process_result(&c, status_map(403, 1), &mut alert, &mut m);
         }
-        assert_eq!(m.calls, [ALERT_FIRST, "AISUpdate", ALERT_LATER, "AISUpdate"]);
+        assert_eq!(
+            m.calls,
+            [ALERT_FIRST, "AISUpdate", ALERT_LATER, "AISUpdate"]
+        );
         // Depth 1 is recoverable: no notification.
         insert(&mut body, "depth", Value::Integer(1));
         let mut m = Log::default();
-        process_result(&ctx(CommandType::FetchCategoryChildren, body), status_map(403, 1), &mut alert, &mut m);
+        process_result(
+            &ctx(CommandType::FetchCategoryChildren, body),
+            status_map(403, 1),
+            &mut alert,
+            &mut m,
+        );
         assert_eq!(m.calls, ["AISUpdate"]);
     }
 
@@ -371,10 +414,21 @@ mod tests {
     fn callbacks() {
         let ids = |v: Vec<Value>| Value::Array(v);
         let mut r = Value::map();
-        insert(&mut r, "_created_categories", ids(vec![Value::Uuid([1; 16])]));
-        insert(&mut r, "_created_items", ids(vec![Value::Uuid([2; 16]), Value::Uuid([3; 16])]));
+        insert(
+            &mut r,
+            "_created_categories",
+            ids(vec![Value::Uuid([1; 16])]),
+        );
+        insert(
+            &mut r,
+            "_created_items",
+            ids(vec![Value::Uuid([2; 16]), Value::Uuid([3; 16])]),
+        );
         insert(&mut r, "category_id", Value::Uuid([4; 16]));
-        assert_eq!(callback_ids(&r, CommandType::CreateInventory), [[1; 16], [2; 16], [3; 16]]);
+        assert_eq!(
+            callback_ids(&r, CommandType::CreateInventory),
+            [[1; 16], [2; 16], [3; 16]]
+        );
         assert_eq!(callback_ids(&r, CommandType::FetchCof), [[4; 16]]);
         assert_eq!(callback_ids(&r, CommandType::UpdateItem), [NULL_ID]);
         insert(&mut r, "_updated_categories", ids(vec![]));

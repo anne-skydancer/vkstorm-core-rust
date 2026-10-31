@@ -31,7 +31,10 @@ pub struct FolderRequest {
 impl FolderRequest {
     fn to_value(&self) -> Value {
         let mut m = BTreeMap::new();
-        m.insert(b"fetch_folders".to_vec(), Value::Boolean(self.fetch_folders));
+        m.insert(
+            b"fetch_folders".to_vec(),
+            Value::Boolean(self.fetch_folders),
+        );
         m.insert(b"fetch_items".to_vec(), Value::Boolean(true));
         m.insert(
             b"folder_id".to_vec(),
@@ -149,7 +152,12 @@ pub fn split_403(body: &FolderBody, recursive: &[Uuid]) -> Vec<(FolderBody, Vec<
             rec.push(id);
         }
         if a.len() == half {
-            out.push((FolderBody { folders: acc.take() }, std::mem::take(&mut rec)));
+            out.push((
+                FolderBody {
+                    folders: acc.take(),
+                },
+                std::mem::take(&mut rec),
+            ));
         }
     }
     out.push((FolderBody { folders: acc }, rec));

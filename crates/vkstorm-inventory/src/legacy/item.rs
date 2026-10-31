@@ -28,7 +28,10 @@ use std::io::Write as _;
 
 use vkstorm_llsd::text::uuid_set;
 
-use super::object::{apply_metadata, push_id_line, push_metadata, push_text_line, push_type_line, rescanned_value, KEYWORD_VALUE};
+use super::object::{
+    KEYWORD_VALUE, apply_metadata, push_id_line, push_metadata, push_text_line, push_type_line,
+    rescanned_value,
+};
 use super::reader::Stream;
 use super::sale::MAX_STRING;
 use super::scanf::{scan_hex, scan_int, sscanf};
@@ -108,7 +111,11 @@ impl Item {
                 b"permissions" => success = self.permissions.import_legacy_stream(input),
                 b"sale_info" => {
                     let (mut has_perm_mask, mut perm_mask) = (false, 0u32);
-                    success = self.sale_info.import_legacy_stream(input, &mut has_perm_mask, &mut perm_mask);
+                    success = self.sale_info.import_legacy_stream(
+                        input,
+                        &mut has_perm_mask,
+                        &mut perm_mask,
+                    );
                     if has_perm_mask {
                         self.apply_legacy_perm_mask(perm_mask);
                     }

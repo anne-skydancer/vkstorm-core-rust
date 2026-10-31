@@ -4817,8 +4817,12 @@ fn opj_j2k_read_sod(
     if l_current_read_size != p_j2k.m_specific_param.m_decoder.m_sot_length as usize {
       if l_current_read_size == usize::MAX {
         /* Avoid issue of https://github.com/uclouvain/openjpeg/issues/1533 */
-        event_msg!(p_manager, EVT_ERROR, "Stream too short
-",);
+        event_msg!(
+          p_manager,
+          EVT_ERROR,
+          "Stream too short
+",
+        );
         return 0i32;
       }
       p_j2k.m_specific_param.m_decoder.m_state = J2KState::NEOC
@@ -8770,8 +8774,14 @@ fn opj_j2k_build_tp_index_from_tlm(mut p_j2k: &mut opj_j2k, mut p_manager: &mut 
       let l_tile_index_no =
         (*(*l_tlm).m_tile_part_infos.offset(i as isize)).m_tile_index as OPJ_UINT32;
       assert!(l_tile_index_no < (*p_j2k.cstr_index).nb_of_tiles);
-      (*(*p_j2k.cstr_index).tile_index.offset(l_tile_index_no as isize)).tileno = l_tile_index_no;
-      let fresh = &mut (*(*p_j2k.cstr_index).tile_index.offset(l_tile_index_no as isize)).current_nb_tps;
+      (*(*p_j2k.cstr_index)
+        .tile_index
+        .offset(l_tile_index_no as isize))
+      .tileno = l_tile_index_no;
+      let fresh = &mut (*(*p_j2k.cstr_index)
+        .tile_index
+        .offset(l_tile_index_no as isize))
+      .current_nb_tps;
       *fresh = (*fresh).wrapping_add(1);
       i += 1;
     }
@@ -8800,8 +8810,9 @@ fn opj_j2k_build_tp_index_from_tlm(mut p_j2k: &mut opj_j2k, mut p_manager: &mut 
       while i < (*l_tlm).m_entries_count {
         let l_tile_index_no =
           (*(*l_tlm).m_tile_part_infos.offset(i as isize)).m_tile_index as OPJ_UINT32;
-        let l_tile_index: *mut opj_tile_index_t =
-          &mut *(*p_j2k.cstr_index).tile_index.offset(l_tile_index_no as isize);
+        let l_tile_index: *mut opj_tile_index_t = &mut *(*p_j2k.cstr_index)
+          .tile_index
+          .offset(l_tile_index_no as isize);
         if (*l_tile_index).tp_index.is_null() {
           (*l_tile_index).tp_index = opj_calloc(
             (*l_tile_index).current_nb_tps as size_t,
@@ -8819,11 +8830,17 @@ fn opj_j2k_build_tp_index_from_tlm(mut p_j2k: &mut opj_j2k, mut p_manager: &mut 
         }
 
         assert!((*l_tile_index).nb_tps < (*l_tile_index).current_nb_tps);
-        (*(*l_tile_index).tp_index.offset((*l_tile_index).nb_tps as isize)).start_pos = l_cur_offset;
+        (*(*l_tile_index)
+          .tp_index
+          .offset((*l_tile_index).nb_tps as isize))
+        .start_pos = l_cur_offset;
         /* We don't know how to set the tp_index[].end_header field, but this is not really needed */
         /* If there would be no markers between SOT and SOD, that would be : */
         /* l_tile_index->tp_index[l_tile_index->nb_tps].end_header = l_cur_offset + 12; */
-        (*(*l_tile_index).tp_index.offset((*l_tile_index).nb_tps as isize)).end_pos =
+        (*(*l_tile_index)
+          .tp_index
+          .offset((*l_tile_index).nb_tps as isize))
+        .end_pos =
           l_cur_offset + (*(*l_tlm).m_tile_part_infos.offset(i as isize)).m_length as OPJ_OFF_T;
         (*l_tile_index).nb_tps = (*l_tile_index).nb_tps.wrapping_add(1);
 
@@ -8842,7 +8859,8 @@ fn opj_j2k_build_tp_index_from_tlm(mut p_j2k: &mut opj_j2k, mut p_manager: &mut 
     while i < (*l_tlm).m_entries_count {
       let l_tile_index =
         (*(*l_tlm).m_tile_part_infos.offset(i as isize)).m_tile_index as OPJ_UINT32;
-      (*(*p_j2k.cstr_index).tile_index.offset(l_tile_index as isize)).current_nb_tps = 0 as OPJ_UINT32;
+      (*(*p_j2k.cstr_index).tile_index.offset(l_tile_index as isize)).current_nb_tps =
+        0 as OPJ_UINT32;
       opj_free(
         (*(*p_j2k.cstr_index).tile_index.offset(l_tile_index as isize)).tp_index
           as *mut core::ffi::c_void,
@@ -9289,10 +9307,15 @@ impl Drop for opj_j2k {
           core::ptr::null_mut::<opj_j2k_tlm_tile_part_info_t>();
 
         opj_free(
-          self.m_specific_param.m_decoder.m_intersecting_tile_parts_offset as *mut core::ffi::c_void,
+          self
+            .m_specific_param
+            .m_decoder
+            .m_intersecting_tile_parts_offset as *mut core::ffi::c_void,
         );
-        self.m_specific_param.m_decoder.m_intersecting_tile_parts_offset =
-          core::ptr::null_mut::<OPJ_OFF_T>();
+        self
+          .m_specific_param
+          .m_decoder
+          .m_intersecting_tile_parts_offset = core::ptr::null_mut::<OPJ_OFF_T>();
       } else {
         if !self
           .m_specific_param
@@ -9681,16 +9704,34 @@ pub(crate) fn opj_j2k_read_tile_header(
     /* We need to encounter a SOT marker (a new tile-part header) */
     /* Read into the codestream until reach the EOC or ! can_decode ??? FIXME */
     while !p_j2k.m_specific_param.m_decoder.m_can_decode && l_current_marker != J2KMarker::EOC {
-      if p_j2k.m_specific_param.m_decoder.m_num_intersecting_tile_parts > 0u32
-        && p_j2k.m_specific_param.m_decoder.m_idx_intersecting_tile_parts
-          < p_j2k.m_specific_param.m_decoder.m_num_intersecting_tile_parts
+      if p_j2k
+        .m_specific_param
+        .m_decoder
+        .m_num_intersecting_tile_parts
+        > 0u32
+        && p_j2k
+          .m_specific_param
+          .m_decoder
+          .m_idx_intersecting_tile_parts
+          < p_j2k
+            .m_specific_param
+            .m_decoder
+            .m_num_intersecting_tile_parts
       {
         let next_tp_sot_pos: OPJ_OFF_T = *p_j2k
           .m_specific_param
           .m_decoder
           .m_intersecting_tile_parts_offset
-          .offset(p_j2k.m_specific_param.m_decoder.m_idx_intersecting_tile_parts as isize);
-        p_j2k.m_specific_param.m_decoder.m_idx_intersecting_tile_parts = p_j2k
+          .offset(
+            p_j2k
+              .m_specific_param
+              .m_decoder
+              .m_idx_intersecting_tile_parts as isize,
+          );
+        p_j2k
+          .m_specific_param
+          .m_decoder
+          .m_idx_intersecting_tile_parts = p_j2k
           .m_specific_param
           .m_decoder
           .m_idx_intersecting_tile_parts
@@ -9978,8 +10019,7 @@ pub(crate) fn opj_j2k_read_tile_header(
             .m_specific_param
             .m_decoder
             .m_nb_tile_parts_correction_checked = true;
-          if (*p_j2k.m_cp.tcps.offset(p_j2k.m_current_tile_number as isize)).m_nb_tile_parts
-            == 1u32
+          if (*p_j2k.m_cp.tcps.offset(p_j2k.m_current_tile_number as isize)).m_nb_tile_parts == 1u32
           {
             /* Skip opj_j2k_need_nb_tile_parts_correction() if there is
              * only a single tile part declared. The
@@ -10210,12 +10250,20 @@ pub(crate) fn opj_j2k_decode_tile(
         // OpenJPEG 2.5.4: a truncated codestream is an error only in strict mode;
         // otherwise what was decoded so far is returned (progressive fetches rely on it).
         if p_j2k.m_cp.strict != 0 {
-          event_msg!(p_manager, EVT_ERROR, "Stream too short
-",);
+          event_msg!(
+            p_manager,
+            EVT_ERROR,
+            "Stream too short
+",
+          );
           return 0i32;
         }
-        event_msg!(p_manager, EVT_WARNING, "Stream too short
-",);
+        event_msg!(
+          p_manager,
+          EVT_WARNING,
+          "Stream too short
+",
+        );
         return 1i32;
       }
       l_current_marker = J2KMarker::from_buffer(l_data.as_mut_ptr());
@@ -12367,13 +12415,24 @@ fn opj_j2k_decode_tiles(
       return 1i32;
     }
 
-    p_j2k.m_specific_param.m_decoder.m_num_intersecting_tile_parts = 0 as OPJ_UINT32;
-    p_j2k.m_specific_param.m_decoder.m_idx_intersecting_tile_parts = 0 as OPJ_UINT32;
+    p_j2k
+      .m_specific_param
+      .m_decoder
+      .m_num_intersecting_tile_parts = 0 as OPJ_UINT32;
+    p_j2k
+      .m_specific_param
+      .m_decoder
+      .m_idx_intersecting_tile_parts = 0 as OPJ_UINT32;
     opj_free(
-      p_j2k.m_specific_param.m_decoder.m_intersecting_tile_parts_offset as *mut core::ffi::c_void,
+      p_j2k
+        .m_specific_param
+        .m_decoder
+        .m_intersecting_tile_parts_offset as *mut core::ffi::c_void,
     );
-    p_j2k.m_specific_param.m_decoder.m_intersecting_tile_parts_offset =
-      core::ptr::null_mut::<OPJ_OFF_T>();
+    p_j2k
+      .m_specific_param
+      .m_decoder
+      .m_intersecting_tile_parts_offset = core::ptr::null_mut::<OPJ_OFF_T>();
 
     /* If the area to decode only intersects a subset of tiles, and we have
      * valid TLM information, then use it to plan the tilepart offsets to
@@ -12419,7 +12478,10 @@ fn opj_j2k_decode_tiles(
         j += 1;
       }
 
-      p_j2k.m_specific_param.m_decoder.m_intersecting_tile_parts_offset = opj_malloc(
+      p_j2k
+        .m_specific_param
+        .m_decoder
+        .m_intersecting_tile_parts_offset = opj_malloc(
         (m_num_intersecting_tile_parts as usize).wrapping_mul(core::mem::size_of::<OPJ_OFF_T>()),
       ) as *mut OPJ_OFF_T;
       if m_num_intersecting_tile_parts > 0u32
@@ -12430,7 +12492,10 @@ fn opj_j2k_decode_tiles(
           .is_null()
       {
         let mut idx = 0 as OPJ_UINT32;
-        let l_offsets = p_j2k.m_specific_param.m_decoder.m_intersecting_tile_parts_offset;
+        let l_offsets = p_j2k
+          .m_specific_param
+          .m_decoder
+          .m_intersecting_tile_parts_offset;
         j = p_j2k.m_specific_param.m_decoder.m_start_tile_y;
         while j < p_j2k.m_specific_param.m_decoder.m_end_tile_y {
           let mut i: OPJ_UINT32 = p_j2k.m_specific_param.m_decoder.m_start_tile_x;
@@ -12451,7 +12516,10 @@ fn opj_j2k_decode_tiles(
           j += 1;
         }
 
-        p_j2k.m_specific_param.m_decoder.m_num_intersecting_tile_parts = idx;
+        p_j2k
+          .m_specific_param
+          .m_decoder
+          .m_num_intersecting_tile_parts = idx;
 
         /* Sort by increasing offset */
         core::slice::from_raw_parts_mut(l_offsets, idx as usize).sort_unstable();
@@ -12518,9 +12586,19 @@ fn opj_j2k_decode_tiles(
       if nr_tiles == p_j2k.m_cp.th.wrapping_mul(p_j2k.m_cp.tw) {
         break;
       }
-      if p_j2k.m_specific_param.m_decoder.m_num_intersecting_tile_parts > 0u32
-        && p_j2k.m_specific_param.m_decoder.m_idx_intersecting_tile_parts
-          == p_j2k.m_specific_param.m_decoder.m_num_intersecting_tile_parts
+      if p_j2k
+        .m_specific_param
+        .m_decoder
+        .m_num_intersecting_tile_parts
+        > 0u32
+        && p_j2k
+          .m_specific_param
+          .m_decoder
+          .m_idx_intersecting_tile_parts
+          == p_j2k
+            .m_specific_param
+            .m_decoder
+            .m_num_intersecting_tile_parts
       {
         opj_stream_seek(p_stream, end_pos + 2i64, p_manager);
         break;

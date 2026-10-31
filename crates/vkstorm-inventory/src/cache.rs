@@ -29,11 +29,11 @@ use std::collections::BTreeSet;
 
 use vkstorm_llsd::{Format, Limits, Reader, SliceSource, Value, ValueBuilder, XmlMode};
 
-use crate::category::{ViewerCategory, VERSION_UNKNOWN};
+use crate::category::{VERSION_UNKNOWN, ViewerCategory};
 use crate::item::Item;
 use crate::llsd::coerce::insert;
-use crate::model::{viewer_item_type, ModelLookup};
-use crate::perms::{Uuid, NULL_ID};
+use crate::model::{ModelLookup, viewer_item_type};
+use crate::perms::{NULL_ID, Uuid};
 use crate::types::AssetType;
 
 /// `LLInventoryModel::sCurrentInvCacheVersion`.
@@ -142,7 +142,10 @@ impl Decoded {
 /// item's type, an `AT_LINK_FOLDER` to a folder the folder's type.
 /// `in_open_sim` is passed to `fromLLSD` (its OpenSim permissions branch).
 pub fn decode(bytes: &[u8], in_open_sim: bool, lookup: &dyn ModelLookup) -> Decoded {
-    let mut out = Decoded { obsolete: true, ..Decoded::default() };
+    let mut out = Decoded {
+        obsolete: true,
+        ..Decoded::default()
+    };
     if bytes.len() < 4 {
         return out;
     }
@@ -154,12 +157,22 @@ pub fn decode(bytes: &[u8], in_open_sim: bool, lookup: &dyn ModelLookup) -> Deco
     let mut src = SliceSource::new(body);
     let mut r = Reader::new(&mut src);
     let mut builder = ValueBuilder::new(vkstorm_llsd::key_policy(Format::Binary));
-    let n = vkstorm_llsd::parse_into(Format::Binary, &mut r, &mut builder, Limits::UNLIMITED, XmlMode::Parse);
+    let n = vkstorm_llsd::parse_into(
+        Format::Binary,
+        &mut r,
+        &mut builder,
+        Limits::UNLIMITED,
+        XmlMode::Parse,
+    );
     if n == vkstorm_llsd::PARSE_FAILURE {
         return out;
     }
     out.obsolete = false;
-    let inventory = if n > 0 { builder.finish().unwrap_or(Value::Undefined) } else { Value::Undefined };
+    let inventory = if n > 0 {
+        builder.finish().unwrap_or(Value::Undefined)
+    } else {
+        Value::Undefined
+    };
     let Value::Map(map) = &inventory else {
         return out;
     };
@@ -197,7 +210,10 @@ mod tests {
 
     #[test]
     fn round_trip_and_header_rules() {
-        let mut cat = ViewerCategory { version: 3, ..ViewerCategory::default() };
+        let mut cat = ViewerCategory {
+            version: 3,
+            ..ViewerCategory::default()
+        };
         cat.category.object.id = [1; 16];
         let unknown = ViewerCategory::default();
         let mut item = Item::default();
@@ -209,7 +225,11 @@ mod tests {
         assert_eq!(bytes.last(), Some(&b'\n'));
         let d = decode(&bytes, false, &EmptyModel);
         assert!(d.rv());
-        assert_eq!(d.categories.len(), 1, "a folder of unknown version is not saved");
+        assert_eq!(
+            d.categories.len(),
+            1,
+            "a folder of unknown version is not saved"
+        );
         // fromLLSD normalises the item (inventory type, masks); from then on
         // the bytes round-trip.
         let again = encode(&d.categories, &d.items);
@@ -230,8 +250,17 @@ mod tests {
     #[test]
     fn names() {
         let id = [0xab; 16];
-        assert_eq!(cache_file_name(&id, None), b"abababab-abab-abab-abab-abababababab.inv.llsd".to_vec());
-        assert_eq!(cache_file_name(&id, Some(b"aditi")), b"abababab-abab-abab-abab-abababababab.aditi.inv.llsd".to_vec());
-        assert_eq!(delete_marker_name(&id), b"abababab-abab-abab-abab-abababababab_DELETE_INV_GZ".to_vec());
+        assert_eq!(
+            cache_file_name(&id, None),
+            b"abababab-abab-abab-abab-abababababab.inv.llsd".to_vec()
+        );
+        assert_eq!(
+            cache_file_name(&id, Some(b"aditi")),
+            b"abababab-abab-abab-abab-abababababab.aditi.inv.llsd".to_vec()
+        );
+        assert_eq!(
+            delete_marker_name(&id),
+            b"abababab-abab-abab-abab-abababababab_DELETE_INV_GZ".to_vec()
+        );
     }
 }

@@ -12,7 +12,8 @@ use common::*;
 use vkstorm_inventory::aggregate::AggregatePermissions;
 use vkstorm_inventory::legacy::reader::Stream;
 use vkstorm_inventory::perms::{
-    Permissions, Uuid, NULL_ID, PERM_ALL, PERM_COPY, PERM_EXPORT, PERM_MODIFY, PERM_MOVE, PERM_TRANSFER,
+    NULL_ID, PERM_ALL, PERM_COPY, PERM_EXPORT, PERM_MODIFY, PERM_MOVE, PERM_TRANSFER, Permissions,
+    Uuid,
 };
 use vkstorm_inventory::types::InventoryType;
 use vkstorm_llsd::Value;
@@ -198,7 +199,11 @@ fn c3_lines() -> Lines {
                     ..PERM_F
                 };
                 p.fix();
-                s.emit(&format!("c3.fix.{}.{}.{go}", x8(b), x8(x)), "perm", &perm_cols(&p));
+                s.emit(
+                    &format!("c3.fix.{}.{}.{go}", x8(b), x8(x)),
+                    "perm",
+                    &perm_cols(&p),
+                );
             }
         }
     }
@@ -207,7 +212,11 @@ fn c3_lines() -> Lines {
         for &n in &MASK_EDGES {
             let mut p = Permissions::default();
             p.init_masks(b, PERM_ALL, PERM_ALL, PERM_ALL, n);
-            s.emit(&format!("c3.initmasks.{}.{}", x8(b), x8(n)), "perm", &perm_cols(&p));
+            s.emit(
+                &format!("c3.initmasks.{}.{}", x8(b), x8(n)),
+                "perm",
+                &perm_cols(&p),
+            );
         }
     }
     // initMasks(inventory type).
@@ -216,7 +225,11 @@ fn c3_lines() -> Lines {
         for si in [0, 5] {
             let mut p = states[si];
             p.init_masks_for_type(InventoryType(t));
-            s.emit(&format!("c3.initmasks_type.{t}.{si}"), "perm", &perm_cols(&p));
+            s.emit(
+                &format!("c3.initmasks_type.{t}.{si}"),
+                "perm",
+                &perm_cols(&p),
+            );
         }
     }
     {
@@ -275,21 +288,41 @@ fn c3_lines() -> Lines {
                     let tail = format!("{si}.{}.{}.{}", idname(agent), u8::from(set), x8(bit));
                     let mut p = states[si];
                     let ret = p.set_base_bits(agent, set, bit);
-                    s.emit(&format!("c3.setbase.{tail}"), "ret+perm", &ret_perm_cols(ret, &p));
+                    s.emit(
+                        &format!("c3.setbase.{tail}"),
+                        "ret+perm",
+                        &ret_perm_cols(ret, &p),
+                    );
                     let mut p = states[si];
                     let ret = p.set_owner_bits(agent, set, bit);
-                    s.emit(&format!("c3.setowner.{tail}"), "ret+perm", &ret_perm_cols(ret, &p));
+                    s.emit(
+                        &format!("c3.setowner.{tail}"),
+                        "ret+perm",
+                        &ret_perm_cols(ret, &p),
+                    );
                     for group in &groups {
                         let gt = format!("{tail}.{}", idname(group));
                         let mut p = states[si];
                         let ret = p.set_group_bits(agent, group, set, bit);
-                        s.emit(&format!("c3.setgroup.{gt}"), "ret+perm", &ret_perm_cols(ret, &p));
+                        s.emit(
+                            &format!("c3.setgroup.{gt}"),
+                            "ret+perm",
+                            &ret_perm_cols(ret, &p),
+                        );
                         let mut p = states[si];
                         let ret = p.set_everyone_bits(agent, group, set, bit);
-                        s.emit(&format!("c3.seteveryone.{gt}"), "ret+perm", &ret_perm_cols(ret, &p));
+                        s.emit(
+                            &format!("c3.seteveryone.{gt}"),
+                            "ret+perm",
+                            &ret_perm_cols(ret, &p),
+                        );
                         let mut p = states[si];
                         let ret = p.set_next_owner_bits(agent, group, set, bit);
-                        s.emit(&format!("c3.setnext.{gt}"), "ret+perm", &ret_perm_cols(ret, &p));
+                        s.emit(
+                            &format!("c3.setnext.{gt}"),
+                            "ret+perm",
+                            &ret_perm_cols(ret, &p),
+                        );
                     }
                 }
             }
@@ -309,7 +342,11 @@ fn c3_lines() -> Lines {
         let mut r = Permissions::default();
         r.set(p);
         s.emit(&cs, "set", &perm_cols(&r));
-        s.emit(&cs, "eq", &[bl(r == *p), bl(r != *p), bl(q == *p), bl(q != *p)]);
+        s.emit(
+            &cs,
+            "eq",
+            &[bl(r == *p), bl(r != *p), bl(q == *p), bl(q != *p)],
+        );
         // Legacy text.
         let mut q = states[0];
         let (text, ok, stream) = legacy_round_trip(p, &mut q);
@@ -319,7 +356,11 @@ fn c3_lines() -> Lines {
         // LLSD.
         let sd = p.to_llsd();
         s.emit_llsd(&cs, "llsd", &sd);
-        s.emit(&cs, "llsd.reimport", &perm_cols(&Permissions::from_llsd(&sd)));
+        s.emit(
+            &cs,
+            "llsd.reimport",
+            &perm_cols(&Permissions::from_llsd(&sd)),
+        );
         let mut filled = Value::map();
         if let Value::Map(m) = &mut filled {
             m.insert(b"preexisting".to_vec(), Value::Integer(1));
@@ -337,7 +378,12 @@ fn c3_lines() -> Lines {
         s.emit(&cs, "unpackmessage", &perm_cols(&q));
     }
     // importLLSD of non-maps.
-    let non_maps = [Value::Undefined, Value::Integer(5), Value::string("x"), Value::array()];
+    let non_maps = [
+        Value::Undefined,
+        Value::Integer(5),
+        Value::string("x"),
+        Value::array(),
+    ];
     for (i, v) in non_maps.iter().enumerate() {
         let mut q = states[5];
         q.import_llsd(v);
@@ -355,8 +401,16 @@ fn c3_lines() -> Lines {
             bl(a.is_empty()),
         ]
     };
-    s.emit("c3.agg.seq", "agg", &agg_cols(&AggregatePermissions::default()));
-    s.emit("c3.agg.empty", "agg", &agg_cols(&AggregatePermissions::EMPTY));
+    s.emit(
+        "c3.agg.seq",
+        "agg",
+        &agg_cols(&AggregatePermissions::default()),
+    );
+    s.emit(
+        "c3.agg.empty",
+        "agg",
+        &agg_cols(&AggregatePermissions::EMPTY),
+    );
     for &m1 in &agg_masks {
         let mut a1 = AggregatePermissions::default();
         a1.aggregate_mask(m1);
@@ -364,11 +418,19 @@ fn c3_lines() -> Lines {
         for &m2 in &agg_masks {
             let mut a2 = a1;
             a2.aggregate_mask(m2);
-            s.emit(&format!("c3.agg.seq.{}.{}", x8(m1), x8(m2)), "agg", &agg_cols(&a2));
+            s.emit(
+                &format!("c3.agg.seq.{}.{}", x8(m1), x8(m2)),
+                "agg",
+                &agg_cols(&a2),
+            );
             for &m3 in &agg_masks {
                 let mut a3 = a2;
                 a3.aggregate_mask(m3);
-                s.emit(&format!("c3.agg.seq.{}.{}.{}", x8(m1), x8(m2), x8(m3)), "agg", &agg_cols(&a3));
+                s.emit(
+                    &format!("c3.agg.seq.{}.{}.{}", x8(m1), x8(m2), x8(m3)),
+                    "agg",
+                    &agg_cols(&a3),
+                );
             }
         }
     }
@@ -419,10 +481,32 @@ fn draw_perm(r: &mut Rng) -> Permissions {
     let everyone = draw_mask(r);
     let next = draw_mask(r);
     let group_owned = r.coin();
-    Permissions { creator, owner, last_owner, group, base, owner_mask, group_mask, everyone, next, group_owned }
+    Permissions {
+        creator,
+        owner,
+        last_owner,
+        group,
+        base,
+        owner_mask,
+        group_mask,
+        everyone,
+        next,
+        group_owned,
+    }
 }
 
-const DRAW_BITS: [u32; 10] = [T_, M_, C_, V_, X_, 0x00000001, 0x80000000, T_ | M_ | C_, PERM_ALL, 0xffffffff];
+const DRAW_BITS: [u32; 10] = [
+    T_,
+    M_,
+    C_,
+    V_,
+    X_,
+    0x00000001,
+    0x80000000,
+    T_ | M_ | C_,
+    PERM_ALL,
+    0xffffffff,
+];
 const C3_OP_NAMES: [&str; 12] = [
     "accumulate",
     "setOwnerAndGroup",
@@ -452,7 +536,10 @@ struct C3In {
 }
 
 fn draw_c3(r: &mut Rng) -> C3In {
-    let mut c = C3In { st: draw_perm(r), ..C3In::default() };
+    let mut c = C3In {
+        st: draw_perm(r),
+        ..C3In::default()
+    };
     c.op = r.below(12);
     match c.op {
         0 => c.other = draw_perm(r),
@@ -581,7 +668,11 @@ fn c3_random_stream() {
 // ---------------------------------------------------------------------------
 
 fn alpha5(i: u32) -> u32 {
-    [T_, M_, C_, V_, X_].iter().enumerate().filter(|(k, _)| i & (1 << k) != 0).fold(0, |m, (_, b)| m | b)
+    [T_, M_, C_, V_, X_]
+        .iter()
+        .enumerate()
+        .filter(|(k, _)| i & (1 << k) != 0)
+        .fold(0, |m, (_, b)| m | b)
 }
 
 fn alpha4(i: u32) -> u32 {
@@ -622,7 +713,13 @@ fn c3x_fair(i: u32, table: &[u32], out: &mut Vec<u8>) {
     const OTHERS: [u32; 5] = [PERM_ALL, 0, T_ | C_, M_ | V_, 0xffffffff];
     let k = (i >> 14) as usize;
     let mut p = Permissions::default();
-    p.init_masks(table[(i & 127) as usize], OTHERS[k % 5], OTHERS[(k / 5) % 5], OTHERS[(k / 25) % 5], table[((i >> 7) & 127) as usize]);
+    p.init_masks(
+        table[(i & 127) as usize],
+        OTHERS[k % 5],
+        OTHERS[(k / 5) % 5],
+        OTHERS[(k / 25) % 5],
+        table[((i >> 7) & 127) as usize],
+    );
     masks_le(&p, out);
 }
 
@@ -653,13 +750,29 @@ fn sweep(name: &str, cases: u64, case: &(dyn Fn(u32, &mut Vec<u8>) + Sync)) -> V
             let part = scope.spawn(|| sha256_hex(&buf));
             let next = (end < cases).then(|| scope.spawn(move || build(end)));
             total.update(&buf);
-            (part.join().expect("chunk digest thread"), next.map(|h| h.join().expect("chunk build thread")))
+            (
+                part.join().expect("chunk digest thread"),
+                next.map(|h| h.join().expect("chunk build thread")),
+            )
         });
-        entries.push([format!("{name}@{start}-{end}"), (end - start).to_string(), (end - start).to_string(), part]);
+        entries.push([
+            format!("{name}@{start}-{end}"),
+            (end - start).to_string(),
+            (end - start).to_string(),
+            part,
+        ]);
         buf = next.unwrap_or_default();
         start = end;
     }
-    entries.insert(0, [name.to_owned(), cases.to_string(), cases.to_string(), total.hex()]);
+    entries.insert(
+        0,
+        [
+            name.to_owned(),
+            cases.to_string(),
+            cases.to_string(),
+            total.hex(),
+        ],
+    );
     entries
 }
 
@@ -686,10 +799,15 @@ fn c3_exhaustive_sweeps() {
         }
         let t7 = &t7;
         handles.push(scope.spawn(move || {
-            let e = sweep("c3x.initmasks5", C3X_FAIR_CASES, &|i, out| c3x_fair(i, t7, out));
+            let e = sweep("c3x.initmasks5", C3X_FAIR_CASES, &|i, out| {
+                c3x_fair(i, t7, out)
+            });
             ("c3x.initmasks5".to_owned(), e)
         }));
-        handles.into_iter().map(|h| h.join().expect("sweep thread")).collect()
+        handles
+            .into_iter()
+            .map(|h| h.join().expect("sweep thread"))
+            .collect()
     });
     let mut report = String::new();
     let (mut ok, mut n) = (0, 0);
@@ -700,6 +818,9 @@ fn c3_exhaustive_sweeps() {
         n += entries.len();
         report.push_str(&r);
     }
-    println!("c3x: {ok}/{n} digest entries match in {:.1?}", start.elapsed());
+    println!(
+        "c3x: {ok}/{n} digest entries match in {:.1?}",
+        start.elapsed()
+    );
     assert!(report.is_empty(), "{report}");
 }

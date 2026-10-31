@@ -48,35 +48,77 @@ pub struct Mock {
 }
 
 fn m(pairs: Vec<(&str, Value)>) -> Value {
-    Value::Map(pairs.into_iter().map(|(k, v)| (k.as_bytes().to_vec(), v)).collect())
+    Value::Map(
+        pairs
+            .into_iter()
+            .map(|(k, v)| (k.as_bytes().to_vec(), v))
+            .collect(),
+    )
 }
 
 fn idmap(pairs: Vec<(Uuid, Value)>) -> Value {
-    Value::Map(pairs.into_iter().map(|(k, v)| (uuid_string(&k).into_bytes(), v)).collect())
+    Value::Map(
+        pairs
+            .into_iter()
+            .map(|(k, v)| (uuid_string(&k).into_bytes(), v))
+            .collect(),
+    )
 }
 
 fn error_body(code: i32) -> Value {
-    m(vec![("error_code", Value::Integer(code)), ("error_description", Value::String(b"scripted".to_vec()))])
+    m(vec![
+        ("error_code", Value::Integer(code)),
+        ("error_description", Value::String(b"scripted".to_vec())),
+    ])
 }
 
 impl Mock {
     /// `POST /control/world` with the scenario's world.
     pub fn new(w: &World) -> Self {
-        let mut s = Mock { agent: w.agent, fail_status: 404, ..Default::default() };
+        let mut s = Mock {
+            agent: w.agent,
+            fail_status: 404,
+            ..Default::default()
+        };
         // a scripted folder's tag comes from its id (README "Mock fidelity")
-        for f in w.folders.iter().filter(|f| !w.not_on_server.contains(&f.id)) {
-            s.folders.insert(f.id, MFolder { parent: f.parent, ftype: f.ftype, version: f.version, owner: f.owner });
+        for f in w
+            .folders
+            .iter()
+            .filter(|f| !w.not_on_server.contains(&f.id))
+        {
+            s.folders.insert(
+                f.id,
+                MFolder {
+                    parent: f.parent,
+                    ftype: f.ftype,
+                    version: f.version,
+                    owner: f.owner,
+                },
+            );
             s.child_f.entry(f.parent).or_default().push(f.id);
         }
         for i in &w.items {
-            s.items.insert(i.id, MItem { parent: i.parent, owner: i.owner, linked: i.linked });
+            s.items.insert(
+                i.id,
+                MItem {
+                    parent: i.parent,
+                    owner: i.owner,
+                    linked: i.linked,
+                },
+            );
             s.child_i.entry(i.parent).or_default().push(i.id);
         }
         s
     }
 
     /// `POST /control/mode`: the counters restart.
-    pub fn set_mode(&mut self, fail_first: u32, fail_status: i32, fail_subset: u32, legacy_error: u32) {
+    pub fn set_mode(
+        &mut self,
+        fail_first: u32,
+        fail_status: i32,
+        fail_subset: u32,
+        legacy_error: u32,
+    ) {
         self.fail_first = fail_first;
         self.fail_status = fail_status;
         self.fail_subset = fail_subset;
@@ -94,7 +136,10 @@ impl Mock {
     }
 
     fn cof(&self) -> Option<Uuid> {
-        self.folders.iter().find(|(_, f)| f.ftype == FT_CURRENT_OUTFIT).map(|(id, _)| *id)
+        self.folders
+            .iter()
+            .find(|(_, f)| f.ftype == FT_CURRENT_OUTFIT)
+            .map(|(id, _)| *id)
     }
 
     fn item_value(&self, id: &Uuid) -> Value {
@@ -112,7 +157,10 @@ impl Mock {
                         p.push(("_embedded", m(vec![("item", self.item_value(&l))])));
                     }
                 } else if self.folders.contains_key(&l) {
-                    p.push(("_embedded", m(vec![("category", self.cat_value(&l, -1, None, false))])));
+                    p.push((
+                        "_embedded",
+                        m(vec![("category", self.cat_value(&l, -1, None, false))]),
+                    ));
                 }
             }
             None => p.push(("permissions", m(vec![("owner_id", Value::Uuid(it.owner))]))),
@@ -134,7 +182,11 @@ impl Mock {
             let is_link = |i: &Uuid| self.items[i].linked.is_some();
             let mut emb = Vec::new();
             if links_only {
-                let links = kids.iter().filter(|i| is_link(i)).map(|i| (*i, self.item_value(i))).collect();
+                let links = kids
+                    .iter()
+                    .filter(|i| is_link(i))
+                    .map(|i| (*i, self.item_value(i)))
+                    .collect();
                 emb.push(("links", idmap(links)));
             } else {
                 let cats = self
@@ -148,8 +200,16 @@ impl Mock {
                     .collect();
                 emb.push(("categories", idmap(cats)));
                 if subset.is_none() {
-                    let links = kids.iter().filter(|i| is_link(i)).map(|i| (*i, self.item_value(i))).collect();
-                    let items = kids.iter().filter(|i| !is_link(i)).map(|i| (*i, self.item_value(i))).collect();
+                    let links = kids
+                        .iter()
+                        .filter(|i| is_link(i))
+                        .map(|i| (*i, self.item_value(i)))
+                        .collect();
+                    let items = kids
+                        .iter()
+                        .filter(|i| !is_link(i))
+                        .map(|i| (*i, self.item_value(i)))
+                        .collect();
                     emb.push(("links", idmap(links)));
                     emb.push(("items", idmap(items)));
                 }
@@ -168,7 +228,10 @@ impl Mock {
         let mut oid = rest.get(1).copied().unwrap_or("").to_owned();
         let sub = rest.get(2).copied().unwrap_or("");
         if kind == "category" && oid == "current" {
-            oid = self.cof().map(|c| uuid_string(&c)).unwrap_or_else(|| uuid_string(&NULL_ID));
+            oid = self
+                .cof()
+                .map(|c| uuid_string(&c))
+                .unwrap_or_else(|| uuid_string(&NULL_ID));
         }
         let mut q: BTreeMap<&str, &str> = BTreeMap::new();
         for kv in query.split(['&', ',']) {
@@ -198,11 +261,20 @@ impl Mock {
         let is_children = method == "GET" && kind == "category" && sub == "children";
         let pre = |id: &Uuid| uuid_string(id)[..2].to_owned();
         if is_children && has_children && depth.unwrap_or(0) > 0 {
-            if children.as_ref().unwrap().iter().any(|c| matches!(pre(c).as_str(), "f3" | "f4")) {
+            if children
+                .as_ref()
+                .unwrap()
+                .iter()
+                .any(|c| matches!(pre(c).as_str(), "f3" | "f4"))
+            {
                 return (403, Some(error_body(403)));
             }
         }
-        if is_children && has_children && children.as_ref().unwrap().iter().any(|c| pre(c) == "4b") && self.count("4b-subset".into()) < 1 {
+        if is_children
+            && has_children
+            && children.as_ref().unwrap().iter().any(|c| pre(c) == "4b")
+            && self.count("4b-subset".into()) < 1
+        {
             return (404, Some(error_body(404)));
         }
         if is_children && p == "4c" {
@@ -232,7 +304,10 @@ impl Mock {
             "orphans" => {
                 let orphans = self.child_i.get(&NULL_ID).cloned().unwrap_or_default();
                 let items = orphans.iter().map(|i| (*i, self.item_value(i))).collect();
-                (200, Some(m(vec![("_embedded", m(vec![("items", idmap(items))]))])))
+                (
+                    200,
+                    Some(m(vec![("_embedded", m(vec![("items", idmap(items))]))])),
+                )
             }
             "item" => match self.items.contains_key(&id) {
                 true => (200, Some(self.item_value(&id))),
@@ -243,9 +318,15 @@ impl Mock {
                     return (404, Some(error_body(404)));
                 }
                 match sub {
-                    "children" => (200, Some(self.cat_value(&id, depth.unwrap_or(0), children.as_deref(), false))),
+                    "children" => (
+                        200,
+                        Some(self.cat_value(&id, depth.unwrap_or(0), children.as_deref(), false)),
+                    ),
                     "links" => (200, Some(self.cat_value(&id, 0, None, true))),
-                    "categories" => (200, Some(self.cat_value(&id, depth.unwrap_or(0), None, false))),
+                    "categories" => (
+                        200,
+                        Some(self.cat_value(&id, depth.unwrap_or(0), None, false)),
+                    ),
                     _ => (404, Some(error_body(404))),
                 }
             }
@@ -259,13 +340,24 @@ impl Mock {
             Value::Array(a) => a.clone(),
             _ => Vec::new(),
         };
-        let ids: Vec<Uuid> = folders.iter().map(|f| as_uuid(get(f, "folder_id"))).collect();
+        let ids: Vec<Uuid> = folders
+            .iter()
+            .map(|f| as_uuid(get(f, "folder_id")))
+            .collect();
         if ids.iter().any(|i| uuid_string(i).starts_with("f4")) {
             return (403, None);
         }
         for i in &ids {
-            if uuid_string(i).starts_with("e0") && self.count(format!("e0:{}", uuid_string(i))) < self.legacy_error {
-                return (200, Some(m(vec![("error", m(vec![("identifier", Value::String(b"Development".to_vec()))]))])));
+            if uuid_string(i).starts_with("e0")
+                && self.count(format!("e0:{}", uuid_string(i))) < self.legacy_error
+            {
+                return (
+                    200,
+                    Some(m(vec![(
+                        "error",
+                        m(vec![("identifier", Value::String(b"Development".to_vec()))]),
+                    )])),
+                );
             }
         }
         let mut out = Vec::new();
@@ -280,12 +372,18 @@ impl Mock {
                     ("version", Value::Integer(0)),
                     ("descendents", Value::Integer(kids.len() as i32)),
                     ("categories", Value::Array(vec![])),
-                    ("items", Value::Array(kids.iter().map(|k| self.item_value(k)).collect())),
+                    (
+                        "items",
+                        Value::Array(kids.iter().map(|k| self.item_value(k)).collect()),
+                    ),
                 ]));
                 continue;
             }
             let Some(f) = self.folders.get(i).cloned() else {
-                bad.push(m(vec![("folder_id", Value::Uuid(*i)), ("error", Value::String(b"Unknown".to_vec()))]));
+                bad.push(m(vec![
+                    ("folder_id", Value::Uuid(*i)),
+                    ("error", Value::String(b"Unknown".to_vec())),
+                ]));
                 continue;
             };
             let cats = self.child_f.get(i).cloned().unwrap_or_default();
@@ -295,7 +393,10 @@ impl Mock {
                 ("owner_id", Value::Uuid(f.owner)),
                 ("folder_id", Value::Uuid(*i)),
                 ("version", Value::Integer(f.version)),
-                ("descendents", Value::Integer((cats.len() + kids.len()) as i32)),
+                (
+                    "descendents",
+                    Value::Integer((cats.len() + kids.len()) as i32),
+                ),
                 (
                     "categories",
                     Value::Array(
@@ -311,7 +412,10 @@ impl Mock {
                             .collect(),
                     ),
                 ),
-                ("items", Value::Array(kids.iter().map(|k| self.item_value(k)).collect())),
+                (
+                    "items",
+                    Value::Array(kids.iter().map(|k| self.item_value(k)).collect()),
+                ),
             ]));
         }
         let mut p = vec![("folders", Value::Array(out))];
@@ -333,6 +437,12 @@ impl Mock {
             .filter(|i| self.items.contains_key(i))
             .map(|i| self.item_value(&i))
             .collect();
-        (200, Some(m(vec![("agent_id", Value::Uuid(self.agent)), ("items", Value::Array(out))])))
+        (
+            200,
+            Some(m(vec![
+                ("agent_id", Value::Uuid(self.agent)),
+                ("items", Value::Array(out)),
+            ])),
+        )
     }
 }

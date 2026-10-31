@@ -14,7 +14,10 @@ use vkstorm_llsd::Value;
 
 /// `make_sale`: the raw fields.
 fn raw(t: i32, p: i32) -> SaleInfo {
-    SaleInfo { sale_type: SaleType(t), price: p }
+    SaleInfo {
+        sale_type: SaleType(t),
+        price: p,
+    }
 }
 
 const SALE_TYPES: [i32; 8] = [0, 1, 2, 3, -1, 4, 200, 255];
@@ -83,7 +86,11 @@ fn c4_lines() -> Lines {
             s.emit(&cs, "llsd.reimport", &sale_pm_cols(&q, Some(ok), has, pm));
             let csd = r.to_llsd();
             s.emit(&cs, "sdcreate.bin", &[llsd_bin(&csd)]);
-            s.emit(&cs, "sdcreate.reimport", &sale_cols(&SaleInfo::from_sd(&csd)));
+            s.emit(
+                &cs,
+                "sdcreate.reimport",
+                &sale_cols(&SaleInfo::from_sd(&csd)),
+            );
             let pmsg = r.pack_message_llsd();
             s.emit(&cs, "packmessage.bin", &[llsd_bin(&pmsg)]);
             let mut q = raw(1, 77);
@@ -92,13 +99,27 @@ fn c4_lines() -> Lines {
         }
     }
     // accumulate, with the price overflow (runtime edge 4: wraps).
-    let acc = [(0, 10), (1, 20), (1, 1), (2, 0), (3, i32::MAX), (200, 5), (1, i32::MAX), (0, i32::MIN), (0, -1)];
+    let acc = [
+        (0, 10),
+        (1, 20),
+        (1, 1),
+        (2, 0),
+        (3, i32::MAX),
+        (200, 5),
+        (1, i32::MAX),
+        (0, i32::MIN),
+        (0, -1),
+    ];
     for (a, &(ta, pa)) in acc.iter().enumerate() {
         for (b, &(tb, pb)) in acc.iter().enumerate() {
             let mut x = raw(ta, pa);
             x.accumulate(&raw(tb, pb));
             let y = raw(tb, pb);
-            s.emit(&format!("c4.acc.{a}.{b}"), "sale", &[d(x.sale_type.0), d(x.price), bl(x == y), bl(x != y)]);
+            s.emit(
+                &format!("c4.acc.{a}.{b}"),
+                "sale",
+                &[d(x.sale_type.0), d(x.price), bl(x == y), bl(x != y)],
+            );
         }
     }
     // fromLLSD over value types.
@@ -163,13 +184,19 @@ fn c4_lines() -> Lines {
         ("bin0", Some(Value::Binary(vec![]))),
         ("bin3", Some(Value::Binary(vec![1, 2, 3]))),
         ("bin4", Some(b4)),
-        ("bin5", Some(Value::Binary(vec![0x00, 0x00, 0xe0, 0x00, 0xff]))),
+        (
+            "bin5",
+            Some(Value::Binary(vec![0x00, 0x00, 0xe0, 0x00, 0xff])),
+        ),
         ("int", Some(Value::Integer(0x8000))),
         ("str", Some(Value::string("8000"))),
         ("undef", Some(Value::Undefined)),
     ];
     for (name, v) in &pms {
-        let mut entries = vec![("sale_type", Value::string("copy")), ("sale_price", Value::Integer(5))];
+        let mut entries = vec![
+            ("sale_type", Value::string("copy")),
+            ("sale_price", Value::Integer(5)),
+        ];
         if let Some(v) = v {
             entries.push(("perm_mask", v.clone()));
         }
@@ -177,14 +204,27 @@ fn c4_lines() -> Lines {
         let mut q = raw(2, 77);
         let (mut has, mut pm) = (false, 0xa5a5a5a5u32);
         q.from_llsd(&sd, &mut has, &mut pm);
-        s.emit(&format!("c4.permmask.{name}"), "sale+perm_mask", &sale_pm_cols(&q, None, has, pm));
+        s.emit(
+            &format!("c4.permmask.{name}"),
+            "sale+perm_mask",
+            &sale_pm_cols(&q, None, has, pm),
+        );
     }
-    let non_maps = [Value::Undefined, Value::Integer(3), Value::string("copy"), Value::array()];
+    let non_maps = [
+        Value::Undefined,
+        Value::Integer(3),
+        Value::string("copy"),
+        Value::array(),
+    ];
     for (i, v) in non_maps.iter().enumerate() {
         let mut q = raw(2, 77);
         let (mut has, mut pm) = (false, 0xa5a5a5a5u32);
         q.from_llsd(v, &mut has, &mut pm);
-        s.emit(&format!("c4.fromllsd.nonmap.{i}"), "sale+perm_mask", &sale_pm_cols(&q, None, has, pm));
+        s.emit(
+            &format!("c4.fromllsd.nonmap.{i}"),
+            "sale+perm_mask",
+            &sale_pm_cols(&q, None, has, pm),
+        );
     }
     s
 }
@@ -236,7 +276,14 @@ fn draw_c4(r: &mut Rng) -> C4In {
     let type2 = draw_sale_type(r);
     let price2 = draw_price(r);
     let sd_kind = r.below(3);
-    C4In { type1, price1, op, type2, price2, sd_kind }
+    C4In {
+        type1,
+        price1,
+        op,
+        type2,
+        price2,
+        sd_kind,
+    }
 }
 
 /// `c4r_case<I>()`.
@@ -246,7 +293,14 @@ fn c4r_case(i: u64, c: &C4In, s: &mut Lines) {
     s.emit(
         &cs,
         "in",
-        &[d(c.type1), d(c.price1), d(c.op), d(c.type2), d(c.price2), d(c.sd_kind)],
+        &[
+            d(c.type1),
+            d(c.price1),
+            d(c.op),
+            d(c.type2),
+            d(c.price2),
+            d(c.sd_kind),
+        ],
     );
     s.emit(&cs, "crc", &[x8(a.crc32()), bl(a.is_for_sale())]);
     match c.op {
@@ -296,7 +350,13 @@ fn c4r_case(i: u64, c: &C4In, s: &mut Lines) {
             s.emit(
                 &cs,
                 "setters",
-                &[d(q.sale_type.0), d(q.price), bl(q == a), bl(q != a), x8(q.crc32())],
+                &[
+                    d(q.sale_type.0),
+                    d(q.price),
+                    bl(q == a),
+                    bl(q != a),
+                    x8(q.crc32()),
+                ],
             );
         }
     }

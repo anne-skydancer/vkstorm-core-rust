@@ -11,20 +11,20 @@
 
 use vkstorm_llsd::Value;
 
-use super::create::{create_body, create_succeeded, CreateRequest};
+use super::create::{CreateRequest, create_body, create_succeeded};
 use super::file::read_task_inventory;
 use super::llsd::read_reply_contents;
 use super::lookup;
 use super::message::Outgoing;
 use super::{
-    scrubbed_file_name, Action, Entry, Env, FloaterKey, RequestState, TaskState, TaskView, ViewerItem,
-    INVENTORY_UPDATE_WAIT_TIME_DESYNC, INVENTORY_UPDATE_WAIT_TIME_OUTDATED, TASK_INVENTORY_ASSET_KEY,
-    TASK_INVENTORY_ITEM_KEY,
+    Action, Entry, Env, FloaterKey, INVENTORY_UPDATE_WAIT_TIME_DESYNC,
+    INVENTORY_UPDATE_WAIT_TIME_OUTDATED, RequestState, TASK_INVENTORY_ASSET_KEY,
+    TASK_INVENTORY_ITEM_KEY, TaskState, TaskView, ViewerItem, scrubbed_file_name,
 };
 use crate::item::Item;
 use crate::llsd::coerce::{as_integer, get};
 use crate::message::ItemBlock;
-use crate::perms::{Uuid, NULL_ID};
+use crate::perms::{NULL_ID, Uuid};
 use crate::types::AssetType;
 
 /// The object during one decision: the view's state, changed as the
@@ -200,7 +200,9 @@ impl<'a> Work<'a> {
         self.delete_inventory();
         self.set_request(RequestState::Pending);
         match self.env.region {
-            Some(r) if !r.request_task_inventory.is_empty() => self.out.push(Action::LaunchCapFetch),
+            Some(r) if !r.request_task_inventory.is_empty() => {
+                self.out.push(Action::LaunchCapFetch)
+            }
             None => self.set_request(RequestState::Stopped),
             Some(_) => {
                 let a = self.env.agent;
@@ -219,7 +221,9 @@ impl<'a> Work<'a> {
             return;
         }
         if self.st.xfer_id != 0 {
-            self.out.push(Action::AbortXfer { id: self.st.xfer_id });
+            self.out.push(Action::AbortXfer {
+                id: self.st.xfer_id,
+            });
             self.set_xfer(0);
         }
         self.set_request(RequestState::Wait);
@@ -235,7 +239,9 @@ impl<'a> Work<'a> {
         };
         self.reset_inventory();
         self.push_front_all(read_task_inventory(bytes));
-        self.out.push(Action::RemoveCacheFile { filename: filename.to_vec() });
+        self.out.push(Action::RemoveCacheFile {
+            filename: filename.to_vec(),
+        });
         self.do_inventory_callback();
         true
     }
@@ -273,7 +279,12 @@ impl<'a> Work<'a> {
         }
         .and_then(|i| entries[i].as_item());
         let (item_id, new_owner, new_group, group_owned) = match old {
-            Some(o) => (o.item.object.id, o.item.permissions.owner, o.item.permissions.group, o.item.permissions.is_group_owned()),
+            Some(o) => (
+                o.item.object.id,
+                o.item.permissions.owner,
+                o.item.permissions.group,
+                o.item.permissions.is_group_owned(),
+            ),
             None => (item.item.object.id, NULL_ID, NULL_ID, false),
         };
         if !is_new && self.inv.is_some() {
@@ -285,7 +296,12 @@ impl<'a> Work<'a> {
             } else if group_owned || new_owner != NULL_ID {
                 perm.set_owner_and_group(&NULL_ID, &new_owner, &new_group, is_atomic);
             } else if self.env.you_owner {
-                perm.set_owner_and_group(&NULL_ID, &self.env.agent.id, &item.item.permissions.group, is_atomic);
+                perm.set_owner_and_group(
+                    &NULL_ID,
+                    &self.env.agent.id,
+                    &item.item.permissions.group,
+                    is_atomic,
+                );
                 self.add_expected(-1);
             } else {
                 perm.set_owner_and_group(&NULL_ID, &NULL_ID, &NULL_ID, is_atomic);
@@ -363,9 +379,17 @@ pub fn delete_inventory_item(view: &TaskView<'_>, env: &Env<'_>, item_id: &Uuid)
 /// serials set, and a file name that scrubs to empty mocks up the
 /// `Contents` drop target, otherwise the file is requested
 /// ([`Action::RequestXfer`], continued by [`xfer_requested`]).
-pub fn reply_task_inventory(view: &TaskView<'_>, env: &Env<'_>, serial: i16, filename: &[u8]) -> Vec<Action> {
+pub fn reply_task_inventory(
+    view: &TaskView<'_>,
+    env: &Env<'_>,
+    serial: i16,
+    filename: &[u8],
+) -> Vec<Action> {
     let mut w = Work::new(view, env);
-    if env.region.is_some_and(|r| !r.request_task_inventory.is_empty()) {
+    if env
+        .region
+        .is_some_and(|r| !r.request_task_inventory.is_empty())
+    {
         w.set_expected(serial);
         w.fetch_inventory_from_server();
         return w.finish();
@@ -387,7 +411,10 @@ pub fn reply_task_inventory(view: &TaskView<'_>, env: &Env<'_>, serial: i16, fil
                 w.set_request(RequestState::Stopped);
             }
         } else {
-            w.out.push(Action::RequestXfer { filename: name, serial });
+            w.out.push(Action::RequestXfer {
+                filename: name,
+                serial,
+            });
         }
     }
     w.finish()
@@ -454,7 +481,12 @@ pub fn xfer_completed(
 
 /// `loadTaskInvFile(filename)` with the cache file's bytes (`None` when it
 /// cannot be opened): whether it loaded, and the actions.
-pub fn load_task_inv_file(view: &TaskView<'_>, env: &Env<'_>, filename: &[u8], file: Option<&[u8]>) -> (bool, Vec<Action>) {
+pub fn load_task_inv_file(
+    view: &TaskView<'_>,
+    env: &Env<'_>,
+    filename: &[u8],
+    file: Option<&[u8]>,
+) -> (bool, Vec<Action>) {
     let mut w = Work::new(view, env);
     let ok = w.load_task_inv_file(filename, file);
     (ok, w.finish())
@@ -486,7 +518,13 @@ pub fn cap_fetch_begin(view: &TaskView<'_>, env: &Env<'_>) -> Vec<Action> {
 /// loads the reply; a 304 releases the request and sets the expected serial
 /// to the current one; any other status releases the request. A received
 /// (or kept, on 304) serial below the expected one is stale: refetch in 1 s.
-pub fn cap_fetch_reply(view: &TaskView<'_>, env: &Env<'_>, success: bool, http_status: i32, result: &Value) -> Vec<Action> {
+pub fn cap_fetch_reply(
+    view: &TaskView<'_>,
+    env: &Env<'_>,
+    success: bool,
+    http_status: i32,
+    result: &Value,
+) -> Vec<Action> {
     let mut w = Work::new(view, env);
     let mut potentially_stale = false;
     if success {
@@ -521,7 +559,13 @@ pub fn delayed_fetch_due(view: &TaskView<'_>, env: &Env<'_>) -> Vec<Action> {
 /// task copy of the item (sliced to the viewer's fields, the object as
 /// parent, the item's transaction id), then the local update with the
 /// owner guess.
-pub fn update_inventory(view: &TaskView<'_>, env: &Env<'_>, item: &ViewerItem, key: u8, is_new: bool) -> Vec<Action> {
+pub fn update_inventory(
+    view: &TaskView<'_>,
+    env: &Env<'_>,
+    item: &ViewerItem,
+    key: u8,
+    is_new: bool,
+) -> Vec<Action> {
     let mut w = Work::new(view, env);
     let task_item = task_item_with_transaction(item, &w.id);
     w.update_inventory(&task_item, key, is_new);
@@ -530,7 +574,12 @@ pub fn update_inventory(view: &TaskView<'_>, env: &Env<'_>, item: &ViewerItem, k
 
 /// `updateInventoryLocal(item, key)`: the local update only (no message,
 /// no transaction id), as not new.
-pub fn update_inventory_local(view: &TaskView<'_>, env: &Env<'_>, item: &Item, key: u8) -> Vec<Action> {
+pub fn update_inventory_local(
+    view: &TaskView<'_>,
+    env: &Env<'_>,
+    item: &Item,
+    key: u8,
+) -> Vec<Action> {
     let mut w = Work::new(view, env);
     let task_item = ViewerItem::task_copy(item, &w.id);
     w.do_update_inventory(&task_item, key, false);
@@ -539,7 +588,12 @@ pub fn update_inventory_local(view: &TaskView<'_>, env: &Env<'_>, item: &Item, k
 
 /// `updateViewerInventoryAsset(item, new_asset)`: a copy of the item with
 /// the new asset, updated locally by item id, as not new.
-pub fn update_viewer_inventory_asset(view: &TaskView<'_>, env: &Env<'_>, item: &ViewerItem, new_asset: &Uuid) -> Vec<Action> {
+pub fn update_viewer_inventory_asset(
+    view: &TaskView<'_>,
+    env: &Env<'_>,
+    item: &ViewerItem,
+    new_asset: &Uuid,
+) -> Vec<Action> {
     let mut w = Work::new(view, env);
     let mut task_item = ViewerItem::copy_from(item);
     task_item.item.asset = *new_asset;
@@ -550,7 +604,13 @@ pub fn update_viewer_inventory_asset(view: &TaskView<'_>, env: &Env<'_>, item: &
 /// `updateMaterialInventory(item, key, is_new)`: textures and materials
 /// only, not already present or pending, with a region; the asset is added
 /// to the pending list, then [`update_inventory`].
-pub fn update_material_inventory(view: &TaskView<'_>, env: &Env<'_>, item: &ViewerItem, key: u8, is_new: bool) -> Vec<Action> {
+pub fn update_material_inventory(
+    view: &TaskView<'_>,
+    env: &Env<'_>,
+    item: &ViewerItem,
+    key: u8,
+    is_new: bool,
+) -> Vec<Action> {
     let mut w = Work::new(view, env);
     let t = item.item.object.asset_type;
     if t != AssetType::TEXTURE && t != AssetType::MATERIAL {
@@ -576,9 +636,15 @@ pub fn remove_inventory(view: &TaskView<'_>, env: &Env<'_>, item_id: &Uuid) -> V
     let mut w = Work::new(view, env);
     w.out.push(Action::HideFloater {
         name: "item_properties",
-        key: FloaterKey::ItemAndObject { id: *item_id, object: w.id },
+        key: FloaterKey::ItemAndObject {
+            id: *item_id,
+            object: w.id,
+        },
     });
-    w.out.push(Action::HideFloater { name: "properties", key: FloaterKey::Id(*item_id) });
+    w.out.push(Action::HideFloater {
+        name: "properties",
+        key: FloaterKey::Id(*item_id),
+    });
     if env.region.is_none() {
         return w.finish();
     }
@@ -597,7 +663,12 @@ pub fn remove_inventory(view: &TaskView<'_>, env: &Env<'_>, item_id: &Uuid) -> V
 /// `moveInventory(folder_id, item_id)`: (with a region)
 /// `MoveTaskInventory`; an item the agent may not copy leaves the contents
 /// and raises the expected serial.
-pub fn move_inventory(view: &TaskView<'_>, env: &Env<'_>, folder_id: &Uuid, item_id: &Uuid) -> Vec<Action> {
+pub fn move_inventory(
+    view: &TaskView<'_>,
+    env: &Env<'_>,
+    folder_id: &Uuid,
+    item_id: &Uuid,
+) -> Vec<Action> {
     let mut w = Work::new(view, env);
     if env.region.is_none() {
         return w.finish();
@@ -637,7 +708,8 @@ pub fn save_script(
         return w.finish();
     }
     let a = env.agent;
-    let template = (task_item.item.asset == NULL_ID && *template_id != NULL_ID).then_some(*template_id);
+    let template =
+        (task_item.item.asset == NULL_ID && *template_id != NULL_ID).then_some(*template_id);
     w.out.push(Action::Send(Outgoing::RezScript {
         agent: a.id,
         session: a.session,
@@ -654,14 +726,25 @@ pub fn save_script(
 /// `createInventoryItem`: without a region or without the
 /// `CreateTaskInventoryItem` capability the callback fails at once;
 /// otherwise the coroutine posts the body ([`super::create::create_body`]).
-pub fn create_inventory_item(view: &TaskView<'_>, env: &Env<'_>, req: &CreateRequest<'_>) -> Vec<Action> {
+pub fn create_inventory_item(
+    view: &TaskView<'_>,
+    env: &Env<'_>,
+    req: &CreateRequest<'_>,
+) -> Vec<Action> {
     let Some(region) = env.region else {
-        return vec![Action::CreateFailed { message: "No region" }];
+        return vec![Action::CreateFailed {
+            message: "No region",
+        }];
     };
     if region.create_task_inventory_item.is_empty() {
-        return vec![Action::CreateFailed { message: "Capability not available" }];
+        return vec![Action::CreateFailed {
+            message: "Capability not available",
+        }];
     }
-    vec![Action::LaunchCreate { url: region.create_task_inventory_item.to_owned(), body: create_body(&view.id, req) }]
+    vec![Action::LaunchCreate {
+        url: region.create_task_inventory_item.to_owned(),
+        body: create_body(&view.id, req),
+    }]
 }
 
 /// `createInventoryItemCoro`'s verdict on the reply (see
@@ -673,7 +756,11 @@ pub fn create_item_succeeded(http_ok: bool, result: &Value) -> bool {
 /// `createInventoryItemCoro` after the reply: on success, for the object
 /// when `gObjectList` has it (`view`), the expected serial is raised and
 /// the contents are made dirty and requested again; then the callback.
-pub fn create_item_completed(view: Option<&TaskView<'_>>, env: &Env<'_>, success: bool) -> Vec<Action> {
+pub fn create_item_completed(
+    view: Option<&TaskView<'_>>,
+    env: &Env<'_>,
+    success: bool,
+) -> Vec<Action> {
     let mut out = Vec::new();
     if success {
         if let Some(view) = view {
@@ -714,17 +801,36 @@ mod tests {
         (0..n)
             .map(|i| {
                 let name = format!("item {i}");
-                Entry::Object(Object::new(&id(i % (n - 7)), &id(0), AssetType::OBJECT, name.as_bytes()))
+                Entry::Object(Object::new(
+                    &id(i % (n - 7)),
+                    &id(0),
+                    AssetType::OBJECT,
+                    name.as_bytes(),
+                ))
             })
             .collect()
     }
 
     fn view(object: Uuid) -> TaskView<'static> {
-        TaskView { id: object, local_id: 1, state: TaskState::default(), inventory: None, pending: &[], has_listeners: false }
+        TaskView {
+            id: object,
+            local_id: 1,
+            state: TaskState::default(),
+            inventory: None,
+            pending: &[],
+            has_listeners: false,
+        }
     }
 
     fn env(names: &LocalizedNames) -> Env<'_> {
-        Env { agent: Agent::default(), region: None, you_owner: false, selection: None, in_open_sim: false, names }
+        Env {
+            agent: Agent::default(),
+            region: None,
+            you_owner: false,
+            selection: None,
+            in_open_sim: false,
+            names,
+        }
     }
 
     /// The batched load emits the actions, and leaves the list, that one
@@ -760,7 +866,12 @@ mod tests {
         }
         assert_eq!(batched.inv, per_entry.inv);
         assert_eq!(batched.out, per_entry.out);
-        assert!(batched.out.iter().any(|a| matches!(a, Action::Erase(i) if *i > 0)));
+        assert!(
+            batched
+                .out
+                .iter()
+                .any(|a| matches!(a, Action::Erase(i) if *i > 0))
+        );
     }
 
     /// With no list (`push_front` on a NULL `mInventory` does nothing) the

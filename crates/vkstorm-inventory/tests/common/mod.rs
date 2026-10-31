@@ -71,7 +71,14 @@ pub fn bl(v: bool) -> String {
 /// A UUID, lower-case and dashed.
 pub fn uuid(id: &[u8; 16]) -> String {
     let h = hex(id);
-    format!("{}-{}-{}-{}-{}", &h[0..8], &h[8..12], &h[12..16], &h[16..20], &h[20..32])
+    format!(
+        "{}-{}-{}-{}-{}",
+        &h[0..8],
+        &h[8..12],
+        &h[12..16],
+        &h[16..20],
+        &h[20..32]
+    )
 }
 
 /// `llsd_bin`: the binary serialization (`LLSDSerialize::toBinary`, no
@@ -84,7 +91,10 @@ pub fn llsd_bin(v: &Value) -> String {
 /// escaped. `toNotation` formats with `OPTIONS_NONE`, so Binary is written
 /// raw (`b(4)"..."`), not as `b16"..."`.
 pub fn llsd_txt(v: &Value) -> String {
-    let opts = Options { pretty_binary: false, ..Options::default() };
+    let opts = Options {
+        pretty_binary: false,
+        ..Options::default()
+    };
     esc(&vkstorm_llsd::format(Format::Notation, v, opts).0)
 }
 
@@ -95,7 +105,8 @@ pub fn llsd_txt(v: &Value) -> String {
 /// `U(tag)`: `tag 01 23 45 67 89 ab cd ef 10 32 54 76 98 ba tag`.
 pub fn u(tag: u8) -> [u8; 16] {
     [
-        tag, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x10, 0x32, 0x54, 0x76, 0x98, 0xba, tag,
+        tag, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x10, 0x32, 0x54, 0x76, 0x98, 0xba,
+        tag,
     ]
 }
 
@@ -134,8 +145,9 @@ pub fn not_magic() -> [u8; 16] {
 
 /// The mask edges (`kMaskEdges`), in the README order.
 pub const MASK_EDGES: [u32; 18] = [
-    0x00000000, 0x7fffffff, 0xffffffff, 0x0000e000, 0x00002000, 0x00004000, 0x00008000, 0x00010000, 0x00080000,
-    0x00000001, 0x80000000, 0x7fffbfff, 0x7fff7fff, 0x7fff3fff, 0x7fffdfff, 0x7fff9fff, 0x7fff5fff, 0x7fff1fff,
+    0x00000000, 0x7fffffff, 0xffffffff, 0x0000e000, 0x00002000, 0x00004000, 0x00008000, 0x00010000,
+    0x00080000, 0x00000001, 0x80000000, 0x7fffbfff, 0x7fff7fff, 0x7fff3fff, 0x7fffdfff, 0x7fff9fff,
+    0x7fff5fff, 0x7fff1fff,
 ];
 
 /// The recorder's generator (`Rng`, xorshift64*; README "Random streams").
@@ -143,7 +155,11 @@ pub struct Rng(u64);
 
 impl Rng {
     pub fn new(seed: u64) -> Rng {
-        Rng(if seed == 0 { 0x9E37_79B9_7F4A_7C15 } else { seed })
+        Rng(if seed == 0 {
+            0x9E37_79B9_7F4A_7C15
+        } else {
+            seed
+        })
     }
 
     pub fn next(&mut self) -> u64 {
@@ -201,7 +217,9 @@ impl Lines {
 
 /// The path of a model fixture.
 pub fn fixture_path(name: &str) -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/model").join(name)
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures/model")
+        .join(name)
 }
 
 /// The data lines of a (plain text) model fixture: every line that does not
@@ -233,9 +251,11 @@ pub fn split_tabs(line: &str) -> Vec<&str> {
 
 const ITEM_COLS: &str = "id parent asset thumbnail type inv_type flags creator owner last_owner group base owner_mask group_mask everyone next group_owned sale_type sale_price date favorite runtime name desc";
 const CAT_COLS: &str = "id parent type pref_type thumbnail favorite date runtime name";
-const VCAT_COLS: &str = "id parent type pref_type thumbnail favorite date runtime name owner version";
+const VCAT_COLS: &str =
+    "id parent type pref_type thumbnail favorite date runtime name owner version";
 const OBJ_COLS: &str = "id parent type thumbnail favorite date runtime name";
-const PERM_COLS: &str = "creator owner last_owner group base owner_mask group_mask everyone next group_owned";
+const PERM_COLS: &str =
+    "creator owner last_owner group base owner_mask group_mask everyone next group_owned";
 const SALE_COLS: &str = "type price";
 const STREAM_COLS: &str = "state pos rest";
 
@@ -249,7 +269,11 @@ pub fn columns_for(case: &str, field: &str, n: usize) -> Vec<String> {
     };
     let corpus = |p: &str| case.starts_with(p);
     let v = if field.ends_with("stream") {
-        if n == 4 { pre("ret", cols(STREAM_COLS)) } else { cols(STREAM_COLS) }
+        if n == 4 {
+            pre("ret", cols(STREAM_COLS))
+        } else {
+            cols(STREAM_COLS)
+        }
     } else if n == 24 {
         cols(ITEM_COLS)
     } else if n == 25 {
@@ -267,9 +291,15 @@ pub fn columns_for(case: &str, field: &str, n: usize) -> Vec<String> {
     } else if field == "notecard" {
         cols("ret version embedded_version items text")
     } else if field == "legacy.outcome" {
-        if n == 2 { cols("key nokey") } else { cols("outcome") }
+        if n == 2 {
+            cols("key nokey")
+        } else {
+            cols("outcome")
+        }
     } else if field.ends_with("invariants") {
-        cols("owner_in_base group_in_owner everyone_in_owner next_in_base everyone_no_modify no_transfer_no_copy")
+        cols(
+            "owner_in_base group_in_owner everyone_in_owner next_in_base everyone_no_modify no_transfer_no_copy",
+        )
     } else if field == "matrix" {
         cols(
             "legacy_type legacy_inv_type llsd_type llsd_inv_type crc reimport_type reimport_inv_type reimport_base \
@@ -324,7 +354,11 @@ pub fn columns_for(case: &str, field: &str, n: usize) -> Vec<String> {
     } else {
         Vec::new()
     };
-    if v.len() == n { v } else { (0..n).map(|i| format!("v{i}")).collect() }
+    if v.len() == n {
+        v
+    } else {
+        (0..n).map(|i| format!("v{i}")).collect()
+    }
 }
 
 /// The value an expected column requires of the crate (README "Marked
@@ -334,14 +368,21 @@ pub fn columns_for(case: &str, field: &str, n: usize) -> Vec<String> {
 /// `linux=` otherwise; the `crate=` value is no longer read. An `RT` without
 /// that key, or an `RT-MISMATCH`, can never match.
 pub fn expected_value(expected: &str) -> Option<Result<&str, &str>> {
-    const KEY: &str = if cfg!(target_env = "msvc") { "win=" } else { "linux=" };
+    const KEY: &str = if cfg!(target_env = "msvc") {
+        "win="
+    } else {
+        "linux="
+    };
     if expected == "UB" {
         return None;
     }
     if expected.starts_with("RT-MISMATCH(") {
         return Some(Err("the recording itself is an RT-MISMATCH"));
     }
-    if let Some(inner) = expected.strip_prefix("RT(").and_then(|s| s.strip_suffix(')')) {
+    if let Some(inner) = expected
+        .strip_prefix("RT(")
+        .and_then(|s| s.strip_suffix(')'))
+    {
         return Some(
             inner
                 .split(';')
@@ -470,7 +511,14 @@ use vkstorm_inventory::sale::SaleInfo;
 
 /// `idname`: `null`, `A`, `B`, `C`, `G`, `H`, else the UUID.
 pub fn idname(id: &[u8; 16]) -> String {
-    let named = [(NUL, "null"), (id_a(), "A"), (id_b(), "B"), (id_c(), "C"), (id_g(), "G"), (id_h(), "H")];
+    let named = [
+        (NUL, "null"),
+        (id_a(), "A"),
+        (id_b(), "B"),
+        (id_c(), "C"),
+        (id_g(), "G"),
+        (id_h(), "H"),
+    ];
     named
         .iter()
         .find(|(x, _)| x == id)
@@ -508,7 +556,11 @@ pub fn sale_cols(s: &SaleInfo) -> Vec<String> {
 /// `stream_cols`: `state pos rest` of a stream over `src`.
 pub fn stream_cols(s: &Stream<'_>, src: &[u8]) -> Vec<String> {
     let pos = s.pos();
-    let rest = if pos <= src.len() { esc(&src[pos..]) } else { "?".to_owned() };
+    let rest = if pos <= src.len() {
+        esc(&src[pos..])
+    } else {
+        "?".to_owned()
+    };
     vec![s.state_letters(), d(pos as i64), rest]
 }
 
@@ -554,7 +606,10 @@ pub struct Sha256 {
 impl Default for Sha256 {
     fn default() -> Self {
         Sha256 {
-            h: [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19],
+            h: [
+                0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab,
+                0x5be0cd19,
+            ],
             block: [0; 64],
             used: 0,
             total: 0,
@@ -571,13 +626,20 @@ impl Sha256 {
         for i in 16..64 {
             let s0 = w[i - 15].rotate_right(7) ^ w[i - 15].rotate_right(18) ^ (w[i - 15] >> 3);
             let s1 = w[i - 2].rotate_right(17) ^ w[i - 2].rotate_right(19) ^ (w[i - 2] >> 10);
-            w[i] = w[i - 16].wrapping_add(s0).wrapping_add(w[i - 7]).wrapping_add(s1);
+            w[i] = w[i - 16]
+                .wrapping_add(s0)
+                .wrapping_add(w[i - 7])
+                .wrapping_add(s1);
         }
         let [mut a, mut b, mut c, mut d, mut e, mut f, mut g, mut hh] = *h;
         for (k, wi) in SHA_K.iter().zip(w.iter()) {
             let s1 = e.rotate_right(6) ^ e.rotate_right(11) ^ e.rotate_right(25);
             let ch = (e & f) ^ (!e & g);
-            let t1 = hh.wrapping_add(s1).wrapping_add(ch).wrapping_add(*k).wrapping_add(*wi);
+            let t1 = hh
+                .wrapping_add(s1)
+                .wrapping_add(ch)
+                .wrapping_add(*k)
+                .wrapping_add(*wi);
             let s0 = a.rotate_right(2) ^ a.rotate_right(13) ^ a.rotate_right(22);
             let maj = (a & b) ^ (a & c) ^ (b & c);
             let t2 = s0.wrapping_add(maj);
@@ -701,8 +763,15 @@ impl ChunkedDigest {
     pub fn finish(mut self) -> Vec<DigestEntry> {
         self.flush(self.cases);
         let total = std::mem::take(&mut self.total);
-        self.entries
-            .insert(0, [self.name.clone(), self.cases.to_string(), self.lines.to_string(), total.hex()]);
+        self.entries.insert(
+            0,
+            [
+                self.name.clone(),
+                self.cases.to_string(),
+                self.lines.to_string(),
+                total.hex(),
+            ],
+        );
         self.entries
     }
 }
@@ -737,7 +806,11 @@ pub fn check_digests(stream: &str, entries: &[DigestEntry]) -> (usize, String) {
             }
             Some((lines, sha)) if *lines == e[2] && *sha == e[3] => ok += 1,
             Some((lines, sha)) => {
-                let _ = writeln!(report, "{what}: digest (lines, sha256) expected {lines} {sha} actual {} {}", e[2], e[3]);
+                let _ = writeln!(
+                    report,
+                    "{what}: digest (lines, sha256) expected {lines} {sha} actual {} {}",
+                    e[2], e[3]
+                );
             }
         }
     }
@@ -746,7 +819,11 @@ pub fn check_digests(stream: &str, entries: &[DigestEntry]) -> (usize, String) {
         .filter(|k| *k == stream || k.strip_prefix(stream).is_some_and(|r| r.starts_with('@')))
         .count();
     if known != entries.len() {
-        let _ = writeln!(report, "{stream}: digests.txt has {known} entries, computed {}", entries.len());
+        let _ = writeln!(
+            report,
+            "{stream}: digests.txt has {known} entries, computed {}",
+            entries.len()
+        );
     }
     (ok, report)
 }
@@ -754,7 +831,10 @@ pub fn check_digests(stream: &str, entries: &[DigestEntry]) -> (usize, String) {
 /// Asserts a stream's digests, printing the count.
 pub fn assert_digests(stream: &str, entries: &[DigestEntry]) {
     let (ok, report) = check_digests(stream, entries);
-    println!("{stream}: {ok}/{} digest entries match (whole stream + chunks)", entries.len());
+    println!(
+        "{stream}: {ok}/{} digest entries match (whole stream + chunks)",
+        entries.len()
+    );
     assert!(report.is_empty(), "{report}");
 }
 
@@ -894,7 +974,10 @@ pub fn make_perm(f: &PermF) -> Permissions {
 }
 
 pub fn make_sale(t: i32, p: i32) -> SaleInfo {
-    SaleInfo { sale_type: SaleType(t), price: p }
+    SaleInfo {
+        sale_type: SaleType(t),
+        price: p,
+    }
 }
 
 /// `make_item` (`RawItem::assign`): every field raw.
@@ -935,12 +1018,19 @@ pub fn make_obj(f: &CatF) -> Object {
 
 /// `make_cat` (`RawCat::assign`).
 pub fn make_cat(f: &CatF) -> Category {
-    Category { object: make_obj(f), preferred_type: FolderType(f.pref) }
+    Category {
+        object: make_obj(f),
+        preferred_type: FolderType(f.pref),
+    }
 }
 
 /// `make_vcat`: `make_cat` plus the owner and version.
 pub fn make_vcat(f: &CatF) -> ViewerCategory {
-    ViewerCategory { category: make_cat(f), owner: f.owner, version: f.version }
+    ViewerCategory {
+        category: make_cat(f),
+        owner: f.owner,
+        version: f.version,
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -949,7 +1039,15 @@ pub fn make_vcat(f: &CatF) -> ViewerCategory {
 
 pub fn item_cols(it: &Item) -> Vec<String> {
     let o = &it.object;
-    let mut v = vec![uuid(&o.id), uuid(&o.parent), uuid(&it.asset), uuid(&o.thumbnail), d(o.asset_type.0), d(it.inv_type.0), x8(it.flags)];
+    let mut v = vec![
+        uuid(&o.id),
+        uuid(&o.parent),
+        uuid(&it.asset),
+        uuid(&o.thumbnail),
+        d(o.asset_type.0),
+        d(it.inv_type.0),
+        x8(it.flags),
+    ];
     let p = perm_cols(&it.permissions);
     v.extend(p);
     v.extend([
@@ -1008,12 +1106,27 @@ pub fn with_ret(ret: bool, mut cols: Vec<String>) -> Vec<String> {
 // The cases (the tool's base_item, prev_item, c5_names, c5_item_cases, ...)
 // ---------------------------------------------------------------------------
 
-pub const ASSET_TYPES: [i32; 36] =
-    [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 17, 18, 19, 20, 21, 22, 24, 25, 40, 45, 49, 56, 57, 58, 59, 255, 26, 60, 127, -2, 50, 9];
-pub const INV_TYPES: [i32; 27] = [0, 1, 2, 3, 6, 7, 8, 9, 10, 15, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 28, -1, 255, 4, 5, 11, 29];
-pub const BASE_MASKS: [u32; 7] = [PERM_ALL, 0x7fffbfff, 0x7fff7fff, 0x7fffdfff, 0x7fff5fff, 0x00000000, 0x0000e000];
+pub const ASSET_TYPES: [i32; 36] = [
+    -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 17, 18, 19, 20, 21, 22, 24, 25, 40, 45, 49, 56,
+    57, 58, 59, 255, 26, 60, 127, -2, 50, 9,
+];
+pub const INV_TYPES: [i32; 27] = [
+    0, 1, 2, 3, 6, 7, 8, 9, 10, 15, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 28, -1, 255, 4, 5, 11,
+    29,
+];
+pub const BASE_MASKS: [u32; 7] = [
+    PERM_ALL, 0x7fffbfff, 0x7fff7fff, 0x7fffdfff, 0x7fff5fff, 0x00000000, 0x0000e000,
+];
 pub const FLAGS: [u32; 7] = [0, 1, 0xff, 0x100, 0x1f1100, 0x7fffffff, 0xffffffff];
-pub const DATES: [i64; 7] = [0, 1, i32::MAX as i64, i32::MIN as i64, 2147483648, 4294967301, -1];
+pub const DATES: [i64; 7] = [
+    0,
+    1,
+    i32::MAX as i64,
+    i32::MIN as i64,
+    2147483648,
+    4294967301,
+    -1,
+];
 pub const PRICES: [i32; 5] = [i32::MIN, -1, 0, 10, i32::MAX];
 /// `T_ | V_`: transfer and move.
 pub const NEXT_DEFAULT: u32 = 0x0008_2000;
@@ -1106,11 +1219,28 @@ pub fn c5_item_cases() -> Vec<(String, ItemF)> {
     let mut v = Vec::new();
     let b = base_item();
     for at in ASSET_TYPES {
-        let inv = if (0..60).contains(&at) { InventoryType::default_for_asset_type(AssetType(at)).0 } else { 255 };
-        v.push((format!("c5.at.{at}"), ItemF { ty: at, inv_type: inv, ..b.clone() }));
+        let inv = if (0..60).contains(&at) {
+            InventoryType::default_for_asset_type(AssetType(at)).0
+        } else {
+            255
+        };
+        v.push((
+            format!("c5.at.{at}"),
+            ItemF {
+                ty: at,
+                inv_type: inv,
+                ..b.clone()
+            },
+        ));
     }
     for it in INV_TYPES {
-        v.push((format!("c5.it.{it}"), ItemF { inv_type: it, ..b.clone() }));
+        v.push((
+            format!("c5.it.{it}"),
+            ItemF {
+                inv_type: it,
+                ..b.clone()
+            },
+        ));
     }
     let assets = [NUL, u(0xa3), MAGIC, not_magic()];
     let asset_names = ["null", "a3", "magic", "notmagic"];
@@ -1127,7 +1257,12 @@ pub fn c5_item_cases() -> Vec<(String, ItemF)> {
             }
         }
     }
-    let runtimes: [Vec<u8>; 4] = [Vec::new(), b"luau".to_vec(), vec![b'r'; 60], b"lu au".to_vec()];
+    let runtimes: [Vec<u8>; 4] = [
+        Vec::new(),
+        b"luau".to_vec(),
+        vec![b'r'; 60],
+        b"lu au".to_vec(),
+    ];
     for th in 0..2 {
         for fv in 0..2 {
             for (ri, rt) in runtimes.iter().enumerate() {
@@ -1147,22 +1282,56 @@ pub fn c5_item_cases() -> Vec<(String, ItemF)> {
     }
     for fl in FLAGS {
         for (t, it) in [(6, 6), (5, 18), (56, 25)] {
-            v.push((format!("c5.flags.{}.{t}", x8(fl)), ItemF { flags: fl, ty: t, inv_type: it, ..b.clone() }));
+            v.push((
+                format!("c5.flags.{}.{t}", x8(fl)),
+                ItemF {
+                    flags: fl,
+                    ty: t,
+                    inv_type: it,
+                    ..b.clone()
+                },
+            ));
         }
     }
     for st in 0..=3 {
         for p in PRICES {
-            v.push((format!("c5.sale.{st}.{p}"), ItemF { sale_type: st, sale_price: p, ..b.clone() }));
+            v.push((
+                format!("c5.sale.{st}.{p}"),
+                ItemF {
+                    sale_type: st,
+                    sale_price: p,
+                    ..b.clone()
+                },
+            ));
         }
     }
     for st in [-1, 4, 200, 255] {
-        v.push((format!("c5.sale.{st}.10"), ItemF { sale_type: st, ..b.clone() }));
+        v.push((
+            format!("c5.sale.{st}.10"),
+            ItemF {
+                sale_type: st,
+                ..b.clone()
+            },
+        ));
     }
     for (i, (n, ds)) in c5_names().into_iter().enumerate() {
-        v.push((format!("c5.name.{i}"), ItemF { name: n, desc: ds, ..b.clone() }));
+        v.push((
+            format!("c5.name.{i}"),
+            ItemF {
+                name: n,
+                desc: ds,
+                ..b.clone()
+            },
+        ));
     }
     for dt in DATES {
-        v.push((format!("c5.date.{dt}"), ItemF { date: dt, ..b.clone() }));
+        v.push((
+            format!("c5.date.{dt}"),
+            ItemF {
+                date: dt,
+                ..b.clone()
+            },
+        ));
     }
     {
         let mut f = b.clone();
@@ -1179,7 +1348,12 @@ pub fn c5_item_cases() -> Vec<(String, ItemF)> {
         v.push(("c5.perm.unfixed".to_owned(), f));
     }
     {
-        let mut f = ItemF { ty: 24, inv_type: -1, asset: u(0xc5), ..b.clone() };
+        let mut f = ItemF {
+            ty: 24,
+            inv_type: -1,
+            asset: u(0xc5),
+            ..b.clone()
+        };
         v.push(("c5.link".to_owned(), f.clone()));
         f.ty = 25;
         f.inv_type = 8;
@@ -1220,23 +1394,76 @@ pub fn c5_cat_cases() -> Vec<(String, CatF)> {
         ..CatF::default()
     };
     for p in -1..=101 {
-        v.push((format!("c5c.pref.{p}"), CatF { pref: p, ..b.clone() }));
+        v.push((
+            format!("c5c.pref.{p}"),
+            CatF {
+                pref: p,
+                ..b.clone()
+            },
+        ));
     }
-    v.push(("c5c.pref.127".to_owned(), CatF { pref: 127, ..b.clone() }));
-    v.push(("c5c.pref.-128".to_owned(), CatF { pref: -128, ..b.clone() }));
+    v.push((
+        "c5c.pref.127".to_owned(),
+        CatF {
+            pref: 127,
+            ..b.clone()
+        },
+    ));
+    v.push((
+        "c5c.pref.-128".to_owned(),
+        CatF {
+            pref: -128,
+            ..b.clone()
+        },
+    ));
     for p in [0, 8, 46, -1, 127, 58] {
         for k in 1..4 {
-            let f = CatF { pref: p, thumb: if k & 1 != 0 { u(0xb2) } else { NUL }, fav: k & 2 != 0, ..b.clone() };
+            let f = CatF {
+                pref: p,
+                thumb: if k & 1 != 0 { u(0xb2) } else { NUL },
+                fav: k & 2 != 0,
+                ..b.clone()
+            };
             v.push((format!("c5c.meta.{p}.{k}"), f));
         }
     }
     for (i, (n, _)) in c5_names().into_iter().enumerate() {
-        v.push((format!("c5c.name.{i}"), CatF { pref: 0, name: n, ..b.clone() }));
+        v.push((
+            format!("c5c.name.{i}"),
+            CatF {
+                pref: 0,
+                name: n,
+                ..b.clone()
+            },
+        ));
     }
     for t in [-1, 255, 6, 24] {
-        v.push((format!("c5c.type.{t}"), CatF { pref: 0, ty: t, ..b.clone() }));
+        v.push((
+            format!("c5c.type.{t}"),
+            CatF {
+                pref: 0,
+                ty: t,
+                ..b.clone()
+            },
+        ));
     }
-    v.push(("c5c.runtime".to_owned(), CatF { runtime: b"luau".to_vec(), thumb: u(0xb2), ..b.clone() }));
-    v.push(("c5c.nullids".to_owned(), CatF { id: NUL, parent: NUL, owner: NUL, version: -1, ..b.clone() }));
+    v.push((
+        "c5c.runtime".to_owned(),
+        CatF {
+            runtime: b"luau".to_vec(),
+            thumb: u(0xb2),
+            ..b.clone()
+        },
+    ));
+    v.push((
+        "c5c.nullids".to_owned(),
+        CatF {
+            id: NUL,
+            parent: NUL,
+            owner: NUL,
+            version: -1,
+            ..b.clone()
+        },
+    ));
     v
 }

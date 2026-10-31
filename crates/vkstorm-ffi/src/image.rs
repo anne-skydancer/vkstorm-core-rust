@@ -8,11 +8,11 @@
 //! `vks_image_last_error`.
 
 use std::cell::RefCell;
-use std::ffi::{c_char, CString};
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::ffi::{CString, c_char};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::slice;
 
-use vkstorm_image::{bmp, dxt, png, tga, Error, Raster};
+use vkstorm_image::{Error, Raster, bmp, dxt, png, tga};
 
 thread_local! {
     static LAST_ERROR: RefCell<CString> = RefCell::new(CString::default());
@@ -56,14 +56,25 @@ unsafe fn bytes<'a>(data: *const u8, len: usize) -> Option<&'a [u8]> {
 }
 
 /// Build a raster from the viewer's `width * height * components` bytes.
-unsafe fn raster_from(data: *const u8, len: usize, width: u32, height: u32, components: u32) -> Option<Raster> {
+unsafe fn raster_from(
+    data: *const u8,
+    len: usize,
+    width: u32,
+    height: u32,
+    components: u32,
+) -> Option<Raster> {
     let b = unsafe { bytes(data, len) }?;
     let need = width as usize * height as usize * components as usize;
     if b.len() < need {
         set_error("Invalid input, no buffer");
         return None;
     }
-    Some(Raster { width, height, components, data: b[..need].to_vec() })
+    Some(Raster {
+        width,
+        height,
+        components,
+        data: b[..need].to_vec(),
+    })
 }
 
 /// Dimensions and component count from a header read.
@@ -181,11 +192,23 @@ pub unsafe extern "C" fn vks_bytes_free(b: *mut VksBytes) {
 /// # Safety
 /// `data` must point to `len` readable bytes; `out` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_png_header(data: *const u8, len: usize, out: *mut VksImageHeader) -> i32 {
-    let Some(b) = (unsafe { bytes(data, len) }) else { return 0 };
+pub unsafe extern "C" fn vks_png_header(
+    data: *const u8,
+    len: usize,
+    out: *mut VksImageHeader,
+) -> i32 {
+    let Some(b) = (unsafe { bytes(data, len) }) else {
+        return 0;
+    };
     match guard(|| png::header(b)) {
         Some(h) if !out.is_null() => {
-            unsafe { *out = VksImageHeader { width: h.width, height: h.height, components: h.components } };
+            unsafe {
+                *out = VksImageHeader {
+                    width: h.width,
+                    height: h.height,
+                    components: h.components,
+                }
+            };
             1
         }
         _ => 0,
@@ -198,7 +221,9 @@ pub unsafe extern "C" fn vks_png_header(data: *const u8, len: usize, out: *mut V
 /// `data` must point to `len` readable bytes.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn vks_png_decode(data: *const u8, len: usize) -> *mut VksRaster {
-    let Some(b) = (unsafe { bytes(data, len) }) else { return std::ptr::null_mut() };
+    let Some(b) = (unsafe { bytes(data, len) }) else {
+        return std::ptr::null_mut();
+    };
     boxed_raster(guard(|| png::decode(b)))
 }
 
@@ -207,8 +232,16 @@ pub unsafe extern "C" fn vks_png_decode(data: *const u8, len: usize) -> *mut Vks
 /// # Safety
 /// `data` must point to `len` readable bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_png_encode(data: *const u8, len: usize, width: u32, height: u32, components: u32) -> *mut VksBytes {
-    let Some(r) = (unsafe { raster_from(data, len, width, height, components) }) else { return std::ptr::null_mut() };
+pub unsafe extern "C" fn vks_png_encode(
+    data: *const u8,
+    len: usize,
+    width: u32,
+    height: u32,
+    components: u32,
+) -> *mut VksBytes {
+    let Some(r) = (unsafe { raster_from(data, len, width, height, components) }) else {
+        return std::ptr::null_mut();
+    };
     boxed_bytes(guard(|| png::encode(&r)))
 }
 
@@ -233,8 +266,14 @@ pub struct VksTgaHeader {
 /// # Safety
 /// `data` must point to `len` readable bytes; `out` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_tga_header(data: *const u8, len: usize, out: *mut VksTgaHeader) -> i32 {
-    let Some(b) = (unsafe { bytes(data, len) }) else { return 0 };
+pub unsafe extern "C" fn vks_tga_header(
+    data: *const u8,
+    len: usize,
+    out: *mut VksTgaHeader,
+) -> i32 {
+    let Some(b) = (unsafe { bytes(data, len) }) else {
+        return 0;
+    };
     match guard(|| tga::parse(b)) {
         Some(i) if !out.is_null() => {
             unsafe {
@@ -259,7 +298,9 @@ pub unsafe extern "C" fn vks_tga_header(data: *const u8, len: usize, out: *mut V
 /// `data` must point to `len` readable bytes.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn vks_tga_decode(data: *const u8, len: usize) -> *mut VksRaster {
-    let Some(b) = (unsafe { bytes(data, len) }) else { return std::ptr::null_mut() };
+    let Some(b) = (unsafe { bytes(data, len) }) else {
+        return std::ptr::null_mut();
+    };
     boxed_raster(guard(|| tga::decode(b)))
 }
 
@@ -269,8 +310,15 @@ pub unsafe extern "C" fn vks_tga_decode(data: *const u8, len: usize) -> *mut Vks
 /// # Safety
 /// `data` must point to `len` readable bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_tga_decode_and_process(data: *const u8, len: usize, domain: f32, weight: f32) -> *mut VksRaster {
-    let Some(b) = (unsafe { bytes(data, len) }) else { return std::ptr::null_mut() };
+pub unsafe extern "C" fn vks_tga_decode_and_process(
+    data: *const u8,
+    len: usize,
+    domain: f32,
+    weight: f32,
+) -> *mut VksRaster {
+    let Some(b) = (unsafe { bytes(data, len) }) else {
+        return std::ptr::null_mut();
+    };
     boxed_raster(guard(|| tga::decode_and_process(b, domain, weight)))
 }
 
@@ -279,8 +327,16 @@ pub unsafe extern "C" fn vks_tga_decode_and_process(data: *const u8, len: usize,
 /// # Safety
 /// `data` must point to `len` readable bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_tga_encode(data: *const u8, len: usize, width: u32, height: u32, components: u32) -> *mut VksBytes {
-    let Some(r) = (unsafe { raster_from(data, len, width, height, components) }) else { return std::ptr::null_mut() };
+pub unsafe extern "C" fn vks_tga_encode(
+    data: *const u8,
+    len: usize,
+    width: u32,
+    height: u32,
+    components: u32,
+) -> *mut VksBytes {
+    let Some(r) = (unsafe { raster_from(data, len, width, height, components) }) else {
+        return std::ptr::null_mut();
+    };
     boxed_bytes(guard(|| tga::encode(&r)))
 }
 
@@ -294,11 +350,23 @@ pub unsafe extern "C" fn vks_tga_encode(data: *const u8, len: usize, width: u32,
 /// # Safety
 /// `data` must point to `len` readable bytes; `out` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_bmp_header(data: *const u8, len: usize, out: *mut VksImageHeader) -> i32 {
-    let Some(b) = (unsafe { bytes(data, len) }) else { return 0 };
+pub unsafe extern "C" fn vks_bmp_header(
+    data: *const u8,
+    len: usize,
+    out: *mut VksImageHeader,
+) -> i32 {
+    let Some(b) = (unsafe { bytes(data, len) }) else {
+        return 0;
+    };
     match guard(|| bmp::parse(b)) {
         Some(i) if !out.is_null() => {
-            unsafe { *out = VksImageHeader { width: i.width, height: i.height, components: i.components } };
+            unsafe {
+                *out = VksImageHeader {
+                    width: i.width,
+                    height: i.height,
+                    components: i.components,
+                }
+            };
             1
         }
         _ => 0,
@@ -311,7 +379,9 @@ pub unsafe extern "C" fn vks_bmp_header(data: *const u8, len: usize, out: *mut V
 /// `data` must point to `len` readable bytes.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn vks_bmp_decode(data: *const u8, len: usize) -> *mut VksRaster {
-    let Some(b) = (unsafe { bytes(data, len) }) else { return std::ptr::null_mut() };
+    let Some(b) = (unsafe { bytes(data, len) }) else {
+        return std::ptr::null_mut();
+    };
     boxed_raster(guard(|| bmp::decode(b)))
 }
 
@@ -321,8 +391,17 @@ pub unsafe extern "C" fn vks_bmp_decode(data: *const u8, len: usize) -> *mut Vks
 /// # Safety
 /// `data` must point to `len` readable bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_bmp_encode(data: *const u8, len: usize, width: u32, height: u32, components: u32, pels_per_meter: i32) -> *mut VksBytes {
-    let Some(r) = (unsafe { raster_from(data, len, width, height, components) }) else { return std::ptr::null_mut() };
+pub unsafe extern "C" fn vks_bmp_encode(
+    data: *const u8,
+    len: usize,
+    width: u32,
+    height: u32,
+    components: u32,
+    pels_per_meter: i32,
+) -> *mut VksBytes {
+    let Some(r) = (unsafe { raster_from(data, len, width, height, components) }) else {
+        return std::ptr::null_mut();
+    };
     boxed_bytes(guard(|| bmp::encode(&r, pels_per_meter)))
 }
 
@@ -360,8 +439,14 @@ fn dxt_info(h: &VksDxtHeader) -> dxt::Info {
 /// # Safety
 /// `data` must point to `len` readable bytes; `out` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_dxt_header(data: *const u8, len: usize, out: *mut VksDxtHeader) -> i32 {
-    let Some(b) = (unsafe { bytes(data, len) }) else { return 0 };
+pub unsafe extern "C" fn vks_dxt_header(
+    data: *const u8,
+    len: usize,
+    out: *mut VksDxtHeader,
+) -> i32 {
+    let Some(b) = (unsafe { bytes(data, len) }) else {
+        return 0;
+    };
     match guard(|| dxt::parse(b)) {
         Some(i) if !out.is_null() => {
             unsafe {
@@ -385,8 +470,14 @@ pub unsafe extern "C" fn vks_dxt_header(data: *const u8, len: usize, out: *mut V
 /// # Safety
 /// `data` must point to `len` readable bytes; `header` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_dxt_decode(data: *const u8, len: usize, header: *const VksDxtHeader) -> *mut VksRaster {
-    let Some(b) = (unsafe { bytes(data, len) }) else { return std::ptr::null_mut() };
+pub unsafe extern "C" fn vks_dxt_decode(
+    data: *const u8,
+    len: usize,
+    header: *const VksDxtHeader,
+) -> *mut VksRaster {
+    let Some(b) = (unsafe { bytes(data, len) }) else {
+        return std::ptr::null_mut();
+    };
     if header.is_null() {
         return std::ptr::null_mut();
     }
@@ -399,8 +490,15 @@ pub unsafe extern "C" fn vks_dxt_decode(data: *const u8, len: usize, header: *co
 /// # Safety
 /// `data` must point to `len` readable bytes; `header` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_dxt_mip_data(data: *const u8, len: usize, header: *const VksDxtHeader, discard: i32) -> *mut VksRaster {
-    let Some(b) = (unsafe { bytes(data, len) }) else { return std::ptr::null_mut() };
+pub unsafe extern "C" fn vks_dxt_mip_data(
+    data: *const u8,
+    len: usize,
+    header: *const VksDxtHeader,
+    discard: i32,
+) -> *mut VksRaster {
+    let Some(b) = (unsafe { bytes(data, len) }) else {
+        return std::ptr::null_mut();
+    };
     if header.is_null() {
         return std::ptr::null_mut();
     }
@@ -414,8 +512,16 @@ pub unsafe extern "C" fn vks_dxt_mip_data(data: *const u8, len: usize, header: *
 /// # Safety
 /// `data` must point to `len` readable bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_dxt_encode(data: *const u8, len: usize, width: u32, height: u32, components: u32) -> *mut VksBytes {
-    let Some(r) = (unsafe { raster_from(data, len, width, height, components) }) else { return std::ptr::null_mut() };
+pub unsafe extern "C" fn vks_dxt_encode(
+    data: *const u8,
+    len: usize,
+    width: u32,
+    height: u32,
+    components: u32,
+) -> *mut VksBytes {
+    let Some(r) = (unsafe { raster_from(data, len, width, height, components) }) else {
+        return std::ptr::null_mut();
+    };
     boxed_bytes(guard(|| dxt::encode(&r)))
 }
 
@@ -425,8 +531,14 @@ pub unsafe extern "C" fn vks_dxt_encode(data: *const u8, len: usize, width: u32,
 /// # Safety
 /// `data` must point to `len` readable bytes; `header` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_dxt_convert_to_dxr(data: *const u8, len: usize, header: *const VksDxtHeader) -> *mut VksBytes {
-    let Some(b) = (unsafe { bytes(data, len) }) else { return std::ptr::null_mut() };
+pub unsafe extern "C" fn vks_dxt_convert_to_dxr(
+    data: *const u8,
+    len: usize,
+    header: *const VksDxtHeader,
+) -> *mut VksBytes {
+    let Some(b) = (unsafe { bytes(data, len) }) else {
+        return std::ptr::null_mut();
+    };
     if header.is_null() {
         return std::ptr::null_mut();
     }
@@ -450,8 +562,23 @@ pub unsafe extern "C" fn vks_dxt_data_size(header: *const VksDxtHeader, discard:
 
 /// `LLImageDXT::getMipOffset` for an image of `width` x `height`; -1 on failure.
 #[unsafe(no_mangle)]
-pub extern "C" fn vks_dxt_mip_offset(format: i32, header_size: i32, width: i32, height: i32, discard: i32) -> i32 {
-    guard(|| dxt::mip_offset(dxt::Format::from_code(format), header_size, width, height, discard)).unwrap_or(-1)
+pub extern "C" fn vks_dxt_mip_offset(
+    format: i32,
+    header_size: i32,
+    width: i32,
+    height: i32,
+    discard: i32,
+) -> i32 {
+    guard(|| {
+        dxt::mip_offset(
+            dxt::Format::from_code(format),
+            header_size,
+            width,
+            height,
+            discard,
+        )
+    })
+    .unwrap_or(-1)
 }
 
 /// `LLImageDXT::formatBits`; 0 for an unknown format.
@@ -495,7 +622,12 @@ pub extern "C" fn vks_dxt_calc_num_mips(width: i32, height: i32) -> i32 {
 /// # Safety
 /// `width` and `height` must be valid pointers.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_dxt_calc_discard_width_height(discard: i32, format: i32, width: *mut i32, height: *mut i32) {
+pub unsafe extern "C" fn vks_dxt_calc_discard_width_height(
+    discard: i32,
+    format: i32,
+    width: *mut i32,
+    height: *mut i32,
+) {
     if width.is_null() || height.is_null() {
         return;
     }
@@ -512,7 +644,11 @@ pub unsafe extern "C" fn vks_dxt_calc_discard_width_height(discard: i32, format:
 /// # Safety
 /// `width` and `height` must be valid pointers.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_dxt_check_min_width_height(format: i32, width: *mut i32, height: *mut i32) {
+pub unsafe extern "C" fn vks_dxt_check_min_width_height(
+    format: i32,
+    width: *mut i32,
+    height: *mut i32,
+) {
     if width.is_null() || height.is_null() {
         return;
     }

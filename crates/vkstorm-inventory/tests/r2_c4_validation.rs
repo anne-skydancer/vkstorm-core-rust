@@ -39,23 +39,65 @@ fn changed(id: &str) -> (World, Box<dyn Fn(&mut TestModel)>) {
         "folder_null_parent_not_root" => Box::new(|m| m.cat_mut(&f(43)).parent = [0; 16]),
         "item_null_parent" => Box::new(|m| m.item_mut(&i(13)).parent = [0; 16]),
         "item_wrong_parent" => Box::new(|m| m.item_mut(&i(13)).parent = f(SF_OBJECTS)),
-        "item_not_in_parent_vector" => Box::new(|m| m.remove_from_vectors(&f(SF_NOTECARDS), &i(13))),
+        "item_not_in_parent_vector" => {
+            Box::new(|m| m.remove_from_vectors(&f(SF_NOTECARDS), &i(13)))
+        }
         "item_in_vector_not_in_map" => Box::new(|m| {
             m.snap.item_map.remove(&i(13));
         }),
         "item_parent_missing" => Box::new(move |m| m.item_mut(&i(13)).parent = f9999),
         "item_under_unrecognised_top" => Box::new(|m| {
             m.add_category(f(800), f(SF_ROOT), -1);
-            m.update_item_new(&WItem { id: i(800), parent: f(800), atype: vkstorm_inventory::types::AssetType::NOTECARD, asset: a(800) });
+            m.update_item_new(&WItem {
+                id: i(800),
+                parent: f(800),
+                atype: vkstorm_inventory::types::AssetType::NOTECARD,
+                asset: a(800),
+            });
             m.cat_mut(&f(800)).parent = [0; 16];
         }),
-        "duplicate_trash_fatal" => return (w.with_folder(pid(TAG_FOLDER, 0x900), f(SF_ROOT), 14, 1), none),
-        "duplicate_cof_fatal" => return (w.with_folder(pid(TAG_FOLDER, 0x901), f(SF_ROOT), 46, 1), none),
-        "duplicate_textures_automatic" => return (w.with_folder(pid(TAG_FOLDER, 0x902), f(SF_ROOT), 0, 1), none),
-        "duplicate_settings_warning" => return (w.with_folder(pid(TAG_FOLDER, 0x903), f(SF_ROOT), 56, 1), none),
-        "duplicate_material_warning" => return (w.with_folder(pid(TAG_FOLDER, 0x904), f(SF_ROOT), 57, 1), none),
-        "system_folder_elsewhere" => return (w.with_folder(pid(TAG_FOLDER, 0x905), f(SF_OBJECTS), 14, 1), none),
-        "suitcase_ignored" => return (w.with_folder(pid(TAG_FOLDER, 0x906), f(SF_ROOT), 100, 1), none),
+        "duplicate_trash_fatal" => {
+            return (
+                w.with_folder(pid(TAG_FOLDER, 0x900), f(SF_ROOT), 14, 1),
+                none,
+            );
+        }
+        "duplicate_cof_fatal" => {
+            return (
+                w.with_folder(pid(TAG_FOLDER, 0x901), f(SF_ROOT), 46, 1),
+                none,
+            );
+        }
+        "duplicate_textures_automatic" => {
+            return (
+                w.with_folder(pid(TAG_FOLDER, 0x902), f(SF_ROOT), 0, 1),
+                none,
+            );
+        }
+        "duplicate_settings_warning" => {
+            return (
+                w.with_folder(pid(TAG_FOLDER, 0x903), f(SF_ROOT), 56, 1),
+                none,
+            );
+        }
+        "duplicate_material_warning" => {
+            return (
+                w.with_folder(pid(TAG_FOLDER, 0x904), f(SF_ROOT), 57, 1),
+                none,
+            );
+        }
+        "system_folder_elsewhere" => {
+            return (
+                w.with_folder(pid(TAG_FOLDER, 0x905), f(SF_OBJECTS), 14, 1),
+                none,
+            );
+        }
+        "suitcase_ignored" => {
+            return (
+                w.with_folder(pid(TAG_FOLDER, 0x906), f(SF_ROOT), 100, 1),
+                none,
+            );
+        }
         "missing_textures" => return (w.without_folder(f(SF_TEXTURES)), none),
         "missing_trash" => return (w.without_folder(f(SF_TRASH)), none),
         "missing_cof" => return (w.without_folder(f(SF_COF)), none),
@@ -72,7 +114,9 @@ fn changed(id: &str) -> (World, Box<dyn Fn(&mut TestModel)>) {
             m.snap.item_locks.insert(f(42));
         }),
         "category_tree_extra_entry" => Box::new(|m| {
-            m.snap.category_tree.insert(pid(TAG_FOLDER, 0x999), Vec::new());
+            m.snap
+                .category_tree
+                .insert(pid(TAG_FOLDER, 0x999), Vec::new());
         }),
         "category_missing_child_arrays" => Box::new(|m| {
             m.snap.item_tree.remove(&f(45));
@@ -94,16 +138,23 @@ fn changed(id: &str) -> (World, Box<dyn Fn(&mut TestModel)>) {
             m.snap.backlinks.push((i(33), i(10)));
             m.snap.backlinks.push((i(30), i(812)));
         }),
-        "two_roots_named_my_inventory" => return (w.with_folder(pid(TAG_FOLDER, 0x907), f(SF_ROOT), 8, 1), none),
+        "two_roots_named_my_inventory" => {
+            return (
+                w.with_folder(pid(TAG_FOLDER, 0x907), f(SF_ROOT), 8, 1),
+                none,
+            );
+        }
         "three_roots_named_my_inventory" => {
             return (
-                w.with_folder(pid(TAG_FOLDER, 0x908), f(SF_ROOT), 8, 1).with_folder(pid(TAG_FOLDER, 0x909), f(SF_ROOT), 8, 1),
+                w.with_folder(pid(TAG_FOLDER, 0x908), f(SF_ROOT), 8, 1)
+                    .with_folder(pid(TAG_FOLDER, 0x909), f(SF_ROOT), 8, 1),
                 none,
             );
         }
         "three_roots_different_parents" => {
             return (
-                w.with_folder(pid(TAG_FOLDER, 0x90a), f(SF_ROOT), 8, 1).with_folder(pid(TAG_FOLDER, 0x90b), f(SF_OBJECTS), 8, 1),
+                w.with_folder(pid(TAG_FOLDER, 0x90a), f(SF_ROOT), 8, 1)
+                    .with_folder(pid(TAG_FOLDER, 0x90b), f(SF_OBJECTS), 8, 1),
                 none,
             );
         }
@@ -151,8 +202,14 @@ fn replay(file: &str, mut qa: Option<QaRandom>) -> Tally {
             .collect();
         assert_case(file, &case.id, &expected, &out);
         tally.replayed("validation", n_validation);
-        tally.replayed("model summary (rebuilt input state)", out.len() - n_validation);
-        tally.left("lock entry counts, pending batch", case.lines.len() - expected.len());
+        tally.replayed(
+            "model summary (rebuilt input state)",
+            out.len() - n_validation,
+        );
+        tally.left(
+            "lock entry counts, pending batch",
+            case.lines.len() - expected.len(),
+        );
     }
     tally.print(file);
     tally
@@ -171,14 +228,20 @@ fn c4_validation() {
 #[test]
 #[cfg(target_env = "msvc")]
 fn c4_validation_qa_msvc() {
-    let t = replay("cache/c4_validation_qa.msvc.txt", Some(QaRandom::new(QaLibrary::Msvc)));
+    let t = replay(
+        "cache/c4_validation_qa.msvc.txt",
+        Some(QaRandom::new(QaLibrary::Msvc)),
+    );
     assert_eq!((t.replayed, t.left), (92, 8));
 }
 
 #[test]
 #[cfg(not(target_env = "msvc"))]
 fn c4_validation_qa_libstdcxx() {
-    let t = replay("cache/c4_validation_qa.libstdcxx.txt", Some(QaRandom::new(QaLibrary::Libstdcxx)));
+    let t = replay(
+        "cache/c4_validation_qa.libstdcxx.txt",
+        Some(QaRandom::new(QaLibrary::Libstdcxx)),
+    );
     assert_eq!((t.replayed, t.left), (92, 8));
 }
 

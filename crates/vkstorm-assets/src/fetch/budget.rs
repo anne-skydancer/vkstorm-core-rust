@@ -53,8 +53,16 @@ pub fn calc_data_size_j2c(w: i32, h: i32, _comp: i32, discard_level: i32, rate: 
         }
         {
             let max_dimension = w.max(h);
-            let ratio = if max_dimension > 0 { max_dimension as f32 / MAX_BLOCK_SIZE as f32 } else { 0.0 };
-            let dimension_layers = if ratio > 0.0 { ((ratio.log2().floor() as i32) + 1).max(1) } else { 1 };
+            let ratio = if max_dimension > 0 {
+                max_dimension as f32 / MAX_BLOCK_SIZE as f32
+            } else {
+                0.0
+            };
+            let dimension_layers = if ratio > 0.0 {
+                ((ratio.log2().floor() as i32) + 1).max(1)
+            } else {
+                1
+            };
             if dimension_layers > nb_layers {
                 let mut extra = dimension_layers.min(HARD_CAP) - nb_layers;
                 while extra > 0 {
@@ -77,7 +85,13 @@ pub fn calc_data_size_j2c(w: i32, h: i32, _comp: i32, discard_level: i32, rate: 
 /// `LLImageJ2C::calcDiscardLevelBytes(bytes)`: the smallest discard level
 /// the first `bytes` of a `w`x`h`x`comp` image cover, with the viewer's
 /// `TextureReverseByteRange` percentage.
-pub fn calc_discard_level_bytes(w: i32, h: i32, comp: i32, bytes: i32, reverse_byte_range_percent: i32) -> i32 {
+pub fn calc_discard_level_bytes(
+    w: i32,
+    h: i32,
+    comp: i32,
+    bytes: i32,
+    reverse_byte_range_percent: i32,
+) -> i32 {
     if bytes == 0 {
         return MAX_DISCARD_LEVEL;
     }
@@ -106,15 +120,27 @@ mod tests {
         let d0 = calc_data_size_j2c(1024, 1024, 3, 0, DEFAULT_RATE);
         assert!(d5 < d2 && d2 < d0);
         // Unknown dimensions: one 64x64 layer plus the header.
-        assert_eq!(calc_data_size_j2c(0, 0, 3, 5, DEFAULT_RATE), 64 * 64 * 32 / 8 / 8 + 600);
-        assert_eq!(calc_data_size_j2c(64, 64, 3, 5, DEFAULT_RATE), 64 * 64 * 32 / 8 / 8 + 600);
+        assert_eq!(
+            calc_data_size_j2c(0, 0, 3, 5, DEFAULT_RATE),
+            64 * 64 * 32 / 8 / 8 + 600
+        );
+        assert_eq!(
+            calc_data_size_j2c(64, 64, 3, 5, DEFAULT_RATE),
+            64 * 64 * 32 / 8 / 8 + 600
+        );
     }
 
     #[test]
     fn discard_from_bytes() {
-        assert_eq!(calc_discard_level_bytes(512, 512, 3, 0, 80), MAX_DISCARD_LEVEL);
+        assert_eq!(
+            calc_discard_level_bytes(512, 512, 3, 0, 80),
+            MAX_DISCARD_LEVEL
+        );
         let full = calc_data_size_j2c(512, 512, 3, 0, DEFAULT_RATE);
         assert_eq!(calc_discard_level_bytes(512, 512, 3, full, 80), 0);
-        assert_eq!(calc_discard_level_bytes(512, 512, 3, 700, 80), MAX_DISCARD_LEVEL);
+        assert_eq!(
+            calc_discard_level_bytes(512, 512, 3, 700, 80),
+            MAX_DISCARD_LEVEL
+        );
     }
 }

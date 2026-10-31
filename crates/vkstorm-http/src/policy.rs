@@ -7,9 +7,11 @@ use std::cmp::Ordering;
 use std::collections::{BinaryHeap, VecDeque};
 
 use crate::hooks::{Hooks, LogLevel, Stat};
-use crate::options::{ClassOptions, GlobalOptions, INVALID_POLICY_ID, POLICY_CLASS_LIMIT, TRACE_OFF};
+use crate::options::{
+    ClassOptions, GlobalOptions, INVALID_POLICY_ID, POLICY_CLASS_LIMIT, TRACE_OFF,
+};
 use crate::request::RequestOp;
-use crate::status::{he, Status};
+use crate::status::{Status, he};
 use crate::transport::Transport;
 
 /// How soon the service loop should run again.
@@ -75,7 +77,10 @@ impl Default for Policy {
 
 impl Policy {
     pub fn new() -> Policy {
-        Policy { classes: vec![ClassState::default()], global: GlobalOptions::default() }
+        Policy {
+            classes: vec![ClassState::default()],
+            global: GlobalOptions::default(),
+        }
     }
 
     pub fn class_count(&self) -> usize {
@@ -121,7 +126,11 @@ impl Policy {
     /// backoff between the request's limits, or at the server's
     /// `Retry-After` delay when it is under 30 seconds.
     pub fn retry_op(&mut self, mut op: Box<RequestOp>, now: u64, hooks: &dyn Hooks) {
-        let delta_factor: u64 = if op.retries <= 10 { 1 << op.retries } else { 1024 };
+        let delta_factor: u64 = if op.retries <= 10 {
+            1 << op.retries
+        } else {
+            1024
+        };
         let mut delta = (op.min_backoff.saturating_mul(delta_factor)).min(op.max_backoff);
         let mut external = false;
         if op.retry_after > 0 && op.retry_after < 30 {
@@ -147,7 +156,12 @@ impl Policy {
         if op.common.tracing > TRACE_OFF {
             hooks.log(
                 LogLevel::Info,
-                &format!("TRACE, ToRetryQueue, Handle:  {}, Delta:  {}, Retries:  {}", op.handle(), delta / 1000, op.retries),
+                &format!(
+                    "TRACE, ToRetryQueue, Handle:  {}, Delta:  {}, Retries:  {}",
+                    op.handle(),
+                    delta / 1000,
+                    op.retries
+                ),
             );
         }
         let pclass = op.policy() as usize;
@@ -157,7 +171,12 @@ impl Policy {
     /// `HttpPolicy::processReadyQueue`: hands requests to the transport up
     /// to each class's concurrency limit, retries that are due first, under
     /// the class's request-rate throttle.
-    pub fn process_ready_queue(&mut self, transport: &mut Transport, now: u64, hooks: &dyn Hooks) -> LoopSpeed {
+    pub fn process_ready_queue(
+        &mut self,
+        transport: &mut Transport,
+        now: u64,
+        hooks: &dyn Hooks,
+    ) -> LoopSpeed {
         let mut result = LoopSpeed::RequestSleep;
         for pclass in 0..self.classes.len() {
             let mut staged: Vec<Box<RequestOp>> = Vec::new();
@@ -228,7 +247,10 @@ impl Policy {
         if now >= state.throttle_end {
             hooks.log(
                 LogLevel::Debug,
-                &format!("Throttle expired with {} requests to go and {} requests issued.", state.throttle_left, state.request_count),
+                &format!(
+                    "Throttle expired with {} requests to go and {} requests issued.",
+                    state.throttle_left, state.request_count
+                ),
             );
             state.throttle_left = state.options.throttle_rate;
             state.throttle_end = now + 1_000_000;
@@ -258,7 +280,12 @@ impl Policy {
     /// `HttpPolicy::stageAfterCompletion`: a failed request that may still
     /// be retried goes back to the retry queue (returns `None`); otherwise
     /// the request is returned for delivery.
-    pub fn stage_after_completion(&mut self, op: Box<RequestOp>, now: u64, hooks: &dyn Hooks) -> Option<Box<RequestOp>> {
+    pub fn stage_after_completion(
+        &mut self,
+        op: Box<RequestOp>,
+        now: u64,
+        hooks: &dyn Hooks,
+    ) -> Option<Box<RequestOp>> {
         if !op.status.is_ok() && op.retries < op.retry_limit && op.status.is_retryable() {
             self.retry_op(op, now, hooks);
             return None;
@@ -275,7 +302,14 @@ impl Policy {
                 ),
             );
         } else if op.retries != 0 {
-            hooks.log(LogLevel::Debug, &format!("HTTP request {} succeeded on retry {}.", op.handle(), op.retries));
+            hooks.log(
+                LogLevel::Debug,
+                &format!(
+                    "HTTP request {} succeeded on retry {}.",
+                    op.handle(),
+                    op.retries
+                ),
+            );
         }
         hooks.stat(Stat::ResultCode, op.status.kind as u64);
         Some(op)
@@ -283,7 +317,9 @@ impl Policy {
 
     /// `HttpPolicy::getReadyCount`.
     pub fn ready_count(&self, pclass: u32) -> usize {
-        self.classes.get(pclass as usize).map_or(0, |s| s.ready.len() + s.retry.len())
+        self.classes
+            .get(pclass as usize)
+            .map_or(0, |s| s.ready.len() + s.retry.len())
     }
 
     /// `HttpPolicy::stallPolicy`: sets the class's stall and returns the
@@ -319,7 +355,15 @@ mod tests {
     use crate::sys::UserPtr;
 
     fn op(handle: u64) -> Box<RequestOp> {
-        Box::new(RequestOp::new(OpCommon { handle, user: UserPtr::null(), reply: None, tracing: 0 }, Request::new(0, Method::Get, "http://x/")))
+        Box::new(RequestOp::new(
+            OpCommon {
+                handle,
+                user: UserPtr::null(),
+                reply: None,
+                tracing: 0,
+            },
+            Request::new(0, Method::Get, "http://x/"),
+        ))
     }
 
     #[test]

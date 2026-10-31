@@ -9,7 +9,7 @@
 
 use std::time::Instant;
 
-use vkstorm_image::{bmp, dxt, jpeg, png, tga, Error, Raster};
+use vkstorm_image::{Error, Raster, bmp, dxt, jpeg, png, tga};
 
 fn read_raw(path: &str) -> Result<Raster, String> {
     let b = std::fs::read(path).map_err(|e| format!("{path}: {e}"))?;
@@ -18,7 +18,12 @@ fn read_raw(path: &str) -> Result<Raster, String> {
     }
     let u = |at: usize| u32::from_le_bytes([b[at], b[at + 1], b[at + 2], b[at + 3]]);
     let (width, height, components) = (u(4), u(8), u(12));
-    Ok(Raster { width, height, components, data: b[16..].to_vec() })
+    Ok(Raster {
+        width,
+        height,
+        components,
+        data: b[16..].to_vec(),
+    })
 }
 
 fn write_raw(path: &str, r: &Raster) -> Result<(), String> {
@@ -99,19 +104,34 @@ fn run(args: &[String]) -> Result<String, String> {
             let list = std::fs::read_to_string(&args[1]).map_err(|e| e.to_string())?;
             let mut out = String::new();
             for path in list.lines().map(str::trim).filter(|l| !l.is_empty()) {
-                let codec = match path.rsplit('.').next().map(|e| e.to_ascii_lowercase()).as_deref() {
+                let codec = match path
+                    .rsplit('.')
+                    .next()
+                    .map(|e| e.to_ascii_lowercase())
+                    .as_deref()
+                {
                     Some("jpg") | Some("jpeg") => "jpeg",
                     Some("mip") => "dxt",
                     Some(e) => e,
                     None => "",
                 }
                 .to_owned();
-                let r = std::fs::read(path).map_err(|e| e.to_string()).and_then(|d| decode(&codec, &d).map_err(|e| e.to_string()));
+                let r = std::fs::read(path)
+                    .map_err(|e| e.to_string())
+                    .and_then(|d| decode(&codec, &d).map_err(|e| e.to_string()));
                 match r {
-                    Ok(r) => out.push_str(&format!("{:08x} {} {} {} {path}
-", crc32(&r.data), r.width, r.height, r.components)),
-                    Err(_) => out.push_str(&format!("FAIL {path}
-")),
+                    Ok(r) => out.push_str(&format!(
+                        "{:08x} {} {} {} {path}
+",
+                        crc32(&r.data),
+                        r.width,
+                        r.height,
+                        r.components
+                    )),
+                    Err(_) => out.push_str(&format!(
+                        "FAIL {path}
+"
+                    )),
                 }
             }
             Ok(out.trim_end().to_owned())
@@ -120,7 +140,10 @@ fn run(args: &[String]) -> Result<String, String> {
             let a = read_raw(&args[1])?;
             let b = read_raw(&args[2])?;
             if (a.width, a.height, a.components) != (b.width, b.height, b.components) {
-                return Err(format!("shape differs: {}x{}x{} vs {}x{}x{}", a.width, a.height, a.components, b.width, b.height, b.components));
+                return Err(format!(
+                    "shape differs: {}x{}x{} vs {}x{}x{}",
+                    a.width, a.height, a.components, b.width, b.height, b.components
+                ));
             }
             let mut max = 0u8;
             let mut sum = 0u64;
@@ -133,8 +156,15 @@ fn run(args: &[String]) -> Result<String, String> {
             }
             let n = a.data.len().max(1) as f64;
             let mse = sq / n;
-            let psnr = if mse <= 0.0 { 99.0 } else { 10.0 * (255.0 * 255.0 / mse).log10() };
-            Ok(format!("max_abs {max} mean_abs {:.5} psnr {psnr:.2}", sum as f64 / n))
+            let psnr = if mse <= 0.0 {
+                99.0
+            } else {
+                10.0 * (255.0 * 255.0 / mse).log10()
+            };
+            Ok(format!(
+                "max_abs {max} mean_abs {:.5} psnr {psnr:.2}",
+                sum as f64 / n
+            ))
         }
         _ => {
             let (codec, op) = cmd.split_once('-').ok_or("usage: see source")?;
@@ -164,7 +194,11 @@ fn crc32(data: &[u8]) -> u32 {
     for (i, t) in table.iter_mut().enumerate() {
         let mut c = i as u32;
         for _ in 0..8 {
-            c = if c & 1 != 0 { 0xEDB8_8320 ^ (c >> 1) } else { c >> 1 };
+            c = if c & 1 != 0 {
+                0xEDB8_8320 ^ (c >> 1)
+            } else {
+                c >> 1
+            };
         }
         *t = c;
     }

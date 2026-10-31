@@ -241,7 +241,11 @@ pub fn sscanf(input: &[u8], format: &str) -> Scan {
                 match scan_number(s, i, width, conv == b'x') {
                     Some((v, next)) => {
                         i = next;
-                        args.push(if conv == b'x' { Arg::Hex(v) } else { Arg::Int(v as i32) });
+                        args.push(if conv == b'x' {
+                            Arg::Hex(v)
+                        } else {
+                            Arg::Int(v as i32)
+                        });
                     }
                     None => break,
                 }
@@ -249,7 +253,11 @@ pub fn sscanf(input: &[u8], format: &str) -> Scan {
             _ => break,
         }
     }
-    let ret = if args.is_empty() && input_failure { EOF } else { args.len() as i32 };
+    let ret = if args.is_empty() && input_failure {
+        EOF
+    } else {
+        args.len() as i32
+    };
     Scan { ret, args }
 }
 
@@ -296,9 +304,15 @@ mod tests {
         let r = sscanf(b"   ", " %255s %255s");
         assert_eq!(r.ret, EOF);
         let r = sscanf(b"\tkey\tvalue more", " %255s %255s");
-        assert_eq!((r.ret, r.str(0), r.str(1)), (2, Some(&b"key"[..]), Some(&b"value"[..])));
+        assert_eq!(
+            (r.ret, r.str(0), r.str(1)),
+            (2, Some(&b"key"[..]), Some(&b"value"[..]))
+        );
         let r = sscanf(b"abcdef", " %3s %3s");
-        assert_eq!((r.ret, r.str(0), r.str(1)), (2, Some(&b"abc"[..]), Some(&b"def"[..])));
+        assert_eq!(
+            (r.ret, r.str(0), r.str(1)),
+            (2, Some(&b"abc"[..]), Some(&b"def"[..]))
+        );
         let r = sscanf(b"\t\tname\tA b|", " %254s%254[\t]%254[^|]");
         assert_eq!((r.ret, r.str(2)), (3, Some(&b"A b"[..])));
         let r = sscanf(b"\t\tname\t|", " %254s%254[\t]%254[^|]");

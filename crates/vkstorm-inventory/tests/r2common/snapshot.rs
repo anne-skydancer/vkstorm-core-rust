@@ -14,7 +14,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use vkstorm_inventory::perms::{Uuid, NULL_ID};
+use vkstorm_inventory::perms::{NULL_ID, Uuid};
 use vkstorm_inventory::types::{AssetType, FolderType};
 use vkstorm_inventory::validate::{self, QaRandom, SnapCategory, SnapItem, Snapshot, Validation};
 
@@ -99,7 +99,12 @@ pub struct World {
 
 impl World {
     pub fn with_folder(mut self, id: Uuid, parent: Uuid, ftype: i32, version: i32) -> World {
-        self.agent.push(Folder { id, parent, ftype, version });
+        self.agent.push(Folder {
+            id,
+            parent,
+            ftype,
+            version,
+        });
         self
     }
 
@@ -113,7 +118,11 @@ impl World {
 
 /// `standard_world()`.
 pub fn standard_world() -> World {
-    let mut w = World { agent_root: f(SF_ROOT), lib_root: lf(1), ..World::default() };
+    let mut w = World {
+        agent_root: f(SF_ROOT),
+        lib_root: lf(1),
+        ..World::default()
+    };
     let folders: &[(u64, u64, i32, i32)] = &[
         (1, 0, 8, 40),
         (2, 1, 0, 3),
@@ -144,12 +153,37 @@ pub fn standard_world() -> World {
         (45, 44, -1, 1),
     ];
     for &(n, p, ftype, version) in folders {
-        w.agent.push(Folder { id: f(n), parent: if p == 0 { NULL_ID } else { f(p) }, ftype, version });
+        w.agent.push(Folder {
+            id: f(n),
+            parent: if p == 0 { NULL_ID } else { f(p) },
+            ftype,
+            version,
+        });
     }
-    w.library.push(Folder { id: lf(1), parent: NULL_ID, ftype: 8, version: 11 });
-    w.library.push(Folder { id: lf(2), parent: lf(1), ftype: 5, version: 5 });
-    w.library.push(Folder { id: lf(3), parent: lf(1), ftype: 6, version: 4 });
-    w.library.push(Folder { id: lf(4), parent: lf(3), ftype: -1, version: 2 });
+    w.library.push(Folder {
+        id: lf(1),
+        parent: NULL_ID,
+        ftype: 8,
+        version: 11,
+    });
+    w.library.push(Folder {
+        id: lf(2),
+        parent: lf(1),
+        ftype: 5,
+        version: 5,
+    });
+    w.library.push(Folder {
+        id: lf(3),
+        parent: lf(1),
+        ftype: 6,
+        version: 4,
+    });
+    w.library.push(Folder {
+        id: lf(4),
+        parent: lf(3),
+        ftype: -1,
+        version: 2,
+    });
     let items: &[(u64, u64, i32)] = &[
         (1, 2, 0),
         (2, 2, 0),
@@ -173,7 +207,12 @@ pub fn standard_world() -> World {
         (20, 20, 56),
     ];
     for &(n, p, t) in items {
-        w.items.push(WItem { id: i(n), parent: f(p), atype: AssetType(t), asset: a(n) });
+        w.items.push(WItem {
+            id: i(n),
+            parent: f(p),
+            atype: AssetType(t),
+            asset: a(n),
+        });
     }
     let links: &[(u64, u64, Uuid, bool)] = &[
         (30, 40, i(4), false),
@@ -190,14 +229,38 @@ pub fn standard_world() -> World {
     for &(n, p, target, folder) in links {
         w.items.push(link(i(n), f(p), target, folder));
     }
-    w.items.push(WItem { id: li(1), parent: lf(2), atype: AssetType::CLOTHING, asset: a(1001) });
-    w.items.push(WItem { id: li(2), parent: lf(3), atype: AssetType::OBJECT, asset: a(1002) });
-    w.items.push(WItem { id: li(3), parent: lf(4), atype: AssetType::OBJECT, asset: a(1003) });
+    w.items.push(WItem {
+        id: li(1),
+        parent: lf(2),
+        atype: AssetType::CLOTHING,
+        asset: a(1001),
+    });
+    w.items.push(WItem {
+        id: li(2),
+        parent: lf(3),
+        atype: AssetType::OBJECT,
+        asset: a(1002),
+    });
+    w.items.push(WItem {
+        id: li(3),
+        parent: lf(4),
+        atype: AssetType::OBJECT,
+        asset: a(1003),
+    });
     w
 }
 
 pub fn link(id: Uuid, parent: Uuid, target: Uuid, folder: bool) -> WItem {
-    WItem { id, parent, atype: if folder { AssetType::LINK_FOLDER } else { AssetType::LINK }, asset: target }
+    WItem {
+        id,
+        parent,
+        atype: if folder {
+            AssetType::LINK_FOLDER
+        } else {
+            AssetType::LINK
+        },
+        asset: target,
+    }
 }
 
 /// The model `validate()` reads, with the summary fields of `dump_model`.
@@ -252,7 +315,12 @@ impl TestModel {
     /// backlink of a link.
     pub fn update_item_new(&mut self, it: &WItem) {
         let k = self.snap.items.len();
-        self.snap.items.push(SnapItem { id: it.id, parent: it.parent, asset_type: it.atype, asset: it.asset });
+        self.snap.items.push(SnapItem {
+            id: it.id,
+            parent: it.parent,
+            asset_type: it.atype,
+            asset: it.asset,
+        });
         self.snap.item_map.insert(it.id, k);
         self.item_order.insert(it.id);
         if let Some(v) = self.snap.item_tree.get_mut(&it.parent) {
@@ -279,7 +347,13 @@ impl TestModel {
         let mut s = self.snap.clone();
         s.category_order = synced(&self.cat_order, s.category_map.keys());
         s.item_order = synced(&self.item_order, s.item_map.keys());
-        validate::validate(&s, validate::Options { qa, in_open_sim: false })
+        validate::validate(
+            &s,
+            validate::Options {
+                qa,
+                in_open_sim: false,
+            },
+        )
     }
 
     /// `dump_model(out, false)` without the lock entry counts and the
@@ -297,11 +371,19 @@ impl TestModel {
             s.category_tree.len(),
             s.item_tree.len()
         )];
-        let parents: BTreeSet<Uuid> = s.category_tree.keys().chain(s.item_tree.keys()).copied().collect();
+        let parents: BTreeSet<Uuid> = s
+            .category_tree
+            .keys()
+            .chain(s.item_tree.keys())
+            .copied()
+            .collect();
         let list = |v: Option<&Vec<Option<usize>>>, id: &dyn Fn(usize) -> Uuid| match v {
             None => "none".to_owned(),
             Some(v) => {
-                let names: Vec<String> = v.iter().map(|e| e.map(|k| uuid(&id(k))).unwrap_or_else(|| "null".into())).collect();
+                let names: Vec<String> = v
+                    .iter()
+                    .map(|e| e.map(|k| uuid(&id(k))).unwrap_or_else(|| "null".into()))
+                    .collect();
                 format!("[{}]", names.join(","))
             }
         };
@@ -338,7 +420,12 @@ impl TestModel {
 pub fn long_line(l: &str) -> String {
     if l.len() > 4000 {
         let sp = l[9..].find(' ').map(|p| p + 9).unwrap_or(l.len());
-        format!("{} long={} sha256={}", &l[..sp], l.len(), sha256_hex(l.as_bytes()))
+        format!(
+            "{} long={} sha256={}",
+            &l[..sp],
+            l.len(),
+            sha256_hex(l.as_bytes())
+        )
     } else {
         l.to_owned()
     }
@@ -353,7 +440,10 @@ pub fn long_line(l: &str) -> String {
 /// The emulated order brought in line with the map's keys: a C4 case that
 /// writes a map directly (one change, then `validate()`) erased or inserted
 /// that key just before.
-fn synced<'a>(order: &super::support_unordered::UnorderedOrder, keys: impl Iterator<Item = &'a Uuid>) -> Vec<Uuid> {
+fn synced<'a>(
+    order: &super::support_unordered::UnorderedOrder,
+    keys: impl Iterator<Item = &'a Uuid>,
+) -> Vec<Uuid> {
     let keys: BTreeSet<Uuid> = keys.copied().collect();
     let mut o = order.clone();
     for k in o.order() {
@@ -368,7 +458,10 @@ fn synced<'a>(order: &super::support_unordered::UnorderedOrder, keys: impl Itera
 }
 
 pub fn populate(w: &World, qa: Option<&mut QaRandom>) -> TestModel {
-    let mut m = TestModel { library_owner: lib_owner(), ..TestModel::default() };
+    let mut m = TestModel {
+        library_owner: lib_owner(),
+        ..TestModel::default()
+    };
     m.snap.root = w.agent_root;
     m.snap.library_root = w.lib_root;
     let mut folders: BTreeMap<Uuid, &Folder> = BTreeMap::new();

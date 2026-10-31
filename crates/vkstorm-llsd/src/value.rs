@@ -92,7 +92,9 @@ impl Children {
     fn take(v: &mut Value) -> Option<Children> {
         match v {
             Value::Map(m) if !m.is_empty() => Some(Children::Map(std::mem::take(m).into_values())),
-            Value::Array(a) if !a.is_empty() => Some(Children::Array(std::mem::take(a).into_iter())),
+            Value::Array(a) if !a.is_empty() => {
+                Some(Children::Array(std::mem::take(a).into_iter()))
+            }
             _ => None,
         }
     }

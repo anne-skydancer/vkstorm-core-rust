@@ -38,7 +38,11 @@ pub struct StatusPolicy {
 
 impl Default for StatusPolicy {
     fn default() -> Self {
-        StatusPolicy { first_poll: Duration::from_secs(5), interval: Duration::from_secs(20), max_failures: 3 }
+        StatusPolicy {
+            first_poll: Duration::from_secs(5),
+            interval: Duration::from_secs(20),
+            max_failures: 3,
+        }
     }
 }
 
@@ -53,7 +57,9 @@ fn split_url(url: &str) -> Option<(&str, &str)> {
 
 /// The status document candidates for a stream URL, most specific first.
 pub(crate) fn candidates(url: &str) -> Vec<String> {
-    let Some((base, mount)) = split_url(url) else { return Vec::new() };
+    let Some((base, mount)) = split_url(url) else {
+        return Vec::new();
+    };
     let mut out = Vec::new();
     let mut path = mount;
     while let Some(i) = path.rfind('/') {
@@ -76,12 +82,20 @@ pub(crate) fn pick(doc: &Json, mount: &str) -> Option<(String, String)> {
     let source = match sources {
         Json::Array(a) => a
             .iter()
-            .find(|s| !mount.is_empty() && s.get("listenurl").map(Json::as_string).is_some_and(|l| l.ends_with(mount)))
+            .find(|s| {
+                !mount.is_empty()
+                    && s.get("listenurl")
+                        .map(Json::as_string)
+                        .is_some_and(|l| l.ends_with(mount))
+            })
             .or(if a.len() == 1 { a.first() } else { None })?,
         Json::Object(_) => sources,
         _ => return None,
     };
-    let mut artist = source.get("artist").map(Json::as_string).unwrap_or_default();
+    let mut artist = source
+        .get("artist")
+        .map(Json::as_string)
+        .unwrap_or_default();
     let mut title = source.get("title").map(Json::as_string).unwrap_or_default();
     if artist.is_empty()
         && let Some(i) = title.find(" - ")
@@ -93,8 +107,17 @@ pub(crate) fn pick(doc: &Json, mount: &str) -> Option<(String, String)> {
 }
 
 /// Polls for the stream of `generation` until it is replaced or `stop`.
-pub(crate) fn run(shared: Arc<Shared>, generation: u64, url: String, net: NetConfig, policy: StatusPolicy, stop: Arc<AtomicBool>) {
-    let mount = split_url(&url).map(|(_, m)| m.to_owned()).unwrap_or_default();
+pub(crate) fn run(
+    shared: Arc<Shared>,
+    generation: u64,
+    url: String,
+    net: NetConfig,
+    policy: StatusPolicy,
+    stop: Arc<AtomicBool>,
+) {
+    let mount = split_url(&url)
+        .map(|(_, m)| m.to_owned())
+        .unwrap_or_default();
     let gone = || stop.load(Ordering::Relaxed) || shared.generation() != generation;
     while !gone() {
         std::thread::sleep(Duration::from_millis(100));
@@ -109,13 +132,21 @@ pub(crate) fn run(shared: Arc<Shared>, generation: u64, url: String, net: NetCon
             if m.probe_fails >= policy.max_failures {
                 return; // no reachable status endpoint: stop asking
             }
-            let threshold = if m.poll_done { policy.interval } else { policy.first_poll };
+            let threshold = if m.poll_done {
+                policy.interval
+            } else {
+                policy.first_poll
+            };
             if m.poll_timer.elapsed() < threshold {
                 continue;
             }
             m.poll_done = true;
             m.poll_timer = std::time::Instant::now();
-            if m.status_url.is_empty() { candidates(&url) } else { vec![m.status_url.clone()] }
+            if m.status_url.is_empty() {
+                candidates(&url)
+            } else {
+                vec![m.status_url.clone()]
+            }
         };
         let mut found = None;
         for cand in &list {
@@ -158,7 +189,10 @@ mod tests {
                 "https://h:8000/status-json.xsl"
             ]
         );
-        assert_eq!(candidates("http://h:8000"), vec!["http://h:8000/status-json.xsl"]);
+        assert_eq!(
+            candidates("http://h:8000"),
+            vec!["http://h:8000/status-json.xsl"]
+        );
         assert_eq!(candidates("http://h/"), vec!["http://h/status-json.xsl"]);
     }
 

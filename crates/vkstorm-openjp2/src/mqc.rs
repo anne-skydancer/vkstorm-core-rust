@@ -1369,4 +1369,3 @@ pub(crate) fn opj_mqc_resetstates(mqc: &mut opj_mqc_t) {
 pub(crate) fn opj_mqc_setstate(mqc: &mut opj_mqc_t, ctxno: u8, msb: OPJ_UINT32, prob: OPJ_INT32) {
   mqc.ctxs[ctxno as usize] = &mqc_states[msb.wrapping_add((prob << 1) as OPJ_UINT32) as usize];
 }
-

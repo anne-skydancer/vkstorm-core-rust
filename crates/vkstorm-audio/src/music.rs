@@ -33,9 +33,14 @@ pub const SPEAKER_SIDE_LEFT: u32 = 0x200;
 pub const SPEAKER_SIDE_RIGHT: u32 = 0x400;
 
 impl ChannelLayout {
-    pub const MONO: ChannelLayout = ChannelLayout { channels: 1, mask: SPEAKER_FRONT_CENTER };
-    pub const STEREO: ChannelLayout =
-        ChannelLayout { channels: 2, mask: SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT };
+    pub const MONO: ChannelLayout = ChannelLayout {
+        channels: 1,
+        mask: SPEAKER_FRONT_CENTER,
+    };
+    pub const STEREO: ChannelLayout = ChannelLayout {
+        channels: 2,
+        mask: SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT,
+    };
 }
 
 /// The result of one pull.

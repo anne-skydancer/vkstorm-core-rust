@@ -16,8 +16,8 @@
 //! Panics are caught at the boundary and reported as failure values.
 
 use std::cell::RefCell;
-use std::ffi::{c_char, c_void, CStr};
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::ffi::{CStr, c_char, c_void};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -58,12 +58,15 @@ pub extern "C" fn vks_audio_engine_info() -> *const c_char {
 pub extern "C" fn vks_audio_engine_version() -> *const c_char {
     static VERSION: std::sync::OnceLock<std::ffi::CString> = std::sync::OnceLock::new();
     VERSION
-        .get_or_init(|| std::ffi::CString::new(vkstorm_audio::UPSTREAM_BASELINE.version).unwrap_or_default())
+        .get_or_init(|| {
+            std::ffi::CString::new(vkstorm_audio::UPSTREAM_BASELINE.version).unwrap_or_default()
+        })
         .as_ptr()
 }
 
 /// Receives a UTF-8 string (not NUL-terminated) of `len` bytes.
-pub type VksAudioStrFn = Option<unsafe extern "C" fn(user: *mut c_void, s: *const c_char, len: usize)>;
+pub type VksAudioStrFn =
+    Option<unsafe extern "C" fn(user: *mut c_void, s: *const c_char, len: usize)>;
 
 fn give_str(cb: VksAudioStrFn, user: *mut c_void, s: &str) {
     if let Some(f) = cb {
@@ -76,7 +79,11 @@ unsafe fn opt_path(p: *const c_char) -> Option<PathBuf> {
         return None;
     }
     let s = unsafe { CStr::from_ptr(p) }.to_string_lossy().into_owned();
-    if s.is_empty() { None } else { Some(PathBuf::from(s)) }
+    if s.is_empty() {
+        None
+    } else {
+        Some(PathBuf::from(s))
+    }
 }
 
 unsafe fn opt_uuid(p: *const u8) -> Option<DeviceUuid> {
@@ -137,7 +144,11 @@ macro_rules! with_audio {
 pub unsafe extern "C" fn vks_audio_create(uuid: *const u8) -> *mut VksAudio {
     let endpoint = unsafe { opt_uuid(uuid) };
     match catch_unwind(|| Engine::new(endpoint)) {
-        Ok(Ok(engine)) => Box::into_raw(Box::new(VksAudio { engine, music: None, serial: 0 })),
+        Ok(Ok(engine)) => Box::into_raw(Box::new(VksAudio {
+            engine,
+            music: None,
+            serial: 0,
+        })),
         Ok(Err(e)) => {
             set_error(e);
             std::ptr::null_mut()
@@ -152,7 +163,12 @@ pub unsafe extern "C" fn vks_audio_create(uuid: *const u8) -> *mut VksAudio {
 /// Creates the engine on the null device (tests, offline rendering): no
 /// hardware, frames rendered on demand by `vks_audio_render_null`.
 #[unsafe(no_mangle)]
-pub extern "C" fn vks_audio_create_null(rate: u32, channels: u32, mask: u32, headphones: i32) -> *mut VksAudio {
+pub extern "C" fn vks_audio_create_null(
+    rate: u32,
+    channels: u32,
+    mask: u32,
+    headphones: i32,
+) -> *mut VksAudio {
     let config = NullConfig {
         rate,
         channels: channels as u16,
@@ -162,7 +178,11 @@ pub extern "C" fn vks_audio_create_null(rate: u32, channels: u32, mask: u32, hea
         clip: false,
     };
     match catch_unwind(|| Engine::new_null(config)) {
-        Ok(Ok(engine)) => Box::into_raw(Box::new(VksAudio { engine, music: None, serial: 0 })),
+        Ok(Ok(engine)) => Box::into_raw(Box::new(VksAudio {
+            engine,
+            music: None,
+            serial: 0,
+        })),
         Ok(Err(e)) => {
             set_error(e);
             std::ptr::null_mut()
@@ -236,8 +256,9 @@ pub unsafe extern "C" fn vks_audio_set_device(a: *mut VksAudio, uuid: *const u8)
 }
 
 /// Receives one output endpoint: its 16-byte identity and display name.
-pub type VksAudioDeviceFn =
-    Option<unsafe extern "C" fn(user: *mut c_void, uuid: *const u8, name: *const c_char, name_len: usize)>;
+pub type VksAudioDeviceFn = Option<
+    unsafe extern "C" fn(user: *mut c_void, uuid: *const u8, name: *const c_char, name_len: usize),
+>;
 
 /// Enumerates the output endpoints (`getDevices`). Returns the count, or -1
 /// if enumeration failed.
@@ -248,7 +269,14 @@ pub extern "C" fn vks_audio_devices(cb: VksAudioDeviceFn, user: *mut c_void) -> 
         Ok(Ok(list)) => {
             if let Some(f) = cb {
                 for d in &list {
-                    unsafe { f(user, d.uuid.0.as_ptr(), d.name.as_ptr() as *const c_char, d.name.len()) };
+                    unsafe {
+                        f(
+                            user,
+                            d.uuid.0.as_ptr(),
+                            d.name.as_ptr() as *const c_char,
+                            d.name.len(),
+                        )
+                    };
                 }
             }
             list.len() as i32
@@ -365,7 +393,12 @@ pub unsafe extern "C" fn vks_audio_wind_cleanup(a: *mut VksAudio) {
 /// # Safety
 /// `a` is null or a live engine.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_audio_wind_targets(a: *mut VksAudio, freq: f32, gain: f32, pan_gain_r: f32) {
+pub unsafe extern "C" fn vks_audio_wind_targets(
+    a: *mut VksAudio,
+    freq: f32,
+    gain: f32,
+    pan_gain_r: f32,
+) {
     with_audio!(a, (), |x| x.engine.set_wind_targets(freq, gain, pan_gain_r))
 }
 
@@ -375,7 +408,11 @@ pub unsafe extern "C" fn vks_audio_wind_targets(a: *mut VksAudio, freq: f32, gai
 /// # Safety
 /// `a` is null or a live engine; `out` holds frames x channels floats.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_audio_render_null(a: *mut VksAudio, out: *mut f32, frames: u32) -> u32 {
+pub unsafe extern "C" fn vks_audio_render_null(
+    a: *mut VksAudio,
+    out: *mut f32,
+    frames: u32,
+) -> u32 {
     if out.is_null() {
         return 0;
     }
@@ -422,7 +459,10 @@ pub struct VksAudioWav(Arc<Wav>);
 /// # Safety
 /// `path` is a NUL-terminated string; `missing` is null or valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_audio_wav_load(path: *const c_char, missing: *mut i32) -> *mut VksAudioWav {
+pub unsafe extern "C" fn vks_audio_wav_load(
+    path: *const c_char,
+    missing: *mut i32,
+) -> *mut VksAudioWav {
     let Some(p) = (unsafe { opt_path(path) }) else {
         return std::ptr::null_mut();
     };
@@ -461,7 +501,9 @@ pub unsafe extern "C" fn vks_audio_wav_free(a: *mut VksAudio, w: *mut VksAudioWa
     let w = unsafe { Box::from_raw(w) };
     if !a.is_null() {
         let x: &mut VksAudio = unsafe { &mut *a };
-        let _ = catch_unwind(AssertUnwindSafe(|| x.engine.mixer().stop_audio_source(&w.0)));
+        let _ = catch_unwind(AssertUnwindSafe(|| {
+            x.engine.mixer().stop_audio_source(&w.0)
+        }));
     }
     drop(w);
 }
@@ -472,7 +514,11 @@ pub unsafe extern "C" fn vks_audio_wav_free(a: *mut VksAudio, w: *mut VksAudioWa
 /// `w` is null or a live buffer.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn vks_audio_wav_sample_count(w: *const VksAudioWav) -> u32 {
-    if w.is_null() { 0 } else { unsafe { &*w }.0.sample_count() }
+    if w.is_null() {
+        0
+    } else {
+        unsafe { &*w }.0.sample_count()
+    }
 }
 
 /// The length in seconds, computed as SoLoud's `Wav::getLength`.
@@ -481,7 +527,11 @@ pub unsafe extern "C" fn vks_audio_wav_sample_count(w: *const VksAudioWav) -> u3
 /// `w` is null or a live buffer.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn vks_audio_wav_length(w: *const VksAudioWav) -> f64 {
-    if w.is_null() { 0.0 } else { unsafe { &*w }.0.length() }
+    if w.is_null() {
+        0.0
+    } else {
+        unsafe { &*w }.0.length()
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -492,12 +542,22 @@ pub unsafe extern "C" fn vks_audio_wav_length(w: *const VksAudioWav) -> f64 {
 /// # Safety
 /// `a` is null or a live engine; `w` a live buffer.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_audio_play(a: *mut VksAudio, w: *const VksAudioWav, volume: f32, paused: i32) -> u32 {
+pub unsafe extern "C" fn vks_audio_play(
+    a: *mut VksAudio,
+    w: *const VksAudioWav,
+    volume: f32,
+    paused: i32,
+) -> u32 {
     if w.is_null() {
         return 0;
     }
     let wav = unsafe { &*w }.0.clone();
-    with_audio!(a, 0, |x| x.engine.mixer().play(&wav, volume, 0.0, paused != 0))
+    with_audio!(a, 0, |x| x.engine.mixer().play(
+        &wav,
+        volume,
+        0.0,
+        paused != 0
+    ))
 }
 
 /// `Soloud::play3d`: returns the voice handle (0 if none).
@@ -518,7 +578,13 @@ pub unsafe extern "C" fn vks_audio_play_3d(
     }
     let wav = unsafe { &*w }.0.clone();
     let (p, v) = unsafe { (vec3(pos), vec3(vel)) };
-    with_audio!(a, 0, |x| x.engine.mixer().play_3d(&wav, p, v, volume, paused != 0))
+    with_audio!(a, 0, |x| x.engine.mixer().play_3d(
+        &wav,
+        p,
+        v,
+        volume,
+        paused != 0
+    ))
 }
 
 macro_rules! voice_fn {
@@ -574,9 +640,17 @@ voice_fn!(/// `set3dSourceAttenuation(h, INVERSE_DISTANCE, rolloff)`.
 /// # Safety
 /// `a` is null or a live engine; `pos`/`vel` 3 floats.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_audio_voice_set_3d(a: *mut VksAudio, h: u32, pos: *const f32, vel: *const f32) {
+pub unsafe extern "C" fn vks_audio_voice_set_3d(
+    a: *mut VksAudio,
+    h: u32,
+    pos: *const f32,
+    vel: *const f32,
+) {
     let (p, v) = unsafe { (vec3(pos), vec3(vel)) };
-    with_audio!(a, (), |x| x.engine.mixer().set_3d_source_parameters(h, p, v))
+    with_audio!(a, (), |x| x
+        .engine
+        .mixer()
+        .set_3d_source_parameters(h, p, v))
 }
 
 /// `set3dListenerParameters`.
@@ -592,7 +666,10 @@ pub unsafe extern "C" fn vks_audio_set_listener(
     vel: *const f32,
 ) {
     let (p, t, u, v) = unsafe { (vec3(pos), vec3(at), vec3(up), vec3(vel)) };
-    with_audio!(a, (), |x| x.engine.mixer().set_3d_listener_parameters(p, t, u, v))
+    with_audio!(a, (), |x| x
+        .engine
+        .mixer()
+        .set_3d_listener_parameters(p, t, u, v))
 }
 
 /// `update3dAudio`.
@@ -642,7 +719,11 @@ pub unsafe extern "C" fn vks_audio_decode_asset(
         *out_len = 0;
         *detail = 0;
     }
-    let bytes: &[u8] = if data.is_null() || len == 0 { &[] } else { unsafe { std::slice::from_raw_parts(data, len) } };
+    let bytes: &[u8] = if data.is_null() || len == 0 {
+        &[]
+    } else {
+        unsafe { std::slice::from_raw_parts(data, len) }
+    };
     use vkstorm_audio::asset::AssetDecodeError as E;
     match catch_unwind(|| decode_sound_asset(bytes)) {
         Ok(Ok(wav)) => {
@@ -688,7 +769,12 @@ pub unsafe extern "C" fn vks_audio_bytes_free(p: *mut u8, len: usize) {
 /// # Safety
 /// `data` points to `len` bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_audio_asset_vendor(data: *const u8, len: usize, cb: VksAudioStrFn, user: *mut c_void) -> i32 {
+pub unsafe extern "C" fn vks_audio_asset_vendor(
+    data: *const u8,
+    len: usize,
+    cb: VksAudioStrFn,
+    user: *mut c_void,
+) -> i32 {
     if data.is_null() || len == 0 {
         return 0;
     }
@@ -727,7 +813,9 @@ pub unsafe extern "C" fn vks_music_create(
     let ua = if user_agent.is_null() {
         String::new()
     } else {
-        unsafe { CStr::from_ptr(user_agent) }.to_string_lossy().into_owned()
+        unsafe { CStr::from_ptr(user_agent) }
+            .to_string_lossy()
+            .into_owned()
     };
     with_audio!(a, 0, |x| {
         if x.music.is_some() {
@@ -755,7 +843,9 @@ pub unsafe extern "C" fn vks_music_start(a: *mut VksAudio, url: *const c_char) {
     if url.is_null() {
         return;
     }
-    let url = unsafe { CStr::from_ptr(url) }.to_string_lossy().into_owned();
+    let url = unsafe { CStr::from_ptr(url) }
+        .to_string_lossy()
+        .into_owned();
     with_audio!(a, (), |x| {
         if let Some(m) = &x.music {
             m.start(&url);
@@ -808,7 +898,11 @@ pub unsafe extern "C" fn vks_music_is_playing(a: *mut VksAudio) -> i32 {
 /// # Safety
 /// `a` is null or a live engine.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_music_state(a: *mut VksAudio, cb: VksAudioStrFn, user: *mut c_void) -> i32 {
+pub unsafe extern "C" fn vks_music_state(
+    a: *mut VksAudio,
+    cb: VksAudioStrFn,
+    user: *mut c_void,
+) -> i32 {
     with_audio!(a, 0, |x| match x.music.as_ref().map(|m| m.state()) {
         None | Some(PlayerState::Idle) => 0,
         Some(PlayerState::Connecting) => 1,
@@ -839,7 +933,14 @@ pub unsafe extern "C" fn vks_music_url(a: *mut VksAudio, cb: VksAudioStrFn, user
 
 /// Receives metadata: `kind` 1 = artist and title, 0 = cleared (empty map).
 pub type VksMusicMetaFn = Option<
-    unsafe extern "C" fn(user: *mut c_void, kind: i32, artist: *const c_char, artist_len: usize, title: *const c_char, title_len: usize),
+    unsafe extern "C" fn(
+        user: *mut c_void,
+        kind: i32,
+        artist: *const c_char,
+        artist_len: usize,
+        title: *const c_char,
+        title_len: usize,
+    ),
 >;
 
 /// Delivers the next metadata event to `cb`; 1 if there was one.
@@ -847,7 +948,11 @@ pub type VksMusicMetaFn = Option<
 /// # Safety
 /// `a` is null or a live engine.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_music_poll_metadata(a: *mut VksAudio, cb: VksMusicMetaFn, user: *mut c_void) -> i32 {
+pub unsafe extern "C" fn vks_music_poll_metadata(
+    a: *mut VksAudio,
+    cb: VksMusicMetaFn,
+    user: *mut c_void,
+) -> i32 {
     with_audio!(a, 0, |x| {
         let Some(ev) = x.music.as_ref().and_then(|m| m.poll_event()) else {
             return 0;
@@ -855,9 +960,18 @@ pub unsafe extern "C" fn vks_music_poll_metadata(a: *mut VksAudio, cb: VksMusicM
         if let Some(f) = cb {
             match ev {
                 PlayerEvent::Metadata { artist, title } => unsafe {
-                    f(user, 1, artist.as_ptr() as *const c_char, artist.len(), title.as_ptr() as *const c_char, title.len())
+                    f(
+                        user,
+                        1,
+                        artist.as_ptr() as *const c_char,
+                        artist.len(),
+                        title.as_ptr() as *const c_char,
+                        title.len(),
+                    )
                 },
-                PlayerEvent::MetadataCleared => unsafe { f(user, 0, std::ptr::null(), 0, std::ptr::null(), 0) },
+                PlayerEvent::MetadataCleared => unsafe {
+                    f(user, 0, std::ptr::null(), 0, std::ptr::null(), 0)
+                },
             }
         }
         1
@@ -869,18 +983,33 @@ pub unsafe extern "C" fn vks_music_poll_metadata(a: *mut VksAudio, cb: VksMusicM
 /// # Safety
 /// `a` is null or a live engine.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_music_current_metadata(a: *mut VksAudio, cb: VksMusicMetaFn, user: *mut c_void) -> i32 {
-    with_audio!(a, 0, |x| match x.music.as_ref().and_then(|m| m.current_metadata()) {
-        Some((artist, title)) => {
-            if let Some(f) = cb {
-                unsafe {
-                    f(user, 1, artist.as_ptr() as *const c_char, artist.len(), title.as_ptr() as *const c_char, title.len())
-                };
+pub unsafe extern "C" fn vks_music_current_metadata(
+    a: *mut VksAudio,
+    cb: VksMusicMetaFn,
+    user: *mut c_void,
+) -> i32 {
+    with_audio!(
+        a,
+        0,
+        |x| match x.music.as_ref().and_then(|m| m.current_metadata()) {
+            Some((artist, title)) => {
+                if let Some(f) = cb {
+                    unsafe {
+                        f(
+                            user,
+                            1,
+                            artist.as_ptr() as *const c_char,
+                            artist.len(),
+                            title.as_ptr() as *const c_char,
+                            title.len(),
+                        )
+                    };
+                }
+                1
             }
-            1
+            None => 0,
         }
-        None => 0,
-    })
+    )
 }
 
 /// The music's user gain (0..1; applied as volume^3 with a 50 ms ramp).
@@ -952,7 +1081,8 @@ pub unsafe extern "C" fn vks_music_transition_state(a: *mut VksAudio, serial: u3
 /// `a` is null or a live engine.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn vks_music_set_spatial_layout(a: *mut VksAudio, layout: i32) -> i32 {
-    with_audio!(a, 0, |x| x.engine.mixer().music.set_spatial_layout(layout) as i32)
+    with_audio!(a, 0, |x| x.engine.mixer().music.set_spatial_layout(layout)
+        as i32)
 }
 
 /// Music counters for diagnostics and tests.
@@ -983,7 +1113,12 @@ pub struct VksMusicStats {
 /// # Safety
 /// `a` is null or a live engine; `out` valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_music_stats(a: *mut VksAudio, out: *mut VksMusicStats, cb: VksAudioStrFn, user: *mut c_void) -> i32 {
+pub unsafe extern "C" fn vks_music_stats(
+    a: *mut VksAudio,
+    out: *mut VksMusicStats,
+    cb: VksAudioStrFn,
+    user: *mut c_void,
+) -> i32 {
     if out.is_null() {
         return 0;
     }
@@ -1002,7 +1137,11 @@ pub unsafe extern "C" fn vks_music_stats(a: *mut VksAudio, out: *mut VksMusicSta
             s.underruns = st.underruns;
             s.reconnects = st.reconnects;
             s.buffered_frames = st.buffered_frames as u64;
-            for seg in st.segments.iter().filter(|g| g.source_rate > 0 && !g.rate_changed) {
+            for seg in st
+                .segments
+                .iter()
+                .filter(|g| g.source_rate > 0 && !g.rate_changed)
+            {
                 s.source_frames += seg.in_frames;
                 s.device_frames += seg.out_frames;
                 s.expected_device_frames +=

@@ -14,7 +14,9 @@
 use vkstorm_llsd::Value;
 
 use super::coerce::{as_boolean, as_integer, as_string, as_uuid, get, has, insert};
-use super::item::{with, ASSET_ID, ASSET_TYPE, FAVORITE, NAME, PARENT_ID, THUMBNAIL, THUMBNAIL_ID, TOGGLED};
+use super::item::{
+    ASSET_ID, ASSET_TYPE, FAVORITE, NAME, PARENT_ID, THUMBNAIL, THUMBNAIL_ID, TOGGLED, with,
+};
 use crate::category::{Category, ViewerCategory};
 use crate::perms::NULL_ID;
 use crate::text::sanitize_in_place;
@@ -61,7 +63,11 @@ impl Category {
     pub fn to_llsd(&self) -> Value {
         let mut sd = Value::map();
         insert(&mut sd, ITEM_ID, Value::Uuid(self.object.id));
-        insert(&mut sd, ASSET_TYPE, Value::Integer(s8(self.preferred_type.0)));
+        insert(
+            &mut sd,
+            ASSET_TYPE,
+            Value::Integer(s8(self.preferred_type.0)),
+        );
         self.fill_common(&mut sd);
         sd
     }
@@ -71,7 +77,11 @@ impl Category {
     pub fn to_ais_create_llsd(&self) -> Value {
         let mut sd = Value::map();
         insert(&mut sd, FOLDER_ID_WS, Value::Uuid(self.object.id));
-        insert(&mut sd, ASSET_TYPE_WS, Value::Integer(s8(self.preferred_type.0)));
+        insert(
+            &mut sd,
+            ASSET_TYPE_WS,
+            Value::Integer(s8(self.preferred_type.0)),
+        );
         self.fill_common(&mut sd);
         sd
     }
@@ -133,7 +143,11 @@ impl Category {
         insert(sd, FOLDER_ID, Value::Uuid(o.id));
         insert(sd, PARENT_ID, Value::Uuid(o.parent));
         insert(sd, ASSET_TYPE, Value::string(o.asset_type.lookup()));
-        insert(sd, PREFERRED_TYPE, Value::string(self.preferred_type.lookup()));
+        insert(
+            sd,
+            PREFERRED_TYPE,
+            Value::string(self.preferred_type.lookup()),
+        );
         insert(sd, NAME, Value::String(o.name.clone()));
         if o.thumbnail != NULL_ID {
             insert(sd, THUMBNAIL, with(ASSET_ID, Value::Uuid(o.thumbnail)));
@@ -158,10 +172,16 @@ impl Category {
         match label {
             b"cat_id" => self.object.id = as_uuid(value),
             b"parent_id" => self.object.parent = as_uuid(value),
-            b"type" => self.object.set_type(AssetType::from_name(&as_string(value))),
+            b"type" => self
+                .object
+                .set_type(AssetType::from_name(&as_string(value))),
             b"preferred_type" => self.preferred_type = FolderType::from_name(&as_string(value)),
             b"thumbnail" => {
-                self.object.thumbnail = if has(value, ASSET_ID) { as_uuid(get(value, ASSET_ID)) } else { NULL_ID };
+                self.object.thumbnail = if has(value, ASSET_ID) {
+                    as_uuid(get(value, ASSET_ID))
+                } else {
+                    NULL_ID
+                };
             }
             b"favorite" => {
                 self.object.favorite = has(value, TOGGLED) && as_boolean(get(value, TOGGLED));
@@ -203,7 +223,11 @@ impl Category {
         insert(&mut rv, NAME, Value::String(o.name.clone()));
         insert(&mut rv, ASSET_TYPE, Value::string(o.asset_type.lookup()));
         if self.preferred_type.is_protected() {
-            insert(&mut rv, PREFERRED_TYPE, Value::string(self.preferred_type.lookup()));
+            insert(
+                &mut rv,
+                PREFERRED_TYPE,
+                Value::string(self.preferred_type.lookup()),
+            );
         }
         rv
     }
@@ -218,7 +242,8 @@ impl Category {
         c.object.id = as_uuid(get(sd, FOLDER_ID));
         c.object.parent = as_uuid(get(sd, PARENT_ID));
         c.object.rename(&as_string(get(sd, NAME)));
-        c.object.set_type(AssetType::from_name(&as_string(get(sd, ASSET_TYPE))));
+        c.object
+            .set_type(AssetType::from_name(&as_string(get(sd, ASSET_TYPE))));
         c.preferred_type = FolderType::from_name(&as_string(get(sd, PREFERRED_TYPE)));
         c
     }

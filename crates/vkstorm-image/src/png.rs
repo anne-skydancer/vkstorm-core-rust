@@ -19,10 +19,10 @@
 use std::io::Cursor;
 
 use png::{ColorType, Decoder, Limits, Transformations};
-use zlib_rs::{DeflateConfig, Method, Strategy};
 use zlib_rs::{Deflate, DeflateFlush, Status};
+use zlib_rs::{DeflateConfig, Method, Strategy};
 
-use crate::{check_dimensions, fail, Error, Header, Raster};
+use crate::{Error, Header, Raster, check_dimensions, fail};
 
 const SIGNATURE: [u8; 8] = [0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a];
 
@@ -135,7 +135,11 @@ fn gamma_table16to8(shift: u32, gamma_val: i64) -> Vec<u8> {
 /// bits: from the significant bits (sBIT), at least 16 - PNG_MAX_GAMMA_8,
 /// at most 8.
 fn gamma_shift16(sig_bit: u32) -> u32 {
-    let mut shift = if sig_bit > 0 && sig_bit < 16 { 16 - sig_bit } else { 0 };
+    let mut shift = if sig_bit > 0 && sig_bit < 16 {
+        16 - sig_bit
+    } else {
+        0
+    };
     if shift < 16 - MAX_GAMMA_8 {
         shift = 16 - MAX_GAMMA_8;
     }
@@ -174,7 +178,11 @@ pub fn header(data: &[u8]) -> Result<Header, Error> {
     let reader = decoder(data).read_info().map_err(png_error)?;
     let info = reader.info();
     let (width, height) = check_dimensions(info.width as i64, info.height as i64, "LLImagePNG")?;
-    Ok(Header { width, height, components: output_components(info.color_type, info.trns.is_some()) })
+    Ok(Header {
+        width,
+        height,
+        components: output_components(info.color_type, info.trns.is_some()),
+    })
 }
 
 /// `LLImagePNG::decode`: the image as the viewer's libpng produced it.
@@ -204,15 +212,27 @@ pub fn decode(data: &[u8]) -> Result<Raster, Error> {
     // tables are built for the file's depth.
     let file_gamma = file_gamma_fixed(info.gama_chunk.map(|g| g.into_scaled()));
     let correct = gamma_correction_needed(file_gamma);
-    let table8 = if correct && bit_depth <= 8 { Some(gamma_table8(reciprocal2(file_gamma, SCREEN_GAMMA_FIXED))) } else { None };
+    let table8 = if correct && bit_depth <= 8 {
+        Some(gamma_table8(reciprocal2(file_gamma, SCREEN_GAMMA_FIXED)))
+    } else {
+        None
+    };
     let (table16, shift16) = if correct && bit_depth == 16 {
         let sig_bit = match (&info.sbit, color_type) {
-            (Some(s), ColorType::Grayscale | ColorType::GrayscaleAlpha) => s.first().copied().unwrap_or(0) as u32,
+            (Some(s), ColorType::Grayscale | ColorType::GrayscaleAlpha) => {
+                s.first().copied().unwrap_or(0) as u32
+            }
             (Some(s), _) => s.iter().take(3).copied().max().unwrap_or(0) as u32,
             (None, _) => 0,
         };
         let shift = gamma_shift16(sig_bit);
-        (Some(gamma_table16to8(shift, product2(file_gamma, SCREEN_GAMMA_FIXED))), shift)
+        (
+            Some(gamma_table16to8(
+                shift,
+                product2(file_gamma, SCREEN_GAMMA_FIXED),
+            )),
+            shift,
+        )
     } else {
         (None, 0)
     };
@@ -291,7 +311,11 @@ pub fn decode(data: &[u8]) -> Result<Raster, Error> {
             }
             ColorType::GrayscaleAlpha => {
                 for (px, s) in dst.chunks_exact_mut(4).zip(src.chunks_exact(4)) {
-                    let g = reduce16(u16::from_be_bytes([s[0], s[1]]), table16.as_deref(), shift16);
+                    let g = reduce16(
+                        u16::from_be_bytes([s[0], s[1]]),
+                        table16.as_deref(),
+                        shift16,
+                    );
                     px[0] = g;
                     px[1] = g;
                     px[2] = g;
@@ -311,7 +335,11 @@ pub fn decode(data: &[u8]) -> Result<Raster, Error> {
                 let trans = trns.map(|t| [t[0], t[1], t[2], t[3], t[4], t[5]]);
                 for (px, s) in dst.chunks_exact_mut(c).zip(src.chunks_exact(6)) {
                     for k in 0..3 {
-                        px[k] = reduce16(u16::from_be_bytes([s[2 * k], s[2 * k + 1]]), table16.as_deref(), shift16);
+                        px[k] = reduce16(
+                            u16::from_be_bytes([s[2 * k], s[2 * k + 1]]),
+                            table16.as_deref(),
+                            shift16,
+                        );
                     }
                     if let Some(t) = trans {
                         px[3] = if s == t { 0 } else { 255 };
@@ -322,7 +350,11 @@ pub fn decode(data: &[u8]) -> Result<Raster, Error> {
             ColorType::Rgba => {
                 for (px, s) in dst.chunks_exact_mut(4).zip(src.chunks_exact(8)) {
                     for k in 0..3 {
-                        px[k] = reduce16(u16::from_be_bytes([s[2 * k], s[2 * k + 1]]), table16.as_deref(), shift16);
+                        px[k] = reduce16(
+                            u16::from_be_bytes([s[2 * k], s[2 * k + 1]]),
+                            table16.as_deref(),
+                            shift16,
+                        );
                     }
                     px[3] = s[6];
                 }
@@ -528,7 +560,11 @@ pub fn encode(raster: &Raster) -> Result<Vec<u8>, Error> {
         let before_in = deflate.total_in() as usize;
         let before_out = deflate.total_out() as usize;
         let status = deflate
-            .compress(&filtered[consumed..], &mut stream[produced..], DeflateFlush::Finish)
+            .compress(
+                &filtered[consumed..],
+                &mut stream[produced..],
+                DeflateFlush::Finish,
+            )
             .map_err(|e| Error::new(e.as_str()))?;
         consumed += deflate.total_in() as usize - before_in;
         produced += deflate.total_out() as usize - before_out;
@@ -594,12 +630,20 @@ mod tests {
         assert_eq!(DEFLATE_LEVEL, 6);
         assert_eq!(DEFLATE_STRATEGY, Strategy::Filtered);
         assert_eq!(DEFLATE_MEM_LEVEL, 8);
-        assert_eq!(FILTER_HEURISTIC, "libpng minimum-sum-of-absolute-differences");
+        assert_eq!(
+            FILTER_HEURISTIC,
+            "libpng minimum-sum-of-absolute-differences"
+        );
         assert_eq!(ZBUF_SIZE, 8192);
         // The one-pixel fixture encodes to the very bytes libpng wrote (an
         // 8-bit window, zlib header 0x08 0x1d).
         let raw: &[u8] = include_bytes!("../tests/fixtures/raw_1x1_c3.raw");
-        let r = Raster { width: 1, height: 1, components: 3, data: raw[16..19].to_vec() };
+        let r = Raster {
+            width: 1,
+            height: 1,
+            components: 3,
+            data: raw[16..19].to_vec(),
+        };
         let out = encode(&r).unwrap();
         assert_eq!(out, include_bytes!("../tests/fixtures/raw_1x1_c3.raw.png"));
     }

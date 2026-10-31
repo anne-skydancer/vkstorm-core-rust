@@ -29,7 +29,9 @@ pub(crate) fn stream_title(block: &[u8]) -> Option<String> {
     let end = block.iter().position(|&b| b == 0).unwrap_or(block.len());
     let text = &block[..end];
     const KEY: &[u8] = b"streamtitle=";
-    let at = text.windows(KEY.len()).position(|w| w.eq_ignore_ascii_case(KEY))?;
+    let at = text
+        .windows(KEY.len())
+        .position(|w| w.eq_ignore_ascii_case(KEY))?;
     let rest = &text[at + KEY.len()..];
     let value = match rest.first() {
         Some(&q) if q == b'\'' || q == b'"' => {
@@ -71,7 +73,12 @@ pub(crate) struct IcyStripper {
 
 impl IcyStripper {
     pub(crate) fn new(metaint: usize) -> IcyStripper {
-        IcyStripper { metaint, phase: Phase::Audio(metaint), block: Vec::new(), last_title: None }
+        IcyStripper {
+            metaint,
+            phase: Phase::Audio(metaint),
+            block: Vec::new(),
+            last_title: None,
+        }
     }
 
     /// Feeds body bytes; `audio` receives the audio runs, `title` each new
@@ -90,13 +97,21 @@ impl IcyStripper {
                         return false;
                     }
                     data = &data[n..];
-                    self.phase = if n == left { Phase::Length } else { Phase::Audio(left - n) };
+                    self.phase = if n == left {
+                        Phase::Length
+                    } else {
+                        Phase::Audio(left - n)
+                    };
                 }
                 Phase::Length => {
                     let len = usize::from(data[0]) * 16;
                     data = &data[1..];
                     self.block.clear();
-                    self.phase = if len == 0 { Phase::Audio(self.metaint) } else { Phase::Meta(len) };
+                    self.phase = if len == 0 {
+                        Phase::Audio(self.metaint)
+                    } else {
+                        Phase::Meta(len)
+                    };
                 }
                 Phase::Meta(left) => {
                     let n = left.min(data.len());
@@ -135,15 +150,33 @@ mod tests {
 
     #[test]
     fn titles() {
-        assert_eq!(stream_title(b"StreamTitle='A - B';StreamUrl='';\0\0").as_deref(), Some("A - B"));
-        assert_eq!(stream_title(b"StreamTitle='Guns N' Roses - Don't Cry';").as_deref(), Some("Guns N' Roses - Don't Cry"));
+        assert_eq!(
+            stream_title(b"StreamTitle='A - B';StreamUrl='';\0\0").as_deref(),
+            Some("A - B")
+        );
+        assert_eq!(
+            stream_title(b"StreamTitle='Guns N' Roses - Don't Cry';").as_deref(),
+            Some("Guns N' Roses - Don't Cry")
+        );
         assert_eq!(stream_title(b"streamtitle=\"x\";").as_deref(), Some("x"));
-        assert_eq!(stream_title(b"StreamTitle=plain;").as_deref(), Some("plain"));
-        assert_eq!(stream_title(b"StreamTitle='unterminated").as_deref(), Some("unterminated"));
+        assert_eq!(
+            stream_title(b"StreamTitle=plain;").as_deref(),
+            Some("plain")
+        );
+        assert_eq!(
+            stream_title(b"StreamTitle='unterminated").as_deref(),
+            Some("unterminated")
+        );
         assert_eq!(stream_title(b"StreamTitle='';").as_deref(), Some(""));
         assert_eq!(stream_title(b"StreamUrl='x';"), None);
-        assert_eq!(stream_title(b"StreamTitle='Caf\xe9 - Cr\xe8me';").as_deref(), Some("Café - Crème"));
-        assert_eq!(stream_title("StreamTitle='Café - Crème';".as_bytes()).as_deref(), Some("Café - Crème"));
+        assert_eq!(
+            stream_title(b"StreamTitle='Caf\xe9 - Cr\xe8me';").as_deref(),
+            Some("Café - Crème")
+        );
+        assert_eq!(
+            stream_title("StreamTitle='Café - Crème';".as_bytes()).as_deref(),
+            Some("Café - Crème")
+        );
     }
 
     #[test]
@@ -157,7 +190,11 @@ mod tests {
         let metaint = 10;
         let mut body = Vec::new();
         let mut audio_ref = Vec::new();
-        let titles = ["StreamTitle='One - 1';", "StreamTitle='One - 1';", "StreamTitle='Two - 2';"];
+        let titles = [
+            "StreamTitle='One - 1';",
+            "StreamTitle='One - 1';",
+            "StreamTitle='Two - 2';",
+        ];
         for (i, t) in titles.iter().enumerate() {
             let a: Vec<u8> = (0..metaint).map(|k| (i * 10 + k) as u8).collect();
             body.extend_from_slice(&a);
@@ -174,7 +211,14 @@ mod tests {
             let mut audio = Vec::new();
             let mut got = Vec::new();
             for c in body.chunks(chunk) {
-                s.feed(c, &mut |a| { audio.extend_from_slice(a); true }, &mut |t| got.push(t));
+                s.feed(
+                    c,
+                    &mut |a| {
+                        audio.extend_from_slice(a);
+                        true
+                    },
+                    &mut |t| got.push(t),
+                );
             }
             assert_eq!(audio, audio_ref);
             assert_eq!(got, vec!["One - 1".to_owned(), "Two - 2".to_owned()]);
