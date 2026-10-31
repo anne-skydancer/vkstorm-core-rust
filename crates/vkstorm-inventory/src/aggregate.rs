@@ -25,10 +25,17 @@ const PI_TRANSFER: usize = 2;
 /// The values come from [`aggregate_mask`](Self::aggregate_mask),
 /// [`aggregate`](Self::aggregate) or [`from_u8`](Self::from_u8), so they are
 /// always 0..=3.
+///
+/// The layout is the C++ object's (`U8 mBits[PI_COUNT]`, 3 bytes, no virtual
+/// functions), so the C ABI reads and writes the viewer's objects in place.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+#[repr(C)]
 pub struct AggregatePermissions {
     bits: [u8; 3],
 }
+
+// The C++ layout of `LLAggregatePermissions` (see `AggregatePermissions`).
+const _: () = assert!(std::mem::size_of::<AggregatePermissions>() == 3);
 
 impl AggregatePermissions {
     /// `LLAggregatePermissions::empty` and the default constructor: every

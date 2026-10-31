@@ -23,6 +23,18 @@ impl<'a> Stream<'a> {
         Stream { data, pos: 0, eof: false, fail: false, bad: false }
     }
 
+    /// A stream at the start of `data` with the given state bits: a caller's
+    /// stream as it is handed to a reader, which may already be past its
+    /// end or failed (`fail` here is the `failbit` alone).
+    pub fn with_state(data: &'a [u8], eof: bool, fail: bool, bad: bool) -> Stream<'a> {
+        Stream { data, pos: 0, eof, fail, bad }
+    }
+
+    /// `rdstate()` as its three bits: `eofbit`, `failbit` and `badbit`.
+    pub fn state_bits(&self) -> (bool, bool, bool) {
+        (self.eof, self.fail, self.bad)
+    }
+
     /// `good()`: no state bit set.
     pub fn good(&self) -> bool {
         !(self.eof || self.fail || self.bad)
