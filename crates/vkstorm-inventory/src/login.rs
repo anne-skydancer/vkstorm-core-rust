@@ -220,6 +220,8 @@ impl Skeleton {
         let loaded = match &decoded {
             Some(d) => {
                 is_cache_obsolete = d.obsolete;
+                plan.cache_obsolete = d.obsolete;
+                plan.null_id_names = d.null_id_names.clone();
                 d.rv()
             }
             None => false,
@@ -428,6 +430,11 @@ pub struct LoadPlan {
     /// Links added in the first pass, links still broken, and links added
     /// in the second (the summary `LL_DEBUGS` line).
     pub good_link_count: usize,
+    /// The cache file was read and found obsolete (version, header or
+    /// parse; `loadFromFile` logged why).
+    pub cache_obsolete: bool,
+    /// [`Decoded::null_id_names`] of the file read.
+    pub null_id_names: Vec<Vec<u8>>,
     pub bad_link_count: usize,
     pub recovered_link_count: usize,
 }

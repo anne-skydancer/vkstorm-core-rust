@@ -416,6 +416,21 @@ pub enum Event {
     UnexpectedSizes { cats: usize, trees: usize },
     /// "null cat".
     NullCat,
+    /// `getObjectTopmostAncestor`: "Unable to trace topmost ancestor,
+    /// initial object {object} does not exist".
+    AncestorMissing { object: Uuid },
+    /// `getObjectTopmostAncestor`: "Detected a loop on an object {parent}
+    /// when searching for ancestor of {object}".
+    AncestorLoop { object: Uuid, parent: Uuid },
+    /// `getObjectTopmostAncestor`: "unable to trace topmost ancestor of
+    /// {object}, missing item for uuid {parent}".
+    AncestorParentMissing { object: Uuid, parent: Uuid },
+    /// `isInSuitcase` (OpenSim): "Detected a loop on a cat {parent} when
+    /// searching for ancestor of {cat}".
+    SuitcaseLoop { cat: Uuid, parent: Uuid },
+    /// `isInSuitcase` (OpenSim): "unable to trace parentage of {cat},
+    /// missing item for uuid {parent}".
+    SuitcaseParentMissing { cat: Uuid, parent: Uuid },
     /// "cat id/index mismatch {key} {cat.id}".
     CatIdMismatch { key: Uuid, cat: usize },
     /// "cat {key} has no parent, but is not root ({root}) or library root
@@ -571,6 +586,8 @@ struct Model<'a> {
     /// `mBacklinkMMap` by target: each target's links in the snapshot's
     /// order (`equal_range`), so a lookup is not a scan of every pair.
     backlinks: UuidMap<Vec<Uuid>>,
+    /// The lines logged so far, in order.
+    events: Vec<Event>,
 }
 
 impl Model<'_> {
@@ -626,6 +643,8 @@ impl Model<'_> {
     /// `getObjectTopmostAncestor`.
     fn topmost_ancestor(&mut self, object_id: &Uuid) -> Ancestor {
         let Some(mut object) = self.get_object(object_id) else {
+            self.events
+                .push(Event::AncestorMissing { object: *object_id });
             return Ancestor::Missing;
         };
         let mut seen = Seen::new(*object_id);
@@ -635,11 +654,21 @@ impl Model<'_> {
                 break;
             }
             if !seen.insert(parent) {
+                self.events.push(Event::AncestorLoop {
+                    object: *object_id,
+                    parent,
+                });
                 return Ancestor::Loop;
             }
             match self.get_object(&parent) {
                 Some(p) => object = p,
-                None => return Ancestor::Missing,
+                None => {
+                    self.events.push(Event::AncestorParentMissing {
+                        object: *object_id,
+                        parent,
+                    });
+                    return Ancestor::Missing;
+                }
             }
         }
         Ancestor::Ok(self.id_of(object))
@@ -653,7 +682,7 @@ impl Model<'_> {
 
     /// `isInSuitcase` (OpenSim only).
     #[cfg(feature = "opensim")]
-    fn in_suitcase(&self, cat: usize) -> bool {
+    fn in_suitcase(&mut self, cat: usize) -> bool {
         let mut c = self.cat(cat);
         let mut seen: BTreeSet<Uuid> = BTreeSet::new();
         seen.insert(c.id);
@@ -663,9 +692,12 @@ impl Model<'_> {
         while c.parent != NULL_ID {
             let parent = c.parent;
             if !seen.insert(parent) {
+                self.events.push(Event::SuitcaseLoop { cat: c.id, parent });
                 return false;
             }
             let Some(p) = self.get_category(&parent) else {
+                self.events
+                    .push(Event::SuitcaseParentMissing { cat: c.id, parent });
                 return false;
             };
             if self.cat(p).preferred_type == FolderType::MY_SUITCASE {
@@ -704,9 +736,9 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
         s,
         last_item: s.last_item,
         backlinks,
+        events: Vec::new(),
     };
     let mut info = ValidationInfo::default();
-    let mut events: Vec<Event> = Vec::new();
     let mut fatal_errs = 0;
     let mut warning_count = 0;
     let mut loop_count = 0;
@@ -717,18 +749,18 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
     };
 
     if s.root == NULL_ID {
-        events.push(Event::NoRootFolder);
+        m.events.push(Event::NoRootFolder);
         info.fatal_no_root_folder = true;
         fatal_errs += 1;
     }
     if s.library_root == NULL_ID {
-        events.push(Event::NoLibraryRootFolder);
+        m.events.push(Event::NoLibraryRootFolder);
         info.log.push_str("No library root folder id\n");
         info.fatal_no_library_root_folder = true;
         fatal_errs += 1;
     }
     if s.category_map.len() + 1 != s.category_tree.len() {
-        events.push(Event::UnexpectedSizes {
+        m.events.push(Event::UnexpectedSizes {
             cats: s.category_map.len(),
             trees: s.category_tree.len(),
         });
@@ -745,7 +777,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
     for cat_id in &s.category_order {
         let slot = s.category_map[cat_id];
         let Some(ci) = slot else {
-            events.push(Event::NullCat);
+            m.events.push(Event::NullCat);
             warn(&mut info, "null_cat", &mut warning_count);
             continue;
         };
@@ -763,24 +795,24 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
         };
         let cat = m.cat(ci).clone();
         if *cat_id != cat.id {
-            events.push(Event::CatIdMismatch {
+            m.events.push(Event::CatIdMismatch {
                 key: *cat_id,
                 cat: ci,
             });
             warn(&mut info, "cat_id_index_mismatch", &mut warning_count);
         }
         if cat.parent == NULL_ID && *cat_id != s.root && *cat_id != s.library_root {
-            events.push(Event::NullParent { key: *cat_id });
+            m.events.push(Event::NullParent { key: *cat_id });
             warn(&mut info, "null_parent", &mut warning_count);
         }
         #[cfg(feature = "opensim")]
         if skip_suitcase && m.in_suitcase(ci) {
-            events.push(Event::SuitcaseSkipped { cat: ci });
+            m.events.push(Event::SuitcaseSkipped { cat: ci });
             continue;
         }
         let (Some(cats), Some(items)) = (s.category_tree.get(cat_id), s.item_tree.get(cat_id))
         else {
-            events.push(Event::DirectDescendents { key: *cat_id });
+            m.events.push(Event::DirectDescendents { key: *cat_id });
             warn(&mut info, "direct_descendents", &mut warning_count);
             continue;
         };
@@ -789,7 +821,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
         } else if (cats.len() + items.len()) as i64 != i64::from(cat.descendent_count)
             && (topmost == NULL_ID || topmost != s.library_root)
         {
-            events.push(Event::InvalidDescendentCount {
+            m.events.push(Event::InvalidDescendentCount {
                 key: *cat_id,
                 cat: ci,
                 cats: cats.len(),
@@ -808,7 +840,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
         }
         for (index, entry) in items.iter().enumerate() {
             let Some(ii) = *entry else {
-                events.push(Event::NullItemAtIndex {
+                m.events.push(Event::NullItemAtIndex {
                     index,
                     key: *cat_id,
                 });
@@ -817,7 +849,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
             };
             let item_id = m.item(ii).id;
             if m.item(ii).parent != *cat_id {
-                events.push(Event::WrongParent {
+                m.events.push(Event::WrongParent {
                     item: ii,
                     key: *cat_id,
                 });
@@ -825,19 +857,19 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
             }
             match s.item_map.get(&item_id) {
                 None => {
-                    events.push(Event::ItemNotInTopMap {
+                    m.events.push(Event::ItemNotInTopMap {
                         item: ii,
                         key: *cat_id,
                     });
                     warn(&mut info, "item_not_in_top_map", &mut warning_count);
                 }
-                Some(&top) if top != ii => events.push(Event::ItemMismatch { item: ii, top }),
+                Some(&top) if top != ii => m.events.push(Event::ItemMismatch { item: ii, top }),
                 Some(_) => {}
             }
             match m.topmost_ancestor(&item_id) {
                 Ancestor::Ok(top) => {
                     if top != s.root && top != s.library_root {
-                        events.push(Event::TopmostNotRecognized { item: ii, top });
+                        m.events.push(Event::TopmostNotRecognized { item: ii, top });
                         warn(
                             &mut info,
                             "topmost_ancestor_not_recognized",
@@ -846,7 +878,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
                     }
                 }
                 _ => {
-                    events.push(Event::TopmostNotFound { item: ii });
+                    m.events.push(Event::TopmostNotFound { item: ii });
                     warn(&mut info, "topmost_ancestor_not_found", &mut warning_count)
                 }
             }
@@ -854,7 +886,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
         if cat.parent != NULL_ID {
             match s.category_tree.get(&cat.parent) {
                 None => {
-                    events.push(Event::CatOrphanNoArray {
+                    m.events.push(Event::CatOrphanNoArray {
                         key: *cat_id,
                         cat: ci,
                         parent: cat.parent,
@@ -863,7 +895,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
                 }
                 Some(siblings) => {
                     if !siblings.iter().any(|e| *e == Some(ci)) {
-                        events.push(Event::CatOrphanNotFound {
+                        m.events.push(Event::CatOrphanNotFound {
                             key: *cat_id,
                             cat: ci,
                             parent: cat.parent,
@@ -878,7 +910,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
         if !in_library {
             #[cfg(feature = "opensim")]
             if skip_suitcase && m.in_suitcase(ci) {
-                events.push(Event::FolderTypeOf {
+                m.events.push(Event::FolderTypeOf {
                     place: Place::Suitcase,
                     cat: ci,
                 });
@@ -892,7 +924,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
                 Place::Elsewhere
             };
             if cat.preferred_type != FolderType::NONE {
-                events.push(Event::FolderTypeOf { place, cat: ci });
+                m.events.push(Event::FolderTypeOf { place, cat: ci });
             }
         }
     }
@@ -902,14 +934,14 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
         let ii = s.item_map[item_id];
         let item = m.item(ii).clone();
         if item.id != *item_id {
-            events.push(Event::ItemIdMismatch {
+            m.events.push(Event::ItemIdMismatch {
                 key: *item_id,
                 item: ii,
             });
             warn(&mut info, "item_id_mismatch", &mut warning_count);
         }
         if item.parent == NULL_ID {
-            events.push(Event::ItemNullParent {
+            m.events.push(Event::ItemNullParent {
                 key: *item_id,
                 item: ii,
             });
@@ -917,7 +949,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
         } else {
             match s.item_tree.get(&item.parent) {
                 None => {
-                    events.push(Event::ItemOrphanNoList {
+                    m.events.push(Event::ItemOrphanNoList {
                         key: *item_id,
                         item: ii,
                         parent: item.parent,
@@ -926,7 +958,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
                 }
                 Some(siblings) => {
                     if !siblings.iter().any(|e| *e == Some(ii)) {
-                        events.push(Event::ItemOrphanNotFound {
+                        m.events.push(Event::ItemOrphanNotFound {
                             key: *item_id,
                             item: ii,
                             parent: item.parent,
@@ -942,29 +974,29 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
             let target_item = m.get_item(&target_id);
             let target_cat = m.get_category(&target_id);
             if !m.has_backlink(&link_id, &target_id) {
-                events.push(Event::MissingBacklink {
+                m.events.push(Event::MissingBacklink {
                     item: ii,
                     target: target_id,
                 });
                 orphaned_count += 1;
             }
             if item.asset_type == AssetType::LINK && target_item.is_none() {
-                events.push(Event::BrokenItemLink { item: ii });
+                m.events.push(Event::BrokenItemLink { item: ii });
                 orphaned_count += 1;
             } else if item.asset_type == AssetType::LINK_FOLDER && target_cat.is_none() {
-                events.push(Event::BrokenFolderLink { item: ii });
+                m.events.push(Event::BrokenFolderLink { item: ii });
                 orphaned_count += 1;
             }
             if let Some(t) = target_item {
                 if m.item(t).is_link() {
-                    events.push(Event::LinkToLink {
+                    m.events.push(Event::LinkToLink {
                         item: ii,
                         target: t,
                     });
                 }
             }
             if m.backlinks.get(&link_id).is_some_and(|l| !l.is_empty()) {
-                events.push(Event::LinkHasBacklinks { item: ii });
+                m.events.push(Event::LinkHasBacklinks { item: ii });
             }
         } else {
             // The backlinks of a non-link item are only logged, but each
@@ -974,7 +1006,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
             for link_id in links {
                 let link_item = m.get_item(&link_id);
                 if !link_item.is_some_and(|l| m.item(l).is_link()) {
-                    events.push(Event::InvalidBacklink {
+                    m.events.push(Event::InvalidBacklink {
                         item: ii,
                         link: link_id,
                     });
@@ -985,7 +1017,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
 
     for (under, counts) in [(true, &under_root), (false, &elsewhere)] {
         for (&folder_type, &count) in counts {
-            events.push(Event::FolderTypeCount {
+            m.events.push(Event::FolderTypeCount {
                 under_root: under,
                 folder_type,
                 count,
@@ -1012,9 +1044,11 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
             continue;
         }
         if count_under_root == 0 {
-            events.push(Event::SystemFolderNotFound { folder_type: ft });
+            m.events
+                .push(Event::SystemFolderNotFound { folder_type: ft });
             if is_automatic {
-                events.push(Event::CannotCreateSystemFolder { folder_type: ft });
+                m.events
+                    .push(Event::CannotCreateSystemFolder { folder_type: ft });
                 let _ = writeln!(
                     info.log,
                     "Cannot create system folder of type {}({})",
@@ -1036,7 +1070,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
                 && folder_type != FolderType::SETTINGS
                 && folder_type != FolderType::MATERIAL
             {
-                events.push(Event::ExcessCopiesFatal {
+                m.events.push(Event::ExcessCopiesFatal {
                     folder_type: ft,
                     count: count_under_root,
                 });
@@ -1050,7 +1084,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
                 info.fatal_system_duplicate += 1;
                 fatal_errs += 1;
             } else {
-                events.push(Event::ExcessCopiesNonFatal {
+                m.events.push(Event::ExcessCopiesNonFatal {
                     folder_type: ft,
                     count: count_under_root,
                 });
@@ -1062,7 +1096,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
             }
         }
         if count_elsewhere > 0 {
-            events.push(Event::ExtraFoldersElsewhere {
+            m.events.push(Event::ExtraFoldersElsewhere {
                 folder_type: ft,
                 count: count_elsewhere,
             });
@@ -1075,18 +1109,18 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
     }
 
     if cat_lock > 0 || item_lock > 0 {
-        events.push(Event::Locks {
+        m.events.push(Event::Locks {
             cats: cat_lock,
             items: item_lock,
         });
     }
     if desc_unknown_count != 0 {
-        events.push(Event::UnknownDescendentCounts {
+        m.events.push(Event::UnknownDescendentCounts {
             count: desc_unknown_count,
         });
     }
     if version_unknown_count != 0 {
-        events.push(Event::UnknownVersions {
+        m.events.push(Event::UnknownVersions {
             count: version_unknown_count,
         });
     }
@@ -1098,7 +1132,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
     Validation {
         info,
         last_item: m.last_item,
-        events,
+        events: m.events,
     }
 }
 

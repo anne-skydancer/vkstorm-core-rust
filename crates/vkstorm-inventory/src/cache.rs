@@ -119,6 +119,9 @@ pub struct Decoded {
     /// The parents of the items whose viewer type is `AT_UNKNOWN`
     /// (`cats_to_update`, UUID order).
     pub cats_to_update: BTreeSet<Uuid>,
+    /// The names of the items dropped for a null id, in file order (the
+    /// C++ logs "Ignoring inventory with null item id: {name}").
+    pub null_id_names: Vec<Vec<u8>>,
 }
 
 impl Decoded {
@@ -191,6 +194,7 @@ pub fn decode(bytes: &[u8], in_open_sim: bool, lookup: &dyn ModelLookup) -> Deco
                 continue;
             }
             if item.object.id == NULL_ID {
+                out.null_id_names.push(item.object.name);
                 continue;
             }
             if viewer_item_type(&item, lookup) == AssetType::UNKNOWN {
