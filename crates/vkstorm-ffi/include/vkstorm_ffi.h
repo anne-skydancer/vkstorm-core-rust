@@ -1599,6 +1599,177 @@ VksInvRecords* vks_inv_notecard_import(const uint8_t* data, size_t len, int32_t 
 VksInvRecords* vks_inv_notecard_export(const VksInvItem* items, size_t count, const uint8_t* text,
                                        size_t text_len);
 
+/* ---- Inventory R3a: AIS replies (src/inventory_r3a.rs) ----
+ *
+ * What the coroutine adapter makes of an AIS response, the coroutine's error
+ * branch and callback ids, and AISUpdate's parse, over vkstorm-inventory's
+ * ais module. The flow:
+ *
+ * 1. vks_inv_ais_reply_build: the AIS-only adapter handler hands the raw
+ *    response over; Rust builds the result the C++ LLSD handler would have
+ *    posted (http_result, error_body, the 499 of an unparsable body whose
+ *    content type is exactly application/llsd+xml, max_depth as the depth
+ *    cap) as a Rust value. Null: nothing is posted (HE_HANDLE_NOT_FOUND) or
+ *    a failure. A pure function, safe on any thread, as is reply_free.
+ *    vks_inv_ais_reply_from_binary reads the binary LLSD of such a result
+ *    instead (an adapter's immediate error; the oracle's scripted results).
+ *    vks_inv_ais_reply_to_binary: the value as binary LLSD, for the C++ code
+ *    that wants an LLSD tree (logging, tests).
+ * 2. vks_inv_ais_error_branch: result[http_result] (a value that is not a map
+ *    becomes one), the status read from it, and the 410/403 handling through
+ *    the host; alert->first_call is the coroutine's static flag.
+ * 3. vks_inv_ais_parse: AISUpdate's parse, querying the model through the
+ *    host in the C++ order, and the completion callback ids. The view lists
+ *    the parse's records (one viewer object each; a lost item's record is
+ *    also its created entry's) and its member maps in id order; doUpdate()
+ *    applies them in C++.
+ *
+ * Host functions must not throw into Rust: catch, answer "not found" / false
+ * (checkpoint: false stops the parse), and rethrow after the call. Strings a
+ * host function hands over borrow the C++ object's until the next host call.
+ * VksInvAisCategory.category.version is not read from the host (the parse
+ * calls get_version where the C++ calls getVersion()). */
+typedef struct VksInvAisStatus
+{
+    uint16_t kind;  /* HttpStatus::getType() */
+    int16_t status; /* HttpStatus::getStatus(): 0 is success */
+    VksInvBytes message;
+} VksInvAisStatus;
+
+typedef struct VksInvAisHeader
+{
+    VksInvBytes name;
+    VksInvBytes value;
+} VksInvAisHeader;
+
+typedef struct VksInvAisResponse
+{
+    VksInvAisStatus status;
+    VksInvBytes url;
+    const VksInvAisHeader* headers; /* in order, names lower case */
+    size_t header_count;
+    bool has_body; /* false: the response has no body buffer */
+    VksInvBytes body;
+    int32_t max_depth; /* AIS_MAX_REPLY_DEPTH; -1 unlimited */
+} VksInvAisResponse;
+
+typedef struct VksInvAisReply VksInvAisReply;
+typedef struct VksInvAisBytesBlock VksInvAisBytesBlock;
+
+/* LLViewerInventoryCategory::mDescendentsRequested (an LLFrameTimer). */
+typedef struct VksInvAisFetchTimer
+{
+    double start_time;
+    double expiry;
+    bool started;
+} VksInvAisFetchTimer;
+
+typedef struct VksInvAisItem
+{
+    VksInvItem item;
+    bool complete;
+    uint8_t transaction_id[16];
+    bool running;
+    bool faulted;
+} VksInvAisItem;
+
+typedef struct VksInvAisCategory
+{
+    VksInvCategory category; /* owner: mOwnerID; version: see above */
+    int32_t descendents;
+    bool has_requested; /* false: a new folder (a fresh, expired timer) */
+    VksInvAisFetchTimer requested;
+} VksInvAisCategory;
+
+typedef struct VksInvAisHost
+{
+    void* ctx;
+    bool (*get_category)(void* ctx, const uint8_t* id, VksInvAisCategory* out, uint64_t* handle);
+    bool (*get_item)(void* ctx, const uint8_t* id, VksInvAisItem* out);
+    int32_t (*get_version)(void* ctx, uint64_t handle);
+    void (*set_version)(void* ctx, uint64_t handle, int32_t version);
+    bool (*fetch)(void* ctx, uint64_t handle, int32_t expiry_seconds);
+    bool (*fetch_descendents_of)(void* ctx, const uint8_t* folder_id);
+    void (*on_object_deleted_from_server)(void* ctx, const uint8_t* id, bool fix_broken_links,
+                                          bool update_parent_version, bool do_notify_observers);
+    void (*notify)(void* ctx, const char* name);
+    bool (*checkpoint)(void* ctx);
+} VksInvAisHost;
+
+typedef struct VksInvAisCall
+{
+    int32_t command; /* AISAPI::COMMAND_TYPE */
+    uint8_t target_id[16];
+    uint8_t agent_id[16];
+    bool in_open_sim;
+    bool has_depth; /* body.has("depth") */
+    int32_t depth;  /* body["depth"].asInteger() */
+} VksInvAisCall;
+
+typedef struct VksInvAisAlert
+{
+    bool first_call;
+} VksInvAisAlert;
+
+/* An id and a value: a record index, a descendent delta or a version (0 for
+ * the lists that have none). */
+typedef struct VksInvAisEntry
+{
+    uint8_t id[16];
+    int32_t value;
+} VksInvAisEntry;
+
+typedef struct VksInvAisList
+{
+    const VksInvAisEntry* entries;
+    size_t count;
+} VksInvAisList;
+
+typedef struct VksInvAisUpdate VksInvAisUpdate;
+typedef struct VksInvAisUpdateView
+{
+    bool stopped; /* apply nothing, call nothing back */
+    const VksInvAisItem* items;
+    size_t item_count;
+    const VksInvAisCategory* categories;
+    size_t category_count;
+    VksInvAisList descendent_deltas;  /* mCatDescendentDeltas */
+    VksInvAisList versions_updated;   /* mCatVersionsUpdated */
+    VksInvAisList items_created;      /* mItemsCreated (item index) */
+    VksInvAisList items_lost;         /* mItemsLost (item index) */
+    VksInvAisList items_updated;      /* mItemsUpdated (item index) */
+    VksInvAisList categories_created; /* mCategoriesCreated (category index) */
+    VksInvAisList categories_updated; /* mCategoriesUpdated (category index) */
+    VksInvAisList objects_deleted;    /* mObjectsDeletedIds */
+    VksInvAisList callbacks;          /* completion callback ids, in order */
+} VksInvAisUpdateView;
+
+VksInvAisReply* vks_inv_ais_reply_build(const VksInvAisResponse* r);
+VksInvAisReply* vks_inv_ais_reply_from_binary(const uint8_t* data, size_t len);
+void vks_inv_ais_reply_status(const VksInvAisReply* r, VksInvAisStatus* out);
+VksInvAisBytesBlock* vks_inv_ais_reply_to_binary(const VksInvAisReply* r);
+VksInvBytes vks_inv_ais_bytes_view(const VksInvAisBytesBlock* b);
+void vks_inv_ais_bytes_free(VksInvAisBytesBlock* b);
+void vks_inv_ais_reply_free(VksInvAisReply* r);
+VksInvAisStatus vks_inv_ais_error_branch(VksInvAisReply* r, const VksInvAisCall* call, VksInvAisAlert* alert,
+                                         const VksInvAisHost* host);
+VksInvAisUpdate* vks_inv_ais_parse(const VksInvAisReply* r, const VksInvAisCall* call,
+                                   const VksInvAisHost* host);
+const VksInvAisUpdateView* vks_inv_ais_update_view(const VksInvAisUpdate* u);
+void vks_inv_ais_update_free(VksInvAisUpdate* u);
+
+#ifdef __cplusplus
+static_assert(sizeof(void*) != 8 ||
+                  (sizeof(VksInvAisStatus) == 24 && sizeof(VksInvAisHeader) == 32 &&
+                   sizeof(VksInvAisResponse) == 88 && offsetof(VksInvAisResponse, body) == 64 &&
+                   sizeof(VksInvAisFetchTimer) == 24 && sizeof(VksInvAisItem) == 256 &&
+                   offsetof(VksInvAisItem, transaction_id) == 233 && sizeof(VksInvAisCategory) == 152 &&
+                   offsetof(VksInvAisCategory, requested) == 128 && sizeof(VksInvAisHost) == 80 &&
+                   sizeof(VksInvAisCall) == 44 && sizeof(VksInvAisEntry) == 20 &&
+                   sizeof(VksInvAisList) == 16 && sizeof(VksInvAisUpdateView) == 184),
+              "inventory R3a layout");
+#endif
+
 #ifdef __cplusplus
 }
 
