@@ -1,6 +1,6 @@
 # llaisupdate_parity expected outputs: <case> <file> <sha256 of the binary file>
 # generator: INTEGRATION_TEST_llaisupdate_parity (indra/newview/tests/llaisupdate_parity_test.cpp), dump mode
-# viewer commit: d4e2324c722168da5c9b78c959d900cfa832d1a3 (llaisapi.cpp blob 154164212265d268b899b1c3f568f590fe75619e)
+# viewer commit: b8246e76aff1ce57d520d107c562f42975bf13ec (llaisapi.cpp blob a0d52b1edebeebb208631d778c3bd89d6270dcf8)
 # platform: windows
 s01a_children_depth0_full s01a_children_depth0_full.expected.llsd 131267f8855495cc2becda3714a7331d3462ac0018e9d4325b3852e57933d3f8
 s01b_children_depth0_no_links_key s01b_children_depth0_no_links_key.expected.llsd 0cc58620be19e2953ee9a1997a0a4b3f9c15e4d79ca224da5337d5336aaaf0de
