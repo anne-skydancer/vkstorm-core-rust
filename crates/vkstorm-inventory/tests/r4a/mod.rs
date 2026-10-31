@@ -1043,6 +1043,9 @@ impl Scene {
             Action::DeleteInventory => self.obj.inv = None,
             Action::ResetInventory => self.obj.inv = Some(Vec::new()),
             Action::PushFront(e) => self.obj.inv.as_mut().expect("a list").insert(0, e),
+            Action::PushFrontReplyContents => {
+                unreachable!("cap_fetch_reply expands the reply's entries")
+            }
             Action::Erase(i) => {
                 self.obj.inv.as_mut().expect("a list").remove(i);
             }

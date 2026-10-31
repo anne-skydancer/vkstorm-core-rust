@@ -76,11 +76,11 @@ pub mod message;
 pub use create::CreateRequest;
 pub use llsd::LocalizedNames;
 pub use machine::{
-    cap_fetch_begin, cap_fetch_reply, create_inventory_item, create_item_completed,
-    create_item_succeeded, delayed_fetch_due, delete_inventory_item, dirty_inventory,
-    load_task_inv_file, move_inventory, remove_inventory, reply_task_inventory, request_inventory,
-    save_script, update_inventory, update_inventory_local, update_material_inventory,
-    update_viewer_inventory_asset, xfer_completed, xfer_requested,
+    CapReply, cap_fetch_begin, cap_fetch_reply, cap_fetch_reply_summary, create_inventory_item,
+    create_item_completed, create_item_succeeded, delayed_fetch_due, delete_inventory_item,
+    dirty_inventory, load_task_inv_file, move_inventory, remove_inventory, reply_task_inventory,
+    request_inventory, save_script, update_inventory, update_inventory_local,
+    update_material_inventory, update_viewer_inventory_asset, xfer_completed, xfer_requested,
 };
 pub use message::Outgoing;
 
@@ -286,13 +286,52 @@ impl Entry {
     }
 }
 
+/// What the decisions read of an entry of `mInventory`: its id and type,
+/// and for an `LLViewerInventoryItem` its asset and permissions (as the
+/// item's getters return them).
+///
+/// [`Entry`] is the full record. A caller that keeps the entries itself (the
+/// viewer, whose `mInventory` stays C++) passes a lighter key per entry
+/// instead; the entries the decisions create cross as [`Entry`] in
+/// [`Action::PushFront`] and become keys through `From<Entry>`.
+pub trait TaskEntry: Clone + From<Entry> {
+    /// `getUUID`.
+    fn id(&self) -> Uuid;
+    /// `getType`.
+    fn asset_type(&self) -> AssetType;
+    /// `getAssetUUID` of an `LLViewerInventoryItem`; `None` for a plain
+    /// `LLInventoryObject`.
+    fn item_asset(&self) -> Option<Uuid>;
+    /// `getPermissions` of an `LLViewerInventoryItem`; `None` for a plain
+    /// `LLInventoryObject`.
+    fn item_permissions(&self) -> Option<&Permissions>;
+}
+
+impl TaskEntry for Entry {
+    fn id(&self) -> Uuid {
+        Entry::id(self)
+    }
+
+    fn asset_type(&self) -> AssetType {
+        Entry::asset_type(self)
+    }
+
+    fn item_asset(&self) -> Option<Uuid> {
+        self.as_item().map(|v| v.item.asset)
+    }
+
+    fn item_permissions(&self) -> Option<&Permissions> {
+        self.as_item().map(|v| &v.item.permissions)
+    }
+}
+
 /// The object's task-inventory state as the decisions read it.
 ///
 /// The entries carry what the C++ getters return (for an
 /// `LLViewerInventoryItem` link the viewer's getters follow the link into
 /// `gInventory`; the wrapper fills the record from them).
-#[derive(Clone, Copy, Debug)]
-pub struct TaskView<'a> {
+#[derive(Debug)]
+pub struct TaskView<'a, E: TaskEntry = Entry> {
     /// `mID`.
     pub id: Uuid,
     /// `mLocalID`.
@@ -300,12 +339,20 @@ pub struct TaskView<'a> {
     /// The serials, request state, xfer id and dirty flag.
     pub state: TaskState,
     /// `mInventory` front to back; `None` for NULL.
-    pub inventory: Option<&'a [Entry]>,
+    pub inventory: Option<&'a [E]>,
     /// `mPendingInventoryItemsIDs` front to back.
     pub pending: &'a [Uuid],
     /// `!mInventoryCallbacks.empty()`.
     pub has_listeners: bool,
 }
+
+impl<E: TaskEntry> Clone for TaskView<'_, E> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<E: TaskEntry> Copy for TaskView<'_, E> {}
 
 /// `gAgent`'s ids.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
@@ -377,6 +424,10 @@ pub enum Action {
     ResetInventory,
     /// `mInventory->push_front(new entry)`.
     PushFront(Entry),
+    /// The entries of a capability reply's `contents`, each pushed to the
+    /// front in reply order (from [`machine::cap_fetch_reply_summary`]
+    /// only; [`cap_fetch_reply`] gives [`Action::PushFront`]s instead).
+    PushFrontReplyContents,
     /// `mInventory->erase(the entry at this index)`.
     Erase(usize),
     /// `mPendingInventoryItemsIDs.push_back(asset)`.

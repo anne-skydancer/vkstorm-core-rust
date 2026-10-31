@@ -19,34 +19,34 @@ use super::message::Outgoing;
 use super::{
     Action, Entry, Env, FloaterKey, INVENTORY_UPDATE_WAIT_TIME_DESYNC,
     INVENTORY_UPDATE_WAIT_TIME_OUTDATED, RequestState, TASK_INVENTORY_ASSET_KEY,
-    TASK_INVENTORY_ITEM_KEY, TaskState, TaskView, ViewerItem, scrubbed_file_name,
+    TASK_INVENTORY_ITEM_KEY, TaskEntry, TaskState, TaskView, ViewerItem, scrubbed_file_name,
 };
 use crate::item::Item;
-use crate::llsd::coerce::{as_integer, get};
+use crate::llsd::coerce::{as_integer, get, has};
 use crate::message::ItemBlock;
 use crate::perms::{NULL_ID, Uuid};
 use crate::types::AssetType;
 
 /// The object during one decision: the view's state, changed as the
 /// actions change it, and the actions so far.
-struct Work<'a> {
+struct Work<'a, E: TaskEntry> {
     id: Uuid,
     local_id: u32,
     st: TaskState,
-    inv: Option<Vec<Entry>>,
+    inv: Option<Vec<E>>,
     pending: Vec<Uuid>,
     has_listeners: bool,
     env: &'a Env<'a>,
     out: Vec<Action>,
 }
 
-impl<'a> Work<'a> {
-    fn new(view: &TaskView<'_>, env: &'a Env<'a>) -> Work<'a> {
+impl<'a, E: TaskEntry> Work<'a, E> {
+    fn new(view: &TaskView<'_, E>, env: &'a Env<'a>) -> Work<'a, E> {
         Work {
             id: view.id,
             local_id: view.local_id,
             st: view.state,
-            inv: view.inventory.map(<[Entry]>::to_vec),
+            inv: view.inventory.map(<[E]>::to_vec),
             pending: view.pending.to_vec(),
             has_listeners: view.has_listeners,
             env,
@@ -107,7 +107,7 @@ impl<'a> Work<'a> {
 
     fn push_front(&mut self, e: Entry) {
         if let Some(inv) = self.inv.as_mut() {
-            inv.insert(0, e.clone());
+            inv.insert(0, E::from(e.clone()));
             self.out.push(Action::PushFront(e));
         }
     }
@@ -122,7 +122,7 @@ impl<'a> Work<'a> {
         };
         let mut front = Vec::new();
         for e in entries {
-            front.push(e.clone());
+            front.push(E::from(e.clone()));
             self.out.push(Action::PushFront(e));
         }
         front.reverse();
@@ -130,7 +130,7 @@ impl<'a> Work<'a> {
         *inv = front;
     }
 
-    fn entries(&self) -> &[Entry] {
+    fn entries(&self) -> &[E] {
         self.inv.as_deref().unwrap_or(&[])
     }
 
@@ -246,19 +246,17 @@ impl<'a> Work<'a> {
         true
     }
 
-    /// `loadTaskInvLLSD`.
-    fn load_task_inv_llsd(&mut self, result: &Value) {
-        match read_reply_contents(result, self.env.in_open_sim, self.env.names) {
-            Some(entries) => {
-                self.reset_inventory();
-                self.push_front(Entry::contents_category(&self.id));
-                self.push_front_all(entries);
-                self.do_inventory_callback();
-            }
-            None => {
-                // Bug 5: no contents fails the request as an HTTP error does.
-                self.set_request(RequestState::Stopped);
-            }
+    /// `loadTaskInvLLSD` for a reply with or without `contents`; the
+    /// entries are [`Action::PushFrontReplyContents`].
+    fn load_task_inv_llsd(&mut self, has_contents: bool) {
+        if has_contents {
+            self.reset_inventory();
+            self.push_front(Entry::contents_category(&self.id));
+            self.out.push(Action::PushFrontReplyContents);
+            self.do_inventory_callback();
+        } else {
+            // Bug 5: no contents fails the request as an HTTP error does.
+            self.set_request(RequestState::Stopped);
         }
     }
 
@@ -277,14 +275,9 @@ impl<'a> Work<'a> {
             TASK_INVENTORY_ASSET_KEY => lookup::item_by_asset(entries, &item.item.asset),
             _ => None,
         }
-        .and_then(|i| entries[i].as_item());
+        .and_then(|i| Some((entries[i].id(), entries[i].item_permissions()?)));
         let (item_id, new_owner, new_group, group_owned) = match old {
-            Some(o) => (
-                o.item.object.id,
-                o.item.permissions.owner,
-                o.item.permissions.group,
-                o.item.permissions.is_group_owned(),
-            ),
+            Some((id, p)) => (id, p.owner, p.group, p.is_group_owned()),
             None => (item.item.object.id, NULL_ID, NULL_ID, false),
         };
         if !is_new && self.inv.is_some() {
@@ -348,21 +341,25 @@ fn task_item_with_transaction(item: &ViewerItem, object_id: &Uuid) -> ViewerItem
 }
 
 /// `requestInventory`.
-pub fn request_inventory(view: &TaskView<'_>, env: &Env<'_>) -> Vec<Action> {
+pub fn request_inventory<E: TaskEntry>(view: &TaskView<'_, E>, env: &Env<'_>) -> Vec<Action> {
     let mut w = Work::new(view, env);
     w.request_inventory();
     w.finish()
 }
 
 /// `dirtyInventory`.
-pub fn dirty_inventory(view: &TaskView<'_>, env: &Env<'_>) -> Vec<Action> {
+pub fn dirty_inventory<E: TaskEntry>(view: &TaskView<'_, E>, env: &Env<'_>) -> Vec<Action> {
     let mut w = Work::new(view, env);
     w.dirty_inventory();
     w.finish()
 }
 
 /// `deleteInventoryItem` (no message).
-pub fn delete_inventory_item(view: &TaskView<'_>, env: &Env<'_>, item_id: &Uuid) -> Vec<Action> {
+pub fn delete_inventory_item<E: TaskEntry>(
+    view: &TaskView<'_, E>,
+    env: &Env<'_>,
+    item_id: &Uuid,
+) -> Vec<Action> {
     let mut w = Work::new(view, env);
     w.delete_inventory_item(item_id);
     w.finish()
@@ -379,8 +376,8 @@ pub fn delete_inventory_item(view: &TaskView<'_>, env: &Env<'_>, item_id: &Uuid)
 /// serials set, and a file name that scrubs to empty mocks up the
 /// `Contents` drop target, otherwise the file is requested
 /// ([`Action::RequestXfer`], continued by [`xfer_requested`]).
-pub fn reply_task_inventory(
-    view: &TaskView<'_>,
+pub fn reply_task_inventory<E: TaskEntry>(
+    view: &TaskView<'_, E>,
     env: &Env<'_>,
     serial: i16,
     filename: &[u8],
@@ -423,7 +420,11 @@ pub fn reply_task_inventory(
 /// The rest of `processTaskInv` once `requestFile` returned `new_id`: a
 /// transfer in progress is replaced by a new one (the old one aborted),
 /// otherwise the state becomes `XFER` with the new id.
-pub fn xfer_requested(view: &TaskView<'_>, env: &Env<'_>, new_id: u64) -> Vec<Action> {
+pub fn xfer_requested<E: TaskEntry>(
+    view: &TaskView<'_, E>,
+    env: &Env<'_>,
+    new_id: u64,
+) -> Vec<Action> {
     let mut w = Work::new(view, env);
     if w.st.request == RequestState::Xfer {
         if new_id > 0 && new_id != w.st.xfer_id {
@@ -445,8 +446,8 @@ pub fn xfer_requested(view: &TaskView<'_>, env: &Env<'_>, new_id: u64) -> Vec<Ac
 /// records the serial and loads the file; a successful load then takes the
 /// assets of the items (not `AT_CATEGORY`) out of the pending list, front to
 /// back, while it is not empty.
-pub fn xfer_completed(
-    view: &TaskView<'_>,
+pub fn xfer_completed<E: TaskEntry>(
+    view: &TaskView<'_, E>,
     env: &Env<'_>,
     serial: i16,
     filename: &[u8],
@@ -466,9 +467,9 @@ pub fn xfer_completed(
             if w.pending.is_empty() {
                 break;
             }
-            if let Some(item) = e.as_item() {
-                if item.item.object.asset_type != AssetType::CATEGORY {
-                    if let Some(i) = w.pending.iter().position(|a| *a == item.item.asset) {
+            if let Some(asset) = e.item_asset() {
+                if e.asset_type() != AssetType::CATEGORY {
+                    if let Some(i) = w.pending.iter().position(|a| *a == asset) {
                         w.pending.remove(i);
                         w.out.push(Action::PendingErase(i));
                     }
@@ -481,8 +482,8 @@ pub fn xfer_completed(
 
 /// `loadTaskInvFile(filename)` with the cache file's bytes (`None` when it
 /// cannot be opened): whether it loaded, and the actions.
-pub fn load_task_inv_file(
-    view: &TaskView<'_>,
+pub fn load_task_inv_file<E: TaskEntry>(
+    view: &TaskView<'_, E>,
     env: &Env<'_>,
     filename: &[u8],
     file: Option<&[u8]>,
@@ -498,7 +499,7 @@ pub fn load_task_inv_file(
 /// the serial is not 0 and the object has contents, which never holds
 /// here: `fetchInventoryFromServer` deleted them; README "Recorded
 /// quirks").
-pub fn cap_fetch_begin(view: &TaskView<'_>, env: &Env<'_>) -> Vec<Action> {
+pub fn cap_fetch_begin<E: TaskEntry>(view: &TaskView<'_, E>, env: &Env<'_>) -> Vec<Action> {
     let mut w = Work::new(view, env);
     let cap = env.region.map_or("", |r| r.request_task_inventory);
     let mut url = format!("{cap}?task_id={}", uuid_string(&w.id));
@@ -518,21 +519,70 @@ pub fn cap_fetch_begin(view: &TaskView<'_>, env: &Env<'_>) -> Vec<Action> {
 /// loads the reply; a 304 releases the request and sets the expected serial
 /// to the current one; any other status releases the request. A received
 /// (or kept, on 304) serial below the expected one is stale: refetch in 1 s.
-pub fn cap_fetch_reply(
-    view: &TaskView<'_>,
+///
+/// The entries of `contents` come back as [`Action::PushFront`]s; see
+/// [`cap_fetch_reply_summary`] for a caller that decodes them itself.
+pub fn cap_fetch_reply<E: TaskEntry>(
+    view: &TaskView<'_, E>,
     env: &Env<'_>,
     success: bool,
     http_status: i32,
     result: &Value,
 ) -> Vec<Action> {
+    let reply = CapReply {
+        serial: as_integer(get(result, "inventory_serial")),
+        has_contents: has(result, "contents"),
+    };
+    let acts = cap_fetch_reply_summary(view, env, success, http_status, reply);
+    let mut out = Vec::with_capacity(acts.len());
+    for a in acts {
+        if a == Action::PushFrontReplyContents {
+            let entries = read_reply_contents(result, env.in_open_sim, env.names);
+            out.extend(
+                entries
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(Action::PushFront),
+            );
+        } else {
+            out.push(a);
+        }
+    }
+    out
+}
+
+/// What the capability reply's decisions read of the reply map, for a
+/// caller that keeps the reply as C++ `LLSD` (the viewer: the entries are
+/// an `LLSD` form, decoded by `LLViewerInventoryItem::unpackMessage(LLSD)`,
+/// which stays C++ until the reply body reaches Rust unparsed).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct CapReply {
+    /// `result["inventory_serial"].asInteger()`.
+    pub serial: i32,
+    /// `result.has("contents")`.
+    pub has_contents: bool,
+}
+
+/// [`cap_fetch_reply`] over what it reads of the reply: the entries of
+/// `contents` are one [`Action::PushFrontReplyContents`], which the caller
+/// carries out by pushing each element of `contents` that is a map with
+/// `item_id` to the front, in reply order, as
+/// `LLViewerInventoryItem::unpackMessage(LLSD)` reads it.
+pub fn cap_fetch_reply_summary<E: TaskEntry>(
+    view: &TaskView<'_, E>,
+    env: &Env<'_>,
+    success: bool,
+    http_status: i32,
+    reply: CapReply,
+) -> Vec<Action> {
     let mut w = Work::new(view, env);
     let mut potentially_stale = false;
     if success {
-        let serial = as_integer(get(result, "inventory_serial")) as i16;
+        let serial = reply.serial as i16;
         potentially_stale = serial < w.st.expected;
         w.set_serial(serial);
         w.set_expected(serial);
-        w.load_task_inv_llsd(result);
+        w.load_task_inv_llsd(reply.has_contents);
     } else if http_status == 304 {
         w.set_request(RequestState::Stopped);
         potentially_stale = w.st.serial < w.st.expected;
@@ -548,7 +598,7 @@ pub fn cap_fetch_reply(
 
 /// `fetchInventoryDelayedCoro` after its timeout, for an object
 /// `gObjectList` still has: the request is released and fetched again.
-pub fn delayed_fetch_due(view: &TaskView<'_>, env: &Env<'_>) -> Vec<Action> {
+pub fn delayed_fetch_due<E: TaskEntry>(view: &TaskView<'_, E>, env: &Env<'_>) -> Vec<Action> {
     let mut w = Work::new(view, env);
     w.set_request(RequestState::Stopped);
     w.fetch_inventory_from_server();
@@ -559,8 +609,8 @@ pub fn delayed_fetch_due(view: &TaskView<'_>, env: &Env<'_>) -> Vec<Action> {
 /// task copy of the item (sliced to the viewer's fields, the object as
 /// parent, the item's transaction id), then the local update with the
 /// owner guess.
-pub fn update_inventory(
-    view: &TaskView<'_>,
+pub fn update_inventory<E: TaskEntry>(
+    view: &TaskView<'_, E>,
     env: &Env<'_>,
     item: &ViewerItem,
     key: u8,
@@ -574,8 +624,8 @@ pub fn update_inventory(
 
 /// `updateInventoryLocal(item, key)`: the local update only (no message,
 /// no transaction id), as not new.
-pub fn update_inventory_local(
-    view: &TaskView<'_>,
+pub fn update_inventory_local<E: TaskEntry>(
+    view: &TaskView<'_, E>,
     env: &Env<'_>,
     item: &Item,
     key: u8,
@@ -588,8 +638,8 @@ pub fn update_inventory_local(
 
 /// `updateViewerInventoryAsset(item, new_asset)`: a copy of the item with
 /// the new asset, updated locally by item id, as not new.
-pub fn update_viewer_inventory_asset(
-    view: &TaskView<'_>,
+pub fn update_viewer_inventory_asset<E: TaskEntry>(
+    view: &TaskView<'_, E>,
     env: &Env<'_>,
     item: &ViewerItem,
     new_asset: &Uuid,
@@ -604,8 +654,8 @@ pub fn update_viewer_inventory_asset(
 /// `updateMaterialInventory(item, key, is_new)`: textures and materials
 /// only, not already present or pending, with a region; the asset is added
 /// to the pending list, then [`update_inventory`].
-pub fn update_material_inventory(
-    view: &TaskView<'_>,
+pub fn update_material_inventory<E: TaskEntry>(
+    view: &TaskView<'_, E>,
     env: &Env<'_>,
     item: &ViewerItem,
     key: u8,
@@ -632,7 +682,11 @@ pub fn update_material_inventory(
 /// `removeInventory(item_id)`: the item's property floaters closed, then
 /// (with a region) `RemoveTaskInventory`, the first entry with the id
 /// erased, and the expected serial raised.
-pub fn remove_inventory(view: &TaskView<'_>, env: &Env<'_>, item_id: &Uuid) -> Vec<Action> {
+pub fn remove_inventory<E: TaskEntry>(
+    view: &TaskView<'_, E>,
+    env: &Env<'_>,
+    item_id: &Uuid,
+) -> Vec<Action> {
     let mut w = Work::new(view, env);
     w.out.push(Action::HideFloater {
         name: "item_properties",
@@ -663,8 +717,8 @@ pub fn remove_inventory(view: &TaskView<'_>, env: &Env<'_>, item_id: &Uuid) -> V
 /// `moveInventory(folder_id, item_id)`: (with a region)
 /// `MoveTaskInventory`; an item the agent may not copy leaves the contents
 /// and raises the expected serial.
-pub fn move_inventory(
-    view: &TaskView<'_>,
+pub fn move_inventory<E: TaskEntry>(
+    view: &TaskView<'_, E>,
     env: &Env<'_>,
     folder_id: &Uuid,
     item_id: &Uuid,
@@ -682,8 +736,8 @@ pub fn move_inventory(
         item_id: *item_id,
     }));
     let no_copy = lookup::object_by_id(w.entries(), item_id)
-        .and_then(|i| w.entries()[i].as_item())
-        .is_some_and(|item| !item.item.permissions.allow_copy_by(&a.id, &NULL_ID));
+        .and_then(|i| w.entries()[i].item_permissions())
+        .is_some_and(|p| !p.allow_copy_by(&a.id, &NULL_ID));
     if no_copy {
         w.delete_inventory_item(item_id);
         w.add_expected(1);
@@ -694,8 +748,8 @@ pub fn move_inventory(
 /// `saveScript(item, active, is_new, template_id)`: (with a region)
 /// `RezScript` with the task copy of the item and, for an item without an
 /// asset and a template, `NewScriptInfo`; then the local update by item id.
-pub fn save_script(
-    view: &TaskView<'_>,
+pub fn save_script<E: TaskEntry>(
+    view: &TaskView<'_, E>,
     env: &Env<'_>,
     item: &ViewerItem,
     active: bool,
@@ -726,8 +780,8 @@ pub fn save_script(
 /// `createInventoryItem`: without a region or without the
 /// `CreateTaskInventoryItem` capability the callback fails at once;
 /// otherwise the coroutine posts the body ([`super::create::create_body`]).
-pub fn create_inventory_item(
-    view: &TaskView<'_>,
+pub fn create_inventory_item<E: TaskEntry>(
+    view: &TaskView<'_, E>,
     env: &Env<'_>,
     req: &CreateRequest<'_>,
 ) -> Vec<Action> {
@@ -756,8 +810,8 @@ pub fn create_item_succeeded(http_ok: bool, result: &Value) -> bool {
 /// `createInventoryItemCoro` after the reply: on success, for the object
 /// when `gObjectList` has it (`view`), the expected serial is raised and
 /// the contents are made dirty and requested again; then the callback.
-pub fn create_item_completed(
-    view: Option<&TaskView<'_>>,
+pub fn create_item_completed<E: TaskEntry>(
+    view: Option<&TaskView<'_, E>>,
     env: &Env<'_>,
     success: bool,
 ) -> Vec<Action> {
