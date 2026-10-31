@@ -376,6 +376,9 @@ pub const VKS_INV_TASK_HIDE_FLOATER: u32 = 22; // text: name; value 0: key uuid,
 pub const VKS_INV_TASK_LAUNCH_CREATE: u32 = 23; // text: url, text2: binary LLSD body
 pub const VKS_INV_TASK_CREATE_CALLBACK: u32 = 24; // value: success
 pub const VKS_INV_TASK_CREATE_FAILED: u32 = 25; // text: message
+pub const VKS_INV_TASK_ADD_EXPECTED: u32 = 26; // value (wrapping S16 add)
+pub const VKS_INV_TASK_NOTIFY_LISTENERS_KEEP_REQUEST: u32 = 27;
+pub const VKS_INV_TASK_CLEAR_LOADED_PENDING: u32 = 28;
 
 /// One action.
 #[repr(C)]
@@ -658,6 +661,14 @@ impl VksInvTaskResult {
                     value: i32::from(v),
                     ..action(VKS_INV_TASK_SET_EXPECTED)
                 },
+                Action::AddExpected(v) => VksInvTaskAction {
+                    value: i32::from(v),
+                    ..action(VKS_INV_TASK_ADD_EXPECTED)
+                },
+                Action::NotifyListenersKeepRequest => {
+                    action(VKS_INV_TASK_NOTIFY_LISTENERS_KEEP_REQUEST)
+                }
+                Action::ClearLoadedPending => action(VKS_INV_TASK_CLEAR_LOADED_PENDING),
                 Action::SetRequestState(v) => VksInvTaskAction {
                     value: request_to(v),
                     ..action(VKS_INV_TASK_SET_REQUEST_STATE)
@@ -944,6 +955,19 @@ pub unsafe extern "C" fn vks_inv_task_xfer_completed(
             )
         })
     }
+}
+
+/// The pending-list cleanup after a successful load
+/// (`VKS_INV_TASK_CLEAR_LOADED_PENDING`), over the object as it is now.
+///
+/// # Safety
+/// As [`vks_inv_task_request_inventory`].
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn vks_inv_task_clear_loaded_pending(
+    view: *const VksInvTaskView,
+    env: *const VksInvTaskEnv,
+) -> *mut VksInvTaskResult {
+    unsafe { decide(view, env, |v, e| (true, task::clear_loaded_pending(v, e))) }
 }
 
 /// `loadTaskInvFile(filename)` with the cache file's bytes as the text-mode

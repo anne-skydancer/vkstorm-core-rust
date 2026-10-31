@@ -1621,8 +1621,12 @@ VksInvRecords* vks_inv_notecard_export(const VksInvItem* items, size_t count, co
  * vks_inv_task_cap_fetch_begin while gObjectList has the object, then
  * vks_inv_task_cap_fetch_reply after the VKS_INV_TASK_HTTP_GET reply),
  * VKS_INV_TASK_LAUNCH_DELAYED_FETCH (vks_inv_task_delayed_fetch_due after
- * the timeout) and VKS_INV_TASK_LAUNCH_CREATE
- * (vks_inv_task_create_item_completed after the POST reply).
+ * the timeout), VKS_INV_TASK_LAUNCH_CREATE
+ * (vks_inv_task_create_item_completed after the POST reply) and
+ * VKS_INV_TASK_CLEAR_LOADED_PENDING (vks_inv_task_clear_loaded_pending).
+ * Listeners may call into the object while they are notified, so every
+ * action after a notification reads or changes the object as it is then
+ * (serial increments are relative: VKS_INV_TASK_ADD_EXPECTED).
  *
  * The task file crosses whole: the bytes as the loader's text-mode stream
  * reads them (on Windows after CRLF -> LF, ending at a Ctrl-Z). The
@@ -1713,6 +1717,9 @@ typedef struct VksInvTaskItem
 #define VKS_INV_TASK_LAUNCH_CREATE 23         /* text: url, text2: the POST body, binary LLSD */
 #define VKS_INV_TASK_CREATE_CALLBACK 24       /* value: success */
 #define VKS_INV_TASK_CREATE_FAILED 25         /* text: message */
+#define VKS_INV_TASK_ADD_EXPECTED 26          /* value: ++/-- (wrapping S16) */
+#define VKS_INV_TASK_NOTIFY_LISTENERS_KEEP_REQUEST 27 /* the loop, the request state and xfer id put back after */
+#define VKS_INV_TASK_CLEAR_LOADED_PENDING 28  /* vks_inv_task_clear_loaded_pending over the object now */
 
 typedef struct VksInvTaskAction
 {
@@ -1795,6 +1802,8 @@ VksInvTaskResult* vks_inv_task_xfer_completed(const VksInvTaskView* view, const 
                                               int16_t serial, const uint8_t* filename, size_t filename_len,
                                               int32_t error_code, bool has_file, const uint8_t* file,
                                               size_t file_len);
+/* processTaskInvFile's pending-list cleanup after a successful load. */
+VksInvTaskResult* vks_inv_task_clear_loaded_pending(const VksInvTaskView* view, const VksInvTaskEnv* env);
 /* loadTaskInvFile; ok is its result. */
 VksInvTaskResult* vks_inv_task_load_file(const VksInvTaskView* view, const VksInvTaskEnv* env,
                                          const uint8_t* filename, size_t filename_len, bool has_file,
