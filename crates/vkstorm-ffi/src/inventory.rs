@@ -1808,6 +1808,37 @@ pub unsafe extern "C" fn vks_inv_category_import_llsd_map(
     })
 }
 
+/// `importLLSD(label, value)` over `cat`: one key, through the base class's
+/// `importLLSD`, or with `viewer` the `LLViewerInventoryCategory` override
+/// (`owner_id`, `version`): one category, `ok` the C++ result (true when the
+/// key was handled; `favorite` is applied but returns false, as in C++).
+/// For a C++ `importLLSDMap` that keeps its virtual dispatch per key. Null
+/// for a malformed buffer or a failure.
+///
+/// # Safety
+/// `cat` must be valid with its strings readable; `label` readable for
+/// `label_len` bytes; `value`, unless null (undefined), a valid buffer.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn vks_inv_category_import_llsd(
+    cat: *const VksInvCategory,
+    label: *const u8,
+    label_len: usize,
+    value: *const VksLlsdFlat,
+    viewer: bool,
+) -> *mut VksInvRecords {
+    records(|| {
+        let value = unsafe { llsd_arg(value) }?;
+        let label = unsafe { bytes(label, label_len) };
+        let mut c = unsafe { category_from(&*cat) };
+        let ok = if viewer {
+            c.import_llsd(label, &value)
+        } else {
+            c.category.import_llsd(label, &value)
+        };
+        Some(VksInvRecords::category(ok, c))
+    })
+}
+
 /// `ll_create_category_from_sd(sd)`: one category (owner null, version
 /// `VERSION_UNKNOWN`). Null for a malformed buffer or a failure.
 ///

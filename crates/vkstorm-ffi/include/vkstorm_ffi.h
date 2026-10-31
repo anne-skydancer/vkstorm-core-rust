@@ -1623,8 +1623,10 @@ VksLlsdDoc* vks_inv_item_create_sd(const VksInvItem* item);
 
 /* LLInventoryCategory and LLViewerInventoryCategory. viewer selects the
  * LLViewerInventoryCategory override of exportLLSD / importLLSD (owner_id,
- * version). from_create_sd: ll_create_category_from_sd. apply_block:
- * unpackMessage of a read folder block. */
+ * version); import_llsd is one key of importLLSD (ok: the C++ result), for
+ * an importLLSDMap that keeps its virtual dispatch per key.
+ * from_create_sd: ll_create_category_from_sd. apply_block: unpackMessage of
+ * a read folder block. */
 #define VKS_INV_CAT_AS_LLSD 0    /* asLLSD */
 #define VKS_INV_CAT_AIS_CREATE 1 /* asAISCreateCatLLSD */
 #define VKS_INV_CAT_CREATE_SD 2  /* ll_create_sd_from_inventory_category */
@@ -1635,6 +1637,8 @@ VksLlsdDoc* vks_inv_category_to_llsd(const VksInvCategory* cat, int32_t form);
 VksLlsdDoc* vks_inv_category_export_llsd(const VksInvCategory* cat, bool viewer, const VksLlsdFlat* into);
 VksInvRecords* vks_inv_category_from_llsd(const VksInvCategory* cat, const VksLlsdFlat* sd);
 VksInvRecords* vks_inv_category_import_llsd_map(const VksInvCategory* cat, const VksLlsdFlat* sd, bool viewer);
+VksInvRecords* vks_inv_category_import_llsd(const VksInvCategory* cat, const uint8_t* label, size_t label_len,
+                                            const VksLlsdFlat* value, bool viewer);
 VksInvRecords* vks_inv_category_from_create_sd(const VksLlsdFlat* sd);
 VksInvRecords* vks_inv_category_apply_block(const VksInvCategory* cat, const VksInvFolderBlock* block);
 
