@@ -1697,11 +1697,29 @@ typedef struct VksInvLoginPlanView {
     bool remove_gz;
     size_t cached_category_count;
     size_t cached_item_count;
+    /* What the C++ logged on the way: the folders whose cached items include
+     * an unknown type ("folder to update"), indices into folders, in cache
+     * order; the cached links the first pass deferred as broken, in order;
+     * every folder a still-broken link invalidated (16 bytes each, UUID
+     * order); the link counts of the summary line. */
+    const size_t* folders_to_update;
+    size_t folders_to_update_count;
+    const VksInvItem* possibly_broken;
+    size_t possibly_broken_count;
+    const uint8_t* invalidated;
+    size_t invalidated_count;
+    size_t good_link_count;
+    size_t bad_link_count;
+    size_t recovered_link_count;
 } VksInvLoginPlanView;
 
 VksInvSkeleton* vks_inv_skeleton_import(const uint8_t* owner, const VksInvSkeletonEntry* entries, size_t count);
 bool vks_inv_skeleton_wants_cache(const VksInvSkeleton* s);
 bool vks_inv_skeleton_rv(const VksInvSkeleton* s);
+/* The entries the import refused (each "Unable to import near <name>"), as
+ * indices into the entry list, in order; *count receives how many. Valid
+ * until the skeleton is loaded or freed. */
+const size_t* vks_inv_skeleton_rejected(const VksInvSkeleton* s, size_t* count);
 void vks_inv_skeleton_free(VksInvSkeleton* s);
 VksInvLoginPlan* vks_inv_skeleton_load(VksInvSkeleton* skeleton, const VksInvCacheInput* input, bool in_open_sim,
                                        const VksInvModelHost* model);
@@ -1709,12 +1727,16 @@ const VksInvLoginPlanView* vks_inv_login_plan_view(const VksInvLoginPlan* p);
 void vks_inv_login_plan_free(VksInvLoginPlan* p);
 
 /* LLInventoryModel::validate() over a snapshot of the model. Records are
- * identified by index (the C++ compares pointers); map entries carry the
- * record index (-1: a null pointer) and come in the order the C++ iterates
- * the maps (unordered_map order, per standard library). A tree's children
- * are `count` indices from `first` in `children` (-1: null). backlinks:
- * (target, link) pairs, 32 bytes each; locks: the keys set to true, 16 bytes
- * each; last_item: mLastItem as an item index or -1. qa: the
+ * identified by index (the C++ compares pointers): one per object a map
+ * holds, plus one per other object a child vector or mLastItem points to.
+ * Map entries carry the object (see VksInvSnapEntry) and come in the
+ * order the C++ iterates the maps (unordered_map order, per standard
+ * library). A tree's children are `count` references from `first` in
+ * `children`; a reference (VksInvSnapRef) is VKS_INV_SNAP_MAPPED for the
+ * object the map holds under its key (the C++ checks that with a find and a
+ * pointer compare), VKS_INV_SNAP_NULL for a null pointer, else a record
+ * index. backlinks: (target, link) pairs, 32 bytes each; locks: the keys set
+ * to true, 16 bytes each; last_item: mLastItem as a reference. qa: the
  * QAModeFakeSystemFolderIssues engine (vks_inv_qa_random_new: this build's
  * std::default_random_engine, state kept between calls), or null when the
  * setting is off. The result: LLInventoryValidationInfo's fields, mWarnings
@@ -1733,10 +1755,20 @@ typedef struct VksInvSnapItem {
     uint8_t asset[16];
     int32_t asset_type; /* getActualType() */
 } VksInvSnapItem;
-typedef struct VksInvSnapEntry {
+typedef struct VksInvSnapRef {
     uint8_t key[16];
     int64_t index;
+} VksInvSnapRef;
+/* A map entry: its key, and its object as a reference keyed by the
+ * object's own id (the entry under that id carries the record index; an
+ * entry under another key refers to it, VKS_INV_SNAP_MAPPED, or to a
+ * record of its own). */
+typedef struct VksInvSnapEntry {
+    uint8_t key[16];
+    VksInvSnapRef object;
 } VksInvSnapEntry;
+#define VKS_INV_SNAP_MAPPED (-1)
+#define VKS_INV_SNAP_NULL (-2)
 typedef struct VksInvSnapTree {
     uint8_t parent[16];
     size_t first;
@@ -1757,7 +1789,7 @@ typedef struct VksInvSnapshot {
     size_t category_tree_count;
     const VksInvSnapTree* item_tree;
     size_t item_tree_count;
-    const int64_t* children;
+    const VksInvSnapRef* children;
     size_t children_count;
     const uint8_t* backlinks;
     size_t backlink_count;
@@ -1765,13 +1797,87 @@ typedef struct VksInvSnapshot {
     size_t category_lock_count;
     const uint8_t* item_locks;
     size_t item_lock_count;
-    int64_t last_item;
+    VksInvSnapRef last_item;
     bool in_open_sim;
 } VksInvSnapshot;
 typedef struct VksInvWarning {
     VksInvBytes key;
     uint32_t count;
 } VksInvWarning;
+/* A line validate() logs, in the C++ order (vkstorm_inventory::validate::
+ * Event; the C++ text of each kind is there). cat, item, other: record
+ * indices (-1 unused); id, id2: UUIDs; a, b: numbers.
+ *   NO_ROOT_FOLDER, NO_LIBRARY_ROOT_FOLDER, NULL_CAT: nothing
+ *   UNEXPECTED_SIZES: a cat map size, b parent/child size
+ *   CAT_ID_MISMATCH: id key, cat;  NULL_PARENT, DIRECT_DESCENDENTS: id key
+ *   SUITCASE_SKIPPED, UNDER_SUITCASE, UNDER_ROOT, ELSEWHERE: cat
+ *   INVALID_DESCENDENT_COUNT: id key, cat, a child folders, b child items
+ *   NULL_ITEM_AT_INDEX: id key, a index
+ *   WRONG_PARENT, ITEM_NOT_IN_TOP_MAP: item, id key
+ *   ITEM_MISMATCH: item, other (the map's record)
+ *   TOPMOST_NOT_FOUND, BROKEN_ITEM_LINK, BROKEN_FOLDER_LINK,
+ *   LINK_HAS_BACKLINKS: item
+ *   TOPMOST_NOT_RECOGNIZED: item, id2 the ancestor found
+ *   CAT_ORPHAN_NO_ARRAY, CAT_ORPHAN_NOT_FOUND: id key, cat, id2 parent
+ *   ITEM_ID_MISMATCH, ITEM_NULL_PARENT: id key, item
+ *   ITEM_ORPHAN_NO_LIST, ITEM_ORPHAN_NOT_FOUND: id key, item, id2 parent
+ *   MISSING_BACKLINK: item, id2 target;  INVALID_BACKLINK: item, id2 link
+ *   LINK_TO_LINK: item, other (the target)
+ *   FOLDER_TYPE_COUNT_*: a folder type, b count
+ *   SYSTEM_FOLDER_NOT_FOUND, CANNOT_CREATE_SYSTEM_FOLDER: a folder type
+ *   EXCESS_COPIES_*, EXTRA_FOLDERS_ELSEWHERE: a folder type, b count
+ *   LOCKS: a folder locks, b item locks
+ *   UNKNOWN_DESCENDENT_COUNTS, UNKNOWN_VERSIONS: a count */
+#define VKS_INV_VEV_NO_ROOT_FOLDER 1u
+#define VKS_INV_VEV_NO_LIBRARY_ROOT_FOLDER 2u
+#define VKS_INV_VEV_UNEXPECTED_SIZES 3u
+#define VKS_INV_VEV_NULL_CAT 4u
+#define VKS_INV_VEV_CAT_ID_MISMATCH 5u
+#define VKS_INV_VEV_NULL_PARENT 6u
+#define VKS_INV_VEV_SUITCASE_SKIPPED 7u
+#define VKS_INV_VEV_DIRECT_DESCENDENTS 8u
+#define VKS_INV_VEV_INVALID_DESCENDENT_COUNT 9u
+#define VKS_INV_VEV_NULL_ITEM_AT_INDEX 10u
+#define VKS_INV_VEV_WRONG_PARENT 11u
+#define VKS_INV_VEV_ITEM_NOT_IN_TOP_MAP 12u
+#define VKS_INV_VEV_ITEM_MISMATCH 13u
+#define VKS_INV_VEV_TOPMOST_NOT_FOUND 14u
+#define VKS_INV_VEV_TOPMOST_NOT_RECOGNIZED 15u
+#define VKS_INV_VEV_CAT_ORPHAN_NO_ARRAY 16u
+#define VKS_INV_VEV_CAT_ORPHAN_NOT_FOUND 17u
+#define VKS_INV_VEV_UNDER_SUITCASE 18u
+#define VKS_INV_VEV_UNDER_ROOT 19u
+#define VKS_INV_VEV_ELSEWHERE 20u
+#define VKS_INV_VEV_ITEM_ID_MISMATCH 21u
+#define VKS_INV_VEV_ITEM_NULL_PARENT 22u
+#define VKS_INV_VEV_ITEM_ORPHAN_NO_LIST 23u
+#define VKS_INV_VEV_ITEM_ORPHAN_NOT_FOUND 24u
+#define VKS_INV_VEV_MISSING_BACKLINK 25u
+#define VKS_INV_VEV_BROKEN_ITEM_LINK 26u
+#define VKS_INV_VEV_BROKEN_FOLDER_LINK 27u
+#define VKS_INV_VEV_LINK_TO_LINK 28u
+#define VKS_INV_VEV_LINK_HAS_BACKLINKS 29u
+#define VKS_INV_VEV_INVALID_BACKLINK 30u
+#define VKS_INV_VEV_FOLDER_TYPE_COUNT_UNDER_ROOT 31u
+#define VKS_INV_VEV_FOLDER_TYPE_COUNT_ELSEWHERE 32u
+#define VKS_INV_VEV_SYSTEM_FOLDER_NOT_FOUND 33u
+#define VKS_INV_VEV_CANNOT_CREATE_SYSTEM_FOLDER 34u
+#define VKS_INV_VEV_EXCESS_COPIES_FATAL 35u
+#define VKS_INV_VEV_EXCESS_COPIES_NON_FATAL 36u
+#define VKS_INV_VEV_EXTRA_FOLDERS_ELSEWHERE 37u
+#define VKS_INV_VEV_LOCKS 38u
+#define VKS_INV_VEV_UNKNOWN_DESCENDENT_COUNTS 39u
+#define VKS_INV_VEV_UNKNOWN_VERSIONS 40u
+typedef struct VksInvValidationEvent {
+    uint32_t kind;
+    int64_t cat;
+    int64_t item;
+    int64_t other;
+    uint8_t id[16];
+    uint8_t id2[16];
+    int64_t a;
+    int64_t b;
+} VksInvValidationEvent;
 typedef struct VksInvValidation VksInvValidation;
 typedef struct VksInvValidationView {
     bool initialized;
@@ -1791,6 +1897,8 @@ typedef struct VksInvValidationView {
     size_t duplicate_count;
     VksInvBytes log;
     int64_t last_item;
+    const VksInvValidationEvent* events;
+    size_t event_count;
 } VksInvValidationView;
 typedef struct VksInvQaRandom VksInvQaRandom;
 
@@ -1805,8 +1913,10 @@ static_assert(sizeof(void*) != 8 ||
                   (sizeof(VksInvModelHost) == 24 && sizeof(VksInvSkeletonEntry) == 64 &&
                    sizeof(VksInvCacheInput) == 32 && sizeof(VksInvLoginFolder) == 128 &&
                    sizeof(VksInvSnapCategory) == 44 && sizeof(VksInvSnapItem) == 52 &&
-                   sizeof(VksInvSnapEntry) == 24 && sizeof(VksInvSnapTree) == 32 &&
-                   sizeof(VksInvSnapshot) == 208 && sizeof(VksInvWarning) == 24),
+                   sizeof(VksInvSnapEntry) == 40 && sizeof(VksInvSnapTree) == 32 &&
+                   sizeof(VksInvSnapRef) == 24 && sizeof(VksInvSnapshot) == 224 &&
+                   sizeof(VksInvWarning) == 24 && sizeof(VksInvValidationEvent) == 80 &&
+                   sizeof(VksInvLoginPlanView) == 152),
               "inventory R2 layout");
 #endif
 
