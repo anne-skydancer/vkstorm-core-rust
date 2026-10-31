@@ -96,16 +96,17 @@ impl TaskEntry for VksInvTaskEntry {
 }
 
 /// The decisions' entries: the C++ object's (as keys), and the entries a
-/// decision created (as records).
+/// decision created (as records, boxed so that a key stays small: the
+/// decisions copy the list of keys).
 #[derive(Clone)]
 enum Key {
     Host(VksInvTaskEntry),
-    New(Entry),
+    New(Box<Entry>),
 }
 
 impl From<Entry> for Key {
     fn from(e: Entry) -> Key {
-        Key::New(e)
+        Key::New(Box::new(e))
     }
 }
 
@@ -127,14 +128,14 @@ impl TaskEntry for Key {
     fn item_asset(&self) -> Option<Uuid> {
         match self {
             Key::Host(k) => k.item_asset(),
-            Key::New(e) => TaskEntry::item_asset(e),
+            Key::New(e) => TaskEntry::item_asset(&**e),
         }
     }
 
     fn item_permissions(&self) -> Option<&Permissions> {
         match self {
             Key::Host(k) => k.item_permissions(),
-            Key::New(e) => TaskEntry::item_permissions(e),
+            Key::New(e) => TaskEntry::item_permissions(&**e),
         }
     }
 }

@@ -1845,7 +1845,10 @@ VksInvTaskResult* vks_inv_task_create_inventory_item(const VksInvTaskView* view,
 VksInvTaskResult* vks_inv_task_create_item_completed(const VksInvTaskView* view, const VksInvTaskEnv* env,
                                                      bool http_ok, bool result_success);
 
-/* The lookups over mInventory's keys: the index found, -1 for none. */
+/* The lookups over mInventory's keys: the index found, -1 for none. The
+ * viewer keeps its lookups C++ for now: building the keys on every call cost
+ * 25 to 3,000 times the C++ loop (R4a bench); the decisions above apply the
+ * same rules to the keys they are given. */
 #define VKS_INV_TASK_FIND_OBJECT 1                 /* getInventoryObject(id) */
 #define VKS_INV_TASK_FIND_ITEM 2                   /* getInventoryItem(id) */
 #define VKS_INV_TASK_FIND_ITEM_BY_ASSET 3          /* getInventoryItemByAsset(id) */
