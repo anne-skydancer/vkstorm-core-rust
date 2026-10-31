@@ -18,8 +18,8 @@ use crate::perms::{NULL_ID, PERM_COPY, PERM_ITEM_UNRESTRICTED, PERM_TRANSFER, Uu
 use crate::types::{AssetType, FolderType};
 
 use super::host::{
-    Action, Handler, Host, LL_PCODE_VOLUME, ModelCat, ModelItem, MoveInv, NameThen, PackArgs,
-    RlvBehaviour, TaskObject, ViewerObject,
+    Action, Handler, Host, LL_PCODE_VOLUME, LogLevel, ModelCat, ModelItem, MoveInv, NameThen,
+    PackArgs, RlvBehaviour, TaskObject, ViewerObject, log, uuid_log_text,
 };
 use super::im::*;
 use super::names::{build_username, find_bytes};
@@ -465,6 +465,7 @@ pub fn give_item(
     item: Option<&ModelItem>,
     im_session: &Uuid,
 ) -> bool {
+    log(host, LogLevel::Info, "", "LLGiveInventory::giveInventory()");
     if !is_give_acceptable(host, item) {
         return false;
     }
@@ -502,6 +503,9 @@ pub fn give_category(
     success_notification: &[u8],
 ) -> bool {
     let Some(cat) = cat else { return false };
+    let mut line = b"LLGiveInventory::giveInventoryCategory() - ".to_vec();
+    line.extend_from_slice(&uuid_log_text(&cat.id));
+    log(host, LogLevel::Info, "", line);
     if !host.avatar_valid() {
         return false;
     }
@@ -580,6 +584,9 @@ pub fn commit_give_category(
     if rlv_share_blocked(host, to) {
         return false;
     }
+    let mut line = b"LLGiveInventory::commitGiveInventoryCategory() - ".to_vec();
+    line.extend_from_slice(&uuid_log_text(&cat.id));
+    log(host, LogLevel::Info, "", line);
     if recent_people_allowed(host, to, im_session) {
         host.act(Action::RecentPeopleAdd(*to));
     }
@@ -930,6 +937,7 @@ pub fn world_to_agent(
     mut filter: Option<&mut dyn ItemFilter>,
 ) -> bool {
     let Some(object) = host.object(object_id) else {
+        log(host, LogLevel::Info, "", "Object not found for drop.");
         return false;
     };
     let contents: Vec<TaskObject> = host
@@ -938,6 +946,12 @@ pub fn world_to_agent(
         .filter(|o| o.ty != AssetType::CATEGORY)
         .collect();
     if contents.is_empty() {
+        log(
+            host,
+            LogLevel::Info,
+            "",
+            "Object contents not found for drop.",
+        );
         return false;
     }
     let mut accept = false;
@@ -952,7 +966,10 @@ pub fn world_to_agent(
     let agent = host.agent_id();
     let group = host.agent_group_id();
     for o in &contents {
-        let Some(perm) = &o.perm else { continue };
+        let Some(perm) = &o.perm else {
+            log(host, LogLevel::Warn, "", "Invalid inventory item for drop");
+            continue;
+        };
         if perm.allow_operation_by(PERM_COPY, &agent, &group) && perm.allow_transfer_to(&agent) {
             accept = true;
         } else if object.perm_you_owner {

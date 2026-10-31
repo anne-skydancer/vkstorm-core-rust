@@ -1890,6 +1890,9 @@ enum
     VKS_INV_R4B_A_FLOATER_HIDE,            /* text[0] */
     VKS_INV_R4B_A_WARN_MOVE_INVENTORY,     /* move */
     VKS_INV_R4B_A_MOVE_TASK_INVENTORY,     /* sd[0] notification, sd[1] response, move */
+    VKS_INV_R4B_A_LOG,                     /* number[0] level (0 LL_DEBUGS, 1 LL_INFOS, 2 LL_WARNS),
+                                              text[0] tag (empty: untagged), text[1] message:
+                                              the C++ log line at the point it logged */
 };
 
 /* What runs when a name lookup answers (number[1] of the lookups). */

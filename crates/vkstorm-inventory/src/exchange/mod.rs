@@ -51,7 +51,9 @@ pub mod offer;
 pub mod throttle;
 pub mod xxh3;
 
-pub use host::{Action, Handler, Host, ImPacket, NameThen, ObserverKind, PackArgs, Route};
+pub use host::{
+    Action, Handler, Host, ImPacket, LogLevel, NameThen, ObserverKind, PackArgs, Route, log,
+};
 pub use im::*;
 pub use info::{NetHost, OfferInfo};
 pub use throttle::Throttle;

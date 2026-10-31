@@ -293,9 +293,41 @@ pub struct OfflineMessage {
     pub aux_id: Uuid,
 }
 
+/// A log line's level (`LL_DEBUGS`, `LL_INFOS`, `LL_WARNS`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LogLevel {
+    Debug,
+    Info,
+    Warn,
+}
+
+/// The viewer's log line `level(tag) << message`, at the point the C++
+/// logged it (`tag` empty for the untagged form). Not an effect of the
+/// decision: the oracle's fakes do not record it.
+pub fn log(host: &mut dyn Host, level: LogLevel, tag: &'static str, message: impl Into<Vec<u8>>) {
+    host.act(Action::Log {
+        level,
+        tag,
+        message: message.into(),
+    });
+}
+
+/// `operator<<(std::ostream&, const LLUUID&)`: the lower-case text form.
+pub fn uuid_log_text(id: &Uuid) -> Vec<u8> {
+    let mut out = Vec::with_capacity(36);
+    vkstorm_llsd::text::uuid_to_hex(id, &mut out);
+    out
+}
+
 /// What a decision tells the viewer to do, in order.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Action {
+    /// A log line (see [`log`]).
+    Log {
+        level: LogLevel,
+        tag: &'static str,
+        message: Vec<u8>,
+    },
     /// `new LLOfferInfo` with these fields: the offer the call works on.
     OfferNew(OfferInfo),
     /// The offer's fields changed (transaction consumed, folder redirected,

@@ -21,7 +21,8 @@ use crate::text::trim;
 use crate::types::{AssetType, FolderType};
 
 use super::host::{
-    Action, Host, ImPacket, NameThen, ObserverKind, OfflineMessage, PackArgs, Route, string_field,
+    Action, Host, ImPacket, LogLevel, NameThen, ObserverKind, OfflineMessage, PackArgs, Route, log,
+    string_field, uuid_log_text,
 };
 use super::im::*;
 use super::info::{NetHost, OfferInfo};
@@ -135,6 +136,15 @@ pub fn send_receive_response(
         host.act(Action::RecentPeopleAdd(info.from_id));
     }
     if info.transaction_id == NULL_ID {
+        log(
+            host,
+            LogLevel::Warn,
+            "Messaging",
+            format!(
+                "Missing transaction id, response for {} won't work",
+                info.im
+            ),
+        );
         return;
     }
     let im = if info.im == IM_GROUP_NOTICE_REQUESTED {
@@ -148,6 +158,14 @@ pub fn send_receive_response(
         (im + 2, vec![0])
     };
     let packet = response_packet(host, info, dialog, bucket);
+    if accept {
+        // `(U8)(im + 1)` streams as a character
+        let mut line = b"Processing".to_vec();
+        line.push(dialog as u8);
+        line.extend_from_slice(b" with transaction id ");
+        line.extend_from_slice(&uuid_log_text(&info.transaction_id));
+        log(host, LogLevel::Debug, "Messaging", line);
+    }
     host.act(Action::SendReliable {
         packet,
         route: Route::Host(info.host),
@@ -254,7 +272,11 @@ pub fn respond(host: &mut dyn Host, info: &mut OfferInfo, notification: &Value, 
         b"UserGiveItem" | b"UserGiveItemLegacy" => {
             inventory_offer_callback(host, info, notification, response, live)
         }
-        _ => {}
+        _ => {
+            let mut line = b"Unexpected notification name : ".to_vec();
+            line.extend_from_slice(&name);
+            log(host, LogLevel::Warn, "", line);
+        }
     }
 }
 
@@ -333,33 +355,45 @@ pub fn inventory_offer_callback(
     let legacy = host.setting_bool("FSUseLegacyInventoryAcceptMessages");
 
     match button {
-        IOR_SHOW | IOR_SHOW_SILENT => match info.im {
-            IM_INVENTORY_OFFERED => {
-                give_to_rlv_agent_offer(host, info);
-                let (o, _) = start_observer(
+        IOR_SHOW | IOR_SHOW_SILENT => {
+            let mut line = b"Initializing an opener for tid: ".to_vec();
+            line.extend_from_slice(&uuid_log_text(&info.transaction_id));
+            log(host, LogLevel::Debug, "Messaging", line);
+            match info.im {
+                IM_INVENTORY_OFFERED => {
+                    give_to_rlv_agent_offer(host, info);
+                    let (o, _) = start_observer(
+                        host,
+                        ObserverKind::OpenAgentOffer {
+                            id: info.object_id,
+                            from_name: chat_history.clone(),
+                            manual: true,
+                        },
+                    );
+                    if catp || itemp.as_ref().is_some_and(|i| i.finished) {
+                        host.act(Action::ObserverDone(o));
+                    } else {
+                        opener = Some(o);
+                    }
+                    if host.setting_bool("FSUseLegacyInventoryAcceptMessages") && button == IOR_SHOW
+                    {
+                        send_auto_receive_response(host, info);
+                    }
+                }
+                IM_GROUP_NOTICE | IM_GROUP_NOTICE_REQUESTED => {
+                    opener = Some(host.observer_new(ObserverKind::OpenTaskGroupOffer));
+                    let folder = info.folder_id;
+                    send_receive_response(host, info, true, &folder);
+                }
+                IM_TASK_INVENTORY_OFFERED => {}
+                _ => log(
                     host,
-                    ObserverKind::OpenAgentOffer {
-                        id: info.object_id,
-                        from_name: chat_history.clone(),
-                        manual: true,
-                    },
-                );
-                if catp || itemp.as_ref().is_some_and(|i| i.finished) {
-                    host.act(Action::ObserverDone(o));
-                } else {
-                    opener = Some(o);
-                }
-                if host.setting_bool("FSUseLegacyInventoryAcceptMessages") && button == IOR_SHOW {
-                    send_auto_receive_response(host, info);
-                }
+                    LogLevel::Warn,
+                    "Messaging",
+                    "inventory_offer_callback: unknown offer type",
+                ),
             }
-            IM_GROUP_NOTICE | IM_GROUP_NOTICE_REQUESTED => {
-                opener = Some(host.observer_new(ObserverKind::OpenTaskGroupOffer));
-                let folder = info.folder_id;
-                send_receive_response(host, info, true, &folder);
-            }
-            _ => {}
-        },
+        }
         IOR_ACCEPT | IOR_ACCEPT_SILENT => {
             if check_offer_throttle(host, &info.from_name, true) {
                 let log_message = cat(&[
@@ -674,6 +708,12 @@ fn inventory_offered(
     host.act(Action::OfferNew(info.clone()));
     if im.dialog == IM_INVENTORY_OFFERED {
         if im.bucket_size != 17 {
+            log(
+                host,
+                LogLevel::Warn,
+                "Messaging",
+                "Malformed inventory offer from agent",
+            );
             host.act(Action::OfferDelete);
             return false;
         }
@@ -689,6 +729,15 @@ fn inventory_offered(
             info.ty = AssetType(im.byte(0) as i32);
         } else {
             info.ty = legacy_task_type(im.buffer).map_or(UNINITIALISED_LEGACY_TYPE, AssetType);
+            log(
+                host,
+                LogLevel::Warn,
+                "Messaging",
+                format!(
+                    "Malformed inventory offer from object, type might be {}",
+                    info.ty.0
+                ),
+            );
         }
         info.object_id = NULL_ID;
         info.from_object = true;
@@ -747,6 +796,12 @@ fn group_notice(
         }
     } else {
         if im.bucket_size < 19 || im.byte(im.bucket_size as usize - 1) != 0 {
+            log(
+                host,
+                LogLevel::Warn,
+                "Messaging",
+                "Malformed group notice binary bucket",
+            );
             return false;
         }
         has_inventory = im.byte(0) != 0;
@@ -766,7 +821,13 @@ fn group_notice(
             original_name.truncate(i);
         }
         let legacy_name = build_legacy_name(&original_name);
-        host.find_id_by_name(&legacy_name)
+        let id = host.find_id_by_name(&legacy_name);
+        if id == NULL_ID {
+            let mut line = b"buildLegacyName returned null while processing ".to_vec();
+            line.extend_from_slice(&original_name);
+            log(host, LogLevel::Warn, "Messaging", line);
+        }
+        id
     };
 
     if agent_id != NULL_ID && host.is_muted(&agent_id, b"", 0) {
@@ -814,6 +875,14 @@ fn group_notice(
         insert(&mut payload, "received_time", Value::Date(host.now()));
         if let Some(o) = &info {
             insert(&mut payload, "inventory_offer", o.as_llsd());
+        }
+        if group_id == NULL_ID {
+            log(
+                host,
+                LogLevel::Warn,
+                "",
+                "Received group notice with null id!",
+            );
         }
         host.act(Action::CacheNameGet {
             id: group_id,
@@ -882,7 +951,22 @@ pub fn inventory_offer_handler(host: &mut dyn Host, info: &mut OfferInfo) {
             Value::String(host.trans(typestr, &[])),
         );
     } else {
+        log(
+            host,
+            LogLevel::Warn,
+            "Messaging",
+            format!(
+                "LLAssetType::lookupHumanReadable() returned NULL - probably bad asset type: {}",
+                info.ty.0
+            ),
+        );
         insert(&mut args, "OBJECTTYPE", Value::string(""));
+        log(
+            host,
+            LogLevel::Warn,
+            "Messaging",
+            "Forcing an inventory-decline for probably-bad asset type.",
+        );
         force_response(host, info, IOR_DECLINE);
         return;
     }

@@ -1112,6 +1112,8 @@ impl Host for Fake {
                     self.offers.insert(h, o);
                 }
             }
+            // the viewer's log line: not an event the fakes record
+            Action::Log { .. } => {}
             Action::OfferDelete => {
                 if let Some(h) = self.cur.take() {
                     self.offers.remove(&h);

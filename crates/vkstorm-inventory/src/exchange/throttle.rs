@@ -5,7 +5,7 @@ use vkstorm_llsd::Value;
 
 use crate::llsd::coerce::insert;
 
-use super::host::{Action, Host};
+use super::host::{Action, Host, LogLevel, log};
 
 /// `OFFER_THROTTLE_TIME` (seconds).
 pub const OFFER_THROTTLE_TIME: f32 = 10.0;
@@ -32,12 +32,20 @@ pub fn check_offer_throttle(host: &mut dyn Host, from_name: &[u8], check_only: b
         return now >= host.throttle().expiry;
     }
     if now >= host.throttle().expiry {
+        log(host, LogLevel::Debug, "Messaging", "Throttle Expired");
         let t = host.throttle();
         t.expiry = now + OFFER_THROTTLE_TIME as f64;
         t.count = 1;
         t.logged = false;
         return true;
     }
+    let count = host.throttle().count;
+    log(
+        host,
+        LogLevel::Debug,
+        "Messaging",
+        format!("Throttle Not Expired, Count: {count}"),
+    );
     let max = host.setting_u32("FSOfferThrottleMaxCount");
     if host.startup_started() && host.throttle().count >= max {
         if !host.throttle().logged {

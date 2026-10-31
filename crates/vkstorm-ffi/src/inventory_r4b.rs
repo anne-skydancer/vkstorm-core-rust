@@ -28,7 +28,7 @@ use std::ptr;
 
 use vkstorm_inventory::exchange::give::{self, Cargo, DragSource, DragState, Functor, ItemFilter};
 use vkstorm_inventory::exchange::host::{
-    Action, Handler, Host, ImPacket, ModelCat, ModelItem, MoveInv, NameThen, ObserverId,
+    Action, Handler, Host, ImPacket, LogLevel, ModelCat, ModelItem, MoveInv, NameThen, ObserverId,
     ObserverKind, OfflineMessage, PackArgs, RlvBehaviour, Route, TaskObject, ViewerObject,
 };
 use vkstorm_inventory::exchange::im::Acceptance;
@@ -334,6 +334,7 @@ mod a {
     pub const FLOATER_HIDE: u32 = 32;
     pub const WARN_MOVE_INVENTORY: u32 = 33;
     pub const MOVE_TASK_INVENTORY: u32 = 34;
+    pub const LOG: u32 = 35;
 }
 
 const THEN_OFFER_MUTE_AVATAR: i32 = 0;
@@ -1084,6 +1085,21 @@ impl Host for CHost {
                 let mut x = blank(a::MOVE_TASK_INVENTORY);
                 x.mv = &v;
                 x.sd = [view(&s0), view(&s1)];
+                self.send(x);
+            }
+            Action::Log {
+                level,
+                tag,
+                message,
+            } => {
+                let mut x = blank(a::LOG);
+                x.number[0] = match level {
+                    LogLevel::Debug => 0,
+                    LogLevel::Info => 1,
+                    LogLevel::Warn => 2,
+                };
+                x.text[0] = view(tag.as_bytes());
+                x.text[1] = view(message);
                 self.send(x);
             }
         }
