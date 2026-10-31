@@ -56,8 +56,11 @@
 //! does this crate. UUID text is parsed with `vkstorm_llsd::text::uuid_set`
 //! (`LLUUID::set` semantics).
 //!
-//! The crate has no `unsafe` code; the C ABI lives in the viewer's
-//! `vkstorm-ffi` crate. The `opensim` feature enables the OpenSim-only paths.
+//! The crate has no `unsafe` code; the C ABI lives in this repository's
+//! `vkstorm-ffi` crate (its `inventory` feature). [`perms::Permissions`],
+//! [`sale::SaleInfo`] and [`aggregate::AggregatePermissions`] have the memory
+//! layout of their C++ classes, so that ABI works on the viewer's objects in
+//! place. The `opensim` feature enables the OpenSim-only paths.
 
 #![forbid(unsafe_code)]
 

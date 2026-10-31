@@ -21,8 +21,9 @@ static library and need no Rust toolchain.
 | `http` | four | `vkstorm-http`: the HTTP layer |
 | `assets` | five | `vkstorm-assets`: the asset pipeline |
 | `audio` | six | `vkstorm-audio` and `vkstorm-vorbis`: the audio engine, sound decoding, parcel music |
+| `inventory` | seven | `vkstorm-inventory`: the inventory data model, sub-rung R1 (`vks_inv_*`) |
 | `full` | all | every rung above |
-| `opensim` | | the legacy UDP paths of the crates that carry them (the viewer's `OPENSIM` option) |
+| `opensim` | | the legacy UDP paths of the crates that carry them and the OpenSim-only inventory rules (the viewer's `OPENSIM` option) |
 
 The header declares every rung. A build without a rung does not define its
 functions, so a viewer line must not call a rung it has not adopted; linking

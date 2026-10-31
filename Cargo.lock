@@ -148,14 +148,14 @@ dependencies = [
 
 [[package]]
 name = "image-eval"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "vkstorm-image",
 ]
 
 [[package]]
 name = "j2c-eval"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "hayro-jpeg2000",
  "image",
@@ -414,7 +414,7 @@ checksum = "5b3dc8af474f516a851ff4bd12db780f948b9250ad37211e4eec0bccea54e01b"
 
 [[package]]
 name = "soloud-oracle"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "vkstorm-audio",
 ]
@@ -568,7 +568,7 @@ checksum = "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563"
 
 [[package]]
 name = "vkstorm-assets"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "vkstorm-llsd",
  "zlib-rs",
@@ -576,7 +576,7 @@ dependencies = [
 
 [[package]]
 name = "vkstorm-audio"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "libloading",
  "symphonia-bundle-flac",
@@ -591,16 +591,17 @@ dependencies = [
 
 [[package]]
 name = "vkstorm-core"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "vkstorm-ffi"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "vkstorm-assets",
  "vkstorm-audio",
  "vkstorm-http",
  "vkstorm-image",
+ "vkstorm-inventory",
  "vkstorm-j2c",
  "vkstorm-llsd",
  "vkstorm-messages",
@@ -610,11 +611,11 @@ dependencies = [
 
 [[package]]
 name = "vkstorm-http"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "vkstorm-image"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "jpeg-encoder",
  "png",
@@ -624,7 +625,7 @@ dependencies = [
 
 [[package]]
 name = "vkstorm-inventory"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "vkstorm-llsd",
  "vkstorm-messages",
@@ -632,22 +633,22 @@ dependencies = [
 
 [[package]]
 name = "vkstorm-j2c"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "vkstorm-openjp2",
 ]
 
 [[package]]
 name = "vkstorm-llsd"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "vkstorm-messages"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "vkstorm-openjp2"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "bitflags 1.3.2",
  "byteorder",
@@ -659,15 +660,15 @@ dependencies = [
 
 [[package]]
 name = "vkstorm-volume"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "vkstorm-vorbis"
-version = "0.2.0"
+version = "0.3.0"
 
 [[package]]
 name = "vorbis-oracle"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "vkstorm-vorbis",
 ]
