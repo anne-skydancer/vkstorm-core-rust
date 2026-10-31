@@ -16,11 +16,18 @@ mod vksraw;
 
 fn load(path: &str, max_bytes: usize) -> Vec<u8> {
     let mut d = std::fs::read(path).expect("read");
-    if max_bytes > 0 && max_bytes < d.len() { d.truncate(max_bytes); }
+    if max_bytes > 0 && max_bytes < d.len() {
+        d.truncate(max_bytes);
+    }
     d
 }
 
-struct Out { w: u32, h: u32, c: u32, data: Vec<u8> }
+struct Out {
+    w: u32,
+    h: u32,
+    c: u32,
+    data: Vec<u8>,
+}
 
 fn hayro_decode(data: &[u8], reduce: u32) -> Result<Out, String> {
     use hayro_jpeg2000::{DecodeSettings, DecoderContext, Image};
@@ -31,7 +38,9 @@ fn hayro_decode(data: &[u8], reduce: u32) -> Result<Out, String> {
     let img = if reduce > 0 {
         settings.target_resolution = Some((fw >> reduce, fh >> reduce));
         Image::new(data, &settings).map_err(|e| format!("{e:?}"))?
-    } else { img };
+    } else {
+        img
+    };
     let mut ctx = DecoderContext::default();
     let dec = img.decode(&mut ctx).map_err(|e| format!("{e:?}"))?;
     let c = dec.components().len() as u32;
@@ -39,18 +48,30 @@ fn hayro_decode(data: &[u8], reduce: u32) -> Result<Out, String> {
     // derive output dimensions from sample count (hayro reports full-size width/height)
     let n = (data.len() as u32) / c;
     let (mut w, mut h) = (fw, fh);
-    if n != w * h { w = fw >> reduce; h = fh >> reduce; if n != w * h { w = (n as f64).sqrt() as u32; h = n / w.max(1); } }
+    if n != w * h {
+        w = fw >> reduce;
+        h = fh >> reduce;
+        if n != w * h {
+            w = (n as f64).sqrt() as u32;
+            h = n / w.max(1);
+        }
+    }
     Ok(Out { w, h, c, data })
 }
 
 fn j2k_decode(data: &[u8], reduce: u32, serial: bool) -> Result<Out, String> {
     use j2k::{CpuDecodeParallelism, DecodeSettings, J2kDecoder};
-    let mut dec = J2kDecoder::new_with_settings(data, DecodeSettings::lenient()).map_err(|e| format!("{e}"))?;
-    if serial { dec.set_cpu_decode_parallelism(CpuDecodeParallelism::Serial); }
+    let mut dec = J2kDecoder::new_with_settings(data, DecodeSettings::lenient())
+        .map_err(|e| format!("{e}"))?;
+    if serial {
+        dec.set_cpu_decode_parallelism(CpuDecodeParallelism::Serial);
+    }
     // decode_srgb8 rejects 4-component (RGBA) input, so always go through the
     // native-components path, which handles any component count and reduction level.
     {
-        let comps = dec.decode_native_components_at_reduction(reduce as u8).map_err(|e| format!("{e}"))?;
+        let comps = dec
+            .decode_native_components_at_reduction(reduce as u8)
+            .map_err(|e| format!("{e}"))?;
         let planes = comps.planes();
         let (w, h) = planes[0].dimensions();
         let c = planes.len() as u32;
@@ -82,7 +103,12 @@ fn openjp2_decode(data: &[u8], reduce: u32) -> Result<Out, String> {
         ImagePixelData::Rgba8(v) => (v, 4),
         _ => return Err("16-bit output".into()),
     };
-    Ok(Out { w: px.width, h: px.height, c, data })
+    Ok(Out {
+        w: px.width,
+        h: px.height,
+        c,
+        data,
+    })
 }
 
 fn vks_decode(data: &[u8], reduce: u32) -> Result<Out, String> {
@@ -91,72 +117,161 @@ fn vks_decode(data: &[u8], reduce: u32) -> Result<Out, String> {
     let d = vkstorm_j2c::decode(data, 0, reduce, 0, 4).map_err(|e| e.to_string())?;
     let (w, h, c) = (d.width as usize, d.height as usize, d.channels as usize);
     let mut top = Vec::with_capacity(d.data.len());
-    for y in (0..h).rev() { top.extend_from_slice(&d.data[y * w * c..(y + 1) * w * c]); }
-    Ok(Out { w: d.width, h: d.height, c: d.channels, data: top })
+    for y in (0..h).rev() {
+        top.extend_from_slice(&d.data[y * w * c..(y + 1) * w * c]);
+    }
+    Ok(Out {
+        w: d.width,
+        h: d.height,
+        c: d.channels,
+        data: top,
+    })
 }
 
 fn vksdec_decode(data: &[u8], reduce: u32) -> Result<Out, String> {
     // The codec alone (no conversion), like-for-like with opj_bench's timer.
     let d = vkstorm_j2c::decode_only(data, 0, reduce).map_err(|e| e.to_string())?;
-    Ok(Out { w: d.width, h: d.height, c: d.components, data: Vec::new() })
+    Ok(Out {
+        w: d.width,
+        h: d.height,
+        c: d.components,
+        data: Vec::new(),
+    })
 }
 
 fn run(which: &str, args: &[String]) {
-    let path = &args[0]; let reduce: u32 = args[1].parse().unwrap();
-    let max_bytes: usize = args[2].parse().unwrap(); let iters: usize = args[3].parse().unwrap();
+    let path = &args[0];
+    let reduce: u32 = args[1].parse().unwrap();
+    let max_bytes: usize = args[2].parse().unwrap();
+    let iters: usize = args[3].parse().unwrap();
     let data = load(path, max_bytes);
-    let mut best = f64::MAX; let mut total = 0.0; let mut last: Option<Out> = None;
+    let mut best = f64::MAX;
+    let mut total = 0.0;
+    let mut last: Option<Out> = None;
     for _ in 0..iters {
         let t0 = Instant::now();
-        let r = match which { "hayro" => hayro_decode(&data, reduce), "openjp2" => openjp2_decode(&data, reduce), "vks" => vks_decode(&data, reduce), "vksdec" => vksdec_decode(&data, reduce), "j2k-auto" => j2k_decode(&data, reduce, false), _ => j2k_decode(&data, reduce, true) };
+        let r = match which {
+            "hayro" => hayro_decode(&data, reduce),
+            "openjp2" => openjp2_decode(&data, reduce),
+            "vks" => vks_decode(&data, reduce),
+            "vksdec" => vksdec_decode(&data, reduce),
+            "j2k-auto" => j2k_decode(&data, reduce, false),
+            _ => j2k_decode(&data, reduce, true),
+        };
         let dt = t0.elapsed().as_secs_f64() * 1000.0;
-        match r { Ok(o) => { if dt < best { best = dt; } total += dt; last = Some(o); }
-                  Err(e) => { println!("FAIL {}", e.replace('\n', " ")); return; } }
+        match r {
+            Ok(o) => {
+                if dt < best {
+                    best = dt;
+                }
+                total += dt;
+                last = Some(o);
+            }
+            Err(e) => {
+                println!("FAIL {}", e.replace('\n', " "));
+                return;
+            }
+        }
     }
     let o = last.unwrap();
-    println!("{} {} {} {:.3} {:.3}", o.w, o.h, o.c, best, total / iters as f64);
-    if args.len() >= 5 { std::fs::write(&args[4], &o.data).unwrap(); }
+    println!(
+        "{} {} {} {:.3} {:.3}",
+        o.w,
+        o.h,
+        o.c,
+        best,
+        total / iters as f64
+    );
+    if args.len() >= 5 {
+        std::fs::write(&args[4], &o.data).unwrap();
+    }
 }
 
 /// The port through its raw API, with the C harness's argument layout.
 fn run_raw(args: &[String]) {
-    let path = &args[0]; let reduce: u32 = args[1].parse().unwrap();
-    let max_bytes: usize = args[2].parse().unwrap(); let iters: usize = args[3].parse().unwrap();
+    let path = &args[0];
+    let reduce: u32 = args[1].parse().unwrap();
+    let max_bytes: usize = args[2].parse().unwrap();
+    let iters: usize = args[3].parse().unwrap();
     let out_path = args.get(4).filter(|s| s.as_str() != "-");
     let mode = match args.get(5) {
         None => vksraw::Mode::Whole,
-        Some(m) => vksraw::Mode::parse(m).unwrap_or_else(|| { eprintln!("unknown mode {m}"); std::process::exit(2); }),
+        Some(m) => vksraw::Mode::parse(m).unwrap_or_else(|| {
+            eprintln!("unknown mode {m}");
+            std::process::exit(2);
+        }),
     };
     let data = load(path, max_bytes);
-    let mut best = f64::MAX; let mut total = 0.0; let mut last = None;
+    let mut best = f64::MAX;
+    let mut total = 0.0;
+    let mut last = None;
     for _ in 0..iters {
         let t0 = Instant::now();
         let r = vksraw::decode(&data, reduce, &mode);
         let dt = t0.elapsed().as_secs_f64() * 1000.0;
-        match r { Ok(o) => { if dt < best { best = dt; } total += dt; last = Some(o); }
-                  Err(e) => { println!("FAIL {e}"); std::process::exit(1); } }
+        match r {
+            Ok(o) => {
+                if dt < best {
+                    best = dt;
+                }
+                total += dt;
+                last = Some(o);
+            }
+            Err(e) => {
+                println!("FAIL {e}");
+                std::process::exit(1);
+            }
+        }
     }
     let (w, h, c, raw) = last.unwrap();
     println!("{} {} {} {:.3} {:.3}", w, h, c, best, total / iters as f64);
-    if let Some(p) = out_path { std::fs::write(p, &raw).unwrap(); }
+    if let Some(p) = out_path {
+        std::fs::write(p, &raw).unwrap();
+    }
 }
 
 fn compare(a: &str, b: &str) {
     let (x, y) = (std::fs::read(a).unwrap(), std::fs::read(b).unwrap());
-    if x.len() != y.len() { println!("LEN_MISMATCH {} {}", x.len(), y.len()); return; }
-    let mut maxd = 0u32; let mut sum = 0u64; let mut sq = 0f64;
-    for (p, q) in x.iter().zip(y.iter()) { let d = (*p as i32 - *q as i32).unsigned_abs(); maxd = maxd.max(d); sum += d as u64; sq += (d as f64) * (d as f64); }
-    let n = x.len() as f64; let mse = sq / n;
-    let psnr = if mse == 0.0 { f64::INFINITY } else { 10.0 * (255.0f64 * 255.0 / mse).log10() };
-    println!("max_abs {} mean_abs {:.4} psnr {:.2}", maxd, sum as f64 / n, psnr);
+    if x.len() != y.len() {
+        println!("LEN_MISMATCH {} {}", x.len(), y.len());
+        return;
+    }
+    let mut maxd = 0u32;
+    let mut sum = 0u64;
+    let mut sq = 0f64;
+    for (p, q) in x.iter().zip(y.iter()) {
+        let d = (*p as i32 - *q as i32).unsigned_abs();
+        maxd = maxd.max(d);
+        sum += d as u64;
+        sq += (d as f64) * (d as f64);
+    }
+    let n = x.len() as f64;
+    let mse = sq / n;
+    let psnr = if mse == 0.0 {
+        f64::INFINITY
+    } else {
+        10.0 * (255.0f64 * 255.0 / mse).log10()
+    };
+    println!(
+        "max_abs {} mean_abs {:.4} psnr {:.2}",
+        maxd,
+        sum as f64 / n,
+        psnr
+    );
 }
 
 fn main() {
     let a: Vec<String> = std::env::args().collect();
     match a.get(1).map(|s| s.as_str()) {
-        Some("hayro") | Some("j2k") | Some("j2k-auto") | Some("openjp2") | Some("vks") | Some("vksdec") => run(&a[1], &a[2..]),
+        Some("hayro") | Some("j2k") | Some("j2k-auto") | Some("openjp2") | Some("vks")
+        | Some("vksdec") => run(&a[1], &a[2..]),
         Some("vksraw") => run_raw(&a[2..]),
         Some("compare") => compare(&a[2], &a[3]),
-        _ => { eprintln!("usage: j2c-eval hayro|j2k file reduce max_bytes iters [out.raw] | compare a b"); std::process::exit(2); }
+        _ => {
+            eprintln!(
+                "usage: j2c-eval hayro|j2k file reduce max_bytes iters [out.raw] | compare a b"
+            );
+            std::process::exit(2);
+        }
     }
 }

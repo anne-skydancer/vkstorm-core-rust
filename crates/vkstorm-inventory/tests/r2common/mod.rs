@@ -17,7 +17,11 @@ pub mod support_unordered;
 /// (`fixtures/cache/README.md`): `cache/<library>/`, `msgs/<library>/`.
 /// The viewer beside the crate uses the same library, as for `RT(...)`.
 #[allow(dead_code)]
-pub const LIBRARY: &str = if cfg!(target_env = "msvc") { "msvc" } else { "libstdcxx" };
+pub const LIBRARY: &str = if cfg!(target_env = "msvc") {
+    "msvc"
+} else {
+    "libstdcxx"
+};
 
 /// `cache/<library>/<rest>`: a record that follows the model's map order.
 #[allow(dead_code)]
@@ -54,7 +58,9 @@ use crate::common::sha256_hex;
 
 /// The path of an R2 fixture (`cache/...`, `msgs/...`).
 pub fn path(rel: &str) -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures").join(rel)
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/fixtures")
+        .join(rel)
 }
 
 pub fn read_bytes(rel: &str) -> Vec<u8> {
@@ -76,7 +82,10 @@ pub fn read_cases(rel: &str) -> Vec<Case> {
     for raw in text.split('\n') {
         let line = raw.strip_suffix('\r').unwrap_or(raw);
         if let Some(id) = line.strip_prefix("== ") {
-            cases.push(Case { id: id.to_owned(), lines: Vec::new() });
+            cases.push(Case {
+                id: id.to_owned(),
+                lines: Vec::new(),
+            });
         } else if line.starts_with('#') {
             continue;
         } else if let Some(c) = cases.last_mut() {
@@ -116,7 +125,10 @@ impl Tally {
         self.kinds.entry(kind.to_owned()).or_default().1 += n;
     }
     pub fn print(&self, label: &str) {
-        eprintln!("{label}: {} lines replayed, {} left to the viewer test", self.replayed, self.left);
+        eprintln!(
+            "{label}: {} lines replayed, {} left to the viewer test",
+            self.replayed, self.left
+        );
         for (k, (r, l)) in &self.kinds {
             eprintln!("  {k}: replayed {r}, left {l}");
         }
@@ -128,16 +140,28 @@ impl Tally {
 pub fn assert_case(file: &str, case: &str, expected: &[String], actual: &[String]) {
     let n = expected.len().max(actual.len());
     for i in 0..n {
-        let e = expected.get(i).map(String::as_str).unwrap_or("<end of case>");
+        let e = expected
+            .get(i)
+            .map(String::as_str)
+            .unwrap_or("<end of case>");
         let a = actual.get(i).map(String::as_str).unwrap_or("<end of case>");
         if e != a {
-            panic!("{file}: case {case} line {}\n  expected: {}\n  actual:   {}", i + 1, clip(e), clip(a));
+            panic!(
+                "{file}: case {case} line {}\n  expected: {}\n  actual:   {}",
+                i + 1,
+                clip(e),
+                clip(a)
+            );
         }
     }
 }
 
 fn clip(s: &str) -> String {
-    if s.len() > 600 { format!("{}...({} chars)", &s[..600], s.len()) } else { s.to_owned() }
+    if s.len() > 600 {
+        format!("{}...({} chars)", &s[..600], s.len())
+    } else {
+        s.to_owned()
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -192,7 +216,10 @@ pub fn hex(data: &[u8]) -> String {
 }
 
 pub fn unhex(h: &str) -> Vec<u8> {
-    (0..h.len()).step_by(2).map(|i| u8::from_str_radix(&h[i..i + 2], 16).unwrap()).collect()
+    (0..h.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(&h[i..i + 2], 16).unwrap())
+        .collect()
 }
 
 /// `ids`: `[a,b,...]`.
@@ -312,7 +339,11 @@ pub fn chunked_digests(label: &str, lines: &[String], chunk: usize) -> Vec<Strin
     let mut first = 0;
     while first < lines.len() {
         let last = lines.len().min(first + chunk);
-        out.push(format!("{label}[{first}..{}] sha256={}", last - 1, digest_lines(&lines[first..last])));
+        out.push(format!(
+            "{label}[{first}..{}] sha256={}",
+            last - 1,
+            digest_lines(&lines[first..last])
+        ));
         first += chunk;
     }
     out

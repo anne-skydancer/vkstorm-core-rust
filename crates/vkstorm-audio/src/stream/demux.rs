@@ -36,7 +36,9 @@ const MAX_ID3: usize = 1 << 20;
 /// Returns false when there is none.
 pub(crate) fn skip_id3(input: &mut Input, sink: &mut dyn PcmSink) -> Result<bool, StreamError> {
     input.fill(10)?;
-    let Some(len) = id3v2_len(input.data()) else { return Ok(false) };
+    let Some(len) = id3v2_len(input.data()) else {
+        return Ok(false);
+    };
     if len <= MAX_ID3 && input.fill(len)? {
         let (artist, title) = id3v2_artist_title(&input.data()[..len]);
         if !artist.is_empty() || !title.is_empty() {
@@ -72,7 +74,10 @@ fn next_frame<H: Copy, K: PartialEq>(
         let Some(h) = parse(input.data()) else {
             *locked = None;
             let d = input.data();
-            let skip = d[1..].iter().position(|&b| b == 0xFF).map_or(d.len(), |p| p + 1);
+            let skip = d[1..]
+                .iter()
+                .position(|&b| b == 0xFF)
+                .map_or(d.len(), |p| p + 1);
             input.consume(skip);
             continue;
         };
@@ -113,7 +118,8 @@ pub(crate) fn run_mpeg(input: &mut Input, sink: &mut dyn PcmSink) -> Result<(), 
     )? {
         let key = (h.layer, h.sample_rate, h.channels);
         if dec.as_ref().is_none_or(|(_, k)| *k != key) {
-            let d = SymDecoder::mpeg(h.layer, h.sample_rate, h.channels).map_err(StreamError::Failed)?;
+            let d = SymDecoder::mpeg(h.layer, h.sample_rate, h.channels)
+                .map_err(StreamError::Failed)?;
             sink.codec(d.name());
             dec = Some((d, key));
         }
@@ -136,7 +142,11 @@ struct Captured {
 }
 
 /// AAC in ADTS.
-pub(crate) fn run_adts(input: &mut Input, ctx: &DecodeCtx, sink: &mut dyn PcmSink) -> Result<(), StreamError> {
+pub(crate) fn run_adts(
+    input: &mut Input,
+    ctx: &DecodeCtx,
+    sink: &mut dyn PcmSink,
+) -> Result<(), StreamError> {
     let mut route: Option<(AacRoute, (u32, u8))> = None;
     let mut probe: Vec<(AdtsHeader, Vec<u8>)> = Vec::new();
     let mut locked = None;
@@ -192,14 +202,21 @@ fn choose_aac_route(
     sink: &mut dyn PcmSink,
 ) -> Result<AacRoute, StreamError> {
     let h = probe[0].0;
-    let lc_ok = h.object_type == 2 && (1..=2).contains(&h.channel_config) && probe.iter().all(|(f, _)| f.raw_blocks == 0);
+    let lc_ok = h.object_type == 2
+        && (1..=2).contains(&h.channel_config)
+        && probe.iter().all(|(f, _)| f.raw_blocks == 0);
     match ctx.ffmpeg() {
         Ok(ff) => {
             let mut d = FfDecoder::aac(ff).map_err(StreamError::Failed)?;
             let mut cap = Captured { chunks: Vec::new() };
             for (_, f) in probe {
                 d.decode(f, &mut |planes, frames, rate, layout| {
-                    cap.chunks.push((planes.iter().map(|p| p.to_vec()).collect(), frames, rate, layout));
+                    cap.chunks.push((
+                        planes.iter().map(|p| p.to_vec()).collect(),
+                        frames,
+                        rate,
+                        layout,
+                    ));
                     Ok(())
                 })?;
             }
@@ -207,14 +224,21 @@ fn choose_aac_route(
             let sbr = out.is_some_and(|(r, _)| r == 2 * h.sample_rate);
             let ps = out.is_some_and(|(_, c)| u8::try_from(c).ok() != Some(h.channel_config));
             if lc_ok && !sbr && !ps && out.is_some() {
-                let mut s = SymDecoder::aac_lc(h.sample_rate, u16::from(h.channel_config)).map_err(StreamError::Failed)?;
+                let mut s = SymDecoder::aac_lc(h.sample_rate, u16::from(h.channel_config))
+                    .map_err(StreamError::Failed)?;
                 sink.codec(s.name());
                 for (f, bytes) in probe {
                     s.decode(&bytes[f.header_len..], sink)?;
                 }
                 return Ok(AacRoute::Sym(s));
             }
-            sink.codec(if ps { "he-aac-v2" } else if sbr { "he-aac" } else { "aac-ffmpeg" });
+            sink.codec(if ps {
+                "he-aac-v2"
+            } else if sbr {
+                "he-aac"
+            } else {
+                "aac-ffmpeg"
+            });
             for (planes, frames, rate, layout) in cap.chunks {
                 let refs: Vec<&[f32]> = planes.iter().map(Vec::as_slice).collect();
                 sink.pcm(&refs, frames, rate, layout)?;
@@ -223,7 +247,8 @@ fn choose_aac_route(
         }
         Err(why) if lc_ok => {
             let _ = why;
-            let mut s = SymDecoder::aac_lc(h.sample_rate, u16::from(h.channel_config)).map_err(StreamError::Failed)?;
+            let mut s = SymDecoder::aac_lc(h.sample_rate, u16::from(h.channel_config))
+                .map_err(StreamError::Failed)?;
             sink.codec(s.name());
             for (f, bytes) in probe {
                 s.decode(&bytes[f.header_len..], sink)?;
@@ -244,17 +269,28 @@ fn choose_aac_route(
 pub(crate) fn vorbis_comments(b: &[u8]) -> (String, String) {
     let mut artist = String::new();
     let mut title = String::new();
-    let rd = |p: usize| b.get(p..p + 4).map(|x| u32::from_le_bytes([x[0], x[1], x[2], x[3]]) as usize);
-    let Some(vlen) = rd(0) else { return (artist, title) };
+    let rd = |p: usize| {
+        b.get(p..p + 4)
+            .map(|x| u32::from_le_bytes([x[0], x[1], x[2], x[3]]) as usize)
+    };
+    let Some(vlen) = rd(0) else {
+        return (artist, title);
+    };
     let mut p = 4usize.saturating_add(vlen);
-    let Some(count) = rd(p) else { return (artist, title) };
+    let Some(count) = rd(p) else {
+        return (artist, title);
+    };
     p += 4;
     for _ in 0..count.min(4096) {
         let Some(len) = rd(p) else { break };
         p += 4;
-        let Some(c) = b.get(p..p.saturating_add(len)) else { break };
+        let Some(c) = b.get(p..p.saturating_add(len)) else {
+            break;
+        };
         p += len;
-        let Some(eq) = c.iter().position(|&x| x == b'=') else { continue };
+        let Some(eq) = c.iter().position(|&x| x == b'=') else {
+            continue;
+        };
         let (k, v) = (&c[..eq], &c[eq + 1..]);
         let v = String::from_utf8_lossy(v).into_owned();
         if k.eq_ignore_ascii_case(b"ARTIST") && artist.is_empty() {
@@ -275,7 +311,11 @@ const fn crc8_table() -> [u8; 256] {
         let mut c = i as u8;
         let mut k = 0;
         while k < 8 {
-            c = if c & 0x80 != 0 { (c << 1) ^ 0x07 } else { c << 1 };
+            c = if c & 0x80 != 0 {
+                (c << 1) ^ 0x07
+            } else {
+                c << 1
+            };
             k += 1;
         }
         t[i] = c;
@@ -291,7 +331,11 @@ const fn crc16_table() -> [u16; 256] {
         let mut c = (i as u16) << 8;
         let mut k = 0;
         while k < 8 {
-            c = if c & 0x8000 != 0 { (c << 1) ^ 0x8005 } else { c << 1 };
+            c = if c & 0x8000 != 0 {
+                (c << 1) ^ 0x8005
+            } else {
+                c << 1
+            };
             k += 1;
         }
         t[i] = c;
@@ -308,7 +352,9 @@ fn crc8(b: &[u8]) -> u8 {
 }
 
 fn crc16(b: &[u8]) -> u16 {
-    b.iter().fold(0u16, |c, &x| (c << 8) ^ CRC16[usize::from((c >> 8) as u8 ^ x)])
+    b.iter().fold(0u16, |c, &x| {
+        (c << 8) ^ CRC16[usize::from((c >> 8) as u8 ^ x)]
+    })
 }
 
 /// The length of a valid FLAC frame header at the start of `b` (CRC-8
@@ -407,10 +453,20 @@ pub(crate) fn run_flac(input: &mut Input, sink: &mut dyn PcmSink) -> Result<(), 
     let si = streaminfo.ok_or_else(|| StreamError::Failed("FLAC: no STREAMINFO".into()))?;
     let channels = u16::from((si[12] >> 1) & 7) + 1;
     let max_frame = (usize::from(si[7]) << 16) | (usize::from(si[8]) << 8) | usize::from(si[9]);
-    let max_frame = if max_frame == 0 { 1 << 20 } else { max_frame.min(1 << 22) };
+    let max_frame = if max_frame == 0 {
+        1 << 20
+    } else {
+        max_frame.min(1 << 22)
+    };
     let mut dec = SymDecoder::flac(&si).map_err(StreamError::Failed)?;
     sink.codec(dec.name());
-    run_flac_frames(input, channels, max_frame, &mut |frame, sink| dec.decode(frame, sink), sink)
+    run_flac_frames(
+        input,
+        channels,
+        max_frame,
+        &mut |frame, sink| dec.decode(frame, sink),
+        sink,
+    )
 }
 
 /// Decodes one FLAC frame into the sink.
@@ -434,7 +490,10 @@ fn run_flac_frames(
                 return Ok(());
             }
             let d = input.data();
-            let skip = d[1..].iter().position(|&b| b == 0xFF).map_or(d.len(), |p| p + 1);
+            let skip = d[1..]
+                .iter()
+                .position(|&b| b == 0xFF)
+                .map_or(d.len(), |p| p + 1);
             input.consume(skip);
             continue;
         };
@@ -480,7 +539,11 @@ fn run_flac_frames(
 /// from an Ogg FLAC mapping header (`\x7FFLAC`, version, header count,
 /// `fLaC`, the STREAMINFO block).
 pub(crate) fn ogg_flac_decoder(first: &[u8]) -> Result<(SymDecoder, ChannelLayout), String> {
-    if first.len() < 51 || &first[..5] != b"\x7FFLAC" || &first[9..13] != b"fLaC" || first[13] & 0x7F != 0 {
+    if first.len() < 51
+        || &first[..5] != b"\x7FFLAC"
+        || &first[9..13] != b"fLaC"
+        || first[13] & 0x7F != 0
+    {
         return Err("Ogg FLAC: bad mapping header".into());
     }
     let si = &first[17..51];

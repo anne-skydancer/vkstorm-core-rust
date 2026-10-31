@@ -17,8 +17,10 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use vkstorm_assets::texcache::{fast_cache_level, Config, FastEntry, Paths, TextureCache, LAZY_PURGE_TIME_LIMIT};
 use vkstorm_assets::Uuid;
+use vkstorm_assets::texcache::{
+    Config, FastEntry, LAZY_PURGE_TIME_LIMIT, Paths, TextureCache, fast_cache_level,
+};
 
 const FIXTURE_MAGIC: u32 = 0x5643_5450;
 const FIXTURE_VERSION: u32 = 1;
@@ -91,7 +93,13 @@ fn write_texture(cache: &TextureCache, rng: &mut Rng, t: &Texture) -> bool {
             discard += level;
         }
     }
-    let fast = FastEntry { width: w, height: h, components: t.raw_c, discard_level: discard, data: vec![0; (w * h * t.raw_c).max(0) as usize] };
+    let fast = FastEntry {
+        width: w,
+        height: h,
+        components: t.raw_c,
+        discard_level: discard,
+        data: vec![0; (w * h * t.raw_c).max(0) as usize],
+    };
     cache.write(&t.id, &t.data, t.image_size, t.discard, &fast)
 }
 
@@ -103,7 +111,10 @@ fn snapshot(root: &Path) -> Snapshot {
     if let Ok(rd) = fs::read_dir(&tex) {
         for e in rd.flatten() {
             if e.file_type().map(|t| t.is_file()).unwrap_or(false) {
-                out.insert(format!("texturecache/{}", e.file_name().to_string_lossy()), fs::read(e.path()).unwrap());
+                out.insert(
+                    format!("texturecache/{}", e.file_name().to_string_lossy()),
+                    fs::read(e.path()).unwrap(),
+                );
             }
         }
     }
@@ -112,7 +123,10 @@ fn snapshot(root: &Path) -> Snapshot {
         if let Ok(rd) = fs::read_dir(&sub) {
             for e in rd.flatten() {
                 if e.file_type().map(|t| t.is_file()).unwrap_or(false) {
-                    out.insert(format!("texturecache/{}/{}", c, e.file_name().to_string_lossy()), fs::read(e.path()).unwrap());
+                    out.insert(
+                        format!("texturecache/{}/{}", c, e.file_name().to_string_lossy()),
+                        fs::read(e.path()).unwrap(),
+                    );
                 }
             }
         }
@@ -134,15 +148,32 @@ fn run_script(root: &Path) -> Vec<(String, Snapshot)> {
         if i < 3 {
             id[0] = 0;
         }
-        let size = if i % 2 == 0 { 100 + rng.below(499) as i32 } else { 601 + rng.below(19000) as i32 };
+        let size = if i % 2 == 0 {
+            100 + rng.below(499) as i32
+        } else {
+            601 + rng.below(19000) as i32
+        };
         let data = make_data(&mut rng, size);
-        let image_size = size + if rng.below(3) == 0 { 1 + rng.below(5000) as i32 } else { 0 };
+        let image_size = size
+            + if rng.below(3) == 0 {
+                1 + rng.below(5000) as i32
+            } else {
+                0
+            };
         let discard = rng.below(6) as i32;
         let dims = [16, 32, 64, 128];
         let raw_w = dims[rng.below(4) as usize];
         let raw_h = dims[rng.below(4) as usize];
         let raw_c = if rng.below(2) == 0 { 3 } else { 4 };
-        textures.push(Texture { id, data, image_size, discard, raw_w, raw_h, raw_c });
+        textures.push(Texture {
+            id,
+            data,
+            image_size,
+            discard,
+            raw_w,
+            raw_h,
+            raw_c,
+        });
     }
 
     let mut snapshots = Vec::new();
@@ -185,7 +216,15 @@ fn run_script(root: &Path) -> Vec<(String, Snapshot)> {
             let id = rng.uuid();
             let size = 15000 + rng.below(6000) as i32;
             let data = make_data(&mut rng, size);
-            let t = Texture { id, data, image_size: size, discard: 1, raw_w: 64, raw_h: 64, raw_c: 3 };
+            let t = Texture {
+                id,
+                data,
+                image_size: size,
+                discard: 1,
+                raw_w: 64,
+                raw_h: 64,
+                raw_c: 3,
+            };
             write_texture(&cache, &mut rng, &t);
         }
         for _ in 0..12 {
@@ -198,8 +237,18 @@ fn run_script(root: &Path) -> Vec<(String, Snapshot)> {
 
     {
         let tex = root.join("texturecache").join("0");
-        let _ = fs::remove_file(tex.join(format!("{}.texture", vkstorm_assets::uuid_to_string(&textures[1].id))));
-        fs::write(tex.join(format!("{}.texture", vkstorm_assets::uuid_to_string(&textures[2].id))), b"short").unwrap();
+        let _ = fs::remove_file(tex.join(format!(
+            "{}.texture",
+            vkstorm_assets::uuid_to_string(&textures[1].id)
+        )));
+        fs::write(
+            tex.join(format!(
+                "{}.texture",
+                vkstorm_assets::uuid_to_string(&textures[2].id)
+            )),
+            b"short",
+        )
+        .unwrap();
         let cache = TextureCache::new(cfg.clone());
         cache.set_read_only(false);
         cache.init_cache(&paths, 500_000, false, Some(0));
@@ -274,7 +323,8 @@ fn mask(rel: &str, bytes: &[u8]) -> Vec<u8> {
 
 #[test]
 fn replay_matches_recorded_files() {
-    let fixture = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/lltexturecache_parity.bin");
+    let fixture =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/lltexturecache_parity.bin");
     let want = read_fixture(&fs::read(fixture).expect("fixture present"));
     let root = std::env::temp_dir().join(format!("vks_texcache_replay_{}", std::process::id()));
     let _ = fs::remove_dir_all(&root);
@@ -293,7 +343,11 @@ fn replay_matches_recorded_files() {
                     if mask(rel, gbytes) != mask(rel, wbytes) {
                         let n = gbytes.len().min(wbytes.len());
                         let k = (0..n).find(|&i| gbytes[i] != wbytes[i]).unwrap_or(n);
-                        problems.push(format!("{wname}: {rel} differs at byte {k} (sizes {} vs {})", gbytes.len(), wbytes.len()));
+                        problems.push(format!(
+                            "{wname}: {rel} differs at byte {k} (sizes {} vs {})",
+                            gbytes.len(),
+                            wbytes.len()
+                        ));
                     }
                 }
             }
@@ -307,7 +361,11 @@ fn replay_matches_recorded_files() {
     for p in &problems {
         eprintln!("PARITY: {p}");
     }
-    eprintln!("compared {files} files over {} snapshots, {} differences", want.len(), problems.len());
+    eprintln!(
+        "compared {files} files over {} snapshots, {} differences",
+        want.len(),
+        problems.len()
+    );
     let _ = fs::remove_dir_all(&root);
     assert!(problems.is_empty());
 }

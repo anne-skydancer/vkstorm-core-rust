@@ -65,7 +65,17 @@ fn c2_inputs() -> Vec<Vec<u8>> {
         s.insert(i, b'|');
         v.push(s);
     }
-    for s in [&b"|"[..], b"||", b" | ", b"line1\r\nline2", b"line1\nline2\n", b"\r\n", b"del\x7f", b"\x7f", b"tab\tinside"] {
+    for s in [
+        &b"|"[..],
+        b"||",
+        b" | ",
+        b"line1\r\nline2",
+        b"line1\nline2\n",
+        b"\r\n",
+        b"del\x7f",
+        b"\x7f",
+        b"tab\tinside",
+    ] {
         v.push(s.to_vec());
     }
     v.push(cat(&[&[0xc3; 63], b"x"]));
@@ -93,7 +103,8 @@ fn c2_lines() -> Lines {
         let ctor_name = text::correct_inventory_name(input);
         let ctor_desc = text::correct_inventory_description(input);
         let prev_desc: &[u8] = b"prev desc";
-        let set_desc = text::set_description(prev_desc, input).unwrap_or_else(|| prev_desc.to_vec());
+        let set_desc =
+            text::set_description(prev_desc, input).unwrap_or_else(|| prev_desc.to_vec());
         // The category constructor: the object constructor's name.
         let cat_name = text::correct_inventory_name(input);
 

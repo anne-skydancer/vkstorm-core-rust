@@ -7,7 +7,7 @@
 //! the DXR formats decode; the old DXT1-5 four-ccs are refused as the viewer
 //! refused them (it aborted where the port returns an error).
 
-use crate::{check_dimensions, fail, generate_mip_into, Error, Raster};
+use crate::{Error, Raster, check_dimensions, fail, generate_mip_into};
 
 /// `MAX_IMAGE_MIP` of the viewer: 4096x4096.
 pub const MAX_IMAGE_MIP: i32 = 12;
@@ -163,7 +163,12 @@ pub fn format_components(format: Format) -> Result<i32, Error> {
 }
 
 /// `LLImageDXT::calcDiscardWidthHeight`.
-pub fn calc_discard_width_height(mut discard_level: i32, format: Format, width: &mut i32, height: &mut i32) {
+pub fn calc_discard_width_height(
+    mut discard_level: i32,
+    format: Format,
+    width: &mut i32,
+    height: &mut i32,
+) {
     while discard_level > 0 && *width > 1 && *height > 1 {
         discard_level -= 1;
         *width >>= 1;
@@ -185,7 +190,13 @@ pub fn calc_num_mips(mut width: i32, mut height: i32) -> i32 {
 
 /// `LLImageDXT::getMipOffset`: byte offset of the mip at `discard` (0 is the
 /// largest, stored last) for an image of the given full size.
-pub fn mip_offset(format: Format, header_size: i32, mut width: i32, mut height: i32, discard: i32) -> Result<i32, Error> {
+pub fn mip_offset(
+    format: Format,
+    header_size: i32,
+    mut width: i32,
+    mut height: i32,
+    discard: i32,
+) -> Result<i32, Error> {
     if format.is_old_dxt() {
         return fail("getMipOffset called with old (unsupported) format");
     }
@@ -221,11 +232,27 @@ pub fn data_size(info: &Info, discard_level: i32) -> Result<i32, Error> {
     if info.format == Format::Unknown {
         return fail("calcDataSize called with unloaded LLImageDXT");
     }
-    let discard_level = if discard_level < 0 { info.discard_level } else { discard_level };
-    data_size_at(info.format, info.header_size, info.width as i32, info.height as i32, discard_level)
+    let discard_level = if discard_level < 0 {
+        info.discard_level
+    } else {
+        discard_level
+    };
+    data_size_at(
+        info.format,
+        info.header_size,
+        info.width as i32,
+        info.height as i32,
+        discard_level,
+    )
 }
 
-fn data_size_at(format: Format, header_size: i32, width: i32, height: i32, discard_level: i32) -> Result<i32, Error> {
+fn data_size_at(
+    format: Format,
+    header_size: i32,
+    width: i32,
+    height: i32,
+    discard_level: i32,
+) -> Result<i32, Error> {
     let discard_level = discard_level.max(0);
     let mut bytes = mip_offset(format, header_size, width, height, discard_level)?;
     bytes += format_bytes(format, width >> discard_level, height >> discard_level)?;
@@ -245,10 +272,22 @@ pub fn parse(data: &[u8]) -> Result<Info, Error> {
     let first = i32_at(0)?;
     let (format, header_size, miplevelmax, width, height) = if first != DDS_FOURCC {
         // Old header: format code, max level, width, height.
-        (Format::from_code(first), OLD_HEADER_SIZE, i32_at(4)?.min(MAX_IMAGE_MIP), i32_at(8)?, i32_at(12)?)
+        (
+            Format::from_code(first),
+            OLD_HEADER_SIZE,
+            i32_at(4)?.min(MAX_IMAGE_MIP),
+            i32_at(8)?,
+            i32_at(12)?,
+        )
     } else {
         // DDS header: mip count at 28, height at 12, width at 16, pixel-format four-cc at 84.
-        (Format::from_fourcc(i32_at(84)?), HEADER_SIZE, (i32_at(28)? - 1).min(MAX_IMAGE_MIP), i32_at(16)?, i32_at(12)?)
+        (
+            Format::from_fourcc(i32_at(84)?),
+            HEADER_SIZE,
+            (i32_at(28)? - 1).min(MAX_IMAGE_MIP),
+            i32_at(16)?,
+            i32_at(12)?,
+        )
     };
     if (data.len() as i64) < header_size as i64 {
         return fail("LLImageDXT: not enough data");
@@ -271,7 +310,14 @@ pub fn parse(data: &[u8]) -> Result<Info, Error> {
     }
     let discard = discard.min(miplevelmax);
 
-    Ok(Info { format, header_size, width: w, height: h, components: components as u32, discard_level: discard })
+    Ok(Info {
+        format,
+        header_size,
+        width: w,
+        height: h,
+        components: components as u32,
+        discard_level: discard,
+    })
 }
 
 /// `LLImageDXT::decode`: the mip at the image's discard level, uncompressed formats only.
@@ -282,7 +328,13 @@ pub fn decode(data: &[u8], info: &Info) -> Result<Raster, Error> {
     let mut width = info.width as i32;
     let mut height = info.height as i32;
     let offset = if info.discard_level >= 0 {
-        let offset = mip_offset(info.format, info.header_size, width, height, info.discard_level)?;
+        let offset = mip_offset(
+            info.format,
+            info.header_size,
+            width,
+            height,
+            info.discard_level,
+        )?;
         calc_discard_width_height(info.discard_level, info.format, &mut width, &mut height);
         offset
     } else {
@@ -302,11 +354,21 @@ pub fn decode(data: &[u8], info: &Info) -> Result<Raster, Error> {
 /// (it starts its dimension computation from zero, so this is always a
 /// single pixel at the mip's offset, as in the C++).
 pub fn mip_data(data: &[u8], info: &Info, discard: i32) -> Result<Raster, Error> {
-    let discard = if discard < 0 { info.discard_level } else { discard };
+    let discard = if discard < 0 {
+        info.discard_level
+    } else {
+        discard
+    };
     if discard < info.discard_level {
         return fail("Request for invalid discard level");
     }
-    let offset = mip_offset(info.format, info.header_size, info.width as i32, info.height as i32, discard)?;
+    let offset = mip_offset(
+        info.format,
+        info.header_size,
+        info.width as i32,
+        info.height as i32,
+        discard,
+    )?;
     let mut width = 0;
     let mut height = 0;
     calc_discard_width_height(discard, info.format, &mut width, &mut height);
@@ -363,7 +425,13 @@ pub fn encode(raster: &Raster) -> Result<Vec<u8>, Error> {
             // after this one.
             let (poff, pbytes) = prev.unwrap();
             let (head, tail) = out.split_at_mut(poff);
-            if !generate_mip_into(&tail[..pbytes], &mut head[offset..offset + pixels], w as usize, h as usize, ncomponents) {
+            if !generate_mip_into(
+                &tail[..pbytes],
+                &mut head[offset..offset + pixels],
+                w as usize,
+                h as usize,
+                ncomponents,
+            ) {
                 return fail("LLImageDXT: mip generation failed");
             }
         }
@@ -403,10 +471,16 @@ pub fn convert_to_dxr(data: &[u8], info: &Info) -> Result<Option<Vec<u8>>, Error
     for mip in 0..nmips {
         let bytes = format_bytes(newformat, w, h)? as usize;
         let newoffset = mip_offset(newformat, info.header_size, width, height, mip)? as usize;
-        let Some(oldoffset) = (total_bytes).checked_sub(newoffset + bytes).map(|r| header_size + r) else {
+        let Some(oldoffset) = (total_bytes)
+            .checked_sub(newoffset + bytes)
+            .map(|r| header_size + r)
+        else {
             return fail("LLImageDXT: not enough data to convert");
         };
-        let (Some(src), true) = (data.get(oldoffset..oldoffset + bytes), newoffset + bytes <= total_bytes) else {
+        let (Some(src), true) = (
+            data.get(oldoffset..oldoffset + bytes),
+            newoffset + bytes <= total_bytes,
+        ) else {
             return fail("LLImageDXT: not enough data to convert");
         };
         newdata[newoffset..newoffset + bytes].copy_from_slice(src);

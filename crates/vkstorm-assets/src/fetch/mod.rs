@@ -20,10 +20,10 @@ pub mod retry;
 
 use std::time::{Duration, Instant};
 
-use crate::{uuid_to_string, Uuid};
-use budget::{FIRST_PACKET_SIZE, MAX_DISCARD_LEVEL};
+use crate::{Uuid, uuid_to_string};
 #[cfg(feature = "opensim")]
 use budget::MAX_IMG_PACKET_SIZE;
+use budget::{FIRST_PACKET_SIZE, MAX_DISCARD_LEVEL};
 use retry::AdaptiveRetryPolicy;
 
 /// `LLTextureFetchWorker::e_state`.
@@ -278,7 +278,14 @@ pub trait Host {
     /// `append_size` reply bytes from `src_offset`, sets `total_size`.
     /// False when the allocation failed. `url` is the request URL, whose
     /// extension picks the codec when no image exists yet.
-    fn assemble_http_reply(&mut self, url: &str, src_offset: i32, cur_size: i32, append_size: i32, total_size: i32) -> bool;
+    fn assemble_http_reply(
+        &mut self,
+        url: &str,
+        src_offset: i32,
+        cur_size: i32,
+        append_size: i32,
+        total_size: i32,
+    ) -> bool;
     /// `mFetcher->addToHTTPQueue(mID)`.
     fn add_to_http_queue(&mut self);
     /// `recordTextureStart`/`recordTextureDone` (asset statistics).
@@ -412,7 +419,11 @@ impl Fetcher {
             // the remainder's order is unspecified in the C++ and they are
             // visited anyway, so a full stable sort gives the same release
             // set and the same order among the released.
-            idx.sort_by(|&a, &b| priorities[b].partial_cmp(&priorities[a]).unwrap_or(std::cmp::Ordering::Equal));
+            idx.sort_by(|&a, &b| {
+                priorities[b]
+                    .partial_cmp(&priorities[a])
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            });
         }
         idx
     }
@@ -539,7 +550,14 @@ pub struct Worker {
 impl Worker {
     /// The constructor: `in_second_life` is `LLGridManager::isInSecondLife()`
     /// (`mCanUseNET = !in_second_life && url.empty()`).
-    pub fn new(ftype: FetchType, url: &str, id: Uuid, host_is_ok: bool, priority: f32, in_second_life: bool) -> Worker {
+    pub fn new(
+        ftype: FetchType,
+        url: &str,
+        id: Uuid,
+        host_is_ok: bool,
+        priority: f32,
+        in_second_life: bool,
+    ) -> Worker {
         let now = Instant::now();
         Worker {
             id,
@@ -716,7 +734,11 @@ impl Worker {
             self.release_http_semaphore(fetcher);
         }
         fetcher.remove_http_waiter(&self.id);
-        fetcher.update_state_stats(self.cache_read_count, self.cache_write_count, self.resource_wait_count);
+        fetcher.update_state_stats(
+            self.cache_read_count,
+            self.cache_write_count,
+            self.resource_wait_count,
+        );
         self.http_active
     }
 
@@ -733,9 +755,18 @@ impl Worker {
             }
         }
         if self.image_priority < F_ALMOST_ZERO
-            && (self.state == State::Init || self.state == State::LoadFromNetwork || self.state == State::LoadFromSimulator)
+            && (self.state == State::Init
+                || self.state == State::LoadFromNetwork
+                || self.state == State::LoadFromSimulator)
         {
-            host.log(0, false, &format!("{} abort: mImagePriority < F_ALMOST_ZERO", uuid_to_string(&self.id)));
+            host.log(
+                0,
+                false,
+                &format!(
+                    "{} abort: mImagePriority < F_ALMOST_ZERO",
+                    uuid_to_string(&self.id)
+                ),
+            );
             return true; // abort
         }
         if self.state > State::CachePost && !self.can_use_capability && self.can_use_http {
@@ -746,7 +777,11 @@ impl Worker {
             }
         }
         if self.state > State::CachePost && !self.can_use_net && !self.can_use_http {
-            host.log(2, false, &format!("{} abort, nowhere to get data", uuid_to_string(&self.id)));
+            host.log(
+                2,
+                false,
+                &format!("{} abort, nowhere to get data", uuid_to_string(&self.id)),
+            );
             return true;
         }
         if env.debug_pause {
@@ -772,9 +807,18 @@ impl Worker {
                     return true;
                 }
                 if self.image_priority < F_ALMOST_ZERO
-                    && (self.state == State::Init || self.state == State::LoadFromNetwork || self.state == State::LoadFromSimulator)
+                    && (self.state == State::Init
+                        || self.state == State::LoadFromNetwork
+                        || self.state == State::LoadFromSimulator)
                 {
-                    host.log(0, false, &format!("{} abort: mImagePriority < F_ALMOST_ZERO", uuid_to_string(&self.id)));
+                    host.log(
+                        0,
+                        false,
+                        &format!(
+                            "{} abort: mImagePriority < F_ALMOST_ZERO",
+                            uuid_to_string(&self.id)
+                        ),
+                    );
                     return true;
                 }
                 if self.state > State::CachePost && !self.can_use_capability && self.can_use_http {
@@ -785,7 +829,11 @@ impl Worker {
                     }
                 }
                 if self.state > State::CachePost && !self.can_use_net && !self.can_use_http {
-                    host.log(2, false, &format!("{} abort, nowhere to get data", uuid_to_string(&self.id)));
+                    host.log(
+                        2,
+                        false,
+                        &format!("{} abort, nowhere to get data", uuid_to_string(&self.id)),
+                    );
                     return true;
                 }
                 if env.debug_pause {
@@ -815,7 +863,8 @@ impl Worker {
     }
 
     fn set_region_retry(&mut self) {
-        self.region_retry_deadline = Some(Instant::now() + Duration::from_secs_f32(CAP_MISSING_EXPIRATION_DELAY));
+        self.region_retry_deadline =
+            Some(Instant::now() + Duration::from_secs_f32(CAP_MISSING_EXPIRATION_DELAY));
     }
 
     /// One pass through the state chain of `doWork` (from the current
@@ -874,7 +923,11 @@ impl Worker {
 
         if self.state == State::LoadFromTextureCache {
             if !self.cache_read_pending {
-                let offset = if env.formatted_present { env.formatted_size } else { 0 };
+                let offset = if env.formatted_present {
+                    env.formatted_size
+                } else {
+                    0
+                };
                 let size = self.desired_size - offset;
                 if size <= 0 {
                     self.set_state(State::CachePost);
@@ -889,7 +942,9 @@ impl Worker {
                     self.cache_read_timer = Instant::now();
                     self.cache_read_pending = true;
                     host.read_cache(Some(&filename), offset, size);
-                } else if (self.url.is_empty() || self.ftype == FetchType::ServerBake) && env.can_load_from_cache {
+                } else if (self.url.is_empty() || self.ftype == FetchType::ServerBake)
+                    && env.can_load_from_cache
+                {
                     self.cache_read_count += 1;
                     self.cache_read_timer = Instant::now();
                     self.cache_read_pending = true;
@@ -919,12 +974,23 @@ impl Worker {
         }
 
         if self.state == State::CachePost {
-            self.cached_size = if env.formatted_present { env.formatted_size } else { 0 };
+            self.cached_size = if env.formatted_present {
+                env.formatted_size
+            } else {
+                0
+            };
             if self.cached_size >= self.desired_size || self.have_all_data {
                 assert!(env.formatted_size > 0);
                 self.loaded_discard = self.desired_discard;
                 if self.loaded_discard < 0 {
-                    host.log(2, false, &format!("{} mLoadedDiscard is {}, should be >=0", id, self.loaded_discard));
+                    host.log(
+                        2,
+                        false,
+                        &format!(
+                            "{} mLoadedDiscard is {}, should be >=0",
+                            id, self.loaded_discard
+                        ),
+                    );
                 }
                 self.set_state(State::DecodeImage);
                 self.in_cache = true;
@@ -934,13 +1000,22 @@ impl Worker {
                     false,
                     &format!(
                         "{}: Cached. Bytes: {} Size: {}x{} Desired Discard: {} Desired Size: {}",
-                        id, env.formatted_size, env.formatted_width, env.formatted_height, self.desired_discard, self.desired_size
+                        id,
+                        env.formatted_size,
+                        env.formatted_width,
+                        env.formatted_height,
+                        self.desired_discard,
+                        self.desired_size
                     ),
                 );
                 host.stat_cache_hit_rate(true);
             } else {
                 if self.url.starts_with("file://") {
-                    host.log(2, false, &format!("{}: abort, failed to load local file {}", id, self.url));
+                    host.log(
+                        2,
+                        false,
+                        &format!("{}: abort, failed to load local file {}", id, self.url),
+                    );
                     return Pass::Return(true);
                 } else {
                     host.log(0, false, &format!("{}: Not in Cache", id));
@@ -993,7 +1068,11 @@ impl Worker {
                         self.can_use_capability = false;
                         self.region_retry_attempt += 1;
                         self.set_region_retry();
-                        host.log(1, true, &format!("Texture not available via HTTP: no region {}", self.url));
+                        host.log(
+                            1,
+                            true,
+                            &format!("Texture not available via HTTP: no region {}", self.url),
+                        );
                     }
                 }
             } else if self.ftype == FetchType::ServerBake {
@@ -1005,7 +1084,10 @@ impl Worker {
                 if self.write_to_cache_state != WriteToCacheState::NotWrite {
                     self.write_to_cache_state = WriteToCacheState::CanWrite;
                 }
-            } else if self.sent_request == RequestState::Unsent && !self.can_use_http && self.can_use_net {
+            } else if self.sent_request == RequestState::Unsent
+                && !self.can_use_http
+                && self.can_use_net
+            {
                 #[cfg(feature = "opensim")]
                 {
                     self.write_to_cache_state = WriteToCacheState::CanWrite;
@@ -1032,7 +1114,9 @@ impl Worker {
         }
 
         if self.state == State::WaitHttpResource {
-            if !self.http_has_resource && (fetcher.http_waiters_count() > 0 || !self.acquire_http_semaphore(fetcher)) {
+            if !self.http_has_resource
+                && (fetcher.http_waiters_count() > 0 || !self.acquire_http_semaphore(fetcher))
+            {
                 self.set_state(State::WaitHttpResource2);
                 fetcher.add_http_waiter(&self.id);
                 self.resource_wait_count += 1;
@@ -1048,7 +1132,11 @@ impl Worker {
         if self.state == State::SendHttpReq {
             if !self.can_use_http {
                 self.release_http_semaphore(fetcher);
-                host.log(2, false, &format!("{} abort: SEND_HTTP_REQ but !mCanUseHTTP", id));
+                host.log(
+                    2,
+                    false,
+                    &format!("{} abort: SEND_HTTP_REQ but !mCanUseHTTP", id),
+                );
                 return Pass::Return(true); // abort
             }
             #[cfg(feature = "opensim")]
@@ -1061,14 +1149,25 @@ impl Worker {
                     if cur_size > 0 {
                         self.loaded_discard = env.formatted_discard;
                         if self.loaded_discard < 0 {
-                            host.log(2, false, &format!("{} mLoadedDiscard is {}, should be >=0", id, self.loaded_discard));
+                            host.log(
+                                2,
+                                false,
+                                &format!(
+                                    "{} mLoadedDiscard is {}, should be >=0",
+                                    id, self.loaded_discard
+                                ),
+                            );
                         }
                         self.set_state(State::DecodeImage);
                         self.release_http_semaphore(fetcher);
                         return Pass::Again;
                     } else {
                         self.release_http_semaphore(fetcher);
-                        host.log(2, false, &format!("{} SEND_HTTP_REQ abort: cur_size {} <=0", id, cur_size));
+                        host.log(
+                            2,
+                            false,
+                            &format!("{} SEND_HTTP_REQ abort: cur_size {} <=0", id, cur_size),
+                        );
                         return Pass::Return(true); // abort
                     }
                 }
@@ -1082,7 +1181,11 @@ impl Worker {
                 self.requested_size += 1;
             }
             if self.url.is_empty() {
-                host.log(2, false, &format!("HTTP GET request failed for {} on empty URL.", id));
+                host.log(
+                    2,
+                    false,
+                    &format!("HTTP GET request failed for {} on empty URL.", id),
+                );
                 self.reset_formatted_data(host);
                 self.release_http_semaphore(fetcher);
                 return Pass::Return(true); // failed
@@ -1097,13 +1200,22 @@ impl Worker {
                 false,
                 &format!(
                     "HTTP GET: {} Offset: {} Bytes: {} Bandwidth(kbps): {}/{}",
-                    id, self.requested_offset, self.requested_size, env.texture_bandwidth, env.max_bandwidth
+                    id,
+                    self.requested_offset,
+                    self.requested_size,
+                    env.texture_bandwidth,
+                    env.max_bandwidth
                 ),
             );
             let get = HttpGet {
                 url: self.url.clone(),
                 offset: self.requested_offset,
-                size: if (self.requested_offset + self.requested_size) > HTTP_REQUESTS_RANGE_END_MAX { 0 } else { self.requested_size },
+                size: if (self.requested_offset + self.requested_size) > HTTP_REQUESTS_RANGE_END_MAX
+                {
+                    0
+                } else {
+                    self.requested_size
+                },
                 no_range: env.range_requests_disabled,
                 with_headers: self.ftype == FetchType::ServerBake,
             };
@@ -1123,7 +1235,11 @@ impl Worker {
             if !self.loaded {
                 return Pass::Return(false);
             }
-            let cur_size = if env.formatted_present { env.formatted_size } else { 0 };
+            let cur_size = if env.formatted_present {
+                env.formatted_size
+            } else {
+                0
+            };
             if self.requested_size < 0 {
                 if self.get_status_type == HTTP_NOT_FOUND {
                     if self.write_to_cache_state == WriteToCacheState::NotWrite {
@@ -1131,7 +1247,14 @@ impl Worker {
                         self.set_state(State::Done);
                         self.release_http_semaphore(fetcher);
                         if self.ftype != FetchType::MapTile {
-                            host.log(2, false, &format!("{}NOT_WRITE texture missing from server (404), abort: {}", id, self.url));
+                            host.log(
+                                2,
+                                false,
+                                &format!(
+                                    "{}NOT_WRITE texture missing from server (404), abort: {}",
+                                    id, self.url
+                                ),
+                            );
                         }
                         return Pass::Return(true);
                     }
@@ -1166,7 +1289,11 @@ impl Worker {
                         return Pass::Again;
                     }
                     if self.ftype != FetchType::MapTile {
-                        host.log(2, false, &format!("Texture missing from server (404): {}", self.url));
+                        host.log(
+                            2,
+                            false,
+                            &format!("Texture missing from server (404): {}", self.url),
+                        );
                     }
                 } else if self.get_status_type == HTTP_SERVICE_UNAVAILABLE {
                     host.log(1, true, &format!("Texture server busy (503): {}", self.url));
@@ -1190,7 +1317,10 @@ impl Worker {
                     host.log(
                         1,
                         false,
-                        &format!("HTTP GET failed for: {} Status: {} Reason: '{}'", self.url, self.get_status_type, self.get_reason),
+                        &format!(
+                            "HTTP GET failed for: {} Status: {} Reason: '{}'",
+                            self.url, self.get_status_type, self.get_reason
+                        ),
                     );
                 }
 
@@ -1200,7 +1330,14 @@ impl Worker {
                 if cur_size > 0 {
                     self.loaded_discard = env.formatted_discard;
                     if self.loaded_discard < 0 {
-                        host.log(2, false, &format!("{} mLoadedDiscard is {}, should be >=0", id, self.loaded_discard));
+                        host.log(
+                            2,
+                            false,
+                            &format!(
+                                "{} mLoadedDiscard is {}, should be >=0",
+                                id, self.loaded_discard
+                            ),
+                        );
                     }
                     self.set_state(State::DecodeImage);
                     self.release_http_semaphore(fetcher);
@@ -1213,7 +1350,9 @@ impl Worker {
                 return Pass::Return(true); // failed
             }
 
-            if self.write_to_cache_state != WriteToCacheState::NotWrite && self.ftype != FetchType::ServerBake {
+            if self.write_to_cache_state != WriteToCacheState::NotWrite
+                && self.ftype != FetchType::ServerBake
+            {
                 self.url.clear();
             }
 
@@ -1234,7 +1373,9 @@ impl Worker {
             let mut src_offset = 0;
             assert_eq!(append_size, self.requested_size);
             if self.http_reply_offset != 0 && self.http_reply_offset != cur_size as u32 {
-                if (self.http_reply_offset as i32) > cur_size || cur_size > (self.http_reply_offset as i32 + append_size) {
+                if (self.http_reply_offset as i32) > cur_size
+                    || cur_size > (self.http_reply_offset as i32 + append_size)
+                {
                     host.log(
                         2,
                         false,
@@ -1253,7 +1394,11 @@ impl Worker {
 
             // The file size: known when all the data arrived, else flagged
             // as not fully loaded (one more than the bytes held).
-            self.file_size = if self.have_all_data { total_size } else { total_size + 1 };
+            self.file_size = if self.have_all_data {
+                total_size
+            } else {
+                total_size + 1
+            };
 
             if !host.assemble_http_reply(&self.url, src_offset, cur_size, append_size, total_size) {
                 self.set_state(State::Done);
@@ -1268,11 +1413,16 @@ impl Worker {
 
             self.loaded_discard = self.requested_discard;
             let env2 = host.env();
-            if self.loaded_discard < 0 || (self.loaded_discard > MAX_DISCARD_LEVEL && env2.formatted_is_j2c) {
+            if self.loaded_discard < 0
+                || (self.loaded_discard > MAX_DISCARD_LEVEL && env2.formatted_is_j2c)
+            {
                 host.log(
                     2,
                     false,
-                    &format!("{} mLoadedDiscard is {}, should be >=0 and <={}", id, self.loaded_discard, MAX_DISCARD_LEVEL),
+                    &format!(
+                        "{} mLoadedDiscard is {}, should be >=0 and <={}",
+                        id, self.loaded_discard, MAX_DISCARD_LEVEL
+                    ),
                 );
             }
             self.set_state(State::DecodeImage);
@@ -1290,27 +1440,68 @@ impl Worker {
             }
             if self.desired_discard < 0 {
                 self.set_state(State::Done);
-                host.log(0, false, &format!("{} DECODE_IMAGE abort: desired discard {}<0", id, self.desired_discard));
+                host.log(
+                    0,
+                    false,
+                    &format!(
+                        "{} DECODE_IMAGE abort: desired discard {}<0",
+                        id, self.desired_discard
+                    ),
+                );
                 return Pass::Return(true);
             }
             if env.formatted_size <= 0 {
-                host.log(2, false, &format!("Decode entered with invalid mFormattedImage. ID = {}", id));
+                host.log(
+                    2,
+                    false,
+                    &format!("Decode entered with invalid mFormattedImage. ID = {}", id),
+                );
                 self.set_state(State::Done);
-                host.log(0, false, &format!("{} DECODE_IMAGE abort: (mFormattedImage->getDataSize() <= 0)", id));
+                host.log(
+                    0,
+                    false,
+                    &format!(
+                        "{} DECODE_IMAGE abort: (mFormattedImage->getDataSize() <= 0)",
+                        id
+                    ),
+                );
                 return Pass::Return(true);
             }
             if self.loaded_discard < 0 {
-                host.log(2, false, &format!("Decode entered with invalid mLoadedDiscard. ID = {}", id));
+                host.log(
+                    2,
+                    false,
+                    &format!("Decode entered with invalid mLoadedDiscard. ID = {}", id),
+                );
                 self.set_state(State::Done);
-                host.log(0, false, &format!("{} DECODE_IMAGE abort: mLoadedDiscard < 0", id));
+                host.log(
+                    0,
+                    false,
+                    &format!("{} DECODE_IMAGE abort: mLoadedDiscard < 0", id),
+                );
                 return Pass::Return(true);
             }
             assert!(env.formatted_present);
-            let discard = if self.have_all_data && !env.formatted_is_j2c { 0 } else { self.loaded_discard };
+            let discard = if self.have_all_data && !env.formatted_is_j2c {
+                0
+            } else {
+                self.loaded_discard
+            };
             if discard > MAX_DISCARD_LEVEL {
-                host.log(2, false, &format!("Decode entered with invalid discard. ID = {}", id));
+                host.log(
+                    2,
+                    false,
+                    &format!("Decode entered with invalid discard. ID = {}", id),
+                );
                 self.set_state(State::Done);
-                host.log(0, false, &format!("{} DECODE_IMAGE abort: mLoadedDiscard > MAX_DISCARD_LEVEL", id));
+                host.log(
+                    0,
+                    false,
+                    &format!(
+                        "{} DECODE_IMAGE abort: mLoadedDiscard > MAX_DISCARD_LEVEL",
+                        id
+                    ),
+                );
                 return Pass::Return(true);
             }
             self.decode_timer = Instant::now();
@@ -1320,12 +1511,19 @@ impl Worker {
             host.log(
                 0,
                 false,
-                &format!("{}: Decoding. Bytes: {} Discard: {} All Data: {}", id, env.formatted_size, discard, self.have_all_data),
+                &format!(
+                    "{}: Decoding. Bytes: {} Discard: {} All Data: {}",
+                    id, env.formatted_size, discard, self.have_all_data
+                ),
             );
             self.decode_handle = host.decode(discard, self.needs_aux);
             if self.decode_handle == 0 {
                 self.set_state(State::Done);
-                host.log(0, false, &format!("{} DECODE_IMAGE abort: failed to post for decoding", id));
+                host.log(
+                    0,
+                    false,
+                    &format!("{} DECODE_IMAGE abort: failed to post for decoding", id),
+                );
                 return Pass::Return(true);
             }
         }
@@ -1335,21 +1533,35 @@ impl Worker {
                 self.decode_time = self.decode_timer.elapsed().as_secs_f32();
                 if self.decoded_discard < 0 {
                     if self.cached_size > 0 && !self.in_local_cache && self.retry_attempt == 0 {
-                        host.log(0, false, &format!("{}: Decode of cached file failed (removed), retrying", id));
+                        host.log(
+                            0,
+                            false,
+                            &format!("{}: Decode of cached file failed (removed), retrying", id),
+                        );
                         assert_eq!(self.decode_handle, 0);
                         host.drop_formatted_image();
                         self.retry_attempt += 1;
                         self.set_state(State::Init);
                         return Pass::Again;
                     } else {
-                        host.log(0, false, &format!("Failed to Decode image {} after {} retries", id, self.retry_attempt));
+                        host.log(
+                            0,
+                            false,
+                            &format!(
+                                "Failed to Decode image {} after {} retries",
+                                id, self.retry_attempt
+                            ),
+                        );
                         self.set_state(State::Done); // failed
                     }
                 } else {
                     host.log(
                         0,
                         false,
-                        &format!("{}: Decoded. Discard: {} Raw Image: {}x{}", id, self.decoded_discard, env.raw_width, env.raw_height),
+                        &format!(
+                            "{}: Decoded. Discard: {} Raw Image: {}x{}",
+                            id, self.decoded_discard, env.raw_width, env.raw_height
+                        ),
                     );
                     self.set_state(State::WriteToCache);
                 }
@@ -1360,14 +1572,19 @@ impl Worker {
 
         if self.state == State::WriteToCache {
             let env = host.env();
-            if self.write_to_cache_state != WriteToCacheState::ShouldWrite || !env.formatted_present {
+            if self.write_to_cache_state != WriteToCacheState::ShouldWrite || !env.formatted_present
+            {
                 self.set_state(State::Done);
                 return Pass::Again;
             }
             let datasize = env.formatted_size;
             if self.file_size < datasize {
                 // HTTP fetching and sim fetching mixed.
-                self.file_size = if self.have_all_data { datasize } else { datasize + 1 };
+                self.file_size = if self.have_all_data {
+                    datasize
+                } else {
+                    datasize + 1
+                };
             }
             assert!(datasize != 0);
             self.written = false;
@@ -1447,14 +1664,29 @@ impl Worker {
                 }
             }
             let env = host.env();
-            host.log(0, false, &format!("{}: Loaded from Sim. Bytes: {}", id, env.formatted_size));
+            host.log(
+                0,
+                false,
+                &format!("{}: Loaded from Sim. Bytes: {}", id, env.formatted_size),
+            );
             host.remove_from_network_queue(false);
             if !env.formatted_present || env.formatted_size == 0 {
-                host.log(2, false, &format!("{} processSimulatorPackets() failed to load buffer", id));
+                host.log(
+                    2,
+                    false,
+                    &format!("{} processSimulatorPackets() failed to load buffer", id),
+                );
                 return Pass::Return(true); // failed
             }
             if self.loaded_discard < 0 {
-                host.log(2, false, &format!("{} mLoadedDiscard is {}, should be >=0", id, self.loaded_discard));
+                host.log(
+                    2,
+                    false,
+                    &format!(
+                        "{} mLoadedDiscard is {}, should be >=0",
+                        id, self.loaded_discard
+                    ),
+                );
             }
             self.set_state(State::DecodeImage);
             self.write_to_cache_state = WriteToCacheState::ShouldWrite;
@@ -1479,7 +1711,11 @@ impl Worker {
         if self.last_packet >= self.first_packet {
             let mut buffer_size = env.formatted_size;
             for i in self.first_packet..=self.last_packet {
-                let p = self.packets.get(i as usize).and_then(|p| p.as_ref()).expect("packet present");
+                let p = self
+                    .packets
+                    .get(i as usize)
+                    .and_then(|p| p.as_ref())
+                    .expect("packet present");
                 buffer_size += p.size as i32;
             }
             let have_all_data = self.last_packet >= self.total_packets as i32 - 1;
@@ -1514,7 +1750,10 @@ impl Worker {
                 return SetupPackets::BadSize;
             } else if self.file_size > 0 {
                 self.last_packet = self.first_packet - 1;
-                self.total_packets = ((self.file_size - FIRST_PACKET_SIZE + MAX_IMG_PACKET_SIZE - 1) / MAX_IMG_PACKET_SIZE + 1) as u16;
+                self.total_packets = ((self.file_size - FIRST_PACKET_SIZE + MAX_IMG_PACKET_SIZE
+                    - 1)
+                    / MAX_IMG_PACKET_SIZE
+                    + 1) as u16;
             } else {
                 self.clear_packets();
                 return SetupPackets::Refetch;
@@ -1548,7 +1787,8 @@ impl Worker {
         if index >= self.total_packets as i32 {
             return false;
         }
-        if index > 0 && index < self.total_packets as i32 - 1 && size != MAX_IMG_PACKET_SIZE as u32 {
+        if index > 0 && index < self.total_packets as i32 - 1 && size != MAX_IMG_PACKET_SIZE as u32
+        {
             return false;
         }
         if index >= self.packets.len() as i32 {
@@ -1557,7 +1797,9 @@ impl Worker {
             return false;
         }
         self.packets[index as usize] = Some(PacketInfo { size });
-        while self.last_packet + 1 < self.packets.len() as i32 && self.packets[(self.last_packet + 1) as usize].is_some() {
+        while self.last_packet + 1 < self.packets.len() as i32
+            && self.packets[(self.last_packet + 1) as usize].is_some()
+        {
             self.last_packet += 1;
         }
         true
@@ -1568,7 +1810,14 @@ impl Worker {
     /// `callbackCacheRead` (under the work mutex): `image_present` is
     /// whether the responder delivered a formatted image, `data_size` its
     /// byte count, `codec` its codec.
-    pub fn cache_read_done(&mut self, success: bool, imagesize: i32, data_size: i32, codec: i32, is_local: bool) {
+    pub fn cache_read_done(
+        &mut self,
+        success: bool,
+        imagesize: i32,
+        data_size: i32,
+        codec: i32,
+        is_local: bool,
+    ) {
         if self.state != State::LoadFromTextureCache {
             return;
         }
@@ -1597,16 +1846,37 @@ impl Worker {
     /// failure (the host removes the texture from the cache). Returns
     /// whether the callback was accepted (the host then keeps the raw
     /// images; otherwise it discards them).
-    pub fn decode_done(&mut self, success: bool, formatted_discard: i32, decode_id: u32, host: &mut dyn Host) -> bool {
+    pub fn decode_done(
+        &mut self,
+        success: bool,
+        formatted_discard: i32,
+        decode_id: u32,
+        host: &mut dyn Host,
+    ) -> bool {
         if self.decode_handle == 0 {
             return false; // aborted, ignore
         }
         if self.decode_handle != decode_id {
-            host.log(0, false, &format!("{} received obsolete decode's callback", uuid_to_string(&self.id)));
+            host.log(
+                0,
+                false,
+                &format!(
+                    "{} received obsolete decode's callback",
+                    uuid_to_string(&self.id)
+                ),
+            );
             return false; // ignore
         }
         if self.state != State::DecodeImageUpdate {
-            host.log(0, false, &format!("Decode callback for {} with state = {}", uuid_to_string(&self.id), self.state as i32));
+            host.log(
+                0,
+                false,
+                &format!(
+                    "Decode callback for {} with state = {}",
+                    uuid_to_string(&self.id),
+                    self.state as i32
+                ),
+            );
             self.decode_handle = 0;
             return false;
         }
@@ -1671,7 +1941,10 @@ impl Worker {
                 host.log(
                     1,
                     false,
-                    &format!("{} will retry after {} seconds, resetting state to LOAD_FROM_NETWORK", id, retry_after_secs),
+                    &format!(
+                        "{} will retry after {} seconds, resetting state to LOAD_FROM_NETWORK",
+                        id, retry_after_secs
+                    ),
                 );
                 self.get_status_ok = status_ok;
                 self.get_status_type = status_type;
@@ -1688,13 +1961,24 @@ impl Worker {
         self.get_status_ok = status_ok;
         self.get_status_type = status_type;
         self.get_reason = reason.to_string();
-        host.log(0, false, &format!("HTTP COMPLETE: {} status: {} '{}'", id, status_type, reason));
+        host.log(
+            0,
+            false,
+            &format!("HTTP COMPLETE: {} status: {} '{}'", id, status_type, reason),
+        );
         let mut success = true;
         let mut is_partial = false;
         if !status_ok {
             success = false;
             if self.ftype != FetchType::MapTile {
-                host.log(2, false, &format!("CURL GET FAILED, status: {} reason: {}", status_type, reason));
+                host.log(
+                    2,
+                    false,
+                    &format!(
+                        "CURL GET FAILED, status: {} reason: {}",
+                        status_type, reason
+                    ),
+                );
             }
         } else {
             is_partial = partial;
@@ -1704,14 +1988,24 @@ impl Worker {
         Some(data_size)
     }
 
-    fn callback_http_get(&mut self, host: &mut dyn Host, partial: bool, success: bool, body_size: i32, range: Option<(u32, u32, u32)>) -> i32 {
+    fn callback_http_get(
+        &mut self,
+        host: &mut dyn Host,
+        partial: bool,
+        success: bool,
+        body_size: i32,
+        range: Option<(u32, u32, u32)>,
+    ) -> i32 {
         let id = uuid_to_string(&self.id);
         let mut data_size = 0;
         if self.state != State::WaitHttpReq {
             host.log(
                 2,
                 false,
-                &format!("callbackHttpGet for unrequested fetch worker: {} req={} state= {}", id, self.sent_request as i32, self.state as i32),
+                &format!(
+                    "callbackHttpGet for unrequested fetch worker: {} req={} state= {}",
+                    id, self.sent_request as i32, self.state as i32
+                ),
             );
             return data_size;
         }
@@ -1721,7 +2015,11 @@ impl Worker {
         }
         if success {
             data_size = body_size;
-            host.log(0, false, &format!("HTTP RECEIVED: {} Bytes: {}", id, data_size));
+            host.log(
+                0,
+                false,
+                &format!("HTTP RECEIVED: {} Bytes: {}", id, data_size),
+            );
             if data_size > 0 {
                 assert!(!self.http_buffer_present);
                 // The host keeps the body (addRef) as mHttpBufferArray.
@@ -1757,7 +2055,14 @@ impl Worker {
                 } else if data_size < self.requested_size {
                     self.have_all_data = true;
                 } else if data_size > self.requested_size {
-                    host.log(2, false, &format!("data_size = {} > requested: {}", data_size, self.requested_size));
+                    host.log(
+                        2,
+                        false,
+                        &format!(
+                            "data_size = {} > requested: {}",
+                            data_size, self.requested_size
+                        ),
+                    );
                     self.have_all_data = true;
                     assert_eq!(self.decode_handle, 0);
                     host.drop_formatted_image();
@@ -1793,7 +2098,8 @@ impl Worker {
         if self.file_size > 0 {
             #[cfg(feature = "opensim")]
             if self.state == State::LoadFromSimulator {
-                let data_size = (FIRST_PACKET_SIZE + (self.last_packet - 1) * MAX_IMG_PACKET_SIZE).max(0);
+                let data_size =
+                    (FIRST_PACKET_SIZE + (self.last_packet - 1) * MAX_IMG_PACKET_SIZE).max(0);
                 return data_size as f32 / self.file_size as f32;
             }
             if let Some(size) = formatted_size {
@@ -1820,13 +2126,23 @@ enum Pass {
 
 /// `createRequest`'s planning: the desired size and discard for a request.
 pub mod plan {
-    use super::budget::{calc_data_size_j2c, DEFAULT_RATE, FIRST_PACKET_SIZE, MAX_DISCARD_LEVEL, MAX_IMAGE_DATA_SIZE};
     use super::FetchType;
+    use super::budget::{
+        DEFAULT_RATE, FIRST_PACKET_SIZE, MAX_DISCARD_LEVEL, MAX_IMAGE_DATA_SIZE, calc_data_size_j2c,
+    };
 
     /// The desired size and discard level of a new request:
     /// `url_is_non_j2c` is whether the URL has an extension of another
     /// codec.
-    pub fn desired_size(ftype: FetchType, url_non_empty: bool, url_is_non_j2c: bool, w: i32, h: i32, c: i32, desired_discard: i32) -> (i32, i32) {
+    pub fn desired_size(
+        ftype: FetchType,
+        url_non_empty: bool,
+        url_is_non_j2c: bool,
+        w: i32,
+        h: i32,
+        c: i32,
+        desired_discard: i32,
+    ) -> (i32, i32) {
         if ftype == FetchType::ServerBake && url_non_empty && url_is_non_j2c {
             (MAX_IMAGE_DATA_SIZE, 0)
         } else if url_non_empty && url_is_non_j2c {
@@ -1834,7 +2150,10 @@ pub mod plan {
         } else if desired_discard == 0 {
             (MAX_IMAGE_DATA_SIZE, desired_discard)
         } else if w * h * c > 0 {
-            (calc_data_size_j2c(w, h, c, desired_discard, DEFAULT_RATE), desired_discard)
+            (
+                calc_data_size_j2c(w, h, c, desired_discard, DEFAULT_RATE),
+                desired_discard,
+            )
         } else {
             (FIRST_PACKET_SIZE, MAX_DISCARD_LEVEL)
         }
@@ -1842,8 +2161,16 @@ pub mod plan {
 
     /// The `createRequest` check on an existing, finished worker: nothing
     /// to do when it already delivered what is asked.
-    pub fn already_done(worker_state_done: bool, worker_desired_size: i32, worker_desired_discard: i32, desired_size: i32, desired_discard: i32) -> bool {
-        worker_state_done && worker_desired_size == desired_size.max(FIRST_PACKET_SIZE) && worker_desired_discard == desired_discard
+    pub fn already_done(
+        worker_state_done: bool,
+        worker_desired_size: i32,
+        worker_desired_discard: i32,
+        desired_size: i32,
+        desired_discard: i32,
+    ) -> bool {
+        worker_state_done
+            && worker_desired_size == desired_size.max(FIRST_PACKET_SIZE)
+            && worker_desired_discard == desired_discard
     }
 }
 

@@ -43,7 +43,13 @@ pub struct AdaptiveRetryPolicy {
 }
 
 impl AdaptiveRetryPolicy {
-    pub fn new(min_delay: f32, max_delay: f32, backoff_factor: f32, max_retries: u32, retry_on_4xx: bool) -> Self {
+    pub fn new(
+        min_delay: f32,
+        max_delay: f32,
+        backoff_factor: f32,
+        max_retries: u32,
+        retry_on_4xx: bool,
+    ) -> Self {
         AdaptiveRetryPolicy {
             min_delay,
             max_delay,
@@ -92,9 +98,14 @@ impl AdaptiveRetryPolicy {
             self.should_retry = false;
         }
         if self.should_retry {
-            ll_infos!("Retry count {} should retry after {}", self.retry_count, wait_time);
+            ll_infos!(
+                "Retry count {} should retry after {}",
+                self.retry_count,
+                wait_time
+            );
             self.retry_started = Instant::now();
-            self.retry_deadline = Some(self.retry_started + Duration::from_secs_f32(wait_time.max(0.0)));
+            self.retry_deadline =
+                Some(self.retry_started + Duration::from_secs_f32(wait_time.max(0.0)));
         }
         self.retry_count += 1;
     }
@@ -109,7 +120,11 @@ impl AdaptiveRetryPolicy {
             match self.retry_deadline {
                 Some(d) => {
                     let now = Instant::now();
-                    if d > now { (d - now).as_secs_f32() } else { -(now - d).as_secs_f32() }
+                    if d > now {
+                        (d - now).as_secs_f32()
+                    } else {
+                        -(now - d).as_secs_f32()
+                    }
                 }
                 None => 0.0,
             }
@@ -132,7 +147,10 @@ mod tests {
     fn retry_after_parsing() {
         assert_eq!(seconds_until_retry_after("5"), Some(5.0));
         assert_eq!(seconds_until_retry_after("2.5"), Some(2.5));
-        assert_eq!(seconds_until_retry_after("Wed, 21 Oct 2015 07:28:00 GMT"), None);
+        assert_eq!(
+            seconds_until_retry_after("Wed, 21 Oct 2015 07:28:00 GMT"),
+            None
+        );
         assert_eq!(seconds_until_retry_after(""), None);
     }
 

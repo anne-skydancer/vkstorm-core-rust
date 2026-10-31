@@ -25,19 +25,21 @@
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::sync::Arc;
 
-use vkstorm_inventory::ais::command::{Command, Method, Request, MAX_SIMULTANEOUS_COROUTINES};
-use vkstorm_inventory::ais::result::{begin, callback_ids, error_branch, AlertState, CommandContext};
-use vkstorm_inventory::ais::update::{
-    ApplyOp, CategoryRecord, FetchTimer, Flow, ItemRecord, Model, ModelCategory, ModelRef, ParseContext,
-    ParsedUpdate, MAX_UPDATE_BACKLOG,
-};
 use vkstorm_inventory::ais::CommandType;
+use vkstorm_inventory::ais::command::{Command, MAX_SIMULTANEOUS_COROUTINES, Method, Request};
+use vkstorm_inventory::ais::result::{
+    AlertState, CommandContext, begin, callback_ids, error_branch,
+};
+use vkstorm_inventory::ais::update::{
+    ApplyOp, CategoryRecord, FetchTimer, Flow, ItemRecord, MAX_UPDATE_BACKLOG, Model,
+    ModelCategory, ModelRef, ParseContext, ParsedUpdate,
+};
 use vkstorm_inventory::category::{Category, VERSION_UNKNOWN};
 use vkstorm_inventory::llsd::coerce::{as_boolean, as_integer, as_string, as_uuid, get, has};
-use vkstorm_inventory::perms::{Uuid, NULL_ID};
+use vkstorm_inventory::perms::{NULL_ID, Uuid};
 use vkstorm_inventory::types::{AssetType, FolderType};
 use vkstorm_llsd::{Format, Options, Value};
-use vkstorm_messages::{parse_template, Builder, Template, Tokenizer, VarType, MAX_BUFFER_SIZE};
+use vkstorm_messages::{Builder, MAX_BUFFER_SIZE, Template, Tokenizer, VarType, parse_template};
 
 // LLInventoryObserver masks.
 const LABEL: u32 = 1;
@@ -100,7 +102,11 @@ struct ModelCat {
 /// The request timer of an object: `LLFrameTimer` over a frame time that
 /// never advances in the test (0). Fresh (`reset()`) is expired; `fetch()`
 /// arms it for `expiry_seconds`.
-const FRESH_TIMER: FetchTimer = FetchTimer { start_time: 0.0, expiry: 0.0, started: true };
+const FRESH_TIMER: FetchTimer = FetchTimer {
+    start_time: 0.0,
+    expiry: 0.0,
+    started: true,
+};
 
 fn timer_of(t: &Option<FetchTimer>) -> FetchTimer {
     t.unwrap_or(FRESH_TIMER)
@@ -177,7 +183,13 @@ pub fn item_fields(r: &ItemRecord) -> Value {
                 ("next_owner_mask", i(p.next as i32)),
             ]),
         ),
-        ("sale_info", map(vec![("sale_type", i(it.sale_info.sale_type.0)), ("sale_price", i(it.sale_info.price))])),
+        (
+            "sale_info",
+            map(vec![
+                ("sale_type", i(it.sale_info.sale_type.0)),
+                ("sale_price", i(it.sale_info.price)),
+            ]),
+        ),
         ("complete", b(r.complete)),
         ("transaction_id", id(&r.transaction_id)),
         ("running", b(r.running)),
@@ -226,7 +238,10 @@ struct Messages {
 
 impl Messages {
     fn load() -> Messages {
-        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../vkstorm-messages/tests/fixtures/message_template.msg");
+        let path = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/../vkstorm-messages/tests/fixtures/message_template.msg"
+        );
         let text = std::fs::read_to_string(path).unwrap_or_else(|e| panic!("{path}: {e}"));
         let file = parse_template(&mut Tokenizer::new(&text)).expect("message template parses");
         let move_item = file
@@ -235,12 +250,20 @@ impl Messages {
             .find(|t| t.name == "MoveInventoryItem")
             .map(|t| Arc::new(t.with_index_keys()))
             .expect("MoveInventoryItem in the template");
-        Messages { move_item, builder: Builder::new() }
+        Messages {
+            move_item,
+            builder: Builder::new(),
+        }
     }
 
     fn add(&mut self, block: &str, var: &str, data: &[u8], ty: VarType) {
         let t = self.move_item.clone();
-        let key = t.block_by_name(block).unwrap().variable_by_name(var).unwrap().key;
+        let key = t
+            .block_by_name(block)
+            .unwrap()
+            .variable_by_name(var)
+            .unwrap()
+            .key;
         self.builder.add_data(key, data, ty).unwrap();
     }
 
@@ -270,7 +293,10 @@ impl Messages {
         // addString("NewName", NULL): no bytes.
         self.add("InventoryData", "NewName", &[], VarType::Variable);
         let mut buf = vec![0u8; MAX_BUFFER_SIZE];
-        let n = self.builder.build_message(&mut buf, 0).expect("message builds");
+        let n = self
+            .builder
+            .build_message(&mut buf, 0)
+            .expect("message builds");
         buf.truncate(n);
         self.builder.clear_message();
         buf
@@ -427,7 +453,10 @@ impl Harness {
 
     fn record(&mut self, op: Value, costs_time: bool) {
         let kind = String::from_utf8_lossy(&as_string(get(&op, "op"))).into_owned();
-        *self.phase_counts.entry((self.mode.name(), self.phase, kind)).or_insert(0) += 1;
+        *self
+            .phase_counts
+            .entry((self.mode.name(), self.phase, kind))
+            .or_insert(0) += 1;
         self.ops.push(op);
         if costs_time && self.mode == Mode::Sched {
             self.clock += self.call_us;
@@ -452,7 +481,14 @@ impl Harness {
         self.case_id = case_id.to_string();
     }
 
-    pub fn begin_run(&mut self, mode: Mode, call_us: u64, frame_us: u64, others_us: Vec<u64>, extra: Vec<u64>) {
+    pub fn begin_run(
+        &mut self,
+        mode: Mode,
+        call_us: u64,
+        frame_us: u64,
+        others_us: Vec<u64>,
+        extra: Vec<u64>,
+    ) {
         self.ops.clear();
         self.mode = mode;
         self.call_us = call_us;
@@ -478,7 +514,14 @@ impl Harness {
 
     /// The step marker (costs no time).
     pub fn step_marker(&mut self, index: i32, ty: &str) {
-        self.record(map(vec![("op", s("step")), ("index", i(index)), ("type", s(ty))]), false);
+        self.record(
+            map(vec![
+                ("op", s("step")),
+                ("index", i(index)),
+                ("type", s(ty)),
+            ]),
+            false,
+        );
     }
 
     pub fn set_disconnected(&mut self, d: bool) {
@@ -514,7 +557,11 @@ impl Harness {
         let skel = get(c, "skeleton");
         if let Value::Array(cats) = get(skel, "categories") {
             for m in cats {
-                let owner = if has(m, "owner_id") { as_uuid(get(m, "owner_id")) } else { self.agent_id };
+                let owner = if has(m, "owner_id") {
+                    as_uuid(get(m, "owner_id"))
+                } else {
+                    self.agent_id
+                };
                 let rec = CategoryRecord {
                     category: Category::new(
                         &as_uuid(get(m, "category_id")),
@@ -523,8 +570,16 @@ impl Harness {
                         &as_string(get(m, "name")),
                     ),
                     owner,
-                    version: if has(m, "version") { as_integer(get(m, "version")) } else { VERSION_UNKNOWN },
-                    descendents: if has(m, "descendents") { as_integer(get(m, "descendents")) } else { -1 },
+                    version: if has(m, "version") {
+                        as_integer(get(m, "version"))
+                    } else {
+                        VERSION_UNKNOWN
+                    },
+                    descendents: if has(m, "descendents") {
+                        as_integer(get(m, "descendents"))
+                    } else {
+                        -1
+                    },
                     requested: Some(FRESH_TIMER),
                 };
                 self.insert_cat(rec);
@@ -534,7 +589,11 @@ impl Harness {
             for m in items {
                 let mut rec = ItemRecord::default();
                 rec.item.from_llsd(m, true, false);
-                rec.complete = if has(m, "_complete") { as_boolean(get(m, "_complete")) } else { true };
+                rec.complete = if has(m, "_complete") {
+                    as_boolean(get(m, "_complete"))
+                } else {
+                    true
+                };
                 if has(m, "_transaction_id") {
                     rec.transaction_id = as_uuid(get(m, "_transaction_id"));
                 }
@@ -548,9 +607,23 @@ impl Harness {
     pub fn skeleton_dump(&self) -> Value {
         Value::Map(
             [
-                (b"categories".to_vec(), Value::Array(self.cats.values().map(|c| category_fields(&c.rec)).collect())),
-                (b"items".to_vec(), Value::Array(self.items.values().map(item_fields).collect())),
-                (b"changed_ids".to_vec(), Value::Array(self.changed.iter().map(id).collect())),
+                (
+                    b"categories".to_vec(),
+                    Value::Array(
+                        self.cats
+                            .values()
+                            .map(|c| category_fields(&c.rec))
+                            .collect(),
+                    ),
+                ),
+                (
+                    b"items".to_vec(),
+                    Value::Array(self.items.values().map(item_fields).collect()),
+                ),
+                (
+                    b"changed_ids".to_vec(),
+                    Value::Array(self.changed.iter().map(id).collect()),
+                ),
             ]
             .into_iter()
             .collect(),
@@ -562,20 +635,36 @@ impl Harness {
         if !self.cats.contains_key(cid) {
             return 0;
         }
-        let n = self.cats.values().filter(|c| c.rec.category.object.parent == *cid).count()
-            + self.items.values().filter(|i| i.item.object.parent == *cid).count();
+        let n = self
+            .cats
+            .values()
+            .filter(|c| c.rec.category.object.parent == *cid)
+            .count()
+            + self
+                .items
+                .values()
+                .filter(|i| i.item.object.parent == *cid)
+                .count();
         n as i32
     }
 
     fn remove_descendents(&mut self, cid: &Uuid) {
-        let sub: Vec<Uuid> =
-            self.cats.iter().filter(|(_, c)| c.rec.category.object.parent == *cid).map(|(k, _)| *k).collect();
+        let sub: Vec<Uuid> = self
+            .cats
+            .iter()
+            .filter(|(_, c)| c.rec.category.object.parent == *cid)
+            .map(|(k, _)| *k)
+            .collect();
         for s in &sub {
             self.remove_descendents(s);
             self.erase_cat(s);
         }
-        let items: Vec<Uuid> =
-            self.items.iter().filter(|(_, i)| i.item.object.parent == *cid).map(|(k, _)| *k).collect();
+        let items: Vec<Uuid> = self
+            .items
+            .iter()
+            .filter(|(_, i)| i.item.object.parent == *cid)
+            .map(|(k, _)| *k)
+            .collect();
         for s in &items {
             self.items.remove(s);
         }
@@ -586,7 +675,11 @@ impl Harness {
     fn q_get_item(&mut self, iid: &Uuid) -> Option<ItemRecord> {
         let item = self.items.get(iid).cloned();
         if self.recording() {
-            let mut op = map(vec![("op", s("q.getItem")), ("id", id(iid)), ("found", b(item.is_some()))]);
+            let mut op = map(vec![
+                ("op", s("q.getItem")),
+                ("id", id(iid)),
+                ("found", b(item.is_some())),
+            ]);
             if let Some(it) = &item {
                 set_key(&mut op, "obj", item_fields(it));
             }
@@ -598,7 +691,11 @@ impl Harness {
     fn q_get_category(&mut self, cid: &Uuid) -> Option<(u64, CategoryRecord)> {
         let cat = self.cats.get(cid).map(|c| (c.serial, c.rec.clone()));
         if self.recording() {
-            let mut op = map(vec![("op", s("q.getCategory")), ("id", id(cid)), ("found", b(cat.is_some()))]);
+            let mut op = map(vec![
+                ("op", s("q.getCategory")),
+                ("id", id(cid)),
+                ("found", b(cat.is_some())),
+            ]);
             if let Some((_, c)) = &cat {
                 set_key(&mut op, "obj", category_fields(c));
             }
@@ -608,14 +705,24 @@ impl Harness {
     }
 
     fn cat_by_serial(&self, serial: u64) -> Uuid {
-        *self.by_serial.get(&serial).expect("a model folder the update holds was deleted (a dangling pointer in C++)")
+        *self
+            .by_serial
+            .get(&serial)
+            .expect("a model folder the update holds was deleted (a dangling pointer in C++)")
     }
 
     /// `getVersion()` on a model folder.
     fn model_get_version(&mut self, cid: &Uuid) -> i32 {
         let v = self.cats[cid].rec.version;
         if self.recording() {
-            self.record(map(vec![("op", s("q.getVersion")), ("id", id(cid)), ("result", i(v))]), true);
+            self.record(
+                map(vec![
+                    ("op", s("q.getVersion")),
+                    ("id", id(cid)),
+                    ("result", i(v)),
+                ]),
+                true,
+            );
         }
         v
     }
@@ -625,7 +732,12 @@ impl Harness {
         let before = self.cats[cid].rec.version;
         if self.recording() {
             self.record(
-                map(vec![("op", s("setVersion")), ("id", id(cid)), ("version", i(v)), ("before", i(before))]),
+                map(vec![
+                    ("op", s("setVersion")),
+                    ("id", id(cid)),
+                    ("version", i(v)),
+                    ("before", i(before)),
+                ]),
                 true,
             );
         }
@@ -638,7 +750,11 @@ impl Harness {
         let t = timer_of(&c.requested);
         let would_start = c.version == VERSION_UNKNOWN && 0.0 >= t.expiry;
         if would_start {
-            c.requested = Some(FetchTimer { start_time: 0.0, expiry: f64::from(expiry as f32), started: true });
+            c.requested = Some(FetchTimer {
+                start_time: 0.0,
+                expiry: f64::from(expiry as f32),
+                started: true,
+            });
         }
         let version = c.version;
         if self.recording() {
@@ -672,7 +788,14 @@ impl Harness {
             }
         }
         if self.recording() {
-            self.record(map(vec![("op", s("q.findCategoryUUIDForType")), ("type", i(t.0)), ("result", id(&rv))]), true);
+            self.record(
+                map(vec![
+                    ("op", s("q.findCategoryUUIDForType")),
+                    ("type", i(t.0)),
+                    ("result", id(&rv)),
+                ]),
+                true,
+            );
         }
         rv
     }
@@ -702,7 +825,13 @@ impl Harness {
 
     fn notify_observers(&mut self) {
         if self.recording() {
-            self.record(map(vec![("op", s("notifyObservers")), ("changed", i(self.changed.len() as i32))]), true);
+            self.record(
+                map(vec![
+                    ("op", s("notifyObservers")),
+                    ("changed", i(self.changed.len() as i32)),
+                ]),
+                true,
+            );
         }
         self.changed.clear();
     }
@@ -715,7 +844,10 @@ impl Harness {
                 ("mask", i(mask as i32)),
                 ("obj", category_fields(cat)),
                 ("exists", b(self.cats.contains_key(&cid))),
-                ("parent_known", b(self.cats.contains_key(&cat.category.object.parent))),
+                (
+                    "parent_known",
+                    b(self.cats.contains_key(&cat.category.object.parent)),
+                ),
             ]);
             self.record(op, true);
         }
@@ -768,7 +900,10 @@ impl Harness {
                 ("mask", i(mask as i32)),
                 ("obj", item_fields(item)),
                 ("exists", b(self.items.contains_key(&iid))),
-                ("parent_known", b(self.cats.contains_key(&item.item.object.parent))),
+                (
+                    "parent_known",
+                    b(self.cats.contains_key(&item.item.object.parent)),
+                ),
             ]);
             self.record(op, true);
         }
@@ -795,7 +930,10 @@ impl Harness {
                     }
                     update_parent_on_server = true;
                 }
-                if update_parent_on_server && old_parent != new_parent && self.cats.contains_key(&new_parent) {
+                if update_parent_on_server
+                    && old_parent != new_parent
+                    && self.cats.contains_key(&new_parent)
+                {
                     self.account_for_update(&new_parent, 1, true);
                 }
                 if old_parent != new_parent {
@@ -881,7 +1019,16 @@ impl Harness {
                 ("fix_broken_links", b(fix_broken_links)),
                 ("update_parent_version", b(update_parent_version)),
                 ("do_notify_observers", b(notify)),
-                ("exists", s(if is_cat { "category" } else if is_item { "item" } else { "none" })),
+                (
+                    "exists",
+                    s(if is_cat {
+                        "category"
+                    } else if is_item {
+                        "item"
+                    } else {
+                        "none"
+                    }),
+                ),
             ]);
             self.record(op, true);
         }
@@ -889,8 +1036,11 @@ impl Harness {
             return;
         }
         self.internal += 1;
-        let parent =
-            if is_cat { self.cats[oid].rec.category.object.parent } else { self.items[oid].item.object.parent };
+        let parent = if is_cat {
+            self.cats[oid].rec.category.object.parent
+        } else {
+            self.items[oid].item.object.parent
+        };
         if is_cat {
             self.remove_descendents(oid);
         }
@@ -912,7 +1062,10 @@ impl Harness {
         let record_it = self.recording();
         let op_index = self.ops.len();
         if record_it {
-            self.record(map(vec![("op", s("fetchDescendentsOf")), ("id", id(folder))]), true);
+            self.record(
+                map(vec![("op", s("fetchDescendentsOf")), ("id", id(folder))]),
+                true,
+            );
         }
         self.internal += 1;
         let mut rv = false;
@@ -982,7 +1135,9 @@ impl Harness {
             self.record(op, true);
         }
         let (agent, session) = (self.agent_id, self.session_id);
-        let body = self.messages.move_inventory_item(&agent, &session, restamp, &o.id, &o.parent);
+        let body = self
+            .messages
+            .move_inventory_item(&agent, &session, restamp, &o.id, &o.parent);
         let op = map(vec![
             ("op", s("msg.send")),
             ("reliable", b(true)),
@@ -1076,7 +1231,11 @@ impl Harness {
     /// `llcoro::suspendUntilNextFrame()`.
     fn suspend_until_next_frame(&mut self) {
         let k = self.yields;
-        let other = if self.others_us.is_empty() { 0 } else { self.others_us[k % self.others_us.len()] };
+        let other = if self.others_us.is_empty() {
+            0
+        } else {
+            self.others_us[k % self.others_us.len()]
+        };
         let extra = self.yield_extra_us.get(k).copied().unwrap_or(0);
         let mut op = map(vec![
             ("op", s("yield")),
@@ -1113,7 +1272,13 @@ impl Harness {
     fn check_stop(&mut self) -> Result<(), Stopped> {
         if self.stop_armed && self.nest == 0 {
             self.stop_armed = false;
-            self.record(map(vec![("op", s("checkStop")), ("throws", s("LLCoros::Stopping"))]), false);
+            self.record(
+                map(vec![
+                    ("op", s("checkStop")),
+                    ("throws", s("LLCoros::Stopping")),
+                ]),
+                false,
+            );
             self.stop_dump = to_binary(&self.skeleton_dump());
             self.stop_op_index = self.ops.len();
             return Err(Stopped);
@@ -1138,8 +1303,13 @@ impl Harness {
     fn run_actions(&mut self, hook: &Value, at: &str, index: i32) {
         let outer = self.phase;
         self.phase = Phase::Harness;
-        self.record(map(vec![("op", s("hook")), ("at", s(at)), ("index", i(index))]), false);
-        let Value::Array(actions) = get(hook, "actions") else { panic!("hook without actions") };
+        self.record(
+            map(vec![("op", s("hook")), ("at", s(at)), ("index", i(index))]),
+            false,
+        );
+        let Value::Array(actions) = get(hook, "actions") else {
+            panic!("hook without actions")
+        };
         for a in actions {
             if has(a, "set_category") {
                 let m = get(a, "set_category");
@@ -1231,9 +1401,14 @@ impl Harness {
         let r = if has(step, "call") {
             self.call_command(step, result)
         } else {
-            let command = CommandType::from_name(&String::from_utf8_lossy(&as_string(get(step, "type"))))
-                .expect("a command type");
-            let with_callback = if has(step, "callback") { as_boolean(get(step, "callback")) } else { true };
+            let command =
+                CommandType::from_name(&String::from_utf8_lossy(&as_string(get(step, "type"))))
+                    .expect("a command type");
+            let with_callback = if has(step, "callback") {
+                as_boolean(get(step, "callback"))
+            } else {
+                true
+            };
             self.coroutine(
                 command,
                 &as_uuid(get(step, "target_id")),
@@ -1308,17 +1483,29 @@ impl Harness {
         self.phase = Phase::ErrorBranch;
         {
             let mut task = Timer::default();
-            let mut host = Host { h: self, task: &mut task, stopped: false };
+            let mut host = Host {
+                h: self,
+                task: &mut task,
+                stopped: false,
+            };
             error_branch(&ctx, &result, status, &mut alert, &mut host);
         }
         self.alert = alert;
 
         // onUpdateReceived: AISUpdate(result, type, body), then doUpdate().
         let mut task = Timer::default();
-        let pctx = ParseContext { command, agent_id: self.agent_id, in_open_sim: false };
+        let pctx = ParseContext {
+            command,
+            agent_id: self.agent_id,
+            in_open_sim: false,
+        };
         self.phase = Phase::Parse;
         let parsed = {
-            let mut host = Host { h: self, task: &mut task, stopped: false };
+            let mut host = Host {
+                h: self,
+                task: &mut task,
+                stopped: false,
+            };
             let p = ParsedUpdate::parse(&result, &ctx.body, &pctx, &mut host);
             if host.stopped || p.stopped {
                 return Err(Stopped);
@@ -1368,7 +1555,9 @@ impl Harness {
                         self.account_for_update(&category, delta, false);
                     }
                 }
-                ApplyOp::CreateCategory { record } => self.update_category(&cats[record].clone(), 512),
+                ApplyOp::CreateCategory { record } => {
+                    self.update_category(&cats[record].clone(), 512)
+                }
                 ApplyOp::FlushBacklog => {
                     if self.changed.len() > MAX_UPDATE_BACKLOG {
                         self.notify_observers();
@@ -1395,9 +1584,13 @@ impl Harness {
                 }
                 ApplyOp::CreateItem { record } => self.update_item(&items[record].clone(), 512),
                 ApplyOp::UpdateItem { record } => self.update_item(&items[record].clone(), 0),
-                ApplyOp::DeleteObject { id } => self.on_object_deleted_from_server(&id, false, false, false),
+                ApplyOp::DeleteObject { id } => {
+                    self.on_object_deleted_from_server(&id, false, false, false)
+                }
                 ApplyOp::VersionUpdate { category, version } => {
-                    if self.q_get_category(&category).is_some() && self.model_get_version(&category) != version {
+                    if self.q_get_category(&category).is_some()
+                        && self.model_get_version(&category) != version
+                    {
                         if version != VERSION_UNKNOWN {
                             if self.model_get_version(&category) == VERSION_UNKNOWN
                                 || version > self.model_get_version(&category)
@@ -1423,13 +1616,27 @@ impl Harness {
             "LibraryAPIv3" => self.lib_cap.clone(),
             _ => String::new(),
         };
-        self.record(map(vec![("op", s("q.getCapability")), ("name", s(name)), ("result", s(&url))]), true);
+        self.record(
+            map(vec![
+                ("op", s("q.getCapability")),
+                ("name", s(name)),
+                ("result", s(&url)),
+            ]),
+            true,
+        );
         url
     }
 
     fn count_pending(&mut self) -> i32 {
         let p = self.pending;
-        self.record(map(vec![("op", s("q.countPending")), ("pool", s("AIS")), ("result", i(p))]), true);
+        self.record(
+            map(vec![
+                ("op", s("q.countPending")),
+                ("pool", s("AIS")),
+                ("result", i(p)),
+            ]),
+            true,
+        );
         p
     }
 
@@ -1455,7 +1662,11 @@ impl Harness {
         let caps = get(step, "caps");
         self.has_region = !as_boolean(get(step, "no_region"));
         let cap = |k: &str| {
-            if has(caps, k) { String::from_utf8(as_string(get(caps, k))).unwrap() } else { String::new() }
+            if has(caps, k) {
+                String::from_utf8(as_string(get(caps, k))).unwrap()
+            } else {
+                String::new()
+            }
         };
         self.inv_cap = cap("inv");
         self.lib_cap = cap("lib");
@@ -1463,7 +1674,11 @@ impl Harness {
         self.next_result = result.clone();
         let args = get(step, "args");
         let name = String::from_utf8(as_string(get(step, "call"))).unwrap();
-        let with_callback = if has(step, "callback") { as_boolean(get(step, "callback")) } else { true };
+        let with_callback = if has(step, "callback") {
+            as_boolean(get(step, "callback"))
+        } else {
+            true
+        };
         let uid = |k: &str| as_uuid(get(args, k));
         let library = String::from_utf8_lossy(&as_string(get(args, "item_type"))) == "LIBRARY";
         let recursive = as_boolean(get(args, "recursive"));
@@ -1486,39 +1701,67 @@ impl Harness {
             }),
             "SlamFolder" => {
                 let new_inventory = get(args, "new_inventory").clone();
-                Some(Command::SlamFolder { folder_id: uid("folder_id"), new_inventory })
+                Some(Command::SlamFolder {
+                    folder_id: uid("folder_id"),
+                    new_inventory,
+                })
             }
-            "RemoveCategory" => Some(Command::RemoveCategory { category_id: uid("category_id") }),
-            "RemoveItem" => Some(Command::RemoveItem { item_id: uid("item_id") }),
-            "PurgeDescendents" => Some(Command::PurgeDescendents { category_id: uid("category_id") }),
-            "UpdateCategory" => {
-                Some(Command::UpdateCategory { category_id: uid("category_id"), updates: get(args, "updates").clone() })
-            }
-            "UpdateItem" => {
-                Some(Command::UpdateItem { item_id: uid("item_id"), updates: get(args, "updates").clone() })
-            }
-            "FetchItem" => Some(Command::FetchItem { item_id: uid("item_id"), library }),
-            "FetchCategoryChildren" => {
-                Some(Command::FetchCategoryChildren { category_id: uid("category_id"), library, recursive, depth })
-            }
+            "RemoveCategory" => Some(Command::RemoveCategory {
+                category_id: uid("category_id"),
+            }),
+            "RemoveItem" => Some(Command::RemoveItem {
+                item_id: uid("item_id"),
+            }),
+            "PurgeDescendents" => Some(Command::PurgeDescendents {
+                category_id: uid("category_id"),
+            }),
+            "UpdateCategory" => Some(Command::UpdateCategory {
+                category_id: uid("category_id"),
+                updates: get(args, "updates").clone(),
+            }),
+            "UpdateItem" => Some(Command::UpdateItem {
+                item_id: uid("item_id"),
+                updates: get(args, "updates").clone(),
+            }),
+            "FetchItem" => Some(Command::FetchItem {
+                item_id: uid("item_id"),
+                library,
+            }),
+            "FetchCategoryChildren" => Some(Command::FetchCategoryChildren {
+                category_id: uid("category_id"),
+                library,
+                recursive,
+                depth,
+            }),
             "FetchCategoryChildrenByName" => Some(Command::FetchCategoryChildrenByName {
                 identifier: String::from_utf8(as_string(get(args, "identifier"))).unwrap(),
                 recursive,
                 depth,
             }),
-            "FetchCategoryCategories" => {
-                Some(Command::FetchCategoryCategories { category_id: uid("category_id"), library, recursive, depth })
-            }
+            "FetchCategoryCategories" => Some(Command::FetchCategoryCategories {
+                category_id: uid("category_id"),
+                library,
+                recursive,
+                depth,
+            }),
             "FetchCategorySubset" => {
                 let children = match get(args, "children") {
                     Value::Array(a) => a.iter().map(as_uuid).collect(),
                     _ => Vec::new(),
                 };
                 let category_id = uid("category_id");
-                Some(Command::FetchCategorySubset { category_id, children, library, recursive, depth })
+                Some(Command::FetchCategorySubset {
+                    category_id,
+                    children,
+                    library,
+                    recursive,
+                    depth,
+                })
             }
             "FetchCOF" => Some(Command::FetchCof),
-            "FetchCategoryLinks" => Some(Command::FetchCategoryLinks { category_id: uid("category_id") }),
+            "FetchCategoryLinks" => Some(Command::FetchCategoryLinks {
+                category_id: uid("category_id"),
+            }),
             "FetchOrphans" => Some(Command::FetchOrphans),
             "CopyLibraryCategory" => Some(Command::CopyLibraryCategory {
                 source_id: uid("source_id"),
@@ -1530,7 +1773,11 @@ impl Harness {
         let mut r = Ok(());
         if let Some(command) = command {
             // getInvCap() / getLibCap(): empty without a region.
-            let cap = if self.has_region { self.get_capability(command.cap().cap_name()) } else { String::new() };
+            let cap = if self.has_region {
+                self.get_capability(command.cap().cap_name())
+            } else {
+                String::new()
+            };
             let tid = self.generate_tid();
             match command.build(&cap, &tid) {
                 Err(_) => {
@@ -1576,7 +1823,11 @@ impl Harness {
             if self.postponed.is_empty() {
                 self.idle_registered = true;
             }
-            self.postponed.push_back(Postponed { name, req, with_callback });
+            self.postponed.push_back(Postponed {
+                name,
+                req,
+                with_callback,
+            });
             Ok(())
         }
     }
@@ -1599,8 +1850,20 @@ impl Harness {
     }
 
     /// The recording pool's `enqueueCoprocedure`: recorded, run at once.
-    fn enqueue_coprocedure(&mut self, name: &str, req: Request, with_callback: bool) -> Result<(), Stopped> {
-        self.record(map(vec![("op", s("enqueue")), ("pool", s("AIS")), ("name", s(name))]), true);
+    fn enqueue_coprocedure(
+        &mut self,
+        name: &str,
+        req: Request,
+        with_callback: bool,
+    ) -> Result<(), Stopped> {
+        self.record(
+            map(vec![
+                ("op", s("enqueue")),
+                ("pool", s("AIS")),
+                ("name", s(name)),
+            ]),
+            true,
+        );
         let (command, target, body) = (req.command, req.target_id, req.body.clone());
         self.coroutine(command, &target, &body, with_callback, Invoke::Http(req))
     }
@@ -1611,18 +1874,26 @@ impl Harness {
         let mut op = map(vec![("op", s("http")), ("method", s(req.method.name()))]);
         if let Some(p) = url.find("?tid=") {
             let tid: String = url[p + 5..].chars().take(36).collect();
-            let ok = tid.len() == 36 && tid.as_bytes()[8] == b'-' && tid != "00000000-0000-0000-0000-000000000000"
+            let ok = tid.len() == 36
+                && tid.as_bytes()[8] == b'-'
+                && tid != "00000000-0000-0000-0000-000000000000"
                 && self.tids.insert(tid.clone());
             set_key(&mut op, "tid_ok", b(ok));
             if !ok {
-                self.tid_failures.push(format!("case {}: tid '{tid}' is malformed, null or reused", self.case_id));
+                self.tid_failures.push(format!(
+                    "case {}: tid '{tid}' is malformed, null or reused",
+                    self.case_id
+                ));
                 set_key(&mut op, "tid", s(&tid));
             }
             url.replace_range(p + 5..p + 5 + tid.len(), "<tid>");
         }
         set_key(&mut op, "url", s(&url));
         if let Some(body) = &req.http_body {
-            debug_assert!(matches!(req.method, Method::Post | Method::Put | Method::Patch));
+            debug_assert!(matches!(
+                req.method,
+                Method::Post | Method::Put | Method::Patch
+            ));
             set_key(&mut op, "body", body.clone());
         }
         if let Some(d) = &req.destination {
@@ -1667,7 +1938,12 @@ struct Host<'a> {
 
 impl Model for Host<'_> {
     fn get_category(&mut self, cid: &Uuid) -> Option<ModelCategory> {
-        self.h.q_get_category(cid).map(|(serial, record)| ModelCategory { handle: ModelRef(serial), record })
+        self.h
+            .q_get_category(cid)
+            .map(|(serial, record)| ModelCategory {
+                handle: ModelRef(serial),
+                record,
+            })
     }
 
     fn get_item(&mut self, iid: &Uuid) -> Option<ItemRecord> {
@@ -1693,12 +1969,20 @@ impl Model for Host<'_> {
         self.h.fetch_descendents_of(folder_id)
     }
 
-    fn on_object_deleted_from_server(&mut self, oid: &Uuid, fix: bool, update_parent: bool, notify: bool) {
-        self.h.on_object_deleted_from_server(oid, fix, update_parent, notify);
+    fn on_object_deleted_from_server(
+        &mut self,
+        oid: &Uuid,
+        fix: bool,
+        update_parent: bool,
+        notify: bool,
+    ) {
+        self.h
+            .on_object_deleted_from_server(oid, fix, update_parent, notify);
     }
 
     fn notify(&mut self, name: &'static str) {
-        self.h.record(map(vec![("op", s("notify")), ("name", s(name))]), true);
+        self.h
+            .record(map(vec![("op", s("notify")), ("name", s(name))]), true);
     }
 
     fn begin_update(&mut self) {

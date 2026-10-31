@@ -11,20 +11,33 @@
 //! callbacks (the texture fetch host table, the log) must not throw.
 
 use std::ffi::{c_char, c_void};
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::slice;
 use std::sync::Mutex;
 
-use vkstorm_assets::asset::{self, RequestKey, ToxicMap, Verdict};
-use vkstorm_assets::diskcache::{self, file as dfile, DiskCache};
-use vkstorm_assets::fetch::{budget, plan, retry::AdaptiveRetryPolicy, Env, FetchType, Fetcher, Host, HttpGet, Region, Release, State, Worker};
-use vkstorm_assets::host::{LogLevel, set_logger};
-use vkstorm_assets::mesh::{self, header::{MeshHeader, NUM_LODS}, plan as mplan, skin::{Decomposition, SkinInfo}, unpack::Face};
-use vkstorm_assets::texcache::{self, Config, FastEntry, Paths, TextureCache};
 use vkstorm_assets::Uuid;
+use vkstorm_assets::asset::{self, RequestKey, ToxicMap, Verdict};
+use vkstorm_assets::diskcache::{self, DiskCache, file as dfile};
+use vkstorm_assets::fetch::{
+    Env, FetchType, Fetcher, Host, HttpGet, Region, Release, State, Worker, budget, plan,
+    retry::AdaptiveRetryPolicy,
+};
+use vkstorm_assets::host::{LogLevel, set_logger};
+use vkstorm_assets::mesh::{
+    self,
+    header::{MeshHeader, NUM_LODS},
+    plan as mplan,
+    skin::{Decomposition, SkinInfo},
+    unpack::Face,
+};
+use vkstorm_assets::texcache::{self, Config, FastEntry, Paths, TextureCache};
 
 unsafe fn bytes<'a>(p: *const u8, len: usize) -> &'a [u8] {
-    if p.is_null() || len == 0 { &[] } else { unsafe { slice::from_raw_parts(p, len) } }
+    if p.is_null() || len == 0 {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(p, len) }
+    }
 }
 
 unsafe fn str_arg<'a>(p: *const c_char, len: usize) -> &'a str {
@@ -65,7 +78,9 @@ pub extern "C" fn vks_assets_set_log(f: Option<unsafe extern "C" fn(i32, *const 
         unsafe impl Send for SendFn {}
         unsafe impl Sync for SendFn {}
         let f = SendFn(f);
-        set_logger(Box::new(move |level: LogLevel, msg: &str| unsafe { (f.0)(level as i32, msg.as_ptr() as *const c_char, msg.len()) }));
+        set_logger(Box::new(move |level: LogLevel, msg: &str| unsafe {
+            (f.0)(level as i32, msg.as_ptr() as *const c_char, msg.len())
+        }));
     }
 }
 
@@ -101,7 +116,12 @@ unsafe fn paths_arg(p: *const VksTexCachePaths) -> Paths {
 /// # Safety
 /// `encoder` must point to `encoder_len` bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_texcache_new(encoder: *const c_char, encoder_len: usize, address_size: u32, clock: Option<extern "C" fn() -> u32>) -> *mut VksTexCache {
+pub unsafe extern "C" fn vks_texcache_new(
+    encoder: *const c_char,
+    encoder_len: usize,
+    address_size: u32,
+    clock: Option<extern "C" fn() -> u32>,
+) -> *mut VksTexCache {
     let encoder = unsafe { str_arg(encoder, encoder_len) }.to_owned();
     let r = catch_unwind(AssertUnwindSafe(|| {
         let mut config = Config::new(&encoder, address_size);
@@ -176,7 +196,14 @@ cache_fn!(vks_texcache_texture_file_name, |c, id: *const u8, buf: *mut c_char, c
 /// # Safety
 /// `buf` must be writable for `size` bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_texcache_read(c: *mut VksTexCache, id: *const u8, offset: i32, size: i32, buf: *mut u8, image_size: *mut i32) -> i32 {
+pub unsafe extern "C" fn vks_texcache_read(
+    c: *mut VksTexCache,
+    id: *const u8,
+    offset: i32,
+    size: i32,
+    buf: *mut u8,
+    image_size: *mut i32,
+) -> i32 {
     if c.is_null() || buf.is_null() || size < 0 {
         return -1;
     }
@@ -218,7 +245,15 @@ pub extern "C" fn vks_texcache_fast_level(width: i32, height: i32, components: i
 /// # Safety
 /// `data` must point to `len` bytes; `fast` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_texcache_write(c: *mut VksTexCache, id: *const u8, data: *const u8, len: usize, image_size: i32, discard_level: i32, fast: *const VksFastEntry) -> i32 {
+pub unsafe extern "C" fn vks_texcache_write(
+    c: *mut VksTexCache,
+    id: *const u8,
+    data: *const u8,
+    len: usize,
+    image_size: i32,
+    discard_level: i32,
+    fast: *const VksFastEntry,
+) -> i32 {
     if c.is_null() || fast.is_null() {
         return 0;
     }
@@ -233,7 +268,10 @@ pub unsafe extern "C" fn vks_texcache_write(c: *mut VksTexCache, id: *const u8, 
         discard_level: f.discard_level,
         data: unsafe { bytes(f.data, f.data_len) }.to_vec(),
     };
-    catch_unwind(AssertUnwindSafe(|| cache.write(&id, data, image_size, discard_level, &fast) as i32)).unwrap_or(0)
+    catch_unwind(AssertUnwindSafe(|| {
+        cache.write(&id, data, image_size, discard_level, &fast) as i32
+    }))
+    .unwrap_or(0)
 }
 
 /// `readFromFastCache`: fills the head fields and copies the pixels into
@@ -242,7 +280,15 @@ pub unsafe extern "C" fn vks_texcache_write(c: *mut VksTexCache, id: *const u8, 
 /// # Safety
 /// `data` must be writable for 1024 bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_texcache_read_fast(c: *mut VksTexCache, id: *const u8, width: *mut i32, height: *mut i32, components: *mut i32, discard_level: *mut i32, data: *mut u8) -> i32 {
+pub unsafe extern "C" fn vks_texcache_read_fast(
+    c: *mut VksTexCache,
+    id: *const u8,
+    width: *mut i32,
+    height: *mut i32,
+    components: *mut i32,
+    discard_level: *mut i32,
+    data: *mut u8,
+) -> i32 {
     if c.is_null() || data.is_null() {
         return 0;
     }
@@ -251,10 +297,18 @@ pub unsafe extern "C" fn vks_texcache_read_fast(c: *mut VksTexCache, id: *const 
     match catch_unwind(AssertUnwindSafe(|| cache.read_fast(&id))) {
         Ok(Some(r)) => {
             unsafe {
-                if !width.is_null() { *width = r.width; }
-                if !height.is_null() { *height = r.height; }
-                if !components.is_null() { *components = r.components; }
-                if !discard_level.is_null() { *discard_level = r.discard_level; }
+                if !width.is_null() {
+                    *width = r.width;
+                }
+                if !height.is_null() {
+                    *height = r.height;
+                }
+                if !components.is_null() {
+                    *components = r.components;
+                }
+                if !discard_level.is_null() {
+                    *discard_level = r.discard_level;
+                }
                 let n = r.data.len().min(texcache::FAST_DATA_SIZE as usize);
                 std::ptr::copy_nonoverlapping(r.data.as_ptr(), data, n);
             }
@@ -274,7 +328,15 @@ pub unsafe extern "C" fn vks_texcache_read_fast(c: *mut VksTexCache, id: *const 
 /// # Safety
 /// `data` must be writable for 1024 bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_texcache_try_read_fast(c: *mut VksTexCache, id: *const u8, width: *mut i32, height: *mut i32, components: *mut i32, discard_level: *mut i32, data: *mut u8) -> i32 {
+pub unsafe extern "C" fn vks_texcache_try_read_fast(
+    c: *mut VksTexCache,
+    id: *const u8,
+    width: *mut i32,
+    height: *mut i32,
+    components: *mut i32,
+    discard_level: *mut i32,
+    data: *mut u8,
+) -> i32 {
     if c.is_null() || data.is_null() {
         return 0;
     }
@@ -283,10 +345,18 @@ pub unsafe extern "C" fn vks_texcache_try_read_fast(c: *mut VksTexCache, id: *co
     match catch_unwind(AssertUnwindSafe(|| cache.try_read_fast(&id))) {
         Ok(texcache::FastRead::Hit(r)) => {
             unsafe {
-                if !width.is_null() { *width = r.width; }
-                if !height.is_null() { *height = r.height; }
-                if !components.is_null() { *components = r.components; }
-                if !discard_level.is_null() { *discard_level = r.discard_level; }
+                if !width.is_null() {
+                    *width = r.width;
+                }
+                if !height.is_null() {
+                    *height = r.height;
+                }
+                if !components.is_null() {
+                    *components = r.components;
+                }
+                if !discard_level.is_null() {
+                    *discard_level = r.discard_level;
+                }
                 let n = r.data.len().min(texcache::FAST_DATA_SIZE as usize);
                 std::ptr::copy_nonoverlapping(r.data.as_ptr(), data, n);
             }
@@ -315,7 +385,13 @@ pub unsafe extern "C" fn vks_file_size(path: *const c_char, len: usize) -> i32 {
 /// # Safety
 /// `buf` must be writable for `cap` bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_file_read_at(path: *const c_char, len: usize, offset: i64, buf: *mut u8, cap: usize) -> i32 {
+pub unsafe extern "C" fn vks_file_read_at(
+    path: *const c_char,
+    len: usize,
+    offset: i64,
+    buf: *mut u8,
+    cap: usize,
+) -> i32 {
     if buf.is_null() {
         return 0;
     }
@@ -350,13 +426,22 @@ pub unsafe extern "C" fn vks_asset_file_size(path: *const c_char, len: usize) ->
 /// # Safety
 /// `buf` must be writable for `cap` bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_asset_file_read(path: *const c_char, len: usize, position: i32, buf: *mut u8, cap: usize) -> i32 {
+pub unsafe extern "C" fn vks_asset_file_read(
+    path: *const c_char,
+    len: usize,
+    position: i32,
+    buf: *mut u8,
+    cap: usize,
+) -> i32 {
     if buf.is_null() {
         return -1;
     }
     let p = unsafe { str_arg(path, len) };
     let b = unsafe { slice::from_raw_parts_mut(buf, cap) };
-    catch_unwind(AssertUnwindSafe(|| dfile::read_at(p, position, b).unwrap_or(-1))).unwrap_or(-1)
+    catch_unwind(AssertUnwindSafe(|| {
+        dfile::read_at(p, position, b).unwrap_or(-1)
+    }))
+    .unwrap_or(-1)
 }
 
 /// `LLFileSystem::write` in `mode` (1 read, 2 write, 3 read-write, 6
@@ -365,10 +450,20 @@ pub unsafe extern "C" fn vks_asset_file_read(path: *const c_char, len: usize, po
 /// # Safety
 /// `data` must point to `data_len` bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_asset_file_write(path: *const c_char, len: usize, mode: i32, position: i32, data: *const u8, data_len: usize) -> i32 {
+pub unsafe extern "C" fn vks_asset_file_write(
+    path: *const c_char,
+    len: usize,
+    mode: i32,
+    position: i32,
+    data: *const u8,
+    data_len: usize,
+) -> i32 {
     let p = unsafe { str_arg(path, len) };
     let d = unsafe { bytes(data, data_len) };
-    catch_unwind(AssertUnwindSafe(|| dfile::write_at(p, dfile::Mode::from_i32(mode), position, d).unwrap_or(-1))).unwrap_or(-1)
+    catch_unwind(AssertUnwindSafe(|| {
+        dfile::write_at(p, dfile::Mode::from_i32(mode), position, d).unwrap_or(-1)
+    }))
+    .unwrap_or(-1)
 }
 
 /// `LLFileSystem::seek`'s arithmetic: writes the new position; returns 1
@@ -377,7 +472,13 @@ pub unsafe extern "C" fn vks_asset_file_write(path: *const c_char, len: usize, m
 /// # Safety
 /// `new_position` must be a valid pointer.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_asset_file_seek(position: i32, offset: i32, origin: i32, size: i32, new_position: *mut i32) -> i32 {
+pub unsafe extern "C" fn vks_asset_file_seek(
+    position: i32,
+    offset: i32,
+    origin: i32,
+    size: i32,
+    new_position: *mut i32,
+) -> i32 {
     let (ok, pos) = match dfile::seek_position(position, offset, origin, size) {
         Ok(p) => (1, p),
         Err(p) => (0, p),
@@ -403,7 +504,12 @@ pub unsafe extern "C" fn vks_asset_file_remove(path: *const c_char, len: usize) 
 /// # Safety
 /// Both paths must point to their lengths.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_asset_file_rename(from: *const c_char, from_len: usize, to: *const c_char, to_len: usize) -> i32 {
+pub unsafe extern "C" fn vks_asset_file_rename(
+    from: *const c_char,
+    from_len: usize,
+    to: *const c_char,
+    to_len: usize,
+) -> i32 {
     let f = unsafe { str_arg(from, from_len) };
     let t = unsafe { str_arg(to, to_len) };
     catch_unwind(AssertUnwindSafe(|| dfile::rename_file(f, t) as i32)).unwrap_or(0)
@@ -425,7 +531,13 @@ pub unsafe extern "C" fn vks_asset_file_touch(path: *const c_char, len: usize) {
 /// # Safety
 /// `buf` must be writable for `cap` bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_lfs_read(path: *const c_char, len: usize, offset: i32, buf: *mut u8, cap: usize) -> i32 {
+pub unsafe extern "C" fn vks_lfs_read(
+    path: *const c_char,
+    len: usize,
+    offset: i32,
+    buf: *mut u8,
+    cap: usize,
+) -> i32 {
     if buf.is_null() {
         return 0;
     }
@@ -439,7 +551,13 @@ pub unsafe extern "C" fn vks_lfs_read(path: *const c_char, len: usize, offset: i
 /// # Safety
 /// `data` must point to `data_len` bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_lfs_write(path: *const c_char, len: usize, offset: i32, data: *const u8, data_len: usize) -> i32 {
+pub unsafe extern "C" fn vks_lfs_write(
+    path: *const c_char,
+    len: usize,
+    offset: i32,
+    data: *const u8,
+    data_len: usize,
+) -> i32 {
     let p = unsafe { str_arg(path, len) };
     let d = unsafe { bytes(data, data_len) };
     catch_unwind(AssertUnwindSafe(|| dfile::lfs_write(p, offset, d))).unwrap_or(0)
@@ -525,7 +643,8 @@ pub struct VksTexFetchHost {
     pub reset_formatted_data: Option<unsafe extern "C" fn(*mut c_void)>,
     pub drop_formatted_image: Option<unsafe extern "C" fn(*mut c_void)>,
     pub release_http_buffer: Option<unsafe extern "C" fn(*mut c_void)>,
-    pub assemble_http_reply: Option<unsafe extern "C" fn(*mut c_void, *const c_char, usize, i32, i32, i32, i32) -> i32>,
+    pub assemble_http_reply:
+        Option<unsafe extern "C" fn(*mut c_void, *const c_char, usize, i32, i32, i32, i32) -> i32>,
     pub add_to_http_queue: Option<unsafe extern "C" fn(*mut c_void)>,
     pub record_texture_start: Option<unsafe extern "C" fn(*mut c_void, i32)>,
     pub record_texture_done: Option<unsafe extern "C" fn(*mut c_void, i32, f64)>,
@@ -570,7 +689,14 @@ impl Host for CHost {
         }
     }
     fn region(&mut self) -> Option<Region> {
-        let mut r = VksTexFetchRegion { present: 0, id: [0; 16], viewer_asset_url: std::ptr::null(), viewer_asset_url_len: 0, http_url: std::ptr::null(), http_url_len: 0 };
+        let mut r = VksTexFetchRegion {
+            present: 0,
+            id: [0; 16],
+            viewer_asset_url: std::ptr::null(),
+            viewer_asset_url_len: 0,
+            http_url: std::ptr::null(),
+            http_url_len: 0,
+        };
         if let Some(f) = self.0.region {
             unsafe { f(self.0.ctx, &mut r) };
         }
@@ -579,23 +705,37 @@ impl Host for CHost {
         }
         Some(Region {
             id: r.id,
-            viewer_asset_url: unsafe { str_arg(r.viewer_asset_url, r.viewer_asset_url_len) }.to_owned(),
+            viewer_asset_url: unsafe { str_arg(r.viewer_asset_url, r.viewer_asset_url_len) }
+                .to_owned(),
             http_url: unsafe { str_arg(r.http_url, r.http_url_len) }.to_owned(),
         })
     }
     fn read_cache(&mut self, local_file: Option<&str>, offset: i32, size: i32) {
         if let Some(f) = self.0.read_cache {
             match local_file {
-                Some(name) => unsafe { f(self.0.ctx, name.as_ptr() as *const c_char, name.len(), offset, size) },
+                Some(name) => unsafe {
+                    f(
+                        self.0.ctx,
+                        name.as_ptr() as *const c_char,
+                        name.len(),
+                        offset,
+                        size,
+                    )
+                },
                 None => unsafe { f(self.0.ctx, std::ptr::null(), 0, offset, size) },
             }
         }
     }
     fn cache_read_complete(&mut self) -> bool {
-        self.0.cache_read_complete.map(|f| unsafe { f(self.0.ctx) } != 0).unwrap_or(true)
+        self.0
+            .cache_read_complete
+            .map(|f| unsafe { f(self.0.ctx) } != 0)
+            .unwrap_or(true)
     }
     fn send_http(&mut self, get: &HttpGet) -> bool {
-        let Some(f) = self.0.send_http else { return false };
+        let Some(f) = self.0.send_http else {
+            return false;
+        };
         let g = VksTexFetchHttpGet {
             url: get.url.as_ptr() as *const c_char,
             url_len: get.url.len(),
@@ -612,7 +752,10 @@ impl Host for CHost {
         }
     }
     fn decode(&mut self, discard: i32, needs_aux: bool) -> u32 {
-        self.0.decode.map(|f| unsafe { f(self.0.ctx, discard, needs_aux as i32) }).unwrap_or(0)
+        self.0
+            .decode
+            .map(|f| unsafe { f(self.0.ctx, discard, needs_aux as i32) })
+            .unwrap_or(0)
     }
     fn write_cache(&mut self, file_size: i32, decoded_discard: i32) {
         if let Some(f) = self.0.write_cache {
@@ -620,7 +763,10 @@ impl Host for CHost {
         }
     }
     fn cache_write_complete(&mut self) -> bool {
-        self.0.cache_write_complete.map(|f| unsafe { f(self.0.ctx) } != 0).unwrap_or(true)
+        self.0
+            .cache_write_complete
+            .map(|f| unsafe { f(self.0.ctx) } != 0)
+            .unwrap_or(true)
     }
     fn prioritize_write(&mut self) {
         if let Some(f) = self.0.prioritize_write {
@@ -647,7 +793,14 @@ impl Host for CHost {
             unsafe { f(self.0.ctx) };
         }
     }
-    fn assemble_http_reply(&mut self, url: &str, src_offset: i32, cur_size: i32, append_size: i32, total_size: i32) -> bool {
+    fn assemble_http_reply(
+        &mut self,
+        url: &str,
+        src_offset: i32,
+        cur_size: i32,
+        append_size: i32,
+        total_size: i32,
+    ) -> bool {
         self.0
             .assemble_http_reply
             .map(|f| unsafe { f(self.0.ctx, url.as_ptr() as *const c_char, url.len(), src_offset, cur_size, append_size, total_size) } != 0)
@@ -685,7 +838,15 @@ impl Host for CHost {
     }
     fn log(&mut self, level: i32, once: bool, msg: &str) {
         if let Some(f) = self.0.log {
-            unsafe { f(self.0.ctx, level, once as i32, msg.as_ptr() as *const c_char, msg.len()) };
+            unsafe {
+                f(
+                    self.0.ctx,
+                    level,
+                    once as i32,
+                    msg.as_ptr() as *const c_char,
+                    msg.len(),
+                )
+            };
         }
     }
     #[cfg(feature = "opensim")]
@@ -702,13 +863,18 @@ impl Host for CHost {
     }
     #[cfg(feature = "opensim")]
     fn assemble_packets(&mut self, first_packet: i32, last_packet: i32) -> i32 {
-        self.0.assemble_packets.map(|f| unsafe { f(self.0.ctx, first_packet, last_packet) }).unwrap_or(0)
+        self.0
+            .assemble_packets
+            .map(|f| unsafe { f(self.0.ctx, first_packet, last_packet) })
+            .unwrap_or(0)
     }
 }
 
 #[unsafe(no_mangle)]
 pub extern "C" fn vks_tfetch_fetcher_new() -> *mut VksTexFetcher {
-    Box::into_raw(Box::new(VksTexFetcher { inner: Mutex::new(Fetcher::new()) }))
+    Box::into_raw(Box::new(VksTexFetcher {
+        inner: Mutex::new(Fetcher::new()),
+    }))
 }
 
 /// # Safety
@@ -770,11 +936,19 @@ fetcher_fn!(vks_tfetch_fetcher_debug_count, |f| -> i32, 0, f.debug_count);
 /// # Safety
 /// `ids` must be writable for `cap * 16` bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_tfetch_fetcher_waiters_to_release(f: *mut VksTexFetcher, needed: *mut i32, ids: *mut u8, cap: usize) -> usize {
+pub unsafe extern "C" fn vks_tfetch_fetcher_waiters_to_release(
+    f: *mut VksTexFetcher,
+    needed: *mut i32,
+    ids: *mut u8,
+    cap: usize,
+) -> usize {
     if f.is_null() {
         return 0;
     }
-    let fetcher_guard = unsafe { &*f }.inner.lock().unwrap_or_else(|e| e.into_inner());
+    let fetcher_guard = unsafe { &*f }
+        .inner
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let fetcher = &*fetcher_guard;
     let (n, list) = fetcher.waiters_to_release();
     if !needed.is_null() {
@@ -793,7 +967,12 @@ pub unsafe extern "C" fn vks_tfetch_fetcher_waiters_to_release(f: *mut VksTexFet
 /// # Safety
 /// `priorities` must point to `n` floats; `order` must be writable for `n`.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_tfetch_release_order(priorities: *const f32, n: usize, needed: i32, order: *mut usize) {
+pub unsafe extern "C" fn vks_tfetch_release_order(
+    priorities: *const f32,
+    n: usize,
+    needed: i32,
+    order: *mut usize,
+) {
     if priorities.is_null() || order.is_null() {
         return;
     }
@@ -811,10 +990,27 @@ pub unsafe extern "C" fn vks_tfetch_release_order(priorities: *const f32, n: usi
 /// # Safety
 /// `url` must point to `url_len` bytes; `id` to 16.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_tfetch_worker_new(ftype: i32, url: *const c_char, url_len: usize, id: *const u8, host_is_ok: i32, priority: f32, in_second_life: i32) -> *mut VksTexFetchWorker {
+pub unsafe extern "C" fn vks_tfetch_worker_new(
+    ftype: i32,
+    url: *const c_char,
+    url_len: usize,
+    id: *const u8,
+    host_is_ok: i32,
+    priority: f32,
+    in_second_life: i32,
+) -> *mut VksTexFetchWorker {
     let url = unsafe { str_arg(url, url_len) }.to_owned();
     let id = unsafe { uuid_arg(id) };
-    let r = catch_unwind(AssertUnwindSafe(|| Worker::new(FetchType::from_i32(ftype), &url, id, host_is_ok != 0, priority, in_second_life != 0)));
+    let r = catch_unwind(AssertUnwindSafe(|| {
+        Worker::new(
+            FetchType::from_i32(ftype),
+            &url,
+            id,
+            host_is_ok != 0,
+            priority,
+            in_second_life != 0,
+        )
+    }));
     match r {
         Ok(inner) => Box::into_raw(Box::new(VksTexFetchWorker { inner })),
         Err(_) => std::ptr::null_mut(),
@@ -853,12 +1049,19 @@ macro_rules! worker_fn {
 /// # Safety
 /// `w`, `f` and `host` must be valid; the caller holds the worker's lock.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_tfetch_worker_do_work(w: *mut VksTexFetchWorker, f: *mut VksTexFetcher, host: *const VksTexFetchHost) -> i32 {
+pub unsafe extern "C" fn vks_tfetch_worker_do_work(
+    w: *mut VksTexFetchWorker,
+    f: *mut VksTexFetcher,
+    host: *const VksTexFetchHost,
+) -> i32 {
     if w.is_null() || f.is_null() || host.is_null() {
         return 1;
     }
     let worker = &mut unsafe { &mut *w }.inner;
-    let mut fetcher_guard = unsafe { &*f }.inner.lock().unwrap_or_else(|e| e.into_inner());
+    let mut fetcher_guard = unsafe { &*f }
+        .inner
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let fetcher = &mut *fetcher_guard;
     let mut h = CHost(unsafe { *host });
     catch_unwind(AssertUnwindSafe(|| worker.do_work(fetcher, &mut h) as i32)).unwrap_or(1)
@@ -1038,19 +1241,31 @@ worker_fn!(vks_tfetch_worker_mark_sent_sim, |w| -> i32, 0, {
 /// Inert without the `opensim` feature.
 #[cfg(not(feature = "opensim"))]
 #[unsafe(no_mangle)]
-pub extern "C" fn vks_tfetch_worker_insert_packet(_w: *mut VksTexFetchWorker, _index: i32, _size: u32) -> i32 {
+pub extern "C" fn vks_tfetch_worker_insert_packet(
+    _w: *mut VksTexFetchWorker,
+    _index: i32,
+    _size: u32,
+) -> i32 {
     0
 }
 /// Inert without the `opensim` feature.
 #[cfg(not(feature = "opensim"))]
 #[unsafe(no_mangle)]
-pub extern "C" fn vks_tfetch_worker_setup_packet_data(_w: *mut VksTexFetchWorker, _data_size: i32) -> i32 {
+pub extern "C" fn vks_tfetch_worker_setup_packet_data(
+    _w: *mut VksTexFetchWorker,
+    _data_size: i32,
+) -> i32 {
     1
 }
 /// Inert without the `opensim` feature.
 #[cfg(not(feature = "opensim"))]
 #[unsafe(no_mangle)]
-pub extern "C" fn vks_tfetch_worker_receive_header(_w: *mut VksTexFetchWorker, _codec: i32, _total_packets: u16, _file_size: i32) -> i32 {
+pub extern "C" fn vks_tfetch_worker_receive_header(
+    _w: *mut VksTexFetchWorker,
+    _codec: i32,
+    _total_packets: u16,
+    _file_size: i32,
+) -> i32 {
     0
 }
 /// Inert without the `opensim` feature.
@@ -1066,13 +1281,22 @@ pub extern "C" fn vks_tfetch_worker_mark_sent_sim(_w: *mut VksTexFetchWorker) ->
 /// # Safety
 /// `w` and `host` must be valid; the caller holds the worker's lock.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_tfetch_worker_decode_done(w: *mut VksTexFetchWorker, host: *const VksTexFetchHost, success: i32, formatted_discard: i32, decode_id: u32) -> i32 {
+pub unsafe extern "C" fn vks_tfetch_worker_decode_done(
+    w: *mut VksTexFetchWorker,
+    host: *const VksTexFetchHost,
+    success: i32,
+    formatted_discard: i32,
+    decode_id: u32,
+) -> i32 {
     if w.is_null() || host.is_null() {
         return 0;
     }
     let worker = &mut unsafe { &mut *w }.inner;
     let mut h = CHost(unsafe { *host });
-    catch_unwind(AssertUnwindSafe(|| worker.decode_done(success != 0, formatted_discard, decode_id, &mut h) as i32)).unwrap_or(0)
+    catch_unwind(AssertUnwindSafe(|| {
+        worker.decode_done(success != 0, formatted_discard, decode_id, &mut h) as i32
+    }))
+    .unwrap_or(0)
 }
 
 /// `onCompleted` and `callbackHttpGet`: returns the data size for the HTTP
@@ -1103,14 +1327,35 @@ pub unsafe extern "C" fn vks_tfetch_worker_http_completed(
         return -1;
     }
     let worker = &mut unsafe { &mut *w }.inner;
-    let mut fetcher_guard = unsafe { &*f }.inner.lock().unwrap_or_else(|e| e.into_inner());
+    let mut fetcher_guard = unsafe { &*f }
+        .inner
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let fetcher = &mut *fetcher_guard;
     let mut h = CHost(unsafe { *host });
     let reason = unsafe { str_arg(reason, reason_len) }.to_owned();
-    let range = if has_range != 0 { Some((range_offset, range_length, range_full)) } else { None };
-    let ra = if has_retry_after != 0 { Some(retry_after) } else { None };
+    let range = if has_range != 0 {
+        Some((range_offset, range_length, range_full))
+    } else {
+        None
+    };
+    let ra = if has_retry_after != 0 {
+        Some(retry_after)
+    } else {
+        None
+    };
     catch_unwind(AssertUnwindSafe(|| {
-        match worker.http_completed(fetcher, &mut h, status_ok != 0, status_type, &reason, partial != 0, body_size, range, ra) {
+        match worker.http_completed(
+            fetcher,
+            &mut h,
+            status_ok != 0,
+            status_type,
+            &reason,
+            partial != 0,
+            body_size,
+            range,
+            ra,
+        ) {
             Some(n) => n as i64,
             None => -1,
         }
@@ -1124,12 +1369,18 @@ pub unsafe extern "C" fn vks_tfetch_worker_http_completed(
 /// # Safety
 /// `w` and `f` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_tfetch_worker_try_release(w: *mut VksTexFetchWorker, f: *mut VksTexFetcher) -> i32 {
+pub unsafe extern "C" fn vks_tfetch_worker_try_release(
+    w: *mut VksTexFetchWorker,
+    f: *mut VksTexFetcher,
+) -> i32 {
     if w.is_null() || f.is_null() {
         return 1;
     }
     let worker = &mut unsafe { &mut *w }.inner;
-    let mut fetcher_guard = unsafe { &*f }.inner.lock().unwrap_or_else(|e| e.into_inner());
+    let mut fetcher_guard = unsafe { &*f }
+        .inner
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let fetcher = &mut *fetcher_guard;
     match catch_unwind(AssertUnwindSafe(|| worker.try_release(fetcher))) {
         Ok(Release::Released) => 0,
@@ -1144,12 +1395,18 @@ pub unsafe extern "C" fn vks_tfetch_worker_try_release(w: *mut VksTexFetchWorker
 /// # Safety
 /// `w` and `f` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_tfetch_worker_on_destroy(w: *mut VksTexFetchWorker, f: *mut VksTexFetcher) -> i32 {
+pub unsafe extern "C" fn vks_tfetch_worker_on_destroy(
+    w: *mut VksTexFetchWorker,
+    f: *mut VksTexFetcher,
+) -> i32 {
     if w.is_null() || f.is_null() {
         return 0;
     }
     let worker = &mut unsafe { &mut *w }.inner;
-    let mut fetcher_guard = unsafe { &*f }.inner.lock().unwrap_or_else(|e| e.into_inner());
+    let mut fetcher_guard = unsafe { &*f }
+        .inner
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let fetcher = &mut *fetcher_guard;
     catch_unwind(AssertUnwindSafe(|| worker.on_destroy(fetcher) as i32)).unwrap_or(0)
 }
@@ -1159,14 +1416,24 @@ pub unsafe extern "C" fn vks_tfetch_worker_on_destroy(w: *mut VksTexFetchWorker,
 /// # Safety
 /// `w` and `f` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_tfetch_worker_delete_ok_state(w: *mut VksTexFetchWorker, f: *mut VksTexFetcher, have_work: i32) -> i32 {
+pub unsafe extern "C" fn vks_tfetch_worker_delete_ok_state(
+    w: *mut VksTexFetchWorker,
+    f: *mut VksTexFetcher,
+    have_work: i32,
+) -> i32 {
     if w.is_null() || f.is_null() {
         return 1;
     }
     let worker = &unsafe { &*w }.inner;
-    let fetcher_guard = unsafe { &*f }.inner.lock().unwrap_or_else(|e| e.into_inner());
+    let fetcher_guard = unsafe { &*f }
+        .inner
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let fetcher = &*fetcher_guard;
-    catch_unwind(AssertUnwindSafe(|| worker.delete_ok_state(fetcher, have_work != 0) as i32)).unwrap_or(1)
+    catch_unwind(AssertUnwindSafe(|| {
+        worker.delete_ok_state(fetcher, have_work != 0) as i32
+    }))
+    .unwrap_or(1)
 }
 
 /// `createRequest`'s desired size and discard.
@@ -1174,18 +1441,52 @@ pub unsafe extern "C" fn vks_tfetch_worker_delete_ok_state(w: *mut VksTexFetchWo
 /// # Safety
 /// Output pointers must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_tfetch_desired_size(ftype: i32, url_non_empty: i32, url_is_non_j2c: i32, w: i32, h: i32, c: i32, desired_discard: i32, size_out: *mut i32, discard_out: *mut i32) {
-    let (size, discard) = plan::desired_size(FetchType::from_i32(ftype), url_non_empty != 0, url_is_non_j2c != 0, w, h, c, desired_discard);
+pub unsafe extern "C" fn vks_tfetch_desired_size(
+    ftype: i32,
+    url_non_empty: i32,
+    url_is_non_j2c: i32,
+    w: i32,
+    h: i32,
+    c: i32,
+    desired_discard: i32,
+    size_out: *mut i32,
+    discard_out: *mut i32,
+) {
+    let (size, discard) = plan::desired_size(
+        FetchType::from_i32(ftype),
+        url_non_empty != 0,
+        url_is_non_j2c != 0,
+        w,
+        h,
+        c,
+        desired_discard,
+    );
     unsafe {
-        if !size_out.is_null() { *size_out = size; }
-        if !discard_out.is_null() { *discard_out = discard; }
+        if !size_out.is_null() {
+            *size_out = size;
+        }
+        if !discard_out.is_null() {
+            *discard_out = discard;
+        }
     }
 }
 
 /// `createRequest`'s "already done" check.
 #[unsafe(no_mangle)]
-pub extern "C" fn vks_tfetch_already_done(worker_done: i32, worker_desired_size: i32, worker_desired_discard: i32, desired_size: i32, desired_discard: i32) -> i32 {
-    plan::already_done(worker_done != 0, worker_desired_size, worker_desired_discard, desired_size, desired_discard) as i32
+pub extern "C" fn vks_tfetch_already_done(
+    worker_done: i32,
+    worker_desired_size: i32,
+    worker_desired_discard: i32,
+    desired_size: i32,
+    desired_discard: i32,
+) -> i32 {
+    plan::already_done(
+        worker_done != 0,
+        worker_desired_size,
+        worker_desired_discard,
+        desired_size,
+        desired_discard,
+    ) as i32
 }
 
 /// `getStateString`.
@@ -1193,21 +1494,37 @@ pub extern "C" fn vks_tfetch_already_done(worker_done: i32, worker_desired_size:
 /// # Safety
 /// `buf` must be writable for `cap` bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_tfetch_state_string(state: i32, buf: *mut c_char, cap: usize) -> usize {
+pub unsafe extern "C" fn vks_tfetch_state_string(
+    state: i32,
+    buf: *mut c_char,
+    cap: usize,
+) -> usize {
     let s = State::string_for(state);
     unsafe { copy_out(s.as_bytes(), buf, cap) }
 }
 
 /// `LLImageJ2C::calcDataSizeJ2C`.
 #[unsafe(no_mangle)]
-pub extern "C" fn vks_j2c_calc_data_size(w: i32, h: i32, comp: i32, discard_level: i32, rate: f32) -> i32 {
+pub extern "C" fn vks_j2c_calc_data_size(
+    w: i32,
+    h: i32,
+    comp: i32,
+    discard_level: i32,
+    rate: f32,
+) -> i32 {
     budget::calc_data_size_j2c(w, h, comp, discard_level, rate)
 }
 
 /// `LLImageJ2C::calcDiscardLevelBytes` with the reverse byte-range
 /// percentage.
 #[unsafe(no_mangle)]
-pub extern "C" fn vks_j2c_calc_discard_level_bytes(w: i32, h: i32, comp: i32, bytes: i32, reverse_percent: i32) -> i32 {
+pub extern "C" fn vks_j2c_calc_discard_level_bytes(
+    w: i32,
+    h: i32,
+    comp: i32,
+    bytes: i32,
+    reverse_percent: i32,
+) -> i32 {
     budget::calc_discard_level_bytes(w, h, comp, bytes, reverse_percent)
 }
 
@@ -1219,8 +1536,22 @@ pub struct VksRetryPolicy {
 }
 
 #[unsafe(no_mangle)]
-pub extern "C" fn vks_retry_policy_new(min_delay: f32, max_delay: f32, backoff_factor: f32, max_retries: u32, retry_on_4xx: i32) -> *mut VksRetryPolicy {
-    Box::into_raw(Box::new(VksRetryPolicy { inner: AdaptiveRetryPolicy::new(min_delay, max_delay, backoff_factor, max_retries, retry_on_4xx != 0) }))
+pub extern "C" fn vks_retry_policy_new(
+    min_delay: f32,
+    max_delay: f32,
+    backoff_factor: f32,
+    max_retries: u32,
+    retry_on_4xx: i32,
+) -> *mut VksRetryPolicy {
+    Box::into_raw(Box::new(VksRetryPolicy {
+        inner: AdaptiveRetryPolicy::new(
+            min_delay,
+            max_delay,
+            backoff_factor,
+            max_retries,
+            retry_on_4xx != 0,
+        ),
+    }))
 }
 
 /// # Safety
@@ -1277,11 +1608,24 @@ pub struct VksDiskCache {
 /// # Safety
 /// `dir` and `delim` must point to their lengths.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_diskcache_new(dir: *const c_char, dir_len: usize, delim: *const c_char, delim_len: usize, max_size: u64, debug: i32, high: f32, low: f32) -> *mut VksDiskCache {
+pub unsafe extern "C" fn vks_diskcache_new(
+    dir: *const c_char,
+    dir_len: usize,
+    delim: *const c_char,
+    delim_len: usize,
+    max_size: u64,
+    debug: i32,
+    high: f32,
+    low: f32,
+) -> *mut VksDiskCache {
     let d = unsafe { str_arg(dir, dir_len) }.to_owned();
     let dl = unsafe { str_arg(delim, delim_len) }.to_owned();
-    match catch_unwind(AssertUnwindSafe(|| DiskCache::new(&d, &dl, max_size, debug != 0, high, low))) {
-        Ok(inner) => Box::into_raw(Box::new(VksDiskCache { inner: Mutex::new(inner) })),
+    match catch_unwind(AssertUnwindSafe(|| {
+        DiskCache::new(&d, &dl, max_size, debug != 0, high, low)
+    })) {
+        Ok(inner) => Box::into_raw(Box::new(VksDiskCache {
+            inner: Mutex::new(inner),
+        })),
         Err(_) => std::ptr::null_mut(),
     }
 }
@@ -1330,7 +1674,10 @@ pub unsafe extern "C" fn vks_diskcache_purge(c: *mut VksDiskCache) -> i32 {
     if catch_unwind(AssertUnwindSafe(|| work.purge())).is_err() {
         return 0;
     }
-    cache.lock().unwrap_or_else(|e| e.into_inner()).absorb_scan(&work);
+    cache
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .absorb_scan(&work);
     1
 }
 /// `purge` with upstream d527adf68c's shutdown early-out: `is_running` is
@@ -1345,7 +1692,10 @@ pub unsafe extern "C" fn vks_diskcache_purge(c: *mut VksDiskCache) -> i32 {
 /// `c` must come from `vks_diskcache_new` and be live; `is_running`, when
 /// not null, must be callable from the purge thread.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_diskcache_purge_while(c: *mut VksDiskCache, is_running: Option<extern "C" fn() -> i32>) -> i32 {
+pub unsafe extern "C" fn vks_diskcache_purge_while(
+    c: *mut VksDiskCache,
+    is_running: Option<extern "C" fn() -> i32>,
+) -> i32 {
     if c.is_null() {
         return 0;
     }
@@ -1358,7 +1708,10 @@ pub unsafe extern "C" fn vks_diskcache_purge_while(c: *mut VksDiskCache, is_runn
     if report.interrupted {
         return 2;
     }
-    cache.lock().unwrap_or_else(|e| e.into_inner()).absorb_scan(&work);
+    cache
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .absorb_scan(&work);
     1
 }
 diskcache_fn!(vks_diskcache_clear, |c| -> i32, 0, { c.clear_cache(); 1 });
@@ -1387,7 +1740,15 @@ diskcache_fn!(vks_diskcache_filepath, |c, id: *const u8, buf: *mut c_char, cap: 
 /// # Safety
 /// `dir` and `delim` must point to their lengths; `buf` to `cap` bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_diskcache_metadata_to_filepath(dir: *const c_char, dir_len: usize, delim: *const c_char, delim_len: usize, id: *const u8, buf: *mut c_char, cap: usize) -> usize {
+pub unsafe extern "C" fn vks_diskcache_metadata_to_filepath(
+    dir: *const c_char,
+    dir_len: usize,
+    delim: *const c_char,
+    delim_len: usize,
+    id: *const u8,
+    buf: *mut c_char,
+    cap: usize,
+) -> usize {
     let d = unsafe { str_arg(dir, dir_len) };
     let dl = unsafe { str_arg(delim, delim_len) };
     let s = diskcache::metadata_to_filepath(d, dl, &unsafe { uuid_arg(id) });
@@ -1412,11 +1773,20 @@ pub unsafe extern "C" fn vks_diskcache_remove_old_vfs_files(path: *const c_char,
 /// # Safety
 /// As `vks_diskcache_prepopulate_file`.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_diskcache_add_static(c: *mut VksDiskCache, from_folder: *const c_char, from_folder_len: usize, from_file: *const c_char, from_file_len: usize) -> i32 {
+pub unsafe extern "C" fn vks_diskcache_add_static(
+    c: *mut VksDiskCache,
+    from_folder: *const c_char,
+    from_folder_len: usize,
+    from_file: *const c_char,
+    from_file_len: usize,
+) -> i32 {
     if c.is_null() {
         return 0;
     }
-    let mut guard = unsafe { &*c }.inner.lock().unwrap_or_else(|e| e.into_inner());
+    let mut guard = unsafe { &*c }
+        .inner
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     let cache = &mut *guard;
     let folder = unsafe { str_arg(from_folder, from_folder_len) }.to_owned();
     let file = unsafe { str_arg(from_file, from_file_len) }.to_owned();
@@ -1473,7 +1843,12 @@ fn header_out(h: &MeshHeader) -> VksMeshHeader {
         physics_mesh_in_cache: h.physics_mesh_in_cache as i32,
         lod_offset: h.lod_offset,
         lod_size: h.lod_size,
-        lod_in_cache: [h.lod_in_cache[0] as i32, h.lod_in_cache[1] as i32, h.lod_in_cache[2] as i32, h.lod_in_cache[3] as i32],
+        lod_in_cache: [
+            h.lod_in_cache[0] as i32,
+            h.lod_in_cache[1] as i32,
+            h.lod_in_cache[2] as i32,
+            h.lod_in_cache[3] as i32,
+        ],
         header_size: h.header_size,
         not_found: h.not_found as i32,
         creator_id: h.creator_id,
@@ -1494,7 +1869,12 @@ fn header_in(h: &VksMeshHeader) -> MeshHeader {
         physics_mesh_in_cache: h.physics_mesh_in_cache != 0,
         lod_offset: h.lod_offset,
         lod_size: h.lod_size,
-        lod_in_cache: [h.lod_in_cache[0] != 0, h.lod_in_cache[1] != 0, h.lod_in_cache[2] != 0, h.lod_in_cache[3] != 0],
+        lod_in_cache: [
+            h.lod_in_cache[0] != 0,
+            h.lod_in_cache[1] != 0,
+            h.lod_in_cache[2] != 0,
+            h.lod_in_cache[3] != 0,
+        ],
         header_size: h.header_size,
         not_found: h.not_found != 0,
         creator_id: h.creator_id,
@@ -1522,7 +1902,12 @@ pub struct VksMeshHeaderReceipt {
 /// # Safety
 /// `data` must point to `len` bytes; `out` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_mesh_header_received(data: *const u8, len: usize, flags: u32, out: *mut VksMeshHeaderReceipt) -> i32 {
+pub unsafe extern "C" fn vks_mesh_header_received(
+    data: *const u8,
+    len: usize,
+    flags: u32,
+    out: *mut VksMeshHeaderReceipt,
+) -> i32 {
     if out.is_null() {
         return 6;
     }
@@ -1627,14 +2012,26 @@ pub unsafe extern "C" fn vks_mesh_preamble_encode(header_bytes: i32, flags: u32,
 /// # Safety
 /// `buf` must point to `len` bytes; outputs must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_mesh_preamble_decode(buf: *const u8, len: usize, version: *mut u32, header_size: *mut i32, flags: *mut u32) -> i32 {
+pub unsafe extern "C" fn vks_mesh_preamble_decode(
+    buf: *const u8,
+    len: usize,
+    version: *mut u32,
+    header_size: *mut i32,
+    flags: *mut u32,
+) -> i32 {
     let b = unsafe { bytes(buf, len) };
     match mesh::header::decode_preamble(b) {
         Some((v, h, f)) => {
             unsafe {
-                if !version.is_null() { *version = v; }
-                if !header_size.is_null() { *header_size = h; }
-                if !flags.is_null() { *flags = f; }
+                if !version.is_null() {
+                    *version = v;
+                }
+                if !header_size.is_null() {
+                    *header_size = h;
+                }
+                if !flags.is_null() {
+                    *flags = f;
+                }
             }
             1
         }
@@ -1700,7 +2097,14 @@ pub extern "C" fn vks_mesh_policy_for(len: u32, legacy_cap_version: i32) -> i32 
 /// # Safety
 /// `h` and the outputs must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_mesh_part_request(h: *const VksMeshHeader, kind: i32, offset: *mut i32, size: *mut i32, in_cache: *mut i32, disk_offset: *mut i32) -> i32 {
+pub unsafe extern "C" fn vks_mesh_part_request(
+    h: *const VksMeshHeader,
+    kind: i32,
+    offset: *mut i32,
+    size: *mut i32,
+    in_cache: *mut i32,
+    disk_offset: *mut i32,
+) -> i32 {
     if h.is_null() {
         return 0;
     }
@@ -1715,10 +2119,18 @@ pub unsafe extern "C" fn vks_mesh_part_request(h: *const VksMeshHeader, kind: i3
     match r {
         Some(r) => {
             unsafe {
-                if !offset.is_null() { *offset = r.offset; }
-                if !size.is_null() { *size = r.size; }
-                if !in_cache.is_null() { *in_cache = r.in_cache as i32; }
-                if !disk_offset.is_null() { *disk_offset = r.disk_offset; }
+                if !offset.is_null() {
+                    *offset = r.offset;
+                }
+                if !size.is_null() {
+                    *size = r.size;
+                }
+                if !in_cache.is_null() {
+                    *in_cache = r.in_cache as i32;
+                }
+                if !disk_offset.is_null() {
+                    *disk_offset = r.disk_offset;
+                }
             }
             1
         }
@@ -1732,7 +2144,12 @@ pub unsafe extern "C" fn vks_mesh_part_request(h: *const VksMeshHeader, kind: i3
 /// # Safety
 /// `out` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_mesh_response_body_offset(request_offset: u32, response_offset: u32, data_size: usize, out: *mut usize) -> i32 {
+pub unsafe extern "C" fn vks_mesh_response_body_offset(
+    request_offset: u32,
+    response_offset: u32,
+    data_size: usize,
+    out: *mut usize,
+) -> i32 {
     match mplan::response_body_offset(request_offset, response_offset, data_size) {
         Some(o) => {
             if !out.is_null() {
@@ -1755,9 +2172,16 @@ pub struct VksMeshFaces {
 /// # Safety
 /// `data` must point to `len` bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_mesh_unpack(data: *const u8, len: usize, sculpt_type: u8, err: *mut i32) -> *mut VksMeshFaces {
+pub unsafe extern "C" fn vks_mesh_unpack(
+    data: *const u8,
+    len: usize,
+    sculpt_type: u8,
+    err: *mut i32,
+) -> *mut VksMeshFaces {
     let d = unsafe { bytes(data, len) };
-    match catch_unwind(AssertUnwindSafe(|| mesh::unpack_volume_faces(d, sculpt_type))) {
+    match catch_unwind(AssertUnwindSafe(|| {
+        mesh::unpack_volume_faces(d, sculpt_type)
+    })) {
         Ok(Ok(faces)) => Box::into_raw(Box::new(VksMeshFaces { faces })),
         Ok(Err(e)) => {
             if !err.is_null() {
@@ -1793,7 +2217,11 @@ pub unsafe extern "C" fn vks_mesh_faces_free(f: *mut VksMeshFaces) {
 /// `f` must be live.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn vks_mesh_faces_count(f: *const VksMeshFaces) -> usize {
-    if f.is_null() { 0 } else { unsafe { &*f }.faces.len() }
+    if f.is_null() {
+        0
+    } else {
+        unsafe { &*f }.faces.len()
+    }
 }
 
 /// One unpacked face: counts, the buffers (valid until the faces are
@@ -1819,7 +2247,11 @@ pub struct VksMeshFace {
 /// # Safety
 /// `f` must be live; `out` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_mesh_face(f: *const VksMeshFaces, i: usize, out: *mut VksMeshFace) -> i32 {
+pub unsafe extern "C" fn vks_mesh_face(
+    f: *const VksMeshFaces,
+    i: usize,
+    out: *mut VksMeshFace,
+) -> i32 {
     if f.is_null() || out.is_null() {
         return 0;
     }
@@ -1835,12 +2267,27 @@ pub unsafe extern "C" fn vks_mesh_face(f: *const VksMeshFaces, i: usize, out: *m
         texcoords: face.texcoords.as_ptr() as *const f32,
         texcoord_count: face.texcoords.len(),
         indices: face.indices.as_ptr(),
-        weights: face.weights.as_ref().map(|w| w.as_ptr() as *const f32).unwrap_or(std::ptr::null()),
+        weights: face
+            .weights
+            .as_ref()
+            .map(|w| w.as_ptr() as *const f32)
+            .unwrap_or(std::ptr::null()),
         extents: [
-            face.extents[0][0], face.extents[0][1], face.extents[0][2], face.extents[0][3],
-            face.extents[1][0], face.extents[1][1], face.extents[1][2], face.extents[1][3],
+            face.extents[0][0],
+            face.extents[0][1],
+            face.extents[0][2],
+            face.extents[0][3],
+            face.extents[1][0],
+            face.extents[1][1],
+            face.extents[1][2],
+            face.extents[1][3],
         ],
-        tc_extents: [face.tc_extents[0][0], face.tc_extents[0][1], face.tc_extents[1][0], face.tc_extents[1][1]],
+        tc_extents: [
+            face.tc_extents[0][0],
+            face.tc_extents[0][1],
+            face.tc_extents[1][0],
+            face.tc_extents[1][1],
+        ],
         normalized_scale: face.normalized_scale,
     };
     unsafe { *out = o };
@@ -1891,7 +2338,10 @@ pub struct VksMeshSkinInfo {
 /// # Safety
 /// `s` must be live; `out` must be valid.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_mesh_skin_info(s: *const VksMeshSkin, out: *mut VksMeshSkinInfo) -> i32 {
+pub unsafe extern "C" fn vks_mesh_skin_info(
+    s: *const VksMeshSkin,
+    out: *mut VksMeshSkinInfo,
+) -> i32 {
     if s.is_null() || out.is_null() {
         return 0;
     }
@@ -1921,7 +2371,11 @@ pub unsafe extern "C" fn vks_mesh_skin_info(s: *const VksMeshSkin, out: *mut Vks
 /// # Safety
 /// `s` must be live.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_mesh_skin_joint_name(s: *const VksMeshSkin, i: usize, out: *mut *const c_char) -> usize {
+pub unsafe extern "C" fn vks_mesh_skin_joint_name(
+    s: *const VksMeshSkin,
+    i: usize,
+    out: *mut *const c_char,
+) -> usize {
     if s.is_null() {
         return 0;
     }
@@ -1943,7 +2397,12 @@ pub unsafe extern "C" fn vks_mesh_skin_joint_name(s: *const VksMeshSkin, i: usiz
 /// # Safety
 /// `s` must be live; `out` must be writable for 16 floats.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_mesh_skin_matrix(s: *const VksMeshSkin, kind: i32, i: usize, out: *mut f32) -> i32 {
+pub unsafe extern "C" fn vks_mesh_skin_matrix(
+    s: *const VksMeshSkin,
+    kind: i32,
+    i: usize,
+    out: *mut f32,
+) -> i32 {
     if s.is_null() || out.is_null() {
         return 0;
     }
@@ -1996,15 +2455,26 @@ pub unsafe extern "C" fn vks_mesh_decomp_free(d: *mut VksMeshDecomp) {
 /// # Safety
 /// `d` must be live.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_mesh_decomp_info(d: *const VksMeshDecomp, hull_count: *mut usize, base_hull_count: *mut usize, base_mesh_cleared: *mut i32) {
+pub unsafe extern "C" fn vks_mesh_decomp_info(
+    d: *const VksMeshDecomp,
+    hull_count: *mut usize,
+    base_hull_count: *mut usize,
+    base_mesh_cleared: *mut i32,
+) {
     if d.is_null() {
         return;
     }
     let k = &unsafe { &*d }.inner;
     unsafe {
-        if !hull_count.is_null() { *hull_count = k.hulls.len(); }
-        if !base_hull_count.is_null() { *base_hull_count = k.base_hull.len(); }
-        if !base_mesh_cleared.is_null() { *base_mesh_cleared = k.base_hull_mesh_cleared as i32; }
+        if !hull_count.is_null() {
+            *hull_count = k.hulls.len();
+        }
+        if !base_hull_count.is_null() {
+            *base_hull_count = k.base_hull.len();
+        }
+        if !base_mesh_cleared.is_null() {
+            *base_mesh_cleared = k.base_hull_mesh_cleared as i32;
+        }
     }
 }
 
@@ -2013,12 +2483,20 @@ pub unsafe extern "C" fn vks_mesh_decomp_info(d: *const VksMeshDecomp, hull_coun
 /// # Safety
 /// `d` must be live.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_mesh_decomp_hull(d: *const VksMeshDecomp, i: usize, points: *mut *const f32) -> usize {
+pub unsafe extern "C" fn vks_mesh_decomp_hull(
+    d: *const VksMeshDecomp,
+    i: usize,
+    points: *mut *const f32,
+) -> usize {
     if d.is_null() {
         return 0;
     }
     let k = &unsafe { &*d }.inner;
-    let list = if i == usize::MAX { Some(&k.base_hull) } else { k.hulls.get(i) };
+    let list = if i == usize::MAX {
+        Some(&k.base_hull)
+    } else {
+        k.hulls.get(i)
+    };
     match list {
         Some(l) => {
             if !points.is_null() {
@@ -2038,8 +2516,20 @@ pub unsafe extern "C" fn vks_mesh_decomp_hull(d: *const VksMeshDecomp, i: usize,
 /// # Safety
 /// Strings must point to their lengths; `buf` to `cap` bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_asset_url(cap_url: *const c_char, cap_len: usize, type_name: *const c_char, type_len: usize, id: *const u8, buf: *mut c_char, cap: usize) -> usize {
-    let s = asset::asset_url(unsafe { str_arg(cap_url, cap_len) }, unsafe { str_arg(type_name, type_len) }, &unsafe { uuid_arg(id) });
+pub unsafe extern "C" fn vks_asset_url(
+    cap_url: *const c_char,
+    cap_len: usize,
+    type_name: *const c_char,
+    type_len: usize,
+    id: *const u8,
+    buf: *mut c_char,
+    cap: usize,
+) -> usize {
+    let s = asset::asset_url(
+        unsafe { str_arg(cap_url, cap_len) },
+        unsafe { str_arg(type_name, type_len) },
+        &unsafe { uuid_arg(id) },
+    );
     unsafe { copy_out(s.as_bytes(), buf, cap) }
 }
 
@@ -2079,7 +2569,10 @@ pub extern "C" fn vks_asset_error_string(status: i32) -> *const c_char {
         asset::LL_ERR_CIRCUIT_GONE,
         asset::LL_ERR_PRICE_MISMATCH,
     ];
-    let idx = codes.iter().position(|&c| c == status).unwrap_or(codes.len());
+    let idx = codes
+        .iter()
+        .position(|&c| c == status)
+        .unwrap_or(codes.len());
     table[idx].as_ptr()
 }
 
@@ -2089,7 +2582,9 @@ pub struct VksToxicMap {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn vks_toxic_new() -> *mut VksToxicMap {
-    Box::into_raw(Box::new(VksToxicMap { inner: ToxicMap::default() }))
+    Box::into_raw(Box::new(VksToxicMap {
+        inner: ToxicMap::default(),
+    }))
 }
 
 /// # Safety
@@ -2104,11 +2599,17 @@ pub unsafe extern "C" fn vks_toxic_free(m: *mut VksToxicMap) {
 /// # Safety
 /// `m` must be live; `id` must point to 16 bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_toxic_is_toxic(m: *mut VksToxicMap, id: *const u8, now_us: u64) -> i32 {
+pub unsafe extern "C" fn vks_toxic_is_toxic(
+    m: *mut VksToxicMap,
+    id: *const u8,
+    now_us: u64,
+) -> i32 {
     if m.is_null() {
         return 0;
     }
-    unsafe { &mut *m }.inner.is_toxic(&unsafe { uuid_arg(id) }, now_us) as i32
+    unsafe { &mut *m }
+        .inner
+        .is_toxic(&unsafe { uuid_arg(id) }, now_us) as i32
 }
 
 /// # Safety
@@ -2125,7 +2626,9 @@ pub unsafe extern "C" fn vks_toxic_flush_old(m: *mut VksToxicMap, now_us: u64, f
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn vks_toxic_mark(m: *mut VksToxicMap, id: *const u8, now_us: u64) {
     if !m.is_null() {
-        unsafe { &mut *m }.inner.mark(&unsafe { uuid_arg(id) }, now_us);
+        unsafe { &mut *m }
+            .inner
+            .mark(&unsafe { uuid_arg(id) }, now_us);
     }
 }
 
@@ -2146,7 +2649,13 @@ unsafe fn keys_arg(keys: *const VksAssetRequestKey, n: usize) -> Vec<RequestKey>
     }
     unsafe { slice::from_raw_parts(keys, n) }
         .iter()
-        .map(|k| RequestKey { id: k.id, asset_type: k.asset_type, callback: k.callback, user_data: k.user_data, time: k.time })
+        .map(|k| RequestKey {
+            id: k.id,
+            asset_type: k.asset_type,
+            callback: k.callback,
+            user_data: k.user_data,
+            time: k.time,
+        })
         .collect()
 }
 
@@ -2155,9 +2664,22 @@ unsafe fn keys_arg(keys: *const VksAssetRequestKey, n: usize) -> Vec<RequestKey>
 /// # Safety
 /// `keys` must point to `n` entries; `id` to 16 bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_asset_duplicate_verdict(keys: *const VksAssetRequestKey, n: usize, id: *const u8, asset_type: i32, callback: u64, user_data: u64) -> i32 {
+pub unsafe extern "C" fn vks_asset_duplicate_verdict(
+    keys: *const VksAssetRequestKey,
+    n: usize,
+    id: *const u8,
+    asset_type: i32,
+    callback: u64,
+    user_data: u64,
+) -> i32 {
     let k = unsafe { keys_arg(keys, n) };
-    match asset::duplicate_verdict(&k, &unsafe { uuid_arg(id) }, asset_type, callback, user_data) {
+    match asset::duplicate_verdict(
+        &k,
+        &unsafe { uuid_arg(id) },
+        asset_type,
+        callback,
+        user_data,
+    ) {
         Verdict::Discard => 0,
         Verdict::Duplicate => 1,
         Verdict::New => 2,
@@ -2170,7 +2692,14 @@ pub unsafe extern "C" fn vks_asset_duplicate_verdict(keys: *const VksAssetReques
 /// # Safety
 /// `keys` must point to `n` entries; `out` must be writable for `cap`.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_asset_completion_order(keys: *const VksAssetRequestKey, n: usize, id: *const u8, asset_type: i32, out: *mut usize, cap: usize) -> usize {
+pub unsafe extern "C" fn vks_asset_completion_order(
+    keys: *const VksAssetRequestKey,
+    n: usize,
+    id: *const u8,
+    asset_type: i32,
+    out: *mut usize,
+    cap: usize,
+) -> usize {
     let k = unsafe { keys_arg(keys, n) };
     let order = asset::completion_order(&k, &unsafe { uuid_arg(id) }, asset_type);
     let count = order.len().min(cap);
@@ -2185,7 +2714,16 @@ pub unsafe extern "C" fn vks_asset_completion_order(keys: *const VksAssetRequest
 /// # Safety
 /// As `vks_asset_completion_order`.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_asset_timed_out_order(keys: *const VksAssetRequestKey, n: usize, is_download_list: i32, all: i32, now_secs: f64, timeout_secs: f64, out: *mut usize, cap: usize) -> usize {
+pub unsafe extern "C" fn vks_asset_timed_out_order(
+    keys: *const VksAssetRequestKey,
+    n: usize,
+    is_download_list: i32,
+    all: i32,
+    now_secs: f64,
+    timeout_secs: f64,
+    out: *mut usize,
+    cap: usize,
+) -> usize {
     let k = unsafe { keys_arg(keys, n) };
     let order = asset::timed_out_order(&k, is_download_list != 0, all != 0, now_secs, timeout_secs);
     let count = order.len().min(cap);

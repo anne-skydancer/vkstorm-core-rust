@@ -95,15 +95,20 @@ unsafe impl Sync for Ffmpeg {}
 
 #[cfg(windows)]
 fn open_lib(path: &Path) -> Result<Library, String> {
-    use libloading::os::windows::{LOAD_LIBRARY_SEARCH_DEFAULT_DIRS, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR};
+    use libloading::os::windows::{
+        LOAD_LIBRARY_SEARCH_DEFAULT_DIRS, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR,
+    };
     // A full backslash path, and the DLL's own directory first for its
     // dependencies (avutil, swresample).
     let p: PathBuf = path.components().collect();
     // SAFETY: loading FFmpeg runs its DLL initialisers, which are benign.
     unsafe {
-        libloading::os::windows::Library::load_with_flags(&p, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS)
-            .map(Library::from)
-            .map_err(|e| format!("{}: {e}", p.display()))
+        libloading::os::windows::Library::load_with_flags(
+            &p,
+            LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS,
+        )
+        .map(Library::from)
+        .map_err(|e| format!("{}: {e}", p.display()))
     }
 }
 
@@ -136,7 +141,10 @@ impl Ffmpeg {
         // SAFETY: avcodec_version takes no arguments.
         let v = unsafe { version() };
         if v >> 16 != AVCODEC_MAJOR {
-            return Err(format!("avcodec major version {} (need {AVCODEC_MAJOR})", v >> 16));
+            return Err(format!(
+                "avcodec major version {} (need {AVCODEC_MAJOR})",
+                v >> 16
+            ));
         }
         let log_level: FnLogSetLevel = sym(&avutil, b"av_log_set_level\0")?;
         // SAFETY: a plain setter. Errors only: the decoders' warnings about
@@ -166,7 +174,10 @@ impl Ffmpeg {
 pub(crate) fn load(dir: &Path) -> Result<Arc<Ffmpeg>, String> {
     type Cache = Mutex<HashMap<PathBuf, Result<Arc<Ffmpeg>, String>>>;
     static CACHE: OnceLock<Cache> = OnceLock::new();
-    let mut cache = CACHE.get_or_init(Default::default).lock().unwrap_or_else(|e| e.into_inner());
+    let mut cache = CACHE
+        .get_or_init(Default::default)
+        .lock()
+        .unwrap_or_else(|e| e.into_inner());
     cache
         .entry(dir.to_path_buf())
         .or_insert_with(|| Ffmpeg::load(dir).map(Arc::new))
@@ -201,7 +212,12 @@ pub(crate) struct FfDecoder {
 unsafe impl Send for FfDecoder {}
 
 impl FfDecoder {
-    fn open(ff: Arc<Ffmpeg>, id: c_int, extradata: Option<&[u8]>, name: &'static str) -> Result<FfDecoder, String> {
+    fn open(
+        ff: Arc<Ffmpeg>,
+        id: c_int,
+        extradata: Option<&[u8]>,
+        name: &'static str,
+    ) -> Result<FfDecoder, String> {
         // SAFETY: standard allocation and open sequence; every pointer is
         // checked, and Drop frees what was allocated.
         unsafe {
@@ -212,7 +228,16 @@ impl FfDecoder {
             let ctx = (ff.alloc_context)(codec);
             let pkt = (ff.packet_alloc)();
             let frame = (ff.frame_alloc)();
-            let d = FfDecoder { ff: ff.clone(), ctx, pkt, frame, planes: Vec::new(), pts: 0, name, errors: 0 };
+            let d = FfDecoder {
+                ff: ff.clone(),
+                ctx,
+                pkt,
+                frame,
+                planes: Vec::new(),
+                pts: 0,
+                name,
+                errors: 0,
+            };
             if ctx.is_null() || pkt.is_null() || frame.is_null() {
                 return Err("FFmpeg allocation failed".into());
             }
@@ -250,12 +275,9 @@ impl FfDecoder {
 
     /// Decodes one packet; each decoded frame goes to `out` as planar
     /// f32 (planes, frames, rate, layout).
-    pub(crate) fn decode(
-        &mut self,
-        data: &[u8],
-        out: &mut PcmFn<'_>,
-    ) -> Result<(), StreamError> {
-        let size = c_int::try_from(data.len()).map_err(|_| StreamError::Failed("packet too large".into()))?;
+    pub(crate) fn decode(&mut self, data: &[u8], out: &mut PcmFn<'_>) -> Result<(), StreamError> {
+        let size = c_int::try_from(data.len())
+            .map_err(|_| StreamError::Failed("packet too large".into()))?;
         // SAFETY: the packet borrows `data` only for the duration of
         // avcodec_send_packet, which copies an unreferenced packet's data
         // (buf is NULL) into its own padded buffer.
@@ -272,7 +294,10 @@ impl FfDecoder {
         if r < 0 && r != AVERROR_EAGAIN {
             self.errors += 1;
             if self.errors > 50 {
-                return Err(StreamError::Failed(format!("{}: undecodable stream ({r})", self.name)));
+                return Err(StreamError::Failed(format!(
+                    "{}: undecodable stream ({r})",
+                    self.name
+                )));
             }
             return Ok(());
         }
@@ -286,7 +311,10 @@ impl FfDecoder {
             if r < 0 {
                 self.errors += 1;
                 if self.errors > 50 {
-                    return Err(StreamError::Failed(format!("{}: undecodable stream ({r})", self.name)));
+                    return Err(StreamError::Failed(format!(
+                        "{}: undecodable stream ({r})",
+                        self.name
+                    )));
                 }
                 break;
             }
@@ -320,11 +348,19 @@ impl FfDecoder {
             let mask = get::<u64>(f, off::FRAME_CH_LAYOUT + 8);
             // AV_CHANNEL_ORDER_NATIVE: the mask bits are the WAVE bits and
             // the planes are in ascending bit order.
-            let layout = if order == 1 && mask.count_ones() as usize == nch && mask <= u64::from(u32::MAX) {
-                if nch == 1 { ChannelLayout::MONO } else { ChannelLayout { channels: nch as u16, mask: mask as u32 } }
-            } else {
-                default_layout(nch as u16)
-            };
+            let layout =
+                if order == 1 && mask.count_ones() as usize == nch && mask <= u64::from(u32::MAX) {
+                    if nch == 1 {
+                        ChannelLayout::MONO
+                    } else {
+                        ChannelLayout {
+                            channels: nch as u16,
+                            mask: mask as u32,
+                        }
+                    }
+                } else {
+                    default_layout(nch as u16)
+                };
             let data = get::<*const *const u8>(f, off::FRAME_EXTENDED_DATA);
             self.planes.resize(nch, Vec::new());
             for p in &mut self.planes {
@@ -341,8 +377,12 @@ impl FfDecoder {
                         for (i, s) in p.iter_mut().enumerate() {
                             *s = match format {
                                 FMT_FLTP => src.cast::<f32>().add(i).read_unaligned(),
-                                FMT_S16P => f32::from(src.cast::<i16>().add(i).read_unaligned()) / 32768.0,
-                                _ => src.cast::<i32>().add(i).read_unaligned() as f32 / 2147483648.0,
+                                FMT_S16P => {
+                                    f32::from(src.cast::<i16>().add(i).read_unaligned()) / 32768.0
+                                }
+                                _ => {
+                                    src.cast::<i32>().add(i).read_unaligned() as f32 / 2147483648.0
+                                }
                             };
                         }
                     }
@@ -354,8 +394,12 @@ impl FfDecoder {
                             let k = i * nch + c;
                             p[i] = match format {
                                 FMT_FLT => src.cast::<f32>().add(k).read_unaligned(),
-                                FMT_S16 => f32::from(src.cast::<i16>().add(k).read_unaligned()) / 32768.0,
-                                _ => src.cast::<i32>().add(k).read_unaligned() as f32 / 2147483648.0,
+                                FMT_S16 => {
+                                    f32::from(src.cast::<i16>().add(k).read_unaligned()) / 32768.0
+                                }
+                                _ => {
+                                    src.cast::<i32>().add(k).read_unaligned() as f32 / 2147483648.0
+                                }
                             };
                         }
                     }
@@ -367,8 +411,14 @@ impl FfDecoder {
     }
 
     /// Decodes a packet into `sink` (the common case).
-    pub(crate) fn decode_into(&mut self, data: &[u8], sink: &mut dyn PcmSink) -> Result<(), StreamError> {
-        self.decode(data, &mut |planes, frames, rate, layout| sink.pcm(planes, frames, rate, layout))
+    pub(crate) fn decode_into(
+        &mut self,
+        data: &[u8],
+        sink: &mut dyn PcmSink,
+    ) -> Result<(), StreamError> {
+        self.decode(data, &mut |planes, frames, rate, layout| {
+            sink.pcm(planes, frames, rate, layout)
+        })
     }
 }
 

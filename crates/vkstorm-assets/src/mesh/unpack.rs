@@ -9,7 +9,7 @@
 
 use vkstorm_llsd::Value;
 
-use super::inflate::{unzip_llsd, ZipResult};
+use super::inflate::{ZipResult, unzip_llsd};
 use super::llsd::{as_binary, get, has, index, size, vector2, vector3};
 
 /// `LL_SCULPT_FLAG_INVERT` and `LL_SCULPT_FLAG_MIRROR` of the sculpt type.
@@ -124,7 +124,11 @@ pub fn unpack_volume_faces_llsd(mdl: &Value, sculpt_type: u8) -> Result<Vec<Face
         face.num_indices = num_indices as i32;
         face.indices = vec![0u16; num_indices];
         if idx.is_empty() || face.num_indices < 3 {
-            crate::ll_warns!("Empty face present! Face index: {} Total: {}", i, face_count);
+            crate::ll_warns!(
+                "Empty face present! Face index: {} Total: {}",
+                i,
+                face_count
+            );
             face.incomplete = true;
             faces.push(face);
             continue;
@@ -155,7 +159,12 @@ pub fn unpack_volume_faces_llsd(mdl: &Value, sculpt_type: u8) -> Result<Vec<Face
         } else {
             face.normalized_scale = [1.0, 1.0, 1.0];
         }
-        let pos_range = [max_pos[0] - min_pos[0], max_pos[1] - min_pos[1], max_pos[2] - min_pos[2], max_pos[3] - min_pos[3]];
+        let pos_range = [
+            max_pos[0] - min_pos[0],
+            max_pos[1] - min_pos[1],
+            max_pos[2] - min_pos[2],
+            max_pos[3] - min_pos[3],
+        ];
         let tc_range2 = [max_tc[0] - min_tc[0], max_tc[1] - min_tc[1]];
         let tc_range = [tc_range2[0], tc_range2[1], tc_range2[0], tc_range2[1]];
         let min_tc4 = [min_tc[0], min_tc[1], min_tc[0], min_tc[1]];
@@ -240,7 +249,11 @@ pub fn unpack_volume_faces_llsd(mdl: &Value, sculpt_type: u8) -> Result<Vec<Face
                 while joint != END_INFLUENCES && idx < weights.len() {
                     let lo = weights[idx] as u16;
                     idx += 1;
-                    let hi = if idx < weights.len() { weights[idx] as u16 } else { 0 };
+                    let hi = if idx < weights.len() {
+                        weights[idx] as u16
+                    } else {
+                        0
+                    };
                     idx += 1;
                     let influence = lo | (hi << 8);
                     let wv = (influence as f32 / 65535.0).clamp(0.001, 0.999);
@@ -380,7 +393,11 @@ mod tests {
         for v in verts {
             for k in 0..3 {
                 let r = max[k] - min[k];
-                let q = if r > 0.0 { ((v[k] - min[k]) / r * 65535.0) as u16 } else { 0 };
+                let q = if r > 0.0 {
+                    ((v[k] - min[k]) / r * 65535.0) as u16
+                } else {
+                    0
+                };
                 pos.extend_from_slice(&q.to_le_bytes());
             }
             tc.extend_from_slice(&((v[0] * 1000.0) as u16).to_le_bytes());
@@ -404,14 +421,26 @@ mod tests {
         m.insert(b"TriangleList".to_vec(), Value::Binary(idx));
         let dom = |a: [f32; 3], b: [f32; 3]| {
             let mut d = BTreeMap::new();
-            d.insert(b"Min".to_vec(), Value::Array(a.iter().map(|x| Value::Real(*x as f64)).collect()));
-            d.insert(b"Max".to_vec(), Value::Array(b.iter().map(|x| Value::Real(*x as f64)).collect()));
+            d.insert(
+                b"Min".to_vec(),
+                Value::Array(a.iter().map(|x| Value::Real(*x as f64)).collect()),
+            );
+            d.insert(
+                b"Max".to_vec(),
+                Value::Array(b.iter().map(|x| Value::Real(*x as f64)).collect()),
+            );
             Value::Map(d)
         };
         m.insert(b"PositionDomain".to_vec(), dom(min, max));
         let mut d = BTreeMap::new();
-        d.insert(b"Min".to_vec(), Value::Array(vec![Value::Real(0.0), Value::Real(0.0)]));
-        d.insert(b"Max".to_vec(), Value::Array(vec![Value::Real(1.0), Value::Real(1.0)]));
+        d.insert(
+            b"Min".to_vec(),
+            Value::Array(vec![Value::Real(0.0), Value::Real(0.0)]),
+        );
+        d.insert(
+            b"Max".to_vec(),
+            Value::Array(vec![Value::Real(1.0), Value::Real(1.0)]),
+        );
         m.insert(b"TexCoord0Domain".to_vec(), Value::Map(d));
         Value::Map(m)
     }
@@ -447,7 +476,10 @@ mod tests {
 
     #[test]
     fn degenerate_faces() {
-        assert_eq!(unpack_volume_faces_llsd(&Value::Array(vec![]), 0).unwrap_err(), UnpackError::NoFaces);
+        assert_eq!(
+            unpack_volume_faces_llsd(&Value::Array(vec![]), 0).unwrap_err(),
+            UnpackError::NoFaces
+        );
         let mut ng = BTreeMap::new();
         ng.insert(b"NoGeometry".to_vec(), Value::Boolean(true));
         let faces = unpack_volume_faces_llsd(&Value::Array(vec![Value::Map(ng)]), 0).unwrap();

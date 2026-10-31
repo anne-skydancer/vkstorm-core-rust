@@ -653,7 +653,6 @@ fn opj_t1_enc_sigpass(
     let r = &mut regs;
     let mut nm: OPJ_INT32 = 0;
 
-
     while k < t1.h & !(0x03) {
       let w = t1.w;
       i = 0;
@@ -662,7 +661,8 @@ fn opj_t1_enc_sigpass(
           /* Nothing to do for any of the 4 data points */
         } else {
           opj_t1_enc_sigpass_step_macro(
-            mqc, r,
+            mqc,
+            r,
             t1.w,
             f,
             datap,
@@ -674,7 +674,8 @@ fn opj_t1_enc_sigpass(
             cblksty & J2K_CCP_CBLKSTY_VSC,
           );
           opj_t1_enc_sigpass_step_macro(
-            mqc, r,
+            mqc,
+            r,
             t1.w,
             f,
             datap.offset(1),
@@ -686,7 +687,8 @@ fn opj_t1_enc_sigpass(
             0,
           );
           opj_t1_enc_sigpass_step_macro(
-            mqc, r,
+            mqc,
+            r,
             t1.w,
             f,
             datap.offset(2),
@@ -698,7 +700,8 @@ fn opj_t1_enc_sigpass(
             0,
           );
           opj_t1_enc_sigpass_step_macro(
-            mqc, r,
+            mqc,
+            r,
             t1.w,
             f,
             datap.offset(3),
@@ -729,7 +732,8 @@ fn opj_t1_enc_sigpass(
           j = k;
           while j < t1.h {
             opj_t1_enc_sigpass_step_macro(
-              mqc, r,
+              mqc,
+              r,
               t1.w,
               f,
               datap,
@@ -1119,7 +1123,6 @@ fn opj_t1_enc_refpass(
     let mut regs = mqc.download();
     let r = &mut regs;
     let mut nm: OPJ_INT32 = 0;
-
 
     while k < t1.h & !(0x03) {
       i = 0;
@@ -1526,7 +1529,8 @@ fn opj_t1_enc_clnpass(
       i = 0;
       while i < t1.w {
         opj_t1_enc_clnpass_step_macro(
-          mqc, r,
+          mqc,
+          r,
           t1.w,
           f,
           datap,

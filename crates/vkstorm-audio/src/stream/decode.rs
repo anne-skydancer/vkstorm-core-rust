@@ -36,7 +36,12 @@ impl DecodeCtx {
 }
 
 /// Runs the demuxer and decoder for `format` until the input ends.
-pub(crate) fn run_format(format: Format, input: &mut Input, ctx: &DecodeCtx, sink: &mut dyn PcmSink) -> Result<(), StreamError> {
+pub(crate) fn run_format(
+    format: Format,
+    input: &mut Input,
+    ctx: &DecodeCtx,
+    sink: &mut dyn PcmSink,
+) -> Result<(), StreamError> {
     match format {
         Format::Mpeg => super::demux::run_mpeg(input, sink),
         Format::Adts => super::demux::run_adts(input, ctx, sink),
@@ -71,7 +76,12 @@ pub(crate) struct Converter {
 
 impl Converter {
     pub(crate) fn new(out_rate: u32) -> Converter {
-        Converter { out_rate, current: None, scratch: Vec::new(), segments: Vec::new() }
+        Converter {
+            out_rate,
+            current: None,
+            scratch: Vec::new(),
+            segments: Vec::new(),
+        }
     }
 
     /// Converts a packet; the interleaved result (in `layout`) is handed to
@@ -84,12 +94,22 @@ impl Converter {
         layout: ChannelLayout,
         push: &mut dyn FnMut(ChannelLayout, &[f32]),
     ) {
-        if self.current.as_ref().is_some_and(|(r, l, _, _)| *r != rate || *l != layout) {
+        if self
+            .current
+            .as_ref()
+            .is_some_and(|(r, l, _, _)| *r != rate || *l != layout)
+        {
             self.end_segment(push);
         }
         let out_rate = self.out_rate;
-        let (_, _, rs, _) =
-            self.current.get_or_insert_with(|| (rate, layout, Resampler::new(rate, out_rate, planes.len()), false));
+        let (_, _, rs, _) = self.current.get_or_insert_with(|| {
+            (
+                rate,
+                layout,
+                Resampler::new(rate, out_rate, planes.len()),
+                false,
+            )
+        });
         self.scratch.clear();
         rs.process(planes, frames, &mut self.scratch);
         if !self.scratch.is_empty() {
@@ -130,14 +150,16 @@ impl Converter {
 
     /// The segment in progress (source rate, layout, frames in and out).
     pub(crate) fn current(&self) -> Option<SegmentStats> {
-        self.current.as_ref().map(|(rate, layout, rs, changed)| SegmentStats {
-            source_rate: *rate,
-            out_rate: rs.out_rate(),
-            layout: *layout,
-            in_frames: rs.in_frames(),
-            out_frames: rs.out_frames(),
-            rate_changed: *changed,
-        })
+        self.current
+            .as_ref()
+            .map(|(rate, layout, rs, changed)| SegmentStats {
+                source_rate: *rate,
+                out_rate: rs.out_rate(),
+                layout: *layout,
+                in_frames: rs.in_frames(),
+                out_frames: rs.out_frames(),
+                rate_changed: *changed,
+            })
     }
 }
 
@@ -185,8 +207,18 @@ impl OfflineSink {
 }
 
 impl PcmSink for OfflineSink {
-    fn pcm(&mut self, planes: &[&[f32]], frames: usize, rate: u32, layout: ChannelLayout) -> Result<(), StreamError> {
-        if self.conv.current().is_some_and(|s| s.source_rate != rate || s.layout != layout) {
+    fn pcm(
+        &mut self,
+        planes: &[&[f32]],
+        frames: usize,
+        rate: u32,
+        layout: ChannelLayout,
+    ) -> Result<(), StreamError> {
+        if self
+            .conv
+            .current()
+            .is_some_and(|s| s.source_rate != rate || s.layout != layout)
+        {
             self.close();
         }
         let mut push = Self::push_into(self.keep, &mut self.current);
@@ -226,7 +258,10 @@ pub fn decode_bytes(
         tags: Vec::new(),
         codecs: Vec::new(),
     };
-    let head = Head { status: 200, ..Default::default() };
+    let head = Head {
+        status: 200,
+        ..Default::default()
+    };
     let format = match detect(&mut input, &head, "", &mut sink).map_err(|e| format!("{e:?}"))? {
         Detected::Audio(f) => f,
         Detected::Playlist { .. } => return Err("a playlist".into()),
@@ -239,5 +274,9 @@ pub fn decode_bytes(
     }
     sink.close();
     let segments = sink.conv.segments.iter().copied().zip(sink.done).collect();
-    Ok(OfflineDecoded { segments, tags: sink.tags, codecs: sink.codecs })
+    Ok(OfflineDecoded {
+        segments,
+        tags: sink.tags,
+        codecs: sink.codecs,
+    })
 }

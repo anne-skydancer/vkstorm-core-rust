@@ -18,9 +18,13 @@ mod r4a;
 
 use r4a::*;
 use vkstorm_inventory::llsd::coerce::insert;
-use vkstorm_inventory::perms::{Permissions, NULL_ID, PERM_ALL, PERM_COPY, PERM_MODIFY, PERM_MOVE, PERM_NONE, PERM_TRANSFER};
+use vkstorm_inventory::perms::{
+    NULL_ID, PERM_ALL, PERM_COPY, PERM_MODIFY, PERM_MOVE, PERM_NONE, PERM_TRANSFER, Permissions,
+};
 use vkstorm_inventory::sale::SaleType;
-use vkstorm_inventory::task::{self, CreateRequest, Entry, TASK_INVENTORY_ASSET_KEY, TASK_INVENTORY_ITEM_KEY};
+use vkstorm_inventory::task::{
+    self, CreateRequest, Entry, TASK_INVENTORY_ASSET_KEY, TASK_INVENTORY_ITEM_KEY,
+};
 use vkstorm_inventory::types::{AssetType, InventoryType};
 use vkstorm_llsd::Value;
 
@@ -58,14 +62,27 @@ fn notowner(s: &mut Scene) {
 
 /// The old entry of `spec`'s id replaced by a group-owned copy.
 fn make_group_owned(s: &mut Scene, old: ItemSpec) {
-    let g = ItemSpec { group: other_group(), group_owned: true, owner: NULL_ID, ..old };
+    let g = ItemSpec {
+        group: other_group(),
+        group_owned: true,
+        owner: NULL_ID,
+        ..old
+    };
     s.delete_inventory_item(&g.id);
-    s.obj.inv.as_mut().unwrap().insert(0, Entry::Item(make_item(&g)));
+    s.obj
+        .inv
+        .as_mut()
+        .unwrap()
+        .insert(0, Entry::Item(make_item(&g)));
     s.take();
 }
 
 fn duplicate_file() -> Vec<u8> {
-    let dup = ItemSpec { name: b"Duplicate A".to_vec(), asset: asset('e'), ..spec_a() };
+    let dup = ItemSpec {
+        name: b"Duplicate A".to_vec(),
+        asset: asset('e'),
+        ..spec_a()
+    };
     let mut f = legacy_object(&obj_id(), b"Contents", AssetType::CATEGORY, &NULL_ID);
     f.extend(legacy_item(&spec_a()));
     f.extend(legacy_item(&dup));
@@ -76,7 +93,8 @@ fn duplicate_file() -> Vec<u8> {
 fn rich() -> ItemSpec {
     ItemSpec {
         id: item('a'),
-        name: b"Rich item with a name longer than sixty-three characters, cut by the setter".to_vec(),
+        name: b"Rich item with a name longer than sixty-three characters, cut by the setter"
+            .to_vec(),
         desc: b"Desc \xc3\xa9 with | pipe".to_vec(),
         txn: txn(),
         flags: 0xffff_ffff,
@@ -110,162 +128,497 @@ type Step = fn(&mut Scene);
 /// capability.
 fn message_cases() -> Vec<(&'static str, Step, Step, bool)> {
     vec![
-        ("update_key0_new", preload, |s| {
-            let d = ItemSpec { id: item('d'), asset: asset('d'), name: b"New D".to_vec(), ..spec_a() };
-            s.update_item(&d, TASK_INVENTORY_ITEM_KEY, true);
-        }, false),
-        ("update_key0_selected", select, |s| {
-            s.update_item(&ItemSpec { desc: b"edited".to_vec(), ..spec_a() }, TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_key0_group_owned", |s| {
-            preload(s);
-            make_group_owned(s, spec_a());
-        }, |s| {
-            s.update_item(&ItemSpec { desc: b"edited".to_vec(), ..spec_a() }, TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_key0_owner_known", preload, |s| {
-            s.update_item(&ItemSpec { desc: b"edited".to_vec(), owner: other(), ..spec_a() }, TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_key0_guess_owner", preload, |s| {
-            let c = ItemSpec { id: item('c'), asset: asset('c'), group: other_group(), ..spec_a() };
-            s.update_item(&c, TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_key0_guess_not_owner", notowner, |s| {
-            s.update_item(&ItemSpec { id: item('c'), asset: asset('c'), ..spec_a() }, TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_key0_object_type_not_atomic", preload, |s| {
-            s.update_item(&ItemSpec { id: item('c'), ..spec_b() }, TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_key1_by_asset_known", preload, |s| {
-            s.update_item(&ItemSpec { id: item('e'), desc: b"by asset".to_vec(), ..spec_a() }, TASK_INVENTORY_ASSET_KEY, false);
-        }, false),
-        ("update_key1_by_asset_guess", preload, |s| {
-            s.update_item(&ItemSpec { id: item('e'), asset: asset('e'), ..spec_a() }, TASK_INVENTORY_ASSET_KEY, false);
-        }, false),
-        ("update_no_inventory", none, |s| {
-            s.update_item(&spec_a(), TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_rich_item", preload, |s| {
-            s.update_item(&rich(), TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_material_new", preload, |s| {
-            let t = ItemSpec {
-                id: item('d'),
-                asset: asset('d'),
-                ty: AssetType::TEXTURE,
-                inv_type: InventoryType::TEXTURE,
-                ..spec_a()
-            };
-            let item = make_item(&t);
-            for _ in 0..2 {
-                let acts = task::update_material_inventory(&s.view(), &s.env(), &item, TASK_INVENTORY_ITEM_KEY, true);
+        (
+            "update_key0_new",
+            preload,
+            |s| {
+                let d = ItemSpec {
+                    id: item('d'),
+                    asset: asset('d'),
+                    name: b"New D".to_vec(),
+                    ..spec_a()
+                };
+                s.update_item(&d, TASK_INVENTORY_ITEM_KEY, true);
+            },
+            false,
+        ),
+        (
+            "update_key0_selected",
+            select,
+            |s| {
+                s.update_item(
+                    &ItemSpec {
+                        desc: b"edited".to_vec(),
+                        ..spec_a()
+                    },
+                    TASK_INVENTORY_ITEM_KEY,
+                    false,
+                );
+            },
+            false,
+        ),
+        (
+            "update_key0_group_owned",
+            |s| {
+                preload(s);
+                make_group_owned(s, spec_a());
+            },
+            |s| {
+                s.update_item(
+                    &ItemSpec {
+                        desc: b"edited".to_vec(),
+                        ..spec_a()
+                    },
+                    TASK_INVENTORY_ITEM_KEY,
+                    false,
+                );
+            },
+            false,
+        ),
+        (
+            "update_key0_owner_known",
+            preload,
+            |s| {
+                s.update_item(
+                    &ItemSpec {
+                        desc: b"edited".to_vec(),
+                        owner: other(),
+                        ..spec_a()
+                    },
+                    TASK_INVENTORY_ITEM_KEY,
+                    false,
+                );
+            },
+            false,
+        ),
+        (
+            "update_key0_guess_owner",
+            preload,
+            |s| {
+                let c = ItemSpec {
+                    id: item('c'),
+                    asset: asset('c'),
+                    group: other_group(),
+                    ..spec_a()
+                };
+                s.update_item(&c, TASK_INVENTORY_ITEM_KEY, false);
+            },
+            false,
+        ),
+        (
+            "update_key0_guess_not_owner",
+            notowner,
+            |s| {
+                s.update_item(
+                    &ItemSpec {
+                        id: item('c'),
+                        asset: asset('c'),
+                        ..spec_a()
+                    },
+                    TASK_INVENTORY_ITEM_KEY,
+                    false,
+                );
+            },
+            false,
+        ),
+        (
+            "update_key0_object_type_not_atomic",
+            preload,
+            |s| {
+                s.update_item(
+                    &ItemSpec {
+                        id: item('c'),
+                        ..spec_b()
+                    },
+                    TASK_INVENTORY_ITEM_KEY,
+                    false,
+                );
+            },
+            false,
+        ),
+        (
+            "update_key1_by_asset_known",
+            preload,
+            |s| {
+                s.update_item(
+                    &ItemSpec {
+                        id: item('e'),
+                        desc: b"by asset".to_vec(),
+                        ..spec_a()
+                    },
+                    TASK_INVENTORY_ASSET_KEY,
+                    false,
+                );
+            },
+            false,
+        ),
+        (
+            "update_key1_by_asset_guess",
+            preload,
+            |s| {
+                s.update_item(
+                    &ItemSpec {
+                        id: item('e'),
+                        asset: asset('e'),
+                        ..spec_a()
+                    },
+                    TASK_INVENTORY_ASSET_KEY,
+                    false,
+                );
+            },
+            false,
+        ),
+        (
+            "update_no_inventory",
+            none,
+            |s| {
+                s.update_item(&spec_a(), TASK_INVENTORY_ITEM_KEY, false);
+            },
+            false,
+        ),
+        (
+            "update_rich_item",
+            preload,
+            |s| {
+                s.update_item(&rich(), TASK_INVENTORY_ITEM_KEY, false);
+            },
+            false,
+        ),
+        (
+            "update_material_new",
+            preload,
+            |s| {
+                let t = ItemSpec {
+                    id: item('d'),
+                    asset: asset('d'),
+                    ty: AssetType::TEXTURE,
+                    inv_type: InventoryType::TEXTURE,
+                    ..spec_a()
+                };
+                let item = make_item(&t);
+                for _ in 0..2 {
+                    let acts = task::update_material_inventory(
+                        &s.view(),
+                        &s.env(),
+                        &item,
+                        TASK_INVENTORY_ITEM_KEY,
+                        true,
+                    );
+                    s.run(acts);
+                }
+            },
+            false,
+        ),
+        (
+            "update_selected_notecard_next_move",
+            select,
+            |s| {
+                s.update_item(
+                    &ItemSpec {
+                        next: PERM_MOVE,
+                        desc: b"atomic".to_vec(),
+                        ..spec_a()
+                    },
+                    TASK_INVENTORY_ITEM_KEY,
+                    false,
+                );
+            },
+            false,
+        ),
+        (
+            "update_selected_object_next_move",
+            select,
+            |s| {
+                s.update_item(
+                    &ItemSpec {
+                        next: PERM_MOVE,
+                        desc: b"not atomic".to_vec(),
+                        ..spec_b()
+                    },
+                    TASK_INVENTORY_ITEM_KEY,
+                    false,
+                );
+            },
+            false,
+        ),
+        (
+            "update_notowner_notecard_next_move",
+            notowner,
+            |s| {
+                let c = ItemSpec {
+                    id: item('c'),
+                    asset: asset('c'),
+                    next: PERM_MOVE,
+                    ..spec_a()
+                };
+                s.update_item(&c, TASK_INVENTORY_ITEM_KEY, false);
+            },
+            false,
+        ),
+        (
+            "update_notowner_object_next_move",
+            notowner,
+            |s| {
+                let c = ItemSpec {
+                    id: item('c'),
+                    asset: asset('c'),
+                    next: PERM_MOVE,
+                    ..spec_b()
+                };
+                s.update_item(&c, TASK_INVENTORY_ITEM_KEY, false);
+            },
+            false,
+        ),
+        (
+            "update_groupowned_notecard_next_move",
+            |s| {
+                preload(s);
+                make_group_owned(s, spec_a());
+            },
+            |s| {
+                s.update_item(
+                    &ItemSpec {
+                        next: PERM_MOVE,
+                        desc: b"atomic".to_vec(),
+                        ..spec_a()
+                    },
+                    TASK_INVENTORY_ITEM_KEY,
+                    false,
+                );
+            },
+            false,
+        ),
+        (
+            "update_groupowned_object_next_move",
+            |s| {
+                preload(s);
+                make_group_owned(s, spec_b());
+            },
+            |s| {
+                s.update_item(
+                    &ItemSpec {
+                        next: PERM_MOVE,
+                        desc: b"not atomic".to_vec(),
+                        ..spec_b()
+                    },
+                    TASK_INVENTORY_ITEM_KEY,
+                    false,
+                );
+            },
+            false,
+        ),
+        (
+            "update_known_notecard_next_move",
+            preload,
+            |s| {
+                let a = ItemSpec {
+                    owner: other(),
+                    next: PERM_MOVE,
+                    desc: b"atomic".to_vec(),
+                    ..spec_a()
+                };
+                s.update_item(&a, TASK_INVENTORY_ITEM_KEY, false);
+            },
+            false,
+        ),
+        (
+            "update_known_object_next_move",
+            preload,
+            |s| {
+                let b = ItemSpec {
+                    owner: other(),
+                    next: PERM_MOVE,
+                    desc: b"not atomic".to_vec(),
+                    ..spec_b()
+                };
+                s.update_item(&b, TASK_INVENTORY_ITEM_KEY, false);
+            },
+            false,
+        ),
+        (
+            "update_selected_script_next_move",
+            select,
+            |s| {
+                let sc = ItemSpec {
+                    next: PERM_MOVE,
+                    ..script('c', Some('c'), b"Script C")
+                };
+                s.update_item(&sc, TASK_INVENTORY_ITEM_KEY, false);
+            },
+            false,
+        ),
+        (
+            "delete_duplicate_id_direct",
+            |s| preload_with(s, Some(&duplicate_file())),
+            |s| s.delete_inventory_item(&item('a')),
+            false,
+        ),
+        (
+            "remove_duplicate_id",
+            |s| preload_with(s, Some(&duplicate_file())),
+            |s| s.remove_inventory(&item('a')),
+            false,
+        ),
+        (
+            "update_local_known",
+            preload,
+            |s| {
+                let a = make_item(&ItemSpec {
+                    desc: b"local".to_vec(),
+                    txn: txn(),
+                    ..spec_a()
+                });
+                let acts = task::update_inventory_local(
+                    &s.view(),
+                    &s.env(),
+                    &a.item,
+                    TASK_INVENTORY_ITEM_KEY,
+                );
                 s.run(acts);
-            }
-        }, false),
-        ("update_selected_notecard_next_move", select, |s| {
-            s.update_item(&ItemSpec { next: PERM_MOVE, desc: b"atomic".to_vec(), ..spec_a() }, TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_selected_object_next_move", select, |s| {
-            s.update_item(&ItemSpec { next: PERM_MOVE, desc: b"not atomic".to_vec(), ..spec_b() }, TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_notowner_notecard_next_move", notowner, |s| {
-            let c = ItemSpec { id: item('c'), asset: asset('c'), next: PERM_MOVE, ..spec_a() };
-            s.update_item(&c, TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_notowner_object_next_move", notowner, |s| {
-            let c = ItemSpec { id: item('c'), asset: asset('c'), next: PERM_MOVE, ..spec_b() };
-            s.update_item(&c, TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_groupowned_notecard_next_move", |s| {
-            preload(s);
-            make_group_owned(s, spec_a());
-        }, |s| {
-            s.update_item(&ItemSpec { next: PERM_MOVE, desc: b"atomic".to_vec(), ..spec_a() }, TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_groupowned_object_next_move", |s| {
-            preload(s);
-            make_group_owned(s, spec_b());
-        }, |s| {
-            s.update_item(&ItemSpec { next: PERM_MOVE, desc: b"not atomic".to_vec(), ..spec_b() }, TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_known_notecard_next_move", preload, |s| {
-            let a = ItemSpec { owner: other(), next: PERM_MOVE, desc: b"atomic".to_vec(), ..spec_a() };
-            s.update_item(&a, TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_known_object_next_move", preload, |s| {
-            let b = ItemSpec { owner: other(), next: PERM_MOVE, desc: b"not atomic".to_vec(), ..spec_b() };
-            s.update_item(&b, TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("update_selected_script_next_move", select, |s| {
-            let sc = ItemSpec { next: PERM_MOVE, ..script('c', Some('c'), b"Script C") };
-            s.update_item(&sc, TASK_INVENTORY_ITEM_KEY, false);
-        }, false),
-        ("delete_duplicate_id_direct", |s| preload_with(s, Some(&duplicate_file())), |s| s.delete_inventory_item(&item('a')), false),
-        ("remove_duplicate_id", |s| preload_with(s, Some(&duplicate_file())), |s| s.remove_inventory(&item('a')), false),
-        ("update_local_known", preload, |s| {
-            let a = make_item(&ItemSpec { desc: b"local".to_vec(), txn: txn(), ..spec_a() });
-            let acts = task::update_inventory_local(&s.view(), &s.env(), &a.item, TASK_INVENTORY_ITEM_KEY);
-            s.run(acts);
-        }, false),
-        ("update_viewer_asset", preload, |s| {
-            let a = make_item(&spec_a());
-            let acts = task::update_viewer_inventory_asset(&s.view(), &s.env(), &a, &asset('e'));
-            s.run(acts);
-        }, false),
-        ("remove_present", preload, |s| s.remove_inventory(&item('a')), false),
-        ("remove_absent", preload, |s| s.remove_inventory(&item('e')), false),
-        ("move_null_folder_copyable", preload, |s| s.move_inventory(&NULL_ID, &item('a')), false),
-        ("move_explicit_folder_nocopy", preload, |s| s.move_inventory(&folder(), &item('b')), false),
-        ("move_absent", preload, |s| s.move_inventory(&folder(), &item('e')), false),
+            },
+            false,
+        ),
+        (
+            "update_viewer_asset",
+            preload,
+            |s| {
+                let a = make_item(&spec_a());
+                let acts =
+                    task::update_viewer_inventory_asset(&s.view(), &s.env(), &a, &asset('e'));
+                s.run(acts);
+            },
+            false,
+        ),
+        (
+            "remove_present",
+            preload,
+            |s| s.remove_inventory(&item('a')),
+            false,
+        ),
+        (
+            "remove_absent",
+            preload,
+            |s| s.remove_inventory(&item('e')),
+            false,
+        ),
+        (
+            "move_null_folder_copyable",
+            preload,
+            |s| s.move_inventory(&NULL_ID, &item('a')),
+            false,
+        ),
+        (
+            "move_explicit_folder_nocopy",
+            preload,
+            |s| s.move_inventory(&folder(), &item('b')),
+            false,
+        ),
+        (
+            "move_absent",
+            preload,
+            |s| s.move_inventory(&folder(), &item('e')),
+            false,
+        ),
         ("request_udp", none, |s| s.request_inventory(), false),
-        ("request_udp_pending_dropped", none, |s| {
-            s.request_inventory();
-            s.request_inventory();
-        }, false),
-        ("rezscript_new_template", none, |s| {
-            let sc = make_item(&ItemSpec { txn: txn(), ..script('c', None, b"New Script") });
-            let acts = task::save_script(&s.view(), &s.env(), &sc, true, true, &template_item());
-            s.run(acts);
-        }, false),
-        ("rezscript_asset_with_template", preload, |s| {
-            let sc = make_item(&script('c', Some('c'), b"Script"));
-            let acts = task::save_script(&s.view(), &s.env(), &sc, false, false, &template_item());
-            s.run(acts);
-        }, false),
-        ("rezscript_template_not_new", preload, |s| {
-            let sc = make_item(&script('c', None, b"Script"));
-            let acts = task::save_script(&s.view(), &s.env(), &sc, true, false, &template_item());
-            s.run(acts);
-        }, false),
-        ("rezscript_new_no_template", none, |s| {
-            let sc = make_item(&script('c', None, b"New Script"));
-            let acts = task::save_script(&s.view(), &s.env(), &sc, true, true, &NULL_ID);
-            s.run(acts);
-        }, false),
-        ("xfer_request", none, |s| {
-            s.request_inventory();
-            s.deliver_reply(0, b"inventory_obj.tmp");
-        }, false),
-        ("xfer_replaced_by_newer_reply", none, |s| {
-            s.request_inventory();
-            s.deliver_reply(0, b"inventory_first.tmp");
-            s.deliver_reply(1, b"inventory_second.tmp");
-        }, false),
-        ("xfer_aborted_by_delayed_fetch", none, |s| {
-            s.request_inventory();
-            s.deliver_reply(0, b"inventory_first.tmp");
-            s.obj.st.expected = 3;
-            s.deliver_reply(1, b"inventory_old.tmp");
-        }, false),
+        (
+            "request_udp_pending_dropped",
+            none,
+            |s| {
+                s.request_inventory();
+                s.request_inventory();
+            },
+            false,
+        ),
+        (
+            "rezscript_new_template",
+            none,
+            |s| {
+                let sc = make_item(&ItemSpec {
+                    txn: txn(),
+                    ..script('c', None, b"New Script")
+                });
+                let acts =
+                    task::save_script(&s.view(), &s.env(), &sc, true, true, &template_item());
+                s.run(acts);
+            },
+            false,
+        ),
+        (
+            "rezscript_asset_with_template",
+            preload,
+            |s| {
+                let sc = make_item(&script('c', Some('c'), b"Script"));
+                let acts =
+                    task::save_script(&s.view(), &s.env(), &sc, false, false, &template_item());
+                s.run(acts);
+            },
+            false,
+        ),
+        (
+            "rezscript_template_not_new",
+            preload,
+            |s| {
+                let sc = make_item(&script('c', None, b"Script"));
+                let acts =
+                    task::save_script(&s.view(), &s.env(), &sc, true, false, &template_item());
+                s.run(acts);
+            },
+            false,
+        ),
+        (
+            "rezscript_new_no_template",
+            none,
+            |s| {
+                let sc = make_item(&script('c', None, b"New Script"));
+                let acts = task::save_script(&s.view(), &s.env(), &sc, true, true, &NULL_ID);
+                s.run(acts);
+            },
+            false,
+        ),
+        (
+            "xfer_request",
+            none,
+            |s| {
+                s.request_inventory();
+                s.deliver_reply(0, b"inventory_obj.tmp");
+            },
+            false,
+        ),
+        (
+            "xfer_replaced_by_newer_reply",
+            none,
+            |s| {
+                s.request_inventory();
+                s.deliver_reply(0, b"inventory_first.tmp");
+                s.deliver_reply(1, b"inventory_second.tmp");
+            },
+            false,
+        ),
+        (
+            "xfer_aborted_by_delayed_fetch",
+            none,
+            |s| {
+                s.request_inventory();
+                s.deliver_reply(0, b"inventory_first.tmp");
+                s.obj.st.expected = 3;
+                s.deliver_reply(1, b"inventory_old.tmp");
+            },
+            false,
+        ),
         ("cap_request_url", none, |s| s.request_inventory(), true),
-        ("cap_request_url_after_load", |s| {
-            s.request_inventory();
-            s.complete_http(Some(standard_reply(9)), 200, None);
-            s.take();
-        }, |s| {
-            s.dirty_inventory();
-            s.request_inventory();
-        }, true),
+        (
+            "cap_request_url_after_load",
+            |s| {
+                s.request_inventory();
+                s.complete_http(Some(standard_reply(9)), 200, None);
+                s.take();
+            },
+            |s| {
+                s.dirty_inventory();
+                s.request_inventory();
+            },
+            true,
+        ),
     ]
 }
 
@@ -279,11 +632,19 @@ fn set4_messages() {
         s.take();
         let before = s.state_line();
         // Capture: the real xfer manager and the datagrams
-        s.xfers = Xfers::Real { list: Vec::new(), ids: Vec::new(), next: 0x5a17_0000_0000_0001 };
+        s.xfers = Xfers::Real {
+            list: Vec::new(),
+            ids: Vec::new(),
+            next: 0x5a17_0000_0000_0001,
+        };
         s.capture = Some(Vec::new());
         action(&mut s);
         let actions = s.take();
-        text += &format!("  before {before}\n  after {} | {}\n", s.state_line(), actions);
+        text += &format!(
+            "  before {before}\n  after {} | {}\n",
+            s.state_line(),
+            actions
+        );
         if s.pending_http_count() > 0 {
             let (method, url, _) = s.pending_http(0);
             text += &format!("  pending {method} {url}\n");
@@ -326,7 +687,10 @@ fn create_cases() -> Vec<CreateCase> {
         status,
         success,
     };
-    let lua_params = map(vec![("language", s("lua")), ("template", Value::Uuid(template_item()))]);
+    let lua_params = map(vec![
+        ("language", s("lua")),
+        ("template", Value::Uuid(template_item())),
+    ]);
     vec![
         CreateCase {
             label: "script",
@@ -337,7 +701,13 @@ fn create_cases() -> Vec<CreateCase> {
             sub_type: 0,
             name: b"New Script",
             desc: b"",
-            masks: [PERM_ALL, PERM_ALL, PERM_NONE, PERM_NONE, PERM_MOVE | PERM_TRANSFER],
+            masks: [
+                PERM_ALL,
+                PERM_ALL,
+                PERM_NONE,
+                PERM_NONE,
+                PERM_MOVE | PERM_TRANSFER,
+            ],
             params: Value::Undefined,
             status: 200,
             success: true,
@@ -356,8 +726,19 @@ fn create_cases() -> Vec<CreateCase> {
             status: 200,
             success: true,
         },
-        CreateCase { desc: b"desc", ..note("notecard", true, true, b"New Note", Value::map(), 200, true) },
-        note("server_says_no", true, true, b"N", Value::Undefined, 200, false),
+        CreateCase {
+            desc: b"desc",
+            ..note("notecard", true, true, b"New Note", Value::map(), 200, true)
+        },
+        note(
+            "server_says_no",
+            true,
+            true,
+            b"N",
+            Value::Undefined,
+            200,
+            false,
+        ),
         note("http_error", true, true, b"N", Value::Undefined, 500, true),
         note("no_cap", true, false, b"N", Value::Undefined, 200, true),
         note("no_region", false, true, b"N", Value::Undefined, 200, true),
@@ -415,5 +796,8 @@ fn set4_create_item() {
         text += &format!("  after {} | {}\n", s.state_line(), s.take());
     }
     assert_text("create_item.txt", text.as_bytes());
-    assert_eq!(std::fs::read_dir(fixture_path("create")).unwrap().count(), files);
+    assert_eq!(
+        std::fs::read_dir(fixture_path("create")).unwrap().count(),
+        files
+    );
 }

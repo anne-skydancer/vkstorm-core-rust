@@ -8,7 +8,7 @@ use std::fs;
 use std::path::Path;
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
-use crate::{ll_debugs, ll_infos, ll_warns, uuid_to_string, Uuid};
+use crate::{Uuid, ll_debugs, ll_infos, ll_warns, uuid_to_string};
 
 /// `CACHE_FILENAME_PREFIX`.
 pub const CACHE_FILENAME_PREFIX: &str = "sl_cache";
@@ -24,7 +24,10 @@ pub fn metadata_to_filepath(cache_dir: &str, delim: &str, id: &Uuid) -> String {
 /// The `sl_cache_<uuid>` part of a cache file name, as the purge reads it
 /// back (`getBaseFileName(path, true).substr(9, 36)`).
 pub fn uuid_text_of_cache_file(path: &str) -> String {
-    let base = Path::new(path).file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+    let base = Path::new(path)
+        .file_stem()
+        .map(|s| s.to_string_lossy().into_owned())
+        .unwrap_or_default();
     let start = CACHE_FILENAME_PREFIX.len() + 1;
     if base.len() <= start {
         return String::new();
@@ -36,7 +39,12 @@ pub fn uuid_text_of_cache_file(path: &str) -> String {
 fn mtime_secs(m: &fs::Metadata) -> i64 {
     m.modified()
         .ok()
-        .and_then(|t| t.duration_since(UNIX_EPOCH).ok().map(|d| d.as_secs() as i64).or_else(|| Some(-(UNIX_EPOCH.duration_since(t).ok()?.as_secs() as i64))))
+        .and_then(|t| {
+            t.duration_since(UNIX_EPOCH)
+                .ok()
+                .map(|d| d.as_secs() as i64)
+                .or_else(|| Some(-(UNIX_EPOCH.duration_since(t).ok()?.as_secs() as i64)))
+        })
         .unwrap_or(0)
 }
 
@@ -49,8 +57,15 @@ fn walk(dir: &Path, needle: &str, f: &mut dyn FnMut(String, u64, i64)) {
 /// [`walk`] that stops, returning false, as soon as `running` says no
 /// (checked before each directory entry, as upstream d527adf68c checks
 /// `LLApp::isRunning()` in `purge`'s directory loop).
-fn walk_while(dir: &Path, needle: &str, running: &mut dyn FnMut() -> bool, f: &mut dyn FnMut(String, u64, i64)) -> bool {
-    let Ok(rd) = fs::read_dir(dir) else { return true };
+fn walk_while(
+    dir: &Path,
+    needle: &str,
+    running: &mut dyn FnMut() -> bool,
+    f: &mut dyn FnMut(String, u64, i64),
+) -> bool {
+    let Ok(rd) = fs::read_dir(dir) else {
+        return true;
+    };
     for e in rd.flatten() {
         if !running() {
             return false;
@@ -111,7 +126,14 @@ impl DiskCache {
     /// The constructor: creates the directory and its 16 subdirectories.
     /// `prepopulate` follows separately (it needs the host's static
     /// asset folders).
-    pub fn new(cache_dir: &str, delim: &str, max_size_bytes: u64, enable_debug_info: bool, high: f32, low: f32) -> DiskCache {
+    pub fn new(
+        cache_dir: &str,
+        delim: &str,
+        max_size_bytes: u64,
+        enable_debug_info: bool,
+        high: f32,
+        low: f32,
+    ) -> DiskCache {
         let _ = fs::create_dir(cache_dir);
         for c in b"0123456789abcdef" {
             let _ = fs::create_dir(format!("{cache_dir}{delim}{}", *c as char));
@@ -164,24 +186,41 @@ impl DiskCache {
             // The C++ `dirFileSize` here cannot be stopped; this scan stops
             // with the others, so a shutdown does not wait for it either.
             let Some(size) = self.dir_file_size_while(false, running) else {
-                return PurgeReport { interrupted: true, ..Default::default() };
+                return PurgeReport {
+                    interrupted: true,
+                    ..Default::default()
+                };
             };
             ll_infos!("Total dir size before purge is {}", size);
         }
         let start = Instant::now();
         let mut file_info: Vec<(i64, u64, String)> = Vec::new();
         let mut file_size_total: u64 = 0;
-        let completed = walk_while(Path::new(&self.cache_dir), CACHE_FILENAME_PREFIX, running, &mut |path, size, time| {
-            file_size_total += size;
-            file_info.push((time, size, path));
-        });
-        let mut report = PurgeReport { files: file_info.len(), size_before: file_size_total, ..Default::default() };
+        let completed = walk_while(
+            Path::new(&self.cache_dir),
+            CACHE_FILENAME_PREFIX,
+            running,
+            &mut |path, size, time| {
+                file_size_total += size;
+                file_info.push((time, size, path));
+            },
+        );
+        let mut report = PurgeReport {
+            files: file_info.len(),
+            size_before: file_size_total,
+            ..Default::default()
+        };
         if !completed {
             report.interrupted = true;
             return report;
         }
-        ll_debugs!("Cache is {}% full", ((file_size_total as f32) / self.max_size_bytes as f32 * 100.0) as i32);
-        if (file_size_total as f64) < self.max_size_bytes as f64 * (self.high_percent as f64 / 100.0) {
+        ll_debugs!(
+            "Cache is {}% full",
+            ((file_size_total as f32) / self.max_size_bytes as f32 * 100.0) as i32
+        );
+        if (file_size_total as f64)
+            < self.max_size_bytes as f64 * (self.high_percent as f64 / 100.0)
+        {
             ll_debugs!("Not exceded high water - do nothing");
             return report;
         }
@@ -266,7 +305,11 @@ impl DiskCache {
         }
         let new_cache_size = self.update_cache_size(file_size_total - deleted_size_total);
         ll_infos!("Total dir size after purge is {}", new_cache_size);
-        ll_infos!("Cache purge took {} ms to execute for {} files", execute_time, file_info.len());
+        ll_infos!(
+            "Cache purge took {} ms to execute for {} files",
+            execute_time,
+            file_info.len()
+        );
         ll_infos!("Deleted: {} Skipped: {} Kept: {}", del, skip, keep);
         ll_infos!("Total of {} bytes removed.", deleted_size_total);
         report.deleted_size = deleted_size_total;
@@ -296,12 +339,19 @@ impl DiskCache {
         self.skip_list.clear();
         for (from_folder, files) in folders {
             for from_asset_file in files {
-                let uuid_as_string = Path::new(from_asset_file).file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default();
+                let uuid_as_string = Path::new(from_asset_file)
+                    .file_stem()
+                    .map(|s| s.to_string_lossy().into_owned())
+                    .unwrap_or_default();
                 let uuid = crate::uuid_from_string(&uuid_as_string).unwrap_or([0; 16]);
                 let to_asset_file = self.filepath(&uuid);
                 if !Path::new(&to_asset_file).exists() {
                     if self.enable_debug_info {
-                        ll_infos!("Copying static asset {} to cache from {}", from_asset_file, from_folder);
+                        ll_infos!(
+                            "Copying static asset {} to cache from {}",
+                            from_asset_file,
+                            from_folder
+                        );
                     }
                     if fs::copy(from_asset_file, &to_asset_file).is_err() {
                         ll_warns!("Failed to copy {} to {}", from_asset_file, to_asset_file);
@@ -321,7 +371,11 @@ impl DiskCache {
     pub fn clear_cache(&mut self) {
         ll_infos!("clearing cache {}", self.cache_dir);
         let mut paths = Vec::new();
-        walk(Path::new(&self.cache_dir), CACHE_FILENAME_PREFIX, &mut |path, _, _| paths.push(path));
+        walk(
+            Path::new(&self.cache_dir),
+            CACHE_FILENAME_PREFIX,
+            &mut |path, _, _| paths.push(path),
+        );
         for p in paths {
             if let Err(e) = fs::remove_file(&p) {
                 ll_warns!("Failed to delete cache file {}: {}", p, e);
@@ -333,7 +387,9 @@ impl DiskCache {
     /// `removeOldVFSFiles`: removes the pre-2021 VFS files of the cache
     /// directory (`inv.llsd`, `db2.x`), not recursing.
     pub fn remove_old_vfs_files(cache_path: &str) {
-        let Ok(rd) = fs::read_dir(cache_path) else { return };
+        let Ok(rd) = fs::read_dir(cache_path) else {
+            return;
+        };
         for e in rd.flatten() {
             if !e.file_type().map(|t| t.is_file()).unwrap_or(false) {
                 continue;
@@ -363,12 +419,17 @@ impl DiskCache {
     /// `dirFileSize`: the total size of the cache files, from the scan
     /// cached within the last 120 seconds unless `force`.
     pub fn dir_file_size(&mut self, force: bool) -> u64 {
-        self.dir_file_size_while(force, &mut || true).unwrap_or(self.stored_cache_size)
+        self.dir_file_size_while(force, &mut || true)
+            .unwrap_or(self.stored_cache_size)
     }
 
     /// [`dir_file_size`](Self::dir_file_size) whose scan stops when
     /// `running` says no: `None`, and the stored size is left alone.
-    fn dir_file_size_while(&mut self, force: bool, running: &mut dyn FnMut() -> bool) -> Option<u64> {
+    fn dir_file_size_while(
+        &mut self,
+        force: bool,
+        running: &mut dyn FnMut() -> bool,
+    ) -> Option<u64> {
         const CACHE_DURATION_SECS: u64 = 120;
         if !force {
             if let Some(last) = self.last_scan {
@@ -379,7 +440,12 @@ impl DiskCache {
             }
         }
         let mut total: u64 = 0;
-        if !walk_while(Path::new(&self.cache_dir), CACHE_FILENAME_PREFIX, running, &mut |_, size, _| total += size) {
+        if !walk_while(
+            Path::new(&self.cache_dir),
+            CACHE_FILENAME_PREFIX,
+            running,
+            &mut |_, size, _| total += size,
+        ) {
             return None;
         }
         Some(self.update_cache_size(total))
@@ -387,7 +453,10 @@ impl DiskCache {
 
     /// The current time in seconds, for callers that stamp files.
     pub fn now_secs() -> i64 {
-        SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0)
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_secs() as i64)
+            .unwrap_or(0)
     }
 }
 
@@ -402,8 +471,14 @@ mod tests {
         // platform's path splitting, as getBaseFileName does.
         let d = std::path::MAIN_SEPARATOR.to_string();
         let p = metadata_to_filepath(&format!("{d}cache"), &d, &id);
-        assert_eq!(p, format!("{d}cache{d}a{d}sl_cache_a1234567-89ab-cdef-1032-547698badcfe_0.asset"));
-        assert_eq!(uuid_text_of_cache_file(&p), "a1234567-89ab-cdef-1032-547698badcfe");
+        assert_eq!(
+            p,
+            format!("{d}cache{d}a{d}sl_cache_a1234567-89ab-cdef-1032-547698badcfe_0.asset")
+        );
+        assert_eq!(
+            uuid_text_of_cache_file(&p),
+            "a1234567-89ab-cdef-1032-547698badcfe"
+        );
     }
 
     #[test]
@@ -420,7 +495,12 @@ mod tests {
             fs::write(&p, vec![0u8; 100]).unwrap();
             // Distinct, increasing modification times.
             let t = filetime_secs(1_600_000_000 + i as i64 * 10);
-            fs::File::options().write(true).open(&p).unwrap().set_modified(t).unwrap();
+            fs::File::options()
+                .write(true)
+                .open(&p)
+                .unwrap()
+                .set_modified(t)
+                .unwrap();
             ids.push(id);
         }
         cache.skip_list.push(uuid_to_string(&ids[0]));
@@ -456,19 +536,34 @@ mod tests {
             let p = cache.filepath(&id);
             fs::write(&p, vec![0u8; 100]).unwrap();
             let t = filetime_secs(1_600_000_000 + i as i64 * 10);
-            fs::File::options().write(true).open(&p).unwrap().set_modified(t).unwrap();
+            fs::File::options()
+                .write(true)
+                .open(&p)
+                .unwrap()
+                .set_modified(t)
+                .unwrap();
             ids.push(id);
         }
         // Stopped before the scan: nothing listed, nothing deleted.
         let r = cache.purge_while(&mut || false);
         assert!(r.interrupted && !r.purged && r.files == 0);
-        assert_eq!(ids.iter().filter(|id| Path::new(&cache.filepath(id)).exists()).count(), 10);
+        assert_eq!(
+            ids.iter()
+                .filter(|id| Path::new(&cache.filepath(id)).exists())
+                .count(),
+            10
+        );
         // Stopped after the scan, before the second deletion: one file goes.
         let mut scan_checks = 0;
-        walk_while(Path::new(&dirs), CACHE_FILENAME_PREFIX, &mut || {
-            scan_checks += 1;
-            true
-        }, &mut |_, _, _| {});
+        walk_while(
+            Path::new(&dirs),
+            CACHE_FILENAME_PREFIX,
+            &mut || {
+                scan_checks += 1;
+                true
+            },
+            &mut |_, _, _| {},
+        );
         let mut asked = 0;
         let mut running = || {
             asked += 1;

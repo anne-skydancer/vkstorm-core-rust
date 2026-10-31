@@ -13,11 +13,13 @@ mod corpus;
 
 use std::time::Instant;
 
-use vkstorm_assets::fetch::{budget, Env, FetchType, Fetcher, Host, HttpGet, Region, State, Worker};
+use vkstorm_assets::Uuid;
+use vkstorm_assets::fetch::{
+    Env, FetchType, Fetcher, Host, HttpGet, Region, State, Worker, budget,
+};
 use vkstorm_assets::mesh::skin::{Decomposition, SkinInfo};
 use vkstorm_assets::mesh::unpack::unpack_volume_faces;
-use vkstorm_assets::texcache::{fast_cache_level, Config, FastEntry, Paths, TextureCache};
-use vkstorm_assets::Uuid;
+use vkstorm_assets::texcache::{Config, FastEntry, Paths, TextureCache, fast_cache_level};
 
 struct Rng(u64);
 
@@ -57,7 +59,10 @@ fn bench_mesh(iterations: usize) {
     let cases = corpus::read_corpus(&bytes);
     let mut best: Option<(&corpus::Case, usize)> = None;
     for c in &cases {
-        let tris: usize = c.raw_faces[3].iter().map(|f| f.num_indices as usize / 3).sum();
+        let tris: usize = c.raw_faces[3]
+            .iter()
+            .map(|f| f.num_indices as usize / 3)
+            .sum();
         if best.map(|(_, t)| tris > t).unwrap_or(true) {
             best = Some((c, tris));
         }
@@ -79,13 +84,17 @@ fn bench_mesh(iterations: usize) {
         if let Some((offset, size)) = skin {
             if offset >= 0 && size > 0 {
                 let start = header_size + offset as usize;
-                std::hint::black_box(SkinInfo::from_zipped(&c.asset[start..start + size as usize]).ok());
+                std::hint::black_box(
+                    SkinInfo::from_zipped(&c.asset[start..start + size as usize]).ok(),
+                );
             }
         }
         if let Some((offset, size)) = convex {
             if offset >= 0 && size > 0 {
                 let start = header_size + offset as usize;
-                std::hint::black_box(Decomposition::from_zipped(&c.asset[start..start + size as usize]).ok());
+                std::hint::black_box(
+                    Decomposition::from_zipped(&c.asset[start..start + size as usize]).ok(),
+                );
             }
         }
     });
@@ -106,7 +115,13 @@ fn bench_texcache(iterations: usize) {
     let mut rng = Rng(42);
     let level = fast_cache_level(64, 64, 3);
     let fast_dim = 64 >> level;
-    let fast = |rng: &mut Rng| FastEntry { width: fast_dim, height: fast_dim, components: 3, discard_level: 2 + level, data: rng.bytes((fast_dim * fast_dim * 3) as usize) };
+    let fast = |rng: &mut Rng| FastEntry {
+        width: fast_dim,
+        height: fast_dim,
+        components: 3,
+        discard_level: 2 + level,
+        data: rng.bytes((fast_dim * fast_dim * 3) as usize),
+    };
     let mut ids = Vec::new();
     let mut datas = Vec::new();
     for _ in 0..200 {
@@ -181,7 +196,17 @@ impl Host for BenchHost {
             formatted_size: self.formatted.len() as i32,
             // As LLImageJ2C reports it after updateData: the discard level
             // the bytes held are good for.
-            formatted_discard: if self.formatted.is_empty() { -1 } else { budget::calc_discard_level_bytes(IMAGE_DIM, IMAGE_DIM, 3, self.formatted.len() as i32, REVERSE_BYTE_RANGE_PERCENT) },
+            formatted_discard: if self.formatted.is_empty() {
+                -1
+            } else {
+                budget::calc_discard_level_bytes(
+                    IMAGE_DIM,
+                    IMAGE_DIM,
+                    3,
+                    self.formatted.len() as i32,
+                    REVERSE_BYTE_RANGE_PERCENT,
+                )
+            },
             formatted_is_j2c: true,
             can_load_from_cache: true,
             use_http_textures: true,
@@ -197,7 +222,11 @@ impl Host for BenchHost {
         }
     }
     fn region(&mut self) -> Option<Region> {
-        Some(Region { id: [1; 16], viewer_asset_url: "http://bench/asset".to_string(), http_url: String::new() })
+        Some(Region {
+            id: [1; 16],
+            viewer_asset_url: "http://bench/asset".to_string(),
+            http_url: String::new(),
+        })
     }
     fn read_cache(&mut self, _local_file: Option<&str>, _offset: i32, _size: i32) {
         self.cache_read = true;
@@ -233,7 +262,14 @@ impl Host for BenchHost {
     fn release_http_buffer(&mut self) {
         self.reply = None;
     }
-    fn assemble_http_reply(&mut self, _url: &str, src_offset: i32, cur_size: i32, append_size: i32, total_size: i32) -> bool {
+    fn assemble_http_reply(
+        &mut self,
+        _url: &str,
+        src_offset: i32,
+        cur_size: i32,
+        append_size: i32,
+        total_size: i32,
+    ) -> bool {
         // As the viewer's host: a new buffer of total_size, the existing
         // bytes copied in, then append_size bytes of the reply from
         // src_offset.
@@ -276,12 +312,25 @@ fn bench_fetch(iterations: usize) {
     let id = [0x10u8; 16];
     let mut steps = 0usize;
     let ms = min_ms(iterations, || {
-        let mut host = BenchHost { file: file.clone(), formatted: Vec::new(), reply: None, pending_get: None, cache_read: false, decode: false, write: false, decode_handle: 0 };
+        let mut host = BenchHost {
+            file: file.clone(),
+            formatted: Vec::new(),
+            reply: None,
+            pending_get: None,
+            cache_read: false,
+            decode: false,
+            write: false,
+            decode_handle: 0,
+        };
         let mut fetcher = Fetcher::new();
         let mut worker = Worker::new(FetchType::Default, "", id, false, 1000.0, true);
         steps = 0;
         for discard in (0..=5).rev() {
-            let size = if discard == 0 { budget::MAX_IMAGE_DATA_SIZE } else { budget::calc_data_size_j2c(IMAGE_DIM, IMAGE_DIM, 3, discard, budget::DEFAULT_RATE) };
+            let size = if discard == 0 {
+                budget::MAX_IMAGE_DATA_SIZE
+            } else {
+                budget::calc_data_size_j2c(IMAGE_DIM, IMAGE_DIM, 3, discard, budget::DEFAULT_RATE)
+            };
             worker.set_desired_discard(discard, size, true);
             if worker.state == State::Done {
                 worker.set_state(State::Init);
@@ -297,12 +346,26 @@ fn bench_fetch(iterations: usize) {
                 }
                 if let Some(get) = host.pending_get.take() {
                     let offset = get.offset as usize;
-                    let want = if get.size == 0 { FILE_SIZE - offset } else { get.size as usize };
+                    let want = if get.size == 0 {
+                        FILE_SIZE - offset
+                    } else {
+                        get.size as usize
+                    };
                     let len = want.min(FILE_SIZE - offset);
                     host.reply = Some((offset, len));
                     let partial = !(offset == 0 && len == FILE_SIZE);
                     let status = if partial { 206 } else { 200 };
-                    worker.http_completed(&mut fetcher, &mut host, true, status, "", partial, len as i32, Some((offset as u32, len as u32, FILE_SIZE as u32)), None);
+                    worker.http_completed(
+                        &mut fetcher,
+                        &mut host,
+                        true,
+                        status,
+                        "",
+                        partial,
+                        len as i32,
+                        Some((offset as u32, len as u32, FILE_SIZE as u32)),
+                        None,
+                    );
                     continue;
                 }
                 if host.decode {
@@ -323,14 +386,21 @@ fn bench_fetch(iterations: usize) {
             }
             assert_eq!(worker.state, State::Done);
         }
-        assert_eq!(host.formatted.len(), FILE_SIZE, "the whole texture was assembled");
+        assert_eq!(
+            host.formatted.len(),
+            FILE_SIZE,
+            "the whole texture was assembled"
+        );
         std::hint::black_box(&host.formatted);
     });
     println!("fetch,assemble_1mib_six_levels,{},{:.4}", steps, ms);
 }
 
 fn main() {
-    let iterations: usize = std::env::args().nth(1).and_then(|a| a.parse().ok()).unwrap_or(20);
+    let iterations: usize = std::env::args()
+        .nth(1)
+        .and_then(|a| a.parse().ok())
+        .unwrap_or(20);
     bench_mesh(iterations);
     bench_texcache(iterations.max(100));
     bench_fetch(iterations);

@@ -44,7 +44,12 @@ impl Raster {
     /// A zero-filled raster.
     pub fn new(width: u32, height: u32, components: u32) -> Raster {
         let size = width as usize * height as usize * components as usize;
-        Raster { width, height, components, data: vec![0; size] }
+        Raster {
+            width,
+            height,
+            components,
+            data: vec![0; size],
+        }
     }
 
     /// Bytes per row.
@@ -72,7 +77,12 @@ impl Raster {
         for px in self.data.chunks_exact(4) {
             out.extend_from_slice(&px[..3]);
         }
-        Raster { width: self.width, height: self.height, components: 3, data: out }
+        Raster {
+            width: self.width,
+            height: self.height,
+            components: 3,
+            data: out,
+        }
     }
 }
 
@@ -92,7 +102,9 @@ pub struct Error {
 
 impl Error {
     pub fn new(message: impl Into<String>) -> Error {
-        Error { message: message.into() }
+        Error {
+            message: message.into(),
+        }
     }
 }
 
@@ -111,7 +123,9 @@ pub(crate) fn fail<T>(message: impl Into<String>) -> Result<T, Error> {
 /// The viewer's U16 dimension limit (`LLImageBase` stores width and height as U16).
 pub(crate) fn check_dimensions(width: i64, height: i64, what: &str) -> Result<(u32, u32), Error> {
     if width < 0 || height < 0 || width > u16::MAX as i64 || height > u16::MAX as i64 {
-        return fail(format!("{what}: unsupported image dimensions {width}x{height}"));
+        return fail(format!(
+            "{what}: unsupported image dimensions {width}x{height}"
+        ));
     }
     Ok((width as u32, height as u32))
 }

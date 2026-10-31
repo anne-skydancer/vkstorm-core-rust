@@ -10,11 +10,11 @@
 //! limit), the transport and the coroutine stay C++. A write's transaction
 //! id (`LLUUID::generate()`) is the caller's input.
 
-use vkstorm_llsd::text::uuid_to_hex;
 use vkstorm_llsd::Value;
+use vkstorm_llsd::text::uuid_to_hex;
 
 use crate::llsd::coerce::insert;
-use crate::perms::{Uuid, NULL_ID};
+use crate::perms::{NULL_ID, Uuid};
 
 /// `AISAPI::INVENTORY_CAP_NAME`.
 pub const INVENTORY_CAP_NAME: &str = "InventoryAPIv3";
@@ -77,7 +77,9 @@ impl CommandType {
 
     /// The type of a C++ value, `None` outside the enumeration.
     pub fn from_i32(v: i32) -> Option<CommandType> {
-        usize::try_from(v).ok().and_then(|i| Self::ALL.get(i).copied())
+        usize::try_from(v)
+            .ok()
+            .and_then(|i| Self::ALL.get(i).copied())
     }
 
     /// The enumerator's name (`COPYINVENTORY` ... `FETCHCATEGORYLINKS`).
@@ -168,7 +170,11 @@ impl CapKind {
 
     /// `type == INVENTORY ? getInvCap() : getLibCap()`.
     fn of(library: bool) -> CapKind {
-        if library { CapKind::Library } else { CapKind::Inventory }
+        if library {
+            CapKind::Library
+        } else {
+            CapKind::Inventory
+        }
     }
 }
 
@@ -176,24 +182,71 @@ impl CapKind {
 /// is `ITEM_TYPE` `LIBRARY`.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Command {
-    CreateInventory { parent_id: Uuid, new_inventory: Value },
-    SlamFolder { folder_id: Uuid, new_inventory: Value },
-    RemoveCategory { category_id: Uuid },
-    RemoveItem { item_id: Uuid },
-    PurgeDescendents { category_id: Uuid },
-    UpdateCategory { category_id: Uuid, updates: Value },
-    UpdateItem { item_id: Uuid, updates: Value },
-    FetchItem { item_id: Uuid, library: bool },
-    FetchCategoryChildren { category_id: Uuid, library: bool, recursive: bool, depth: i32 },
+    CreateInventory {
+        parent_id: Uuid,
+        new_inventory: Value,
+    },
+    SlamFolder {
+        folder_id: Uuid,
+        new_inventory: Value,
+    },
+    RemoveCategory {
+        category_id: Uuid,
+    },
+    RemoveItem {
+        item_id: Uuid,
+    },
+    PurgeDescendents {
+        category_id: Uuid,
+    },
+    UpdateCategory {
+        category_id: Uuid,
+        updates: Value,
+    },
+    UpdateItem {
+        item_id: Uuid,
+        updates: Value,
+    },
+    FetchItem {
+        item_id: Uuid,
+        library: bool,
+    },
+    FetchCategoryChildren {
+        category_id: Uuid,
+        library: bool,
+        recursive: bool,
+        depth: i32,
+    },
     /// The `FetchCategoryChildren(const std::string& identifier, ...)`
     /// overload (folders by name: `current`, `root`, `lstndfnd`, ...).
-    FetchCategoryChildrenByName { identifier: String, recursive: bool, depth: i32 },
-    FetchCategoryCategories { category_id: Uuid, library: bool, recursive: bool, depth: i32 },
-    FetchCategorySubset { category_id: Uuid, children: Vec<Uuid>, library: bool, recursive: bool, depth: i32 },
+    FetchCategoryChildrenByName {
+        identifier: String,
+        recursive: bool,
+        depth: i32,
+    },
+    FetchCategoryCategories {
+        category_id: Uuid,
+        library: bool,
+        recursive: bool,
+        depth: i32,
+    },
+    FetchCategorySubset {
+        category_id: Uuid,
+        children: Vec<Uuid>,
+        library: bool,
+        recursive: bool,
+        depth: i32,
+    },
     FetchCof,
-    FetchCategoryLinks { category_id: Uuid },
+    FetchCategoryLinks {
+        category_id: Uuid,
+    },
     FetchOrphans,
-    CopyLibraryCategory { source_id: Uuid, dest_id: Uuid, copy_subfolders: bool },
+    CopyLibraryCategory {
+        source_id: Uuid,
+        dest_id: Uuid,
+        copy_subfolders: bool,
+    },
 }
 
 /// Why a command function sends nothing: it calls the completion callback
@@ -245,7 +298,11 @@ fn depth_body(depth: i32) -> Value {
 /// The depth a folder fetch requests: [`MAX_FOLDER_DEPTH_REQUEST`] when
 /// recursive, else `llmin(depth, MAX_FOLDER_DEPTH_REQUEST)`.
 fn request_depth(recursive: bool, depth: i32) -> i32 {
-    if recursive { MAX_FOLDER_DEPTH_REQUEST } else { depth.min(MAX_FOLDER_DEPTH_REQUEST) }
+    if recursive {
+        MAX_FOLDER_DEPTH_REQUEST
+    } else {
+        depth.min(MAX_FOLDER_DEPTH_REQUEST)
+    }
 }
 
 impl Command {
@@ -266,7 +323,9 @@ impl Command {
     pub fn uses_tid(&self) -> bool {
         matches!(
             self,
-            Command::CreateInventory { .. } | Command::SlamFolder { .. } | Command::CopyLibraryCategory { .. }
+            Command::CreateInventory { .. }
+                | Command::SlamFolder { .. }
+                | Command::CopyLibraryCategory { .. }
         )
     }
 
@@ -291,7 +350,10 @@ impl Command {
             url_too_long: false,
         };
         Ok(match self {
-            Command::CreateInventory { parent_id, new_inventory } => req(
+            Command::CreateInventory {
+                parent_id,
+                new_inventory,
+            } => req(
                 "CreateInventory",
                 Method::Post,
                 format!("{cap}/category/{}?tid={tid}", id_text(parent_id)),
@@ -300,7 +362,10 @@ impl Command {
                 new_inventory.clone(),
                 CommandType::CreateInventory,
             ),
-            Command::SlamFolder { folder_id, new_inventory } => req(
+            Command::SlamFolder {
+                folder_id,
+                new_inventory,
+            } => req(
                 "SlamFolder",
                 Method::Put,
                 format!("{cap}/category/{}/links?tid={tid}", id_text(folder_id)),
@@ -336,7 +401,10 @@ impl Command {
                 Value::Undefined,
                 CommandType::PurgeDescendents,
             ),
-            Command::UpdateCategory { category_id, updates } => req(
+            Command::UpdateCategory {
+                category_id,
+                updates,
+            } => req(
                 "UpdateCategory",
                 Method::Patch,
                 format!("{cap}/category/{}", id_text(category_id)),
@@ -363,19 +431,31 @@ impl Command {
                 Value::Undefined,
                 CommandType::FetchItem,
             ),
-            Command::FetchCategoryChildren { category_id, recursive, depth, .. } => {
+            Command::FetchCategoryChildren {
+                category_id,
+                recursive,
+                depth,
+                ..
+            } => {
                 let depth = request_depth(*recursive, *depth);
                 req(
                     "FetchCategoryChildren",
                     Method::Get,
-                    format!("{cap}/category/{}/children?depth={depth}", id_text(category_id)),
+                    format!(
+                        "{cap}/category/{}/children?depth={depth}",
+                        id_text(category_id)
+                    ),
                     None,
                     *category_id,
                     depth_body(depth),
                     CommandType::FetchCategoryChildren,
                 )
             }
-            Command::FetchCategoryChildrenByName { identifier, recursive, depth } => {
+            Command::FetchCategoryChildrenByName {
+                identifier,
+                recursive,
+                depth,
+            } => {
                 let depth = request_depth(*recursive, *depth);
                 req(
                     "FetchCategoryChildren",
@@ -387,19 +467,33 @@ impl Command {
                     CommandType::FetchCategoryChildren,
                 )
             }
-            Command::FetchCategoryCategories { category_id, recursive, depth, .. } => {
+            Command::FetchCategoryCategories {
+                category_id,
+                recursive,
+                depth,
+                ..
+            } => {
                 let depth = request_depth(*recursive, *depth);
                 req(
                     "FetchCategoryCategories",
                     Method::Get,
-                    format!("{cap}/category/{}/categories?depth={depth}", id_text(category_id)),
+                    format!(
+                        "{cap}/category/{}/categories?depth={depth}",
+                        id_text(category_id)
+                    ),
                     None,
                     *category_id,
                     depth_body(depth),
                     CommandType::FetchCategoryCategories,
                 )
             }
-            Command::FetchCategorySubset { category_id, children, recursive, depth, .. } => {
+            Command::FetchCategorySubset {
+                category_id,
+                children,
+                recursive,
+                depth,
+                ..
+            } => {
                 let Some((first, rest)) = children.split_first() else {
                     return Err(Refusal::EmptyRequest);
                 };
@@ -452,7 +546,11 @@ impl Command {
                 Value::Undefined,
                 CommandType::FetchOrphans,
             ),
-            Command::CopyLibraryCategory { source_id, dest_id, copy_subfolders } => {
+            Command::CopyLibraryCategory {
+                source_id,
+                dest_id,
+                copy_subfolders,
+            } => {
                 let mut url = format!("{cap}/category/{}?tid={tid}", id_text(source_id));
                 if !copy_subfolders {
                     url.push_str(",depth=0");
@@ -486,14 +584,20 @@ mod tests {
         }
         assert_eq!(CommandType::from_i32(16), None);
         assert_eq!(CommandType::from_i32(-1), None);
-        let fetches = CommandType::ALL.into_iter().filter(|t| t.is_fetch()).count();
+        let fetches = CommandType::ALL
+            .into_iter()
+            .filter(|t| t.is_fetch())
+            .count();
         assert_eq!(fetches, 7);
     }
 
     #[test]
     fn refusals_and_depths() {
         let id = [0xc0; 16];
-        assert_eq!(Command::FetchOrphans.build("", &NULL_ID), Err(Refusal::NoCapability));
+        assert_eq!(
+            Command::FetchOrphans.build("", &NULL_ID),
+            Err(Refusal::NoCapability)
+        );
         let empty = Command::FetchCategorySubset {
             category_id: id,
             children: vec![],
@@ -501,19 +605,36 @@ mod tests {
             recursive: false,
             depth: 3,
         };
-        assert_eq!(empty.build("https://cap", &NULL_ID), Err(Refusal::EmptyRequest));
-        let children =
-            |recursive, depth| Command::FetchCategoryChildren { category_id: id, library: true, recursive, depth };
+        assert_eq!(
+            empty.build("https://cap", &NULL_ID),
+            Err(Refusal::EmptyRequest)
+        );
+        let children = |recursive, depth| Command::FetchCategoryChildren {
+            category_id: id,
+            library: true,
+            recursive,
+            depth,
+        };
         let fetch = |recursive, depth| children(recursive, depth).build("c", &NULL_ID).unwrap();
         assert!(fetch(false, 51).url.ends_with("/children?depth=50"));
         assert!(fetch(false, -1).url.ends_with("/children?depth=-1"));
         assert!(fetch(true, 0).url.ends_with("/children?depth=50"));
         assert_eq!(fetch(true, 0).body, depth_body(50));
         assert_eq!(children(false, 0).cap(), CapKind::Library);
-        let copy = Command::CopyLibraryCategory { source_id: id, dest_id: [0xd0; 16], copy_subfolders: false };
+        let copy = Command::CopyLibraryCategory {
+            source_id: id,
+            dest_id: [0xd0; 16],
+            copy_subfolders: false,
+        };
         let r = copy.build("c", &[0x7d; 16]).unwrap();
-        assert!(r.url.ends_with("?tid=7d7d7d7d-7d7d-7d7d-7d7d-7d7d7d7d7d7d,depth=0"));
-        assert_eq!(r.destination.as_deref(), Some("d0d0d0d0-d0d0-d0d0-d0d0-d0d0d0d0d0d0"));
+        assert!(
+            r.url
+                .ends_with("?tid=7d7d7d7d-7d7d-7d7d-7d7d-7d7d7d7d7d7d,depth=0")
+        );
+        assert_eq!(
+            r.destination.as_deref(),
+            Some("d0d0d0d0-d0d0-d0d0-d0d0-d0d0d0d0d0d0")
+        );
         assert_eq!(r.target_id, [0xd0; 16]);
         assert!(copy.uses_tid());
     }

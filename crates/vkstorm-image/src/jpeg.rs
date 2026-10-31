@@ -9,11 +9,11 @@
 //! is jpeg-encoder with its AVX2 paths.
 
 use jpeg_encoder::{ChromaSubsamplingMethod, ColorType, Encoder, SamplingFactor};
+use zune_jpeg::JpegDecoder;
 use zune_jpeg::zune_core::colorspace::ColorSpace;
 use zune_jpeg::zune_core::options::DecoderOptions;
-use zune_jpeg::JpegDecoder;
 
-use crate::{check_dimensions, fail, Error, Header, Raster};
+use crate::{Error, Header, Raster, check_dimensions, fail};
 
 /// The result of scanning a prefix of a file for its frame header.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -33,18 +33,25 @@ pub fn dimensions(data: &[u8]) -> Result<Dimensions, Error> {
         return Ok(Dimensions::Truncated);
     }
     if data[0] != 0xff || data[1] != 0xd8 {
-        return fail(format!("Not a JPEG file: starts with 0x{:02x} 0x{:02x}", data[0], data[1]));
+        return fail(format!(
+            "Not a JPEG file: starts with 0x{:02x} 0x{:02x}",
+            data[0], data[1]
+        ));
     }
     let mut pos = 2usize;
     loop {
         // Find the next marker, skipping fill bytes.
-        let Some(&b) = data.get(pos) else { return Ok(Dimensions::Truncated) };
+        let Some(&b) = data.get(pos) else {
+            return Ok(Dimensions::Truncated);
+        };
         if b != 0xff {
             return fail(format!("Bogus marker length"));
         }
         pos += 1;
         let marker = loop {
-            let Some(&m) = data.get(pos) else { return Ok(Dimensions::Truncated) };
+            let Some(&m) = data.get(pos) else {
+                return Ok(Dimensions::Truncated);
+            };
             pos += 1;
             if m != 0xff {
                 break m;
@@ -55,7 +62,9 @@ pub fn dimensions(data: &[u8]) -> Result<Dimensions, Error> {
             0xd8 | 0x01 | 0xd0..=0xd7 => continue,
             0xd9 => return fail("Premature end of JPEG file"),
             0xc0 | 0xc1 | 0xc2 | 0xc3 | 0xc9 | 0xca | 0xcb => {
-                let Some(seg) = data.get(pos..pos + 7) else { return Ok(Dimensions::Truncated) };
+                let Some(seg) = data.get(pos..pos + 7) else {
+                    return Ok(Dimensions::Truncated);
+                };
                 let height = u16::from_be_bytes([seg[3], seg[4]]) as u32;
                 let width = u16::from_be_bytes([seg[5], seg[6]]) as u32;
                 if width == 0 || height == 0 {
@@ -67,7 +76,9 @@ pub fn dimensions(data: &[u8]) -> Result<Dimensions, Error> {
                 return fail(format!("Unsupported JPEG process: SOF type 0x{marker:02x}"));
             }
             _ => {
-                let Some(len) = data.get(pos..pos + 2) else { return Ok(Dimensions::Truncated) };
+                let Some(len) = data.get(pos..pos + 2) else {
+                    return Ok(Dimensions::Truncated);
+                };
                 let len = u16::from_be_bytes([len[0], len[1]]) as usize;
                 if len < 2 {
                     return fail("Bogus marker length");
@@ -87,7 +98,11 @@ pub fn header(data: &[u8]) -> Result<Header, Error> {
     match dimensions(data)? {
         Dimensions::Found { width, height } => {
             let (width, height) = check_dimensions(width as i64, height as i64, "LLImageJPEG")?;
-            Ok(Header { width, height, components: 3 })
+            Ok(Header {
+                width,
+                height,
+                components: 3,
+            })
         }
         Dimensions::Truncated => fail("Premature end of JPEG file"),
     }
@@ -108,12 +123,20 @@ pub fn decode(data: &[u8]) -> Result<Raster, Error> {
         return fail("LLImageJPEG trying to decode an image with no data!");
     }
     let mut decoder = JpegDecoder::new_with_options(std::io::Cursor::new(data), options());
-    decoder.decode_headers().map_err(|e| Error::new(e.to_string()))?;
-    let Some(info) = decoder.info() else { return fail("Unable to decode JPEG image.") };
+    decoder
+        .decode_headers()
+        .map_err(|e| Error::new(e.to_string()))?;
+    let Some(info) = decoder.info() else {
+        return fail("Unable to decode JPEG image.");
+    };
     let (width, height) = check_dimensions(info.width as i64, info.height as i64, "LLImageJPEG")?;
-    let Some(size) = decoder.output_buffer_size() else { return fail("Unable to decode JPEG image.") };
+    let Some(size) = decoder.output_buffer_size() else {
+        return fail("Unable to decode JPEG image.");
+    };
     let mut top_down = vec![0u8; size];
-    decoder.decode_into(&mut top_down).map_err(|e| Error::new(e.to_string()))?;
+    decoder
+        .decode_into(&mut top_down)
+        .map_err(|e| Error::new(e.to_string()))?;
     if decoder.output_colorspace() != Some(ColorSpace::RGB) {
         return fail("Unsupported color conversion request");
     }
@@ -122,7 +145,12 @@ pub fn decode(data: &[u8]) -> Result<Raster, Error> {
         return fail("Unable to decode JPEG image.");
     }
     top_down.truncate(row * height as usize);
-    let mut raster = Raster { width, height, components: 3, data: top_down };
+    let mut raster = Raster {
+        width,
+        height,
+        components: 3,
+        data: top_down,
+    };
     raster.vertical_flip();
     Ok(raster)
 }

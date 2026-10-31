@@ -14,7 +14,7 @@
 
 #![allow(non_camel_case_types, dead_code)]
 
-use std::ffi::{c_char, c_int, c_long, c_void, CStr};
+use std::ffi::{CStr, c_char, c_int, c_long, c_void};
 
 pub type CURL = c_void;
 pub type CURLM = c_void;
@@ -158,7 +158,8 @@ pub type WriteFn = unsafe extern "C" fn(*mut c_char, usize, usize, *mut c_void) 
 pub type ReadFn = unsafe extern "C" fn(*mut c_char, usize, usize, *mut c_void) -> usize;
 pub type SeekFn = unsafe extern "C" fn(*mut c_void, curl_off_t, c_int) -> c_int;
 pub type SslCtxFn = unsafe extern "C" fn(*mut CURL, *mut c_void, *mut c_void) -> CURLcode;
-pub type DebugFn = unsafe extern "C" fn(*mut CURL, curl_infotype, *mut c_char, usize, *mut c_void) -> c_int;
+pub type DebugFn =
+    unsafe extern "C" fn(*mut CURL, curl_infotype, *mut c_char, usize, *mut c_void) -> c_int;
 
 // The library, and tests built with the `link-curl` feature, bind the real
 // functions. The crate's own plain test build (`cargo test` without the
@@ -225,13 +226,21 @@ mod typed {
 
     /// # Safety
     /// `h` must be a live easy handle; `out` valid.
-    pub unsafe fn easy_getinfo_ptr(h: *mut CURL, info: CURLINFO, out: *mut *mut c_void) -> CURLcode {
+    pub unsafe fn easy_getinfo_ptr(
+        h: *mut CURL,
+        info: CURLINFO,
+        out: *mut *mut c_void,
+    ) -> CURLcode {
         unsafe { curl_easy_getinfo(h, info, out) }
     }
 
     /// # Safety
     /// `h` must be a live easy handle; `out` valid.
-    pub unsafe fn easy_getinfo_str(h: *mut CURL, info: CURLINFO, out: *mut *const c_char) -> CURLcode {
+    pub unsafe fn easy_getinfo_str(
+        h: *mut CURL,
+        info: CURLINFO,
+        out: *mut *const c_char,
+    ) -> CURLcode {
         unsafe { curl_easy_getinfo(h, info, out) }
     }
 
@@ -253,33 +262,97 @@ mod stubs {
     use super::*;
 
     fn unlinked() -> ! {
-        panic!("libcurl is not linked into this test build: run `cargo test -p vkstorm-http --features link-curl` with VKS_HTTP_CURL_LIB_DIR set (see the crate README)")
+        panic!(
+            "libcurl is not linked into this test build: run `cargo test -p vkstorm-http --features link-curl` with VKS_HTTP_CURL_LIB_DIR set (see the crate README)"
+        )
     }
 
-    pub unsafe fn curl_global_init(flags: c_long) -> CURLcode { unlinked() }
-    pub unsafe fn curl_version() -> *const c_char { unlinked() }
-    pub unsafe fn curl_easy_init() -> *mut CURL { unlinked() }
-    pub unsafe fn curl_easy_duphandle(handle: *mut CURL) -> *mut CURL { unlinked() }
-    pub unsafe fn curl_easy_reset(handle: *mut CURL) { unlinked() }
-    pub unsafe fn curl_easy_cleanup(handle: *mut CURL) { unlinked() }
-    pub unsafe fn curl_easy_strerror(code: CURLcode) -> *const c_char { unlinked() }
-    pub unsafe fn curl_multi_init() -> *mut CURLM { unlinked() }
-    pub unsafe fn curl_multi_cleanup(multi: *mut CURLM) -> CURLMcode { unlinked() }
-    pub unsafe fn curl_multi_add_handle(multi: *mut CURLM, handle: *mut CURL) -> CURLMcode { unlinked() }
-    pub unsafe fn curl_multi_remove_handle(multi: *mut CURLM, handle: *mut CURL) -> CURLMcode { unlinked() }
-    pub unsafe fn curl_multi_perform(multi: *mut CURLM, running: *mut c_int) -> CURLMcode { unlinked() }
-    pub unsafe fn curl_multi_info_read(multi: *mut CURLM, msgs_in_queue: *mut c_int) -> *mut CURLMsg { unlinked() }
-    pub unsafe fn curl_multi_strerror(code: CURLMcode) -> *const c_char { unlinked() }
-    pub unsafe fn curl_slist_append(list: *mut curl_slist, string: *const c_char) -> *mut curl_slist { unlinked() }
-    pub unsafe fn curl_slist_free_all(list: *mut curl_slist) { unlinked() }
-    pub unsafe fn easy_setopt_long(h: *mut CURL, opt: CURLoption, v: c_long) -> CURLcode { unlinked() }
-    pub unsafe fn easy_setopt_ptr(h: *mut CURL, opt: CURLoption, v: *const c_void) -> CURLcode { unlinked() }
-    pub unsafe fn easy_setopt_str(h: *mut CURL, opt: CURLoption, v: *const c_char) -> CURLcode { unlinked() }
-    pub unsafe fn multi_setopt_long(m: *mut CURLM, opt: CURLMoption, v: c_long) -> CURLMcode { unlinked() }
-    pub unsafe fn easy_getinfo_long(h: *mut CURL, info: CURLINFO, out: *mut c_long) -> CURLcode { unlinked() }
-    pub unsafe fn easy_getinfo_ptr(h: *mut CURL, info: CURLINFO, out: *mut *mut c_void) -> CURLcode { unlinked() }
-    pub unsafe fn easy_getinfo_str(h: *mut CURL, info: CURLINFO, out: *mut *const c_char) -> CURLcode { unlinked() }
-    pub unsafe fn easy_getinfo_double(h: *mut CURL, info: CURLINFO, out: *mut f64) -> CURLcode { unlinked() }
+    pub unsafe fn curl_global_init(flags: c_long) -> CURLcode {
+        unlinked()
+    }
+    pub unsafe fn curl_version() -> *const c_char {
+        unlinked()
+    }
+    pub unsafe fn curl_easy_init() -> *mut CURL {
+        unlinked()
+    }
+    pub unsafe fn curl_easy_duphandle(handle: *mut CURL) -> *mut CURL {
+        unlinked()
+    }
+    pub unsafe fn curl_easy_reset(handle: *mut CURL) {
+        unlinked()
+    }
+    pub unsafe fn curl_easy_cleanup(handle: *mut CURL) {
+        unlinked()
+    }
+    pub unsafe fn curl_easy_strerror(code: CURLcode) -> *const c_char {
+        unlinked()
+    }
+    pub unsafe fn curl_multi_init() -> *mut CURLM {
+        unlinked()
+    }
+    pub unsafe fn curl_multi_cleanup(multi: *mut CURLM) -> CURLMcode {
+        unlinked()
+    }
+    pub unsafe fn curl_multi_add_handle(multi: *mut CURLM, handle: *mut CURL) -> CURLMcode {
+        unlinked()
+    }
+    pub unsafe fn curl_multi_remove_handle(multi: *mut CURLM, handle: *mut CURL) -> CURLMcode {
+        unlinked()
+    }
+    pub unsafe fn curl_multi_perform(multi: *mut CURLM, running: *mut c_int) -> CURLMcode {
+        unlinked()
+    }
+    pub unsafe fn curl_multi_info_read(
+        multi: *mut CURLM,
+        msgs_in_queue: *mut c_int,
+    ) -> *mut CURLMsg {
+        unlinked()
+    }
+    pub unsafe fn curl_multi_strerror(code: CURLMcode) -> *const c_char {
+        unlinked()
+    }
+    pub unsafe fn curl_slist_append(
+        list: *mut curl_slist,
+        string: *const c_char,
+    ) -> *mut curl_slist {
+        unlinked()
+    }
+    pub unsafe fn curl_slist_free_all(list: *mut curl_slist) {
+        unlinked()
+    }
+    pub unsafe fn easy_setopt_long(h: *mut CURL, opt: CURLoption, v: c_long) -> CURLcode {
+        unlinked()
+    }
+    pub unsafe fn easy_setopt_ptr(h: *mut CURL, opt: CURLoption, v: *const c_void) -> CURLcode {
+        unlinked()
+    }
+    pub unsafe fn easy_setopt_str(h: *mut CURL, opt: CURLoption, v: *const c_char) -> CURLcode {
+        unlinked()
+    }
+    pub unsafe fn multi_setopt_long(m: *mut CURLM, opt: CURLMoption, v: c_long) -> CURLMcode {
+        unlinked()
+    }
+    pub unsafe fn easy_getinfo_long(h: *mut CURL, info: CURLINFO, out: *mut c_long) -> CURLcode {
+        unlinked()
+    }
+    pub unsafe fn easy_getinfo_ptr(
+        h: *mut CURL,
+        info: CURLINFO,
+        out: *mut *mut c_void,
+    ) -> CURLcode {
+        unlinked()
+    }
+    pub unsafe fn easy_getinfo_str(
+        h: *mut CURL,
+        info: CURLINFO,
+        out: *mut *const c_char,
+    ) -> CURLcode {
+        unlinked()
+    }
+    pub unsafe fn easy_getinfo_double(h: *mut CURL, info: CURLINFO, out: *mut f64) -> CURLcode {
+        unlinked()
+    }
 }
 
 #[cfg(all(test, not(feature = "link-curl")))]
@@ -296,17 +369,23 @@ pub fn global_init() {
 
 /// The text of a libcurl easy result code.
 pub fn easy_strerror(code: CURLcode) -> String {
-    unsafe { CStr::from_ptr(curl_easy_strerror(code)) }.to_string_lossy().into_owned()
+    unsafe { CStr::from_ptr(curl_easy_strerror(code)) }
+        .to_string_lossy()
+        .into_owned()
 }
 
 /// The text of a libcurl multi result code.
 pub fn multi_strerror(code: CURLMcode) -> String {
-    unsafe { CStr::from_ptr(curl_multi_strerror(code)) }.to_string_lossy().into_owned()
+    unsafe { CStr::from_ptr(curl_multi_strerror(code)) }
+        .to_string_lossy()
+        .into_owned()
 }
 
 /// `curl_version()`.
 pub fn version() -> String {
-    unsafe { CStr::from_ptr(curl_version()) }.to_string_lossy().into_owned()
+    unsafe { CStr::from_ptr(curl_version()) }
+        .to_string_lossy()
+        .into_owned()
 }
 
 /// A raw pointer that may cross threads: a libcurl handle or list owned by

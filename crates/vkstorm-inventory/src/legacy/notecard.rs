@@ -26,8 +26,8 @@
 
 use std::io::Write as _;
 
-use super::reader::{c_str, Stream};
-use super::scanf::{sscanf, Arg};
+use super::reader::{Stream, c_str};
+use super::scanf::{Arg, sscanf};
 use crate::item::Item;
 
 /// `STD_STRING_BUF_SIZE` (`lldefs.h`): the buffer of the `Text length` line.
@@ -63,7 +63,13 @@ impl Notecard {
 
     /// `LLNotecard(max_text)`: versions 0, no items, no text.
     pub fn new(max_text: i32) -> Notecard {
-        Notecard { max_text, version: 0, embedded_version: 0, items: Vec::new(), text: Vec::new() }
+        Notecard {
+            max_text,
+            version: 0,
+            embedded_version: 0,
+            items: Vec::new(),
+            text: Vec::new(),
+        }
     }
 
     /// `LLNotecard::importEmbeddedItemsStream`: the `LLEmbeddedItems`

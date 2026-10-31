@@ -86,7 +86,11 @@ pub enum ObserverKind {
     /// `LLInventoryFetchItemsObserver(id)`.
     FetchItems { id: Uuid },
     /// `LLOpenAgentOffer(object_id, from_name, manual)`.
-    OpenAgentOffer { id: Uuid, from_name: Vec<u8>, manual: bool },
+    OpenAgentOffer {
+        id: Uuid,
+        from_name: Vec<u8>,
+        manual: bool,
+    },
     /// `LLDiscardAgentOffer(folder_id, object_id)`.
     DiscardAgentOffer { folder: Uuid, object: Uuid },
     /// `RlvGiveToRLVAgentOffer(folder)`.
@@ -181,7 +185,11 @@ impl PackArgs {
         let (message, bytes_left) = if self.message.is_empty() {
             (Vec::new(), mtu)
         } else {
-            let m = &self.message[..self.message.iter().position(|&c| c == 0).unwrap_or(self.message.len())];
+            let m = &self.message[..self
+                .message
+                .iter()
+                .position(|&c| c == 0)
+                .unwrap_or(self.message.len())];
             let written = m.len().min(mtu - 1);
             (cstring_field(&m[..written]), mtu - written)
         };
@@ -222,11 +230,21 @@ pub enum NameThen {
     SystemMessageTip { format: Vec<u8>, message: Vec<u8> },
     /// `notification_group_name_cb(group_name, sender, subject, message,
     /// payload, timestamp)`: the `GroupNotice` notification.
-    GroupNotice { sender: Vec<u8>, subject: Vec<u8>, message: Vec<u8>, payload: Value, timestamp: u32 },
+    GroupNotice {
+        sender: Vec<u8>,
+        subject: Vec<u8>,
+        message: Vec<u8>,
+        payload: Value,
+        timestamp: u32,
+    },
     /// `get_name_cb` (`lltooldraganddrop.cpp`): the share confirmation for
     /// the dragged object, by the looked-up user name
     /// ([`super::give::show_object_sharing_confirmation`]).
-    ShareConfirmation { item_id: Uuid, item_name: Vec<u8>, dest: Vec<u8> },
+    ShareConfirmation {
+        item_id: Uuid,
+        item_name: Vec<u8>,
+        dest: Vec<u8>,
+    },
     /// `notify_automute_callback` (the executor's `LLMuteList::autoRemove`
     /// looking up a name it does not have): the auto-unmute notice.
     AutoUnmuteNotice { reason: i32 },
@@ -293,11 +311,23 @@ pub enum Action {
     /// `gAgent.sendReliableMessage()` of the packed message.
     SendPackedToRegion,
     /// `LLNotificationsUtil::add(name, substitutions, payload[, functor])`.
-    Notify { name: String, substitutions: Value, payload: Value, handler: Option<Handler> },
+    Notify {
+        name: String,
+        substitutions: Value,
+        payload: Value,
+        handler: Option<Handler>,
+    },
     /// `LLPostponedNotification::add<LLPostponedOfferNotification>`: posted
     /// once the sender's name resolves, with `NAME` set to it; the current
     /// offer is its responder.
-    NotifyPostponed { name: String, substitutions: Value, payload: Value, offer_from_agent: bool, from_id: Uuid, is_group: bool },
+    NotifyPostponed {
+        name: String,
+        substitutions: Value,
+        payload: Value,
+        offer_from_agent: bool,
+        from_id: Uuid,
+        is_group: bool,
+    },
     /// `LLNotifications::forceResponse`'s temporary notification answered
     /// with `response` (it is never live).
     ForceRespond { name: String, response: Value },
@@ -306,7 +336,11 @@ pub enum Action {
     /// `gCacheName->getGroup(id, callback)`.
     GroupNameLookup { id: Uuid, then: NameThen },
     /// `gCacheName->get(id, is_group, callback)`.
-    CacheNameGet { id: Uuid, is_group: bool, then: NameThen },
+    CacheNameGet {
+        id: Uuid,
+        is_group: bool,
+        then: NameThen,
+    },
     /// `observer->done()`.
     ObserverDone(ObserverId),
     /// `gInventory.addObserver(observer)`.
@@ -325,7 +359,14 @@ pub enum Action {
     InventoryPanelSelect { auto_open: bool, id: Uuid },
     /// `LLPanelGroup::showNotice(...)`; with `with_offer` the current offer
     /// is handed to the panel (else `NULL`).
-    GroupPanelShowNotice { subject: Vec<u8>, message: Vec<u8>, group_id: Uuid, has_inventory: bool, inventory_name: Vec<u8>, with_offer: bool },
+    GroupPanelShowNotice {
+        subject: Vec<u8>,
+        message: Vec<u8>,
+        group_id: Uuid,
+        has_inventory: bool,
+        inventory_name: Vec<u8>,
+        with_offer: bool,
+    },
     /// `RlvBehaviourNotifyHandler::sendNotification(text)`.
     RlvSendNotification(Vec<u8>),
     /// `RlvUtil::notifyBlocked(RlvStringKeys::Blocked::Share, args)`.
@@ -341,10 +382,20 @@ pub enum Action {
     /// `LLMuteList::autoRemove(id, reason)` (`AR_INVENTORY` = 2).
     MuteAutoRemove { id: Uuid, reason: i32 },
     /// `gIMMgr->addSystemMessage(session, name, args)`.
-    ImSystemMessage { session: Uuid, name: String, args: Value },
+    ImSystemMessage {
+        session: Uuid,
+        name: String,
+        args: Value,
+    },
     /// `LLUIString(template).setArgs(args)` logged with
     /// `LLIMModel::logToFile(file, from, id, line)`.
-    ImLogToFile { file: Vec<u8>, from: Vec<u8>, id: Uuid, template: Vec<u8>, args: Value },
+    ImLogToFile {
+        file: Vec<u8>,
+        from: Vec<u8>,
+        id: Uuid,
+        template: Vec<u8>,
+        args: Value,
+    },
     /// `gInventory.deleteObject(id)`.
     DeleteObject(Uuid),
     /// `gInventory.notifyObservers()`.
@@ -355,7 +406,11 @@ pub enum Action {
     WarnMoveInventory(MoveInv),
     /// `move_task_inventory_callback(notification, response, move_inv)`
     /// (through `MoveInventoryFromObject`'s forced response).
-    MoveTaskInventory { notification: Value, response: Value, mv: MoveInv },
+    MoveTaskInventory {
+        notification: Value,
+        response: Value,
+        mv: MoveInv,
+    },
 }
 
 /// What a decision reads from the viewer, and the effects with a result.

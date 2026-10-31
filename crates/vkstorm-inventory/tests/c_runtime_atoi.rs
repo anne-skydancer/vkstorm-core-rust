@@ -11,7 +11,7 @@ use vkstorm_inventory::exchange::names::{atoi, atol};
 /// `long` and 64-bit limits.
 #[test]
 fn atoi_atol_match_the_c_runtime() {
-    use std::ffi::{c_char, c_int, c_long, CString};
+    use std::ffi::{CString, c_char, c_int, c_long};
     unsafe extern "C" {
         #[link_name = "atoi"]
         fn c_atoi(s: *const c_char) -> c_int;
@@ -19,10 +19,31 @@ fn atoi_atol_match_the_c_runtime() {
         fn c_atol(s: *const c_char) -> c_long;
     }
     let cases: &[&str] = &[
-        "", "x", "0", "42", "  \t\n+7x", "-7 8", "- 7", "--7", "0x10", "300", "2147483647", "2147483648",
-        "-2147483648", "-2147483649", "4294967295", "4294967296", "4294967297", "-4294967297",
-        "9223372036854775807", "9223372036854775808", "-9223372036854775808", "-9223372036854775809",
-        "18446744073709551617", "99999999999999999999", "-99999999999999999999",
+        "",
+        "x",
+        "0",
+        "42",
+        "  \t\n+7x",
+        "-7 8",
+        "- 7",
+        "--7",
+        "0x10",
+        "300",
+        "2147483647",
+        "2147483648",
+        "-2147483648",
+        "-2147483649",
+        "4294967295",
+        "4294967296",
+        "4294967297",
+        "-4294967297",
+        "9223372036854775807",
+        "9223372036854775808",
+        "-9223372036854775808",
+        "-9223372036854775809",
+        "18446744073709551617",
+        "99999999999999999999",
+        "-99999999999999999999",
         "123456789012345678901234567890123456789",
     ];
     for case in cases {
@@ -31,6 +52,10 @@ fn atoi_atol_match_the_c_runtime() {
         let (ci, cl) = unsafe { (c_atoi(c.as_ptr()), c_atol(c.as_ptr())) };
         assert_eq!(atoi(case.as_bytes()), ci, "atoi({case:?})");
         assert_eq!(atol(case.as_bytes()), cl, "atol({case:?})");
-        assert_eq!(atol(case.as_bytes()) as u32, cl as u32, "LLHost port {case:?}");
+        assert_eq!(
+            atol(case.as_bytes()) as u32,
+            cl as u32,
+            "LLHost port {case:?}"
+        );
     }
 }

@@ -109,7 +109,13 @@ pub fn as_string(v: &Value) -> Vec<u8> {
         Value::String(s) => s.clone(),
         Value::Uri(s) => s.clone(),
         Value::Integer(i) => i.to_string().into_bytes(),
-        Value::Boolean(b) => if *b { b"true".to_vec() } else { Vec::new() },
+        Value::Boolean(b) => {
+            if *b {
+                b"true".to_vec()
+            } else {
+                Vec::new()
+            }
+        }
         _ => Vec::new(),
     }
 }
@@ -117,11 +123,7 @@ pub fn as_string(v: &Value) -> Vec<u8> {
 /// `(LLSD::Integer)real` with the NaN check: a C++ float-to-int cast,
 /// saturating here where the C++ was undefined.
 fn real_to_int(r: f64) -> i32 {
-    if r.is_nan() {
-        0
-    } else {
-        r as i32
-    }
+    if r.is_nan() { 0 } else { r as i32 }
 }
 
 /// `std::istringstream >> F64`: the leading number of the string.
@@ -138,7 +140,8 @@ fn string_to_real(s: &[u8]) -> f64 {
         let c = b[end];
         if c.is_ascii_digit() {
             seen_digit = true;
-        } else if (c == b'+' || c == b'-') && (end == 0 || b[end - 1] == b'e' || b[end - 1] == b'E') {
+        } else if (c == b'+' || c == b'-') && (end == 0 || b[end - 1] == b'e' || b[end - 1] == b'E')
+        {
         } else if c == b'.' && !seen_dot && !seen_exp {
             seen_dot = true;
         } else if (c == b'e' || c == b'E') && seen_digit && !seen_exp {
@@ -163,7 +166,11 @@ fn string_to_real(s: &[u8]) -> f64 {
 
 /// `LLVector3::setValue(sd)`: `(F32)sd[i].asReal()` per component.
 pub fn vector3(v: &Value) -> [f32; 3] {
-    [as_real(index(v, 0)) as f32, as_real(index(v, 1)) as f32, as_real(index(v, 2)) as f32]
+    [
+        as_real(index(v, 0)) as f32,
+        as_real(index(v, 1)) as f32,
+        as_real(index(v, 2)) as f32,
+    ]
 }
 
 /// `LLVector2::setValue(sd)`.
@@ -178,7 +185,13 @@ pub fn parse_binary(bytes: &[u8], max_bytes: i64, max_depth: i32) -> Option<(Val
     let mut src = vkstorm_llsd::SliceSource::new(bytes);
     let mut r = vkstorm_llsd::Reader::new(&mut src);
     let mut b = vkstorm_llsd::ValueBuilder::new(vkstorm_llsd::key_policy(Format::Binary));
-    let n = vkstorm_llsd::parse_into(Format::Binary, &mut r, &mut b, Limits::from_cpp(max_bytes, max_depth), vkstorm_llsd::XmlMode::Parse);
+    let n = vkstorm_llsd::parse_into(
+        Format::Binary,
+        &mut r,
+        &mut b,
+        Limits::from_cpp(max_bytes, max_depth),
+        vkstorm_llsd::XmlMode::Parse,
+    );
     if n > 0 {
         let consumed = r.consumed();
         b.finish().map(|v| (v, consumed))
@@ -202,6 +215,9 @@ mod tests {
         assert_eq!(as_integer(&Value::Undefined), 0);
         assert_eq!(as_real(&Value::Integer(7)), 7.0);
         assert_eq!(as_real(&Value::String(b"1e3x".to_vec())), 1000.0);
-        assert_eq!(vector3(&Value::Array(vec![Value::Real(1.5), Value::Integer(2)])), [1.5, 2.0, 0.0]);
+        assert_eq!(
+            vector3(&Value::Array(vec![Value::Real(1.5), Value::Integer(2)])),
+            [1.5, 2.0, 0.0]
+        );
     }
 }

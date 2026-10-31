@@ -9,7 +9,7 @@ mod r3a;
 
 use std::sync::OnceLock;
 
-use r3a::{check_tree, compare_runs, op_total, run_corpus, Corpus};
+use r3a::{Corpus, check_tree, compare_runs, op_total, run_corpus};
 use vkstorm_inventory::llsd::coerce::{as_boolean, as_integer, as_string, get};
 use vkstorm_llsd::Value;
 
@@ -27,7 +27,10 @@ fn report(mode: &str, failures: &[String]) {
         failures.len()
     );
     let lines = failures.join("\n");
-    assert!(failures.is_empty(), "AIS update corpus, check '{mode}', differs from the fixtures:\n{lines}");
+    assert!(
+        failures.is_empty(),
+        "AIS update corpus, check '{mode}', differs from the fixtures:\n{lines}"
+    );
 }
 
 #[test]
@@ -43,7 +46,8 @@ fn never_op_lists_and_query_streams() {
 fn coverage_report() {
     let c = corpus();
     for mode in ["never", "sched"] {
-        let mut by_phase: std::collections::BTreeMap<String, (usize, Vec<String>)> = Default::default();
+        let mut by_phase: std::collections::BTreeMap<String, (usize, Vec<String>)> =
+            Default::default();
         for ((m, phase, kind), n) in &c.phase_counts {
             if *m == mode {
                 let e = by_phase.entry(format!("{phase:?}")).or_default();
@@ -58,9 +62,18 @@ fn coverage_report() {
     let steps: usize = c.records.iter().map(|r| r.steps).sum();
     let calls: usize = c.records.iter().map(|r| r.calls).sum();
     let hooks: usize = c.records.iter().map(|r| r.hooks).sum();
-    eprintln!("[r3a] {} cases, {steps} steps ({calls} command-function calls), {hooks} hooks", c.records.len());
-    eprintln!("[r3a] executor ops run (both runs): {:?}", c.apply_op_counts);
-    eprintln!("[r3a] corpus time: never {:.0} ms, sched {:.0} ms", c.never_ms, c.sched_ms);
+    eprintln!(
+        "[r3a] {} cases, {steps} steps ({calls} command-function calls), {hooks} hooks",
+        c.records.len()
+    );
+    eprintln!(
+        "[r3a] executor ops run (both runs): {:?}",
+        c.apply_op_counts
+    );
+    eprintln!(
+        "[r3a] corpus time: never {:.0} ms, sched {:.0} ms",
+        c.never_ms, c.sched_ms
+    );
 }
 
 #[test]
@@ -73,7 +86,11 @@ fn fixture_tree_and_write_tids() {
     let c = corpus();
     let tree = check_tree(c);
     assert!(tree.is_empty(), "fixture tree:\n{}", tree.join("\n"));
-    assert!(c.tid_failures.is_empty(), "write tids:\n{}", c.tid_failures.join("\n"));
+    assert!(
+        c.tid_failures.is_empty(),
+        "write tids:\n{}",
+        c.tid_failures.join("\n")
+    );
 }
 
 /// The shutdown contract, in both runs: after a stop the update aborts, no
@@ -84,12 +101,23 @@ fn shutdown_contract() {
     let mut aborts = 0;
     for r in c.records.iter().filter(|r| !r.large) {
         for mode in ["never", "sched"] {
-            let Value::Array(ops) = get(get(&r.actual, mode), "ops") else { panic!() };
+            let Value::Array(ops) = get(get(&r.actual, mode), "ops") else {
+                panic!()
+            };
             for (i, op) in ops.iter().enumerate() {
                 if as_string(get(op, "op")) == b"abort" {
                     aborts += 1;
-                    assert_eq!(as_integer(get(op, "ops_after_stop")), 0, "{} {mode} op {i}", r.id);
-                    assert!(as_boolean(get(op, "model_unchanged")), "{} {mode} op {i}", r.id);
+                    assert_eq!(
+                        as_integer(get(op, "ops_after_stop")),
+                        0,
+                        "{} {mode} op {i}",
+                        r.id
+                    );
+                    assert!(
+                        as_boolean(get(op, "model_unchanged")),
+                        "{} {mode} op {i}",
+                        r.id
+                    );
                 }
             }
         }

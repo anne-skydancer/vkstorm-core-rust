@@ -6,7 +6,7 @@
 //! each hold one, as the C++ classes derive from it. Its legacy text form is
 //! in [`crate::legacy::object`].
 
-use crate::perms::{Uuid, NULL_ID};
+use crate::perms::{NULL_ID, Uuid};
 use crate::text::{self, correct_inventory_name};
 use crate::types::AssetType;
 
@@ -58,7 +58,13 @@ impl Object {
     /// the name through `correctInventoryName`; date 0, not favorite, null
     /// thumbnail, no runtime.
     pub fn new(id: &Uuid, parent: &Uuid, asset_type: AssetType, name: &[u8]) -> Object {
-        Object { id: *id, parent: *parent, asset_type, name: correct_inventory_name(name), ..Object::default() }
+        Object {
+            id: *id,
+            parent: *parent,
+            asset_type,
+            name: correct_inventory_name(name),
+            ..Object::default()
+        }
     }
 
     /// `LLInventoryObject::copyObject`: the id, parent, type, name,
