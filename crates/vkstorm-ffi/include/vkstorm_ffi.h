@@ -1599,6 +1599,122 @@ VksInvRecords* vks_inv_notecard_import(const uint8_t* data, size_t len, int32_t 
 VksInvRecords* vks_inv_notecard_export(const VksInvItem* items, size_t count, const uint8_t* text,
                                        size_t text_len);
 
+/* ---- Inventory R2: the cache file and the login load (rung seven) ------ *
+ * LLInventoryModel::loadFromFile, saveToFile and loadSkeleton
+ * (newview/llinventorymodel.cpp). The cache file's bytes are parsed and
+ * written in Rust: no C++ LLSD tree is built. Records cross as the R1 flat
+ * views (VksInvItem, VksInvCategory with owner and version). The model stays
+ * C++: the rules read it through a VksInvModelHost; C++ keeps the file-system
+ * steps (the clear-cache marker, gunzip_file, the removals) and applies the
+ * login plan to the model. */
+
+/* What the rules read from LLInventoryModel. item_type: getItem(id), true
+ * with the stored type (getActualType) when the model has it. category:
+ * getCategory(id), true with the stored type and the version. A null
+ * callback (or a null host) answers "absent". */
+typedef struct VksInvModelHost {
+    void* ctx;
+    bool (*item_type)(void* ctx, const uint8_t* id, int32_t* out_type);
+    bool (*category)(void* ctx, const uint8_t* id, int32_t* out_type, int32_t* out_version);
+} VksInvModelHost;
+
+/* loadFromFile over the bytes of the file it opened. obsolete: the
+ * is_cache_obsolete flag (loadFromFile returns its negation; no records then).
+ * categories, items: in file order (importLLSDMap, fromLLSD with is_new; the
+ * items without those of null id and those whose viewer type is AT_UNKNOWN,
+ * whose parents are cats_to_update, 16 bytes each, UUID order). Free the
+ * block with vks_inv_cache_free. Null on a panic. */
+typedef struct VksInvCache VksInvCache;
+typedef struct VksInvCacheView {
+    bool obsolete;
+    const VksInvCategory* categories;
+    size_t category_count;
+    const VksInvItem* items;
+    size_t item_count;
+    const uint8_t* cats_to_update;
+    size_t cats_to_update_count;
+} VksInvCacheView;
+
+VksInvCache* vks_inv_cache_decode(const uint8_t* data, size_t len, bool in_open_sim, const VksInvModelHost* model);
+const VksInvCacheView* vks_inv_cache_view(const VksInvCache* c);
+void vks_inv_cache_free(VksInvCache* c);
+
+/* saveToFile's bytes (the result block's text): the version, the binary
+ * LLSD of the categories of known version and of every item, in the order
+ * given, and the newline. */
+VksInvRecords* vks_inv_cache_encode(const VksInvCategory* categories, size_t category_count,
+                                    const VksInvItem* items, size_t item_count);
+
+/* loadSkeleton. The C++ walker extracts each skeleton entry with the LLSD
+ * coercions (isDefined, asString, asUUID, asInteger) and marks the defined
+ * keys; vks_inv_skeleton_import makes the folders (one per id). When
+ * vks_inv_skeleton_wants_cache, C++ gunzips and reads the cache file;
+ * vks_inv_skeleton_load (which takes the skeleton) reconciles them over the
+ * model as it is and returns the plan: addCategory for each folder in order
+ * (with its final version, and its descendent count, -1 for unknown),
+ * addItem for each item in order, the model folders to invalidate (16 bytes
+ * each), the files to remove. vks_inv_skeleton_rv: the return value when the
+ * cache is not read (no folder). A skeleton that is not loaded is freed with
+ * vks_inv_skeleton_free, a plan with vks_inv_login_plan_free. */
+#define VKS_INV_SKEL_NAME 1u
+#define VKS_INV_SKEL_FOLDER_ID 2u
+#define VKS_INV_SKEL_PARENT_ID 4u
+#define VKS_INV_SKEL_VERSION 8u
+#define VKS_INV_SKEL_TYPE_DEFAULT 16u
+typedef struct VksInvSkeletonEntry {
+    uint32_t defined; /* VKS_INV_SKEL_* */
+    VksInvBytes name;
+    uint8_t folder_id[16];
+    uint8_t parent_id[16];
+    int32_t version;
+    int32_t type_default;
+} VksInvSkeletonEntry;
+
+typedef struct VksInvCacheInput {
+    bool gz_present;   /* <name>.gz could be opened */
+    bool gunzip_ok;    /* gunzip_file succeeded */
+    bool file_present; /* the file loadFromFile opens could be opened: file */
+    VksInvBytes file;
+    bool second_instance;
+} VksInvCacheInput;
+
+typedef struct VksInvLoginFolder {
+    VksInvCategory category;
+    int32_t descendent_count;
+} VksInvLoginFolder;
+
+typedef struct VksInvSkeleton VksInvSkeleton;
+typedef struct VksInvLoginPlan VksInvLoginPlan;
+typedef struct VksInvLoginPlanView {
+    bool rv;
+    const VksInvLoginFolder* folders;
+    size_t folder_count;
+    const VksInvItem* items;
+    size_t item_count;
+    const uint8_t* invalidate;
+    size_t invalidate_count;
+    bool remove_plain;
+    bool remove_gz;
+    size_t cached_category_count;
+    size_t cached_item_count;
+} VksInvLoginPlanView;
+
+VksInvSkeleton* vks_inv_skeleton_import(const uint8_t* owner, const VksInvSkeletonEntry* entries, size_t count);
+bool vks_inv_skeleton_wants_cache(const VksInvSkeleton* s);
+bool vks_inv_skeleton_rv(const VksInvSkeleton* s);
+void vks_inv_skeleton_free(VksInvSkeleton* s);
+VksInvLoginPlan* vks_inv_skeleton_load(VksInvSkeleton* skeleton, const VksInvCacheInput* input, bool in_open_sim,
+                                       const VksInvModelHost* model);
+const VksInvLoginPlanView* vks_inv_login_plan_view(const VksInvLoginPlan* p);
+void vks_inv_login_plan_free(VksInvLoginPlan* p);
+
+#ifdef __cplusplus
+static_assert(sizeof(void*) != 8 ||
+                  (sizeof(VksInvModelHost) == 24 && sizeof(VksInvSkeletonEntry) == 64 &&
+                   sizeof(VksInvCacheInput) == 32 && sizeof(VksInvLoginFolder) == 128),
+              "inventory R2 layout");
+#endif
+
 #ifdef __cplusplus
 }
 

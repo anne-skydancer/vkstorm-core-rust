@@ -35,6 +35,8 @@ mod http;
 mod image;
 #[cfg(feature = "inventory")]
 mod inventory;
+#[cfg(feature = "inventory")]
+mod inventory_r2;
 #[cfg(feature = "j2c")]
 mod j2c;
 #[cfg(feature = "llsd")]
