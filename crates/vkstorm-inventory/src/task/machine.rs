@@ -76,8 +76,12 @@ impl<'a, E: TaskKey> Work<'a, E> {
         self.out.push(Action::SetExpected(v));
     }
 
+    /// `++`/`--mExpectedInventorySerialNum`: relative, so a listener that
+    /// changed the serial during a notification earlier in the decision is
+    /// counted from, as in the C++.
     fn add_expected(&mut self, delta: i16) {
-        self.set_expected(self.st.expected.wrapping_add(delta));
+        self.st.expected = self.st.expected.wrapping_add(delta);
+        self.out.push(Action::AddExpected(delta));
     }
 
     fn set_request(&mut self, v: RequestState) {
@@ -186,9 +190,8 @@ impl<'a, E: TaskKey> Work<'a, E> {
         if self.inv.is_some() {
             if self.is_inventory_pending() {
                 // Bug 6: the listeners get the contents; the state and xfer
-                // id that doInventoryCallback() releases are put back, so
-                // only the notification is left.
-                self.out.push(Action::NotifyListeners);
+                // id that doInventoryCallback() releases are put back.
+                self.out.push(Action::NotifyListenersKeepRequest);
             } else {
                 self.do_inventory_callback();
             }
@@ -466,19 +469,32 @@ pub fn xfer_completed<E: TaskKey>(
     }
     w.set_serial(serial);
     if w.load_task_inv_file(filename, file) {
-        let Some(inv) = w.inv.clone() else {
-            return w.finish();
-        };
-        for e in &inv {
-            if w.pending.is_empty() {
-                break;
-            }
-            if let Some(asset) = e.item_asset() {
-                if e.asset_type() != AssetType::CATEGORY {
-                    if let Some(i) = w.pending.iter().position(|a| *a == asset) {
-                        w.pending.remove(i);
-                        w.out.push(Action::PendingErase(i));
-                    }
+        // The listeners were called back by the load and may have changed
+        // the contents or the pending list: the rest reads them afterwards.
+        w.out.push(Action::ClearLoadedPending);
+    }
+    w.finish()
+}
+
+/// The rest of `processTaskInvFile` after a successful load
+/// ([`Action::ClearLoadedPending`]), over the object as the listeners left
+/// it: without contents nothing (the `<FS:ND>` guard); otherwise the assets
+/// of the items (not `AT_CATEGORY`) leave the pending list, front to back,
+/// while it is not empty.
+pub fn clear_loaded_pending<E: TaskKey>(view: &TaskView<'_, E>, env: &Env<'_>) -> Vec<Action> {
+    let mut w = Work::new(view, env);
+    let Some(inv) = w.inv.clone() else {
+        return w.finish();
+    };
+    for e in &inv {
+        if w.pending.is_empty() {
+            break;
+        }
+        if let Some(asset) = e.item_asset() {
+            if e.asset_type() != AssetType::CATEGORY {
+                if let Some(i) = w.pending.iter().position(|a| *a == asset) {
+                    w.pending.remove(i);
+                    w.out.push(Action::PendingErase(i));
                 }
             }
         }

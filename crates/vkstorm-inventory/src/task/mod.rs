@@ -77,10 +77,11 @@ pub use create::CreateRequest;
 pub use llsd::LocalizedNames;
 pub use machine::{
     CapReply, TaskKey, cap_fetch_begin, cap_fetch_reply, cap_fetch_reply_summary,
-    create_inventory_item, create_item_completed, create_item_succeeded, delayed_fetch_due,
-    delete_inventory_item, dirty_inventory, load_task_inv_file, move_inventory, remove_inventory,
-    reply_task_inventory, request_inventory, save_script, update_inventory, update_inventory_local,
-    update_material_inventory, update_viewer_inventory_asset, xfer_completed, xfer_requested,
+    clear_loaded_pending, create_inventory_item, create_item_completed, create_item_succeeded,
+    delayed_fetch_due, delete_inventory_item, dirty_inventory, load_task_inv_file, move_inventory,
+    remove_inventory, reply_task_inventory, request_inventory, save_script, update_inventory,
+    update_inventory_local, update_material_inventory, update_viewer_inventory_asset,
+    xfer_completed, xfer_requested,
 };
 pub use message::Outgoing;
 
@@ -413,6 +414,8 @@ pub enum Action {
     SetSerial(i16),
     /// `mExpectedInventorySerialNum = v`.
     SetExpected(i16),
+    /// `mExpectedInventorySerialNum += v` (wrapping): `++` and `--`.
+    AddExpected(i16),
     /// `mInvRequestState = v`.
     SetRequestState(RequestState),
     /// `mInvRequestXFerId = v`.
@@ -439,6 +442,14 @@ pub enum Action {
     /// `inventoryChanged(this, mInventory, mInventorySerialNum, data)`, in
     /// list order, entries with a NULL listener deleted.
     NotifyListeners,
+    /// [`Action::NotifyListeners`] with `mInvRequestState` and
+    /// `mInvRequestXFerId` saved before and put back after (bug 6's
+    /// `requestInventory` while a request is outstanding).
+    NotifyListenersKeepRequest,
+    /// The pending-list cleanup after a successful load in
+    /// `processTaskInvFile`: [`clear_loaded_pending`] over the object as it
+    /// is now (the load's notification may have changed it).
+    ClearLoadedPending,
     /// `msg->sendReliable(mRegionp->getHost())` of the message.
     Send(Outgoing),
     /// `LLCoros::launch("LLViewerObject::fetchInventoryFromCapCoro()", ...)`

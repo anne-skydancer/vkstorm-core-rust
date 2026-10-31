@@ -1037,6 +1037,7 @@ impl Scene {
         match a {
             Action::SetSerial(v) => self.obj.st.serial = v,
             Action::SetExpected(v) => self.obj.st.expected = v,
+            Action::AddExpected(v) => self.obj.st.expected = self.obj.st.expected.wrapping_add(v),
             Action::SetRequestState(v) => self.obj.st.request = v,
             Action::SetXferId(v) => self.obj.st.xfer_id = v,
             Action::SetDirty(v) => self.obj.st.dirty = v,
@@ -1073,6 +1074,16 @@ impl Scene {
                     let d = datagram(&mut b, true);
                     self.capture.as_mut().unwrap().push(d);
                 }
+            }
+            Action::NotifyListenersKeepRequest => {
+                let (request, xfer) = (self.obj.st.request, self.obj.st.xfer_id);
+                self.act(Action::NotifyListeners);
+                self.obj.st.request = request;
+                self.obj.st.xfer_id = xfer;
+            }
+            Action::ClearLoadedPending => {
+                let acts = task::clear_loaded_pending(&self.view(), &self.env());
+                self.run(acts);
             }
             Action::LaunchCapFetch => {
                 self.add("coro.launch LLViewerObject::fetchInventoryFromCapCoro()");
