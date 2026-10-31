@@ -213,21 +213,6 @@ pub struct VksInvR4bOut {
     tasks: Vec<TaskObject>,
 }
 
-/// The result block of the LLSD forms.
-pub struct VksInvR4bBlock {
-    bytes: Vec<u8>,
-    from_name: Vec<u8>,
-    desc: Vec<u8>,
-    view: VksInvR4bBlockView,
-}
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct VksInvR4bBlockView {
-    pub bytes: VksInvBytes,
-    pub offer: VksInvOffer,
-}
-
 // Layout: the same numbers are static asserts in the header (64-bit).
 const _: () = {
     use std::mem::{offset_of, size_of};
@@ -246,7 +231,6 @@ const _: () = {
         assert!(offset_of!(VksInvR4bAction, mv) == 176);
         assert!(size_of::<VksInvR4bThrottle>() == 16);
         assert!(size_of::<VksInvR4bHost>() == 32);
-        assert!(size_of::<VksInvR4bBlockView>() == 144);
     }
 };
 
@@ -1539,77 +1523,6 @@ pub unsafe extern "C" fn vks_inv_r4b_send_decline_response(
             let mut info = offer_from(o);
             offer::send_decline_response(h, &mut info);
         })
-    }
-}
-
-/// A result block: `bytes`, and an offer whose strings point into the block.
-fn block(bytes: Vec<u8>, info: OfferInfo) -> *mut VksInvR4bBlock {
-    let mut b = Box::new(VksInvR4bBlock {
-        bytes,
-        from_name: info.from_name.clone(),
-        desc: info.desc.clone(),
-        view: VksInvR4bBlockView {
-            bytes: NO_BYTES,
-            offer: offer_to(&info),
-        },
-    });
-    b.view.bytes = view(&b.bytes);
-    b.view.offer.from_name = view(&b.from_name);
-    b.view.offer.desc = view(&b.desc);
-    Box::into_raw(b)
-}
-
-/// `LLOfferInfo::asLLSD()` as binary LLSD (the block's bytes).
-///
-/// # Safety
-/// `offer` is valid.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_r4b_offer_as_llsd(
-    offer: *const VksInvOffer,
-) -> *mut VksInvR4bBlock {
-    guard(ptr::null_mut(), || {
-        let Some(o) = (unsafe { offer.as_ref() }) else {
-            set_error("vks_inv_r4b_offer_as_llsd: null offer");
-            return ptr::null_mut();
-        };
-        let info = unsafe { offer_from(o) };
-        block(sd_out(&info.as_llsd()), OfferInfo::default())
-    })
-}
-
-/// `LLOfferInfo(const LLSD&)` from binary LLSD (the block's offer).
-///
-/// # Safety
-/// `sd` holds `len` bytes.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_r4b_offer_from_llsd(
-    sd: *const u8,
-    len: usize,
-) -> *mut VksInvR4bBlock {
-    guard(ptr::null_mut(), || {
-        let v = unsafe { sd_arg(sd, len) };
-        block(Vec::new(), OfferInfo::from_llsd(&v))
-    })
-}
-
-/// # Safety
-/// `b` is a block from this module, or null.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_r4b_block_view(
-    b: *const VksInvR4bBlock,
-) -> *const VksInvR4bBlockView {
-    match unsafe { b.as_ref() } {
-        Some(b) => &b.view,
-        None => ptr::null(),
-    }
-}
-
-/// # Safety
-/// `b` is a block from this module (freed once), or null.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_inv_r4b_block_free(b: *mut VksInvR4bBlock) {
-    if !b.is_null() {
-        drop(unsafe { Box::from_raw(b) });
     }
 }
 

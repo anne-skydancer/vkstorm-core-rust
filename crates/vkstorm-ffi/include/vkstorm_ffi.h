@@ -1969,18 +1969,9 @@ void vks_inv_r4b_send_receive_response(const VksInvR4bHost* host, const VksInvOf
                                        const uint8_t* folder);
 void vks_inv_r4b_send_auto_receive_response(const VksInvR4bHost* host, const VksInvOffer* offer);
 void vks_inv_r4b_send_decline_response(const VksInvR4bHost* host, const VksInvOffer* offer);
-/* asLLSD and LLOfferInfo(LLSD) / fromLLSD: a block with the binary LLSD
- * (bytes) or the offer (its strings in the block). */
-typedef struct VksInvR4bBlock VksInvR4bBlock;
-typedef struct VksInvR4bBlockView
-{
-    VksInvBytes bytes;
-    VksInvOffer offer;
-} VksInvR4bBlockView;
-VksInvR4bBlock* vks_inv_r4b_offer_as_llsd(const VksInvOffer* offer);
-VksInvR4bBlock* vks_inv_r4b_offer_from_llsd(const uint8_t* sd, size_t len);
-const VksInvR4bBlockView* vks_inv_r4b_block_view(const VksInvR4bBlock* b);
-void vks_inv_r4b_block_free(VksInvR4bBlock* b);
+/* LLOfferInfo's LLSD form (asLLSD, LLOfferInfo(LLSD), fromLLSD) stays C++
+ * until the inventory storage moves to Rust (owner's decision: crossing the
+ * LLSD cost 3x the C++); the crate keeps its logic (exchange::info). */
 bool vks_inv_r4b_check_offer_throttle(const VksInvR4bHost* host, const uint8_t* from_name, size_t len,
                                       bool check_only);
 
@@ -2051,7 +2042,6 @@ void vks_inv_r4b_share_confirmation(const VksInvR4bHost* host, const uint8_t* na
 #define VKS_INV_R4B_ACTION_SIZE 184
 #define VKS_INV_R4B_THROTTLE_SIZE 16
 #define VKS_INV_R4B_HOST_SIZE 32
-#define VKS_INV_R4B_BLOCK_VIEW_SIZE 144
 
 #ifdef __cplusplus
 }
@@ -2089,8 +2079,7 @@ static_assert(sizeof(void*) != 8 ||
                    sizeof(VksInvR4bQuery) == VKS_INV_R4B_QUERY_SIZE &&
                    sizeof(VksInvR4bAction) == VKS_INV_R4B_ACTION_SIZE &&
                    sizeof(VksInvR4bThrottle) == VKS_INV_R4B_THROTTLE_SIZE &&
-                   sizeof(VksInvR4bHost) == VKS_INV_R4B_HOST_SIZE &&
-                   sizeof(VksInvR4bBlockView) == VKS_INV_R4B_BLOCK_VIEW_SIZE),
+                   sizeof(VksInvR4bHost) == VKS_INV_R4B_HOST_SIZE),
               "inventory R4b layout");
 
 /* The string a vks_* function writes into (buf, cap). Those functions write
