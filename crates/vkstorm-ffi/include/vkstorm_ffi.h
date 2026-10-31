@@ -1951,8 +1951,11 @@ typedef struct VksInvR4bHost
  * and 37 (other dialogs do nothing), from its raw arguments: name as
  * received; buffer the bytes the bucket was copied into (process_improved_im's
  * U8[MTUBYTES], or the offline message's vector; the legacy C-string reads
- * stop at its end); bucket_size the declared size. */
-void vks_inv_r4b_receive_im(const VksInvR4bHost* host, const uint8_t* from_id, bool from_group, int32_t dialog,
+ * stop at its end); bucket_size the declared size. Returns whether the case
+ * ends with its break (true) or returns from processNewMessage (false: a
+ * malformed agent offer or group notice bucket, a notice from a muted
+ * sender), skipping what follows the dialog switch. */
+bool vks_inv_r4b_receive_im(const VksInvR4bHost* host, const uint8_t* from_id, bool from_group, int32_t dialog,
                             const uint8_t* session_id, uint32_t timestamp, const uint8_t* name, size_t name_len,
                             const uint8_t* message, size_t message_len, const uint8_t* buffer, size_t buffer_len,
                             int32_t bucket_size, const VksInvNetHost* sender, const uint8_t* aux_id);
@@ -1986,8 +1989,9 @@ bool vks_inv_r4b_give_item(const VksInvR4bHost* host, const uint8_t* to, const V
                            const uint8_t* im_session);
 bool vks_inv_r4b_give_category(const VksInvR4bHost* host, const uint8_t* to, const VksInvR4bCat* cat,
                                const uint8_t* im_session, const uint8_t* success_notification, size_t len);
-/* The answer to a notification posted with a handler (VKS_INV_R4B_H_*). */
-void vks_inv_r4b_answer(const VksInvR4bHost* host, int32_t handler, const uint8_t* notification,
+/* The answer to a notification posted with a handler (VKS_INV_R4B_H_*):
+ * the handler's result (false for give_inventory_cb, which has none). */
+bool vks_inv_r4b_answer(const VksInvR4bHost* host, int32_t handler, const uint8_t* notification,
                         size_t notification_len, const uint8_t* response, size_t response_len);
 /* The share dialog's callback; avatars and selected are arrays of 16-byte ids. */
 void vks_inv_r4b_share(const VksInvR4bHost* host, const uint8_t* avatars, size_t avatar_count,

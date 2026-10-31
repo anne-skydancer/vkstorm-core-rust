@@ -628,7 +628,12 @@ impl<'a> ImArgs<'a> {
 /// the `Unnamed` string) and, for the dialogs `clean_name_from_im` covers,
 /// cleaned of `" Resident"`; the mute verdict (`flagTextChat` exempt); then
 /// the dialog's case. Other dialogs do nothing here.
-pub fn receive_im(host: &mut dyn Host, im: &ImArgs<'_>) {
+///
+/// Returns whether the case ends with its `break` (`true`) or `return`s
+/// from `processNewMessage` (`false`: a malformed agent offer or group
+/// notice bucket, a group notice from a muted sender), which skips the code
+/// after the dialog switch (Firestorm's "Don't flash task icon").
+pub fn receive_im(host: &mut dyn Host, im: &ImArgs<'_>) -> bool {
     let mut name = trim(im.name).to_vec();
     if name.is_empty() {
         name = host.trans("Unnamed", &[]);
@@ -646,7 +651,7 @@ pub fn receive_im(host: &mut dyn Host, im: &ImArgs<'_>) {
         IM_INVENTORY_OFFERED | IM_TASK_INVENTORY_OFFERED => {
             inventory_offered(host, im, name, is_muted, is_do_not_disturb)
         }
-        _ => {}
+        _ => true,
     }
 }
 
@@ -664,13 +669,13 @@ fn inventory_offered(
     name: Vec<u8>,
     is_muted: bool,
     is_do_not_disturb: bool,
-) {
+) -> bool {
     let mut info = OfferInfo::default();
     host.act(Action::OfferNew(info.clone()));
     if im.dialog == IM_INVENTORY_OFFERED {
         if im.bucket_size != 17 {
             host.act(Action::OfferDelete);
-            return;
+            return false;
         }
         info.ty = AssetType(im.byte(0) as i8 as i32);
         let mut id = [0u8; 16];
@@ -716,9 +721,15 @@ fn inventory_offered(
     } else {
         inventory_offer_handler(host, &mut info);
     }
+    true
 }
 
-fn group_notice(host: &mut dyn Host, im: &ImArgs<'_>, name: &[u8], mut original_name: Vec<u8>) {
+fn group_notice(
+    host: &mut dyn Host,
+    im: &ImArgs<'_>,
+    name: &[u8],
+    mut original_name: Vec<u8>,
+) -> bool {
     let mut from_group = im.from_group;
     let has_inventory: bool;
     let mut asset_type: u8 = 0;
@@ -736,7 +747,7 @@ fn group_notice(host: &mut dyn Host, im: &ImArgs<'_>, name: &[u8], mut original_
         }
     } else {
         if im.bucket_size < 19 || im.byte(im.bucket_size as usize - 1) != 0 {
-            return;
+            return false;
         }
         has_inventory = im.byte(0) != 0;
         asset_type = im.byte(1);
@@ -759,7 +770,7 @@ fn group_notice(host: &mut dyn Host, im: &ImArgs<'_>, name: &[u8], mut original_
     };
 
     if agent_id != NULL_ID && host.is_muted(&agent_id, b"", 0) {
-        return;
+        return false;
     }
 
     let mut info: Option<OfferInfo> = None;
@@ -829,6 +840,7 @@ fn group_notice(host: &mut dyn Host, im: &ImArgs<'_>, name: &[u8], mut original_
     } else if info.is_some() {
         host.act(Action::OfferDelete);
     }
+    true
 }
 
 /// `inventory_offer_handler(info)`: a muted sender (by id and name, or by
@@ -1179,7 +1191,8 @@ pub fn receive_offline(host: &mut dyn Host, messages: &Value) {
 /// `processNewMessage` for a message the offline loop posted (run from the
 /// main coroutine): the bucket is the message's own vector.
 pub fn process_offline_message(host: &mut dyn Host, m: &OfflineMessage) {
-    receive_im(
+    // the window flash after the dialog switch is not part of this area
+    let _ = receive_im(
         host,
         &ImArgs {
             from_id: m.from_id,

@@ -1415,9 +1415,9 @@ pub unsafe extern "C" fn vks_inv_r4b_receive_im(
     bucket_size: i32,
     sender: *const VksInvNetHost,
     aux_id: *const u8,
-) {
+) -> bool {
     unsafe {
-        with_host(host, (), |h| {
+        with_host(host, true, |h| {
             let args = ImArgs {
                 from_id: uuid_arg(from_id),
                 from_group,
@@ -1431,7 +1431,7 @@ pub unsafe extern "C" fn vks_inv_r4b_receive_im(
                 sender: sender.as_ref().map_or_else(NetHost::default, net_from),
                 aux_id: uuid_arg(aux_id),
             };
-            offer::receive_im(h, &args);
+            offer::receive_im(h, &args)
         })
     }
 }
@@ -1684,21 +1684,21 @@ pub unsafe extern "C" fn vks_inv_r4b_answer(
     notification_len: usize,
     response: *const u8,
     response_len: usize,
-) {
+) -> bool {
     unsafe {
-        with_host(host, (), |h| {
+        with_host(host, false, |h| {
             let handler = match handler {
                 H_COPY_PROTECTED_ITEM => Handler::CopyProtectedItem,
                 H_COPY_PROTECTED_CATEGORY => Handler::CopyProtectedCategory,
                 H_DRAG_GIVE_INVENTORY => Handler::DragGiveInventory,
                 _ => {
                     set_error("vks_inv_r4b_answer: unknown handler");
-                    return;
+                    return false;
                 }
             };
             let n = sd_arg(notification, notification_len);
             let r = sd_arg(response, response_len);
-            give::answer(h, handler, &n, &r);
+            give::answer(h, handler, &n, &r)
         })
     }
 }

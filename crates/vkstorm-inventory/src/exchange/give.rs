@@ -738,15 +738,23 @@ pub fn handle_copy_protected_category(
 }
 
 /// The answer to a notification the give code posted (the seam's `answer`).
-pub fn answer(host: &mut dyn Host, handler: Handler, notification: &Value, response: &Value) {
+///
+/// Returns the handler's result (`give_inventory_cb` has none: `false`).
+pub fn answer(
+    host: &mut dyn Host,
+    handler: Handler,
+    notification: &Value,
+    response: &Value,
+) -> bool {
     match handler {
-        Handler::CopyProtectedItem => {
-            handle_copy_protected_item(host, notification, response);
-        }
+        Handler::CopyProtectedItem => handle_copy_protected_item(host, notification, response),
         Handler::CopyProtectedCategory => {
-            handle_copy_protected_category(host, notification, response);
+            handle_copy_protected_category(host, notification, response)
         }
-        Handler::DragGiveInventory => drag_give_inventory_cb(host, notification, response),
+        Handler::DragGiveInventory => {
+            drag_give_inventory_cb(host, notification, response);
+            false
+        }
     }
 }
 
