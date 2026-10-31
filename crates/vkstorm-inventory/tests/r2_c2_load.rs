@@ -30,13 +30,13 @@ mod r2common;
 
 use std::collections::BTreeMap;
 
-use r2common::fixture_model::{files_line, state_from_dumps, Delta, HarnessModel};
+use r2common::fixture_model::{Delta, HarnessModel, files_line, state_from_dumps};
 use r2common::gz::gunzip_file;
 use r2common::*;
 use vkstorm_inventory::cache;
 use vkstorm_inventory::login::{self, CacheInput, Skeleton, SkeletonEntry};
 use vkstorm_inventory::model::{ModelLookup, ModelObjects};
-use vkstorm_inventory::perms::{Uuid, NULL_ID};
+use vkstorm_inventory::perms::{NULL_ID, Uuid};
 use vkstorm_inventory::validate::{self, ValidationInfo};
 use vkstorm_llsd::{Format, Limits, Value};
 
@@ -62,12 +62,22 @@ struct CaseInput {
 
 /// `LLDir::getScrubbedFileName` then `utf8str_tolower`.
 fn scrubbed_grid(grid: &str) -> Vec<u8> {
-    grid.bytes().map(|b| if b"\\/:*?\"<>|".contains(&b) { b'_' } else { b.to_ascii_lowercase() }).collect()
+    grid.bytes()
+        .map(|b| {
+            if b"\\/:*?\"<>|".contains(&b) {
+                b'_'
+            } else {
+                b.to_ascii_lowercase()
+            }
+        })
+        .collect()
 }
 
 fn read_notation(rel: &str) -> Value {
     let bytes = read_bytes(rel);
-    vkstorm_llsd::parse(Format::Notation, &bytes, Limits::UNLIMITED).1.expect("skeleton notation")
+    vkstorm_llsd::parse(Format::Notation, &bytes, Limits::UNLIMITED)
+        .1
+        .expect("skeleton notation")
 }
 
 fn read_input(id: &str) -> CaseInput {
@@ -85,19 +95,28 @@ fn read_input(id: &str) -> CaseInput {
     if let Ok(entries) = std::fs::read_dir(path(&format!("{dir}/files"))) {
         for e in entries {
             let e = e.unwrap();
-            files.insert(e.file_name().into_string().unwrap(), std::fs::read(e.path()).unwrap());
+            files.insert(
+                e.file_name().into_string().unwrap(),
+                std::fs::read(e.path()).unwrap(),
+            );
         }
     }
     CaseInput {
         note: kv["note"].clone(),
         second_instance: kv["second_instance"] == "1",
-        grid: if production { None } else { Some(scrubbed_grid(&kv["grid_id"])) },
+        grid: if production {
+            None
+        } else {
+            Some(scrubbed_grid(&kv["grid_id"]))
+        },
         logout: kv["logout"] == "1",
         agent_root: id_of("agent_root"),
         lib_root: id_of("lib_root"),
         lib_owner: id_of("lib_owner"),
         agent_skel: read_notation(&format!("{dir}/skel_agent.llsd")),
-        lib_skel: lib_path.exists().then(|| read_notation(&format!("{dir}/skel_library.llsd"))),
+        lib_skel: lib_path
+            .exists()
+            .then(|| read_notation(&format!("{dir}/skel_library.llsd"))),
         files,
     }
 }
@@ -124,7 +143,10 @@ impl Login<'_> {
         let agent = parse_uuid(AGENT);
         let grid = self.input.grid.as_deref();
         let purge = login::purge_names(&agent, &self.model.library_owner, grid);
-        if self.cache_dir.contains_key(&Self::name(purge.marker.clone())) {
+        if self
+            .cache_dir
+            .contains_key(&Self::name(purge.marker.clone()))
+        {
             for n in purge.files {
                 self.cache_dir.remove(&Self::name(n));
             }
@@ -159,20 +181,36 @@ impl Login<'_> {
         } else {
             self.cache_dir.get(&plain).cloned()
         };
-        let input = CacheInput { gz_present, gunzip_ok, file: file.as_deref(), second_instance: second };
+        let input = CacheInput {
+            gz_present,
+            gunzip_ok,
+            file: file.as_deref(),
+            second_instance: second,
+        };
         // The C ABI path: the ids the load reads, resolved before the call
         // into ModelObjects, give the same plan as the live model.
         let mut resolved = ModelObjects::default();
-        for id in file.as_deref().map(|b| login::lookup_ids(b, false)).unwrap_or_default() {
+        for id in file
+            .as_deref()
+            .map(|b| login::lookup_ids(b, false))
+            .unwrap_or_default()
+        {
             if let Some(t) = self.model.item_type(&id) {
                 resolved.items.insert(id, t);
             }
-            if let (Some(t), Some(v)) = (self.model.category_type(&id), self.model.category_version(&id)) {
+            if let (Some(t), Some(v)) = (
+                self.model.category_type(&id),
+                self.model.category_version(&id),
+            ) {
                 resolved.categories.insert(id, (t, v));
             }
         }
         let plan = skel.clone().load(&input, false, &self.model);
-        assert_eq!(plan, skel.load(&input, false, &resolved), "plan over pre-resolved lookups");
+        assert_eq!(
+            plan,
+            skel.load(&input, false, &resolved),
+            "plan over pre-resolved lookups"
+        );
         let (rv, remove_plain, remove_gz) = (plan.rv, plan.remove_plain, plan.remove_gz);
         self.model.apply(plan);
         if remove_plain {
@@ -191,8 +229,16 @@ impl Login<'_> {
 
 /// The lines of a case up to `buildParentChildMap`.
 fn load_lines(input: &CaseInput) -> (Vec<String>, Login<'_>) {
-    let mut l = Login { input, cache_dir: input.files.clone(), temp_dir: BTreeMap::new(), model: HarnessModel::default() };
-    let mut out = vec![format!("note {}", input.note), files_line("before", &l.cache_dir)];
+    let mut l = Login {
+        input,
+        cache_dir: input.files.clone(),
+        temp_dir: BTreeMap::new(),
+        model: HarnessModel::default(),
+    };
+    let mut out = vec![
+        format!("note {}", input.note),
+        files_line("before", &l.cache_dir),
+    ];
     if input.agent_root != NULL_ID {
         l.model.root = input.agent_root;
     }
@@ -223,8 +269,11 @@ fn load_lines(input: &CaseInput) -> (Vec<String>, Login<'_>) {
 #[test]
 fn c2_load() {
     let file = &r2common::cache_lib("c2_load.txt");
-    let ids: Vec<String> =
-        String::from_utf8(read_bytes("cache/c2/cases.txt")).unwrap().lines().map(str::to_owned).collect();
+    let ids: Vec<String> = String::from_utf8(read_bytes("cache/c2/cases.txt"))
+        .unwrap()
+        .lines()
+        .map(str::to_owned)
+        .collect();
     assert_eq!(ids.len(), 64);
     let cases = read_cases(file);
     assert_eq!(cases.iter().map(|c| c.id.clone()).collect::<Vec<_>>(), ids);
@@ -232,30 +281,57 @@ fn c2_load() {
     for case in &cases {
         let input = read_input(&case.id);
         let (out, login) = load_lines(&input);
-        let build = case.lines.iter().position(|l| l == "step build_parent_child_map").unwrap();
+        let build = case
+            .lines
+            .iter()
+            .position(|l| l == "step build_parent_child_map")
+            .unwrap();
         assert_case(file, &case.id, &case.lines[..build], &out);
         tally.replayed("login load (loadSkeleton)", out.len());
 
         // validate() at the end of buildParentChildMap.
-        let first_v = case.lines.iter().position(|l| l.starts_with("validation ")).unwrap();
-        let expected_v: Vec<String> =
-            case.lines[first_v..].iter().take_while(|l| l.starts_with("validation ")).cloned().collect();
+        let first_v = case
+            .lines
+            .iter()
+            .position(|l| l.starts_with("validation "))
+            .unwrap();
+        let expected_v: Vec<String> = case.lines[first_v..]
+            .iter()
+            .take_while(|l| l.starts_with("validation "))
+            .cloned()
+            .collect();
         let state = state_from_dumps(&[&case.lines[..first_v]]);
         let info = if state.root != NULL_ID && state.category_tree.contains_key(&state.root) {
-            let mut info = validate::validate(&r2common::key_ordered(&state), Default::default()).info;
+            let mut info =
+                validate::validate(&r2common::key_ordered(&state), Default::default()).info;
             info.initialized = true;
             info
         } else {
             ValidationInfo::default()
         };
-        assert_case(file, &format!("{} (validation)", case.id), &expected_v, &dump_validation(&info));
+        assert_case(
+            file,
+            &format!("{} (validation)", case.id),
+            &expected_v,
+            &dump_validation(&info),
+        );
         tally.replayed("buildParentChildMap validation", expected_v.len());
-        tally.left("buildParentChildMap messages, model changes, usable", first_v + expected_v.len() + 1 - build - expected_v.len());
+        tally.left(
+            "buildParentChildMap messages, model changes, usable",
+            first_v + expected_v.len() + 1 - build - expected_v.len(),
+        );
 
         // After the login.
         let rest_start = first_v + expected_v.len() + 1;
-        let content_start = case.lines.iter().position(|l| l.starts_with("content ")).unwrap_or(case.lines.len());
-        tally.left("system folders, startup notify, logout save", content_start - rest_start);
+        let content_start = case
+            .lines
+            .iter()
+            .position(|l| l.starts_with("content "))
+            .unwrap_or(case.lines.len());
+        tally.left(
+            "system folders, startup notify, logout save",
+            content_start - rest_start,
+        );
         let content = &case.lines[content_start..];
         if input.logout {
             tally.left("plain files after a logout save", content.len());
@@ -309,13 +385,28 @@ fn library_real_listings() {
         lib_skel: None,
         files: [(name.to_owned(), gz)].into_iter().collect(),
     };
-    let mut l = Login { input: &input, cache_dir: input.files.clone(), temp_dir: BTreeMap::new(), model: HarnessModel::default() };
+    let mut l = Login {
+        input: &input,
+        cache_dir: input.files.clone(),
+        temp_dir: BTreeMap::new(),
+        model: HarnessModel::default(),
+    };
     l.model.library_owner = owner;
     assert!(l.load_entries(&skel, &owner));
     let after_library = files_line("after_library", &l.cache_dir);
     assert!(l.load_skeleton(&input.agent_skel, &parse_uuid(AGENT)));
     let after_agent = files_line("after_agent", &l.cache_dir);
     let temp = files_line("temp", &l.temp_dir);
-    let expected: Vec<String> = case.lines.iter().filter(|l| l.starts_with("files ")).cloned().collect();
-    assert_case(file, &case.id, &expected, &[after_library, after_agent, temp]);
+    let expected: Vec<String> = case
+        .lines
+        .iter()
+        .filter(|l| l.starts_with("files "))
+        .cloned()
+        .collect();
+    assert_case(
+        file,
+        &case.id,
+        &expected,
+        &[after_library, after_agent, temp],
+    );
 }

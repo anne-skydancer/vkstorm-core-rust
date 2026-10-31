@@ -299,15 +299,24 @@ impl Permissions {
     /// Then the group, `fixOwnership()`, move on the base and on a
     /// non-empty next-owner mask, and `fix()`. Returns whether it was
     /// allowed.
-    pub fn set_owner_and_group(&mut self, agent: &Uuid, owner: &Uuid, group: &Uuid, is_atomic: bool) -> bool {
+    pub fn set_owner_and_group(
+        &mut self,
+        agent: &Uuid,
+        owner: &Uuid,
+        group: &Uuid,
+        is_atomic: bool,
+    ) -> bool {
         let allowed = is_null(agent)
             || is_null(&self.owner)
-            || (*agent == self.owner && (*owner == self.owner || self.owner_mask & PERM_TRANSFER != 0));
+            || (*agent == self.owner
+                && (*owner == self.owner || self.owner_mask & PERM_TRANSFER != 0));
         if allowed {
             if is_null(&self.last_owner) || (!is_null(&self.owner) && *owner != self.last_owner) {
                 self.last_owner = self.owner;
             }
-            if self.owner != *owner || (is_null(&self.owner) && is_null(owner) && self.group != *group) {
+            if self.owner != *owner
+                || (is_null(&self.owner) && is_null(owner) && self.group != *group)
+            {
                 self.base = self.next;
                 self.owner = *owner;
                 if is_atomic && self.base & PERM_COPY == 0 {
@@ -346,7 +355,9 @@ impl Permissions {
     pub fn deed_to_group(&mut self, agent: &Uuid, group: &Uuid) -> bool {
         if !is_null(group)
             && (is_null(agent)
-                || (*group == self.group && self.owner_mask & PERM_TRANSFER != 0 && self.group_mask & PERM_MOVE != 0))
+                || (*group == self.group
+                    && self.owner_mask & PERM_TRANSFER != 0
+                    && self.group_mask & PERM_MOVE != 0))
         {
             if !is_null(&self.owner) {
                 self.last_owner = self.owner;
@@ -399,7 +410,13 @@ impl Permissions {
 
     /// `LLPermissions::setGroupBits`: the system, the owner or a group
     /// member; then `fix()`.
-    pub fn set_group_bits(&mut self, agent: &Uuid, group: &Uuid, set: bool, bits: PermissionMask) -> bool {
+    pub fn set_group_bits(
+        &mut self,
+        agent: &Uuid,
+        group: &Uuid,
+        set: bool,
+        bits: PermissionMask,
+    ) -> bool {
         let ownership = self.may_set_shared_bits(agent, group);
         if ownership {
             Self::apply_bits(&mut self.group_mask, set, bits);
@@ -410,7 +427,13 @@ impl Permissions {
 
     /// `LLPermissions::setEveryoneBits`: the system, the owner or a group
     /// member; then `fix()`.
-    pub fn set_everyone_bits(&mut self, agent: &Uuid, group: &Uuid, set: bool, bits: PermissionMask) -> bool {
+    pub fn set_everyone_bits(
+        &mut self,
+        agent: &Uuid,
+        group: &Uuid,
+        set: bool,
+        bits: PermissionMask,
+    ) -> bool {
         let ownership = self.may_set_shared_bits(agent, group);
         if ownership {
             Self::apply_bits(&mut self.everyone, set, bits);
@@ -422,7 +445,13 @@ impl Permissions {
     /// `LLPermissions::setNextOwnerBits`: the system, the owner or a group
     /// member; a next-owner mask without copy then gains transfer, then
     /// `fix()`.
-    pub fn set_next_owner_bits(&mut self, agent: &Uuid, group: &Uuid, set: bool, bits: PermissionMask) -> bool {
+    pub fn set_next_owner_bits(
+        &mut self,
+        agent: &Uuid,
+        group: &Uuid,
+        set: bool,
+        bits: PermissionMask,
+    ) -> bool {
         let ownership = self.may_set_shared_bits(agent, group);
         if ownership {
             Self::apply_bits(&mut self.next, set, bits);

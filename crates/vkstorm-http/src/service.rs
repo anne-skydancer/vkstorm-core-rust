@@ -5,18 +5,22 @@
 //! (`createService`, `startThread`, `requestStopThread`, `destroyService`).
 
 use std::collections::VecDeque;
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::atomic::{AtomicBool, AtomicI32, AtomicU64, Ordering};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard, OnceLock};
 use std::time::{Duration, Instant};
 
 use crate::hooks::{Hooks, LogLevel};
-use crate::options::{check_option, PolicyOption, GLOBAL_POLICY_ID, SERVICE_LOOP_SLEEP_NORMAL_MS, TRACE_OFF};
+use crate::options::{
+    GLOBAL_POLICY_ID, PolicyOption, SERVICE_LOOP_SLEEP_NORMAL_MS, TRACE_OFF, check_option,
+};
 use crate::policy::{LoopSpeed, Policy};
-use crate::request::{reply_plain, Op, OpCommon, Reply, ReplyKind, ReplyQueue, Request, RequestOp, SetGetOp};
-use crate::status::{he, Status};
+use crate::request::{
+    Op, OpCommon, Reply, ReplyKind, ReplyQueue, Request, RequestOp, SetGetOp, reply_plain,
+};
+use crate::status::{Status, he};
 use crate::sys::UserPtr;
-use crate::transport::{deliver_cancelled, Transport};
+use crate::transport::{Transport, deliver_cancelled};
 
 /// `HttpService::EState`.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -54,7 +58,10 @@ struct RequestQueue {
 
 impl RequestQueue {
     fn new() -> RequestQueue {
-        RequestQueue { queue: Mutex::new((VecDeque::new(), false)), cv: Condvar::new() }
+        RequestQueue {
+            queue: Mutex::new((VecDeque::new(), false)),
+            cv: Condvar::new(),
+        }
     }
 
     fn lock(&self) -> MutexGuard<'_, (VecDeque<Op>, bool)> {
@@ -143,7 +150,10 @@ impl Service {
     /// `HttpRequest::createService`. `user_agent` is the `User-Agent`
     /// header value (the viewer's application name).
     pub fn new(hooks: Arc<dyn Hooks>, user_agent: &str) -> Service {
-        let worker = Worker { policy: Policy::new(), transport: Transport::new(hooks.clone(), user_agent) };
+        let worker = Worker {
+            policy: Policy::new(),
+            transport: Transport::new(hooks.clone(), user_agent),
+        };
         let inner = Arc::new(Inner {
             hooks,
             queue: RequestQueue::new(),
@@ -153,7 +163,10 @@ impl Service {
             worker: Mutex::new(Some(worker)),
             last_policy: AtomicI32::new(0),
         });
-        Service { inner, thread: None }
+        Service {
+            inner,
+            thread: None,
+        }
     }
 
     pub fn state(&self) -> State {
@@ -194,7 +207,15 @@ impl Service {
         }
         let mut w = self.inner.worker();
         let worker = w.as_mut().ok_or(Status::llcore(he::OPT_NOT_DYNAMIC))?;
-        set_long(&mut worker.policy, &mut worker.transport, opt, pclass, value, self.last_policy(), false)
+        set_long(
+            &mut worker.policy,
+            &mut worker.transport,
+            opt,
+            pclass,
+            value,
+            self.last_policy(),
+            false,
+        )
     }
 
     /// `HttpRequest::setStaticPolicyOption` with a string.
@@ -204,7 +225,14 @@ impl Service {
         }
         let mut w = self.inner.worker();
         let worker = w.as_mut().ok_or(Status::llcore(he::OPT_NOT_DYNAMIC))?;
-        set_string(&mut worker.policy, opt, pclass, value, self.last_policy(), false)
+        set_string(
+            &mut worker.policy,
+            opt,
+            pclass,
+            value,
+            self.last_policy(),
+            false,
+        )
     }
 
     /// `HttpRequest::setStaticPolicyOption` with the SSL verification
@@ -216,7 +244,14 @@ impl Service {
         }
         let mut w = self.inner.worker();
         let worker = w.as_mut().ok_or(Status::llcore(he::OPT_NOT_DYNAMIC))?;
-        let opt = check_option(PolicyOption::from_i32(opt), false, pclass, self.last_policy(), true, false)?;
+        let opt = check_option(
+            PolicyOption::from_i32(opt),
+            false,
+            pclass,
+            self.last_policy(),
+            true,
+            false,
+        )?;
         if pclass != GLOBAL_POLICY_ID {
             return Err(Status::llcore(he::INVALID_ARG));
         }
@@ -265,7 +300,12 @@ impl Service {
         self.inner.exit_requested.store(false, Ordering::Release);
         self.inner.set_state(State::Running);
         let inner = self.inner.clone();
-        self.thread = Some(std::thread::Builder::new().name("HttpService".into()).spawn(move || thread_run(inner)).expect("spawn HttpService thread"));
+        self.thread = Some(
+            std::thread::Builder::new()
+                .name("HttpService".into())
+                .spawn(move || thread_run(inner))
+                .expect("spawn HttpService thread"),
+        );
     }
 
     fn next_handle(&self) -> u64 {
@@ -273,7 +313,12 @@ impl Service {
     }
 
     fn common(&self, reply: &Arc<ReplyQueue>, user: UserPtr) -> OpCommon {
-        OpCommon { handle: self.next_handle(), user, reply: Some(reply.clone()), tracing: TRACE_OFF }
+        OpCommon {
+            handle: self.next_handle(),
+            user,
+            reply: Some(reply.clone()),
+            tracing: TRACE_OFF,
+        }
     }
 
     fn enqueue(&self, op: Op) -> Result<u64, Status> {
@@ -288,7 +333,12 @@ impl Service {
     }
 
     /// `HttpRequest::requestGet` and the other request methods.
-    pub fn submit(&self, reply: &Arc<ReplyQueue>, user: UserPtr, req: Request) -> Result<u64, Status> {
+    pub fn submit(
+        &self,
+        reply: &Arc<ReplyQueue>,
+        user: UserPtr,
+        req: Request,
+    ) -> Result<u64, Status> {
         if req.policy > self.last_policy() {
             self.inner.hooks.release_user(user);
             return Err(Status::llcore(he::INVALID_ARG));
@@ -298,7 +348,12 @@ impl Service {
     }
 
     /// `HttpRequest::requestCancel`.
-    pub fn cancel(&self, reply: &Arc<ReplyQueue>, user: UserPtr, target: u64) -> Result<u64, Status> {
+    pub fn cancel(
+        &self,
+        reply: &Arc<ReplyQueue>,
+        user: UserPtr,
+        target: u64,
+    ) -> Result<u64, Status> {
         let common = self.common(reply, user);
         self.enqueue(Op::Cancel { common, target })
     }
@@ -324,7 +379,14 @@ impl Service {
     /// `HttpRequest::setPolicyOption` with a long: the dynamic path,
     /// through the service thread. The pre-checks of
     /// `HttpOpSetGet::setupSet` are applied here.
-    pub fn set_option_long_dynamic(&self, reply: &Arc<ReplyQueue>, user: UserPtr, opt: i32, pclass: u32, value: i64) -> Result<u64, Status> {
+    pub fn set_option_long_dynamic(
+        &self,
+        reply: &Arc<ReplyQueue>,
+        user: UserPtr,
+        opt: i32,
+        pclass: u32,
+        value: i64,
+    ) -> Result<u64, Status> {
         let Some(option) = PolicyOption::from_i32(opt) else {
             self.inner.hooks.release_user(user);
             return Err(Status::llcore(he::INVALID_ARG));
@@ -339,11 +401,25 @@ impl Service {
             return Err(Status::llcore(he::OPT_NOT_DYNAMIC));
         }
         let common = self.common(reply, user);
-        self.enqueue(Op::SetGet(SetGetOp { common, option, pclass, do_set: true, long_value: value, string_value: String::new() }))
+        self.enqueue(Op::SetGet(SetGetOp {
+            common,
+            option,
+            pclass,
+            do_set: true,
+            long_value: value,
+            string_value: String::new(),
+        }))
     }
 
     /// `HttpRequest::setPolicyOption` with a string.
-    pub fn set_option_string_dynamic(&self, reply: &Arc<ReplyQueue>, user: UserPtr, opt: i32, pclass: u32, value: &str) -> Result<u64, Status> {
+    pub fn set_option_string_dynamic(
+        &self,
+        reply: &Arc<ReplyQueue>,
+        user: UserPtr,
+        opt: i32,
+        pclass: u32,
+        value: &str,
+    ) -> Result<u64, Status> {
         let Some(option) = PolicyOption::from_i32(opt) else {
             self.inner.hooks.release_user(user);
             return Err(Status::llcore(he::INVALID_ARG));
@@ -358,7 +434,14 @@ impl Service {
             return Err(Status::llcore(he::OPT_NOT_DYNAMIC));
         }
         let common = self.common(reply, user);
-        self.enqueue(Op::SetGet(SetGetOp { common, option, pclass, do_set: true, long_value: 0, string_value: value.to_owned() }))
+        self.enqueue(Op::SetGet(SetGetOp {
+            common,
+            option,
+            pclass,
+            do_set: true,
+            long_value: 0,
+            string_value: value.to_owned(),
+        }))
     }
 
     /// `HttpService::term`: asks a running thread to exit and waits up to
@@ -383,7 +466,10 @@ impl Service {
             if inner.state() != State::Running {
                 let _ = t.join();
             } else {
-                inner.hooks.log(LogLevel::Warn, "Destroying HttpService with running thread.  Expect problems.");
+                inner.hooks.log(
+                    LogLevel::Warn,
+                    "Destroying HttpService with running thread.  Expect problems.",
+                );
             }
         }
         // Cancel what was never picked up.
@@ -403,8 +489,23 @@ impl Drop for Service {
     }
 }
 
-fn set_long(policy: &mut Policy, transport: &mut Transport, opt: i32, pclass: u32, value: i64, last_policy: u32, running: bool) -> Result<i64, Status> {
-    let opt = check_option(PolicyOption::from_i32(opt), true, pclass, last_policy, true, running)?;
+fn set_long(
+    policy: &mut Policy,
+    transport: &mut Transport,
+    opt: i32,
+    pclass: u32,
+    value: i64,
+    last_policy: u32,
+    running: bool,
+) -> Result<i64, Status> {
+    let opt = check_option(
+        PolicyOption::from_i32(opt),
+        true,
+        pclass,
+        last_policy,
+        true,
+        running,
+    )?;
     if pclass == GLOBAL_POLICY_ID {
         let status = policy.global.set_long(opt, value);
         if !status.is_ok() {
@@ -421,8 +522,22 @@ fn set_long(policy: &mut Policy, transport: &mut Transport, opt: i32, pclass: u3
     }
 }
 
-fn set_string(policy: &mut Policy, opt: i32, pclass: u32, value: &str, last_policy: u32, running: bool) -> Result<String, Status> {
-    let opt = check_option(PolicyOption::from_i32(opt), false, pclass, last_policy, true, running)?;
+fn set_string(
+    policy: &mut Policy,
+    opt: i32,
+    pclass: u32,
+    value: &str,
+    last_policy: u32,
+    running: bool,
+) -> Result<String, Status> {
+    let opt = check_option(
+        PolicyOption::from_i32(opt),
+        false,
+        pclass,
+        last_policy,
+        true,
+        running,
+    )?;
     if pclass != GLOBAL_POLICY_ID {
         return Err(Status::llcore(he::INVALID_ARG));
     }
@@ -434,7 +549,14 @@ fn set_string(policy: &mut Policy, opt: i32, pclass: u32, value: &str, last_poli
 }
 
 fn get_long(policy: &Policy, opt: i32, pclass: u32, last_policy: u32) -> Result<i64, Status> {
-    let opt = check_option(PolicyOption::from_i32(opt), true, pclass, last_policy, false, false)?;
+    let opt = check_option(
+        PolicyOption::from_i32(opt),
+        true,
+        pclass,
+        last_policy,
+        false,
+        false,
+    )?;
     if pclass == GLOBAL_POLICY_ID {
         policy.global.get_long(opt)
     } else {
@@ -443,7 +565,14 @@ fn get_long(policy: &Policy, opt: i32, pclass: u32, last_policy: u32) -> Result<
 }
 
 fn get_string(policy: &Policy, opt: i32, pclass: u32, last_policy: u32) -> Result<String, Status> {
-    let opt = check_option(PolicyOption::from_i32(opt), false, pclass, last_policy, false, false)?;
+    let opt = check_option(
+        PolicyOption::from_i32(opt),
+        false,
+        pclass,
+        last_policy,
+        false,
+        false,
+    )?;
     if pclass != GLOBAL_POLICY_ID {
         return Err(Status::llcore(he::INVALID_ARG));
     }
@@ -473,7 +602,10 @@ fn thread_run(inner: Arc<Inner>) {
     let mut worker = match inner.worker().take() {
         Some(w) => w,
         None => {
-            inner.hooks.log(LogLevel::Warn, "HttpService thread started without a worker state.");
+            inner.hooks.log(
+                LogLevel::Warn,
+                "HttpService thread started without a worker state.",
+            );
             inner.set_state(State::Stopped);
             inner.hooks.thread_stop();
             return;
@@ -485,7 +617,10 @@ fn thread_run(inner: Arc<Inner>) {
         let r = catch_unwind(AssertUnwindSafe(|| {
             speed = process_request_queue(&inner, &mut worker, speed, last_policy);
             let now = now_us();
-            let new_speed = worker.policy.process_ready_queue(&mut worker.transport, now, &*inner.hooks);
+            let new_speed =
+                worker
+                    .policy
+                    .process_ready_queue(&mut worker.transport, now, &*inner.hooks);
             speed = speed.min(new_speed);
             let new_speed = worker.transport.process(&mut worker.policy, now_us());
             speed = speed.min(new_speed);
@@ -494,8 +629,15 @@ fn thread_run(inner: Arc<Inner>) {
             }
         }));
         if let Err(e) = r {
-            let what = e.downcast_ref::<String>().cloned().or_else(|| e.downcast_ref::<&str>().map(|s| s.to_string())).unwrap_or_default();
-            inner.hooks.log(LogLevel::Warn, &format!("HttpService: internal error in the service loop: {what}"));
+            let what = e
+                .downcast_ref::<String>()
+                .cloned()
+                .or_else(|| e.downcast_ref::<&str>().map(|s| s.to_string()))
+                .unwrap_or_default();
+            inner.hooks.log(
+                LogLevel::Warn,
+                &format!("HttpService: internal error in the service loop: {what}"),
+            );
             speed = LoopSpeed::Normal;
         }
     }
@@ -511,7 +653,12 @@ fn thread_run(inner: Arc<Inner>) {
 }
 
 /// `HttpService::processRequestQueue`: stages every queued operation.
-fn process_request_queue(inner: &Arc<Inner>, worker: &mut Worker, speed: LoopSpeed, last_policy: u32) -> LoopSpeed {
+fn process_request_queue(
+    inner: &Arc<Inner>,
+    worker: &mut Worker,
+    speed: LoopSpeed,
+    last_policy: u32,
+) -> LoopSpeed {
     let wait = speed == LoopSpeed::RequestSleep;
     let ops = inner.queue.fetch_all(wait);
     for mut op in ops {
@@ -524,7 +671,10 @@ fn process_request_queue(inner: &Arc<Inner>, worker: &mut Worker, speed: LoopSpe
             let c = op.common_mut();
             c.tracing = c.tracing.max(tracing);
             if c.tracing > TRACE_OFF {
-                inner.hooks.log(LogLevel::Info, &format!("TRACE, FromRequestQueue, Handle:  {}", c.handle));
+                inner.hooks.log(
+                    LogLevel::Info,
+                    &format!("TRACE, FromRequestQueue, Handle:  {}", c.handle),
+                );
             }
         }
         stage_from_request(inner, worker, op, last_policy);
@@ -538,19 +688,38 @@ fn stage_from_request(inner: &Arc<Inner>, worker: &mut Worker, op: Op, last_poli
         Op::Request(r) => worker.policy.add_op(r),
         Op::Cancel { common, target } => {
             let found = cancel_target(worker, target);
-            let status = if found { Status::OK } else { Status::llcore(he::HANDLE_NOT_FOUND) };
+            let status = if found {
+                Status::OK
+            } else {
+                Status::llcore(he::HANDLE_NOT_FOUND)
+            };
             reply_plain(&common, ReplyKind::Cancel, status);
         }
         Op::SetGet(s) => {
             let d = s.option.descriptor();
             let (status, long_value, string_value) = if s.do_set {
                 if d.is_long {
-                    match set_long(&mut worker.policy, &mut worker.transport, s.option as i32, s.pclass, s.long_value, last_policy, true) {
+                    match set_long(
+                        &mut worker.policy,
+                        &mut worker.transport,
+                        s.option as i32,
+                        s.pclass,
+                        s.long_value,
+                        last_policy,
+                        true,
+                    ) {
                         Ok(v) => (Status::OK, v, String::new()),
                         Err(e) => (e, 0, String::new()),
                     }
                 } else {
-                    match set_string(&mut worker.policy, s.option as i32, s.pclass, &s.string_value, last_policy, true) {
+                    match set_string(
+                        &mut worker.policy,
+                        s.option as i32,
+                        s.pclass,
+                        &s.string_value,
+                        last_policy,
+                        true,
+                    ) {
                         Ok(v) => (Status::OK, 0, v),
                         Err(e) => (e, 0, String::new()),
                     }

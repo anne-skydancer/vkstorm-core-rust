@@ -3,7 +3,7 @@
 //! [`SaleInfo`] is the flat record of an `LLSaleInfo`. Its LLSD forms live in
 //! [`crate::llsd::sale`] and its legacy text in [`crate::legacy::sale`].
 
-pub use crate::types::sale::{SaleType, DEFAULT_PRICE};
+pub use crate::types::sale::{DEFAULT_PRICE, SaleType};
 
 /// `llclamp(price, 0, S32_MAX)`: a negative price is 0.
 pub fn clamp_price(price: i32) -> i32 {
@@ -33,12 +33,18 @@ impl Default for SaleInfo {
 impl SaleInfo {
     /// `LLSaleInfo::DEFAULT` and the default constructor: not for sale, at
     /// `DEFAULT_PRICE`.
-    pub const DEFAULT: SaleInfo = SaleInfo { sale_type: SaleType::NOT, price: DEFAULT_PRICE };
+    pub const DEFAULT: SaleInfo = SaleInfo {
+        sale_type: SaleType::NOT,
+        price: DEFAULT_PRICE,
+    };
 
     /// `LLSaleInfo(EForSale, S32)`: the type as given, the price clamped to
     /// `0..=S32_MAX`.
     pub fn new(sale_type: SaleType, price: i32) -> SaleInfo {
-        SaleInfo { sale_type, price: clamp_price(price) }
+        SaleInfo {
+            sale_type,
+            price: clamp_price(price),
+        }
     }
 
     /// `isForSale`: any type but `FS_NOT`.

@@ -11,10 +11,14 @@ use std::collections::BTreeSet;
 
 use r4b_common::*;
 use vkstorm_inventory::exchange::give::{self, Cargo, DragSource, DragState, Functor};
-use vkstorm_inventory::exchange::host::{Action, Host, PackArgs, TaskObject, ViewerObject, LL_PCODE_VOLUME};
+use vkstorm_inventory::exchange::host::{
+    Action, Host, LL_PCODE_VOLUME, PackArgs, TaskObject, ViewerObject,
+};
 use vkstorm_inventory::exchange::im::*;
 use vkstorm_inventory::llsd::coerce::insert;
-use vkstorm_inventory::perms::{Permissions, Uuid, NULL_ID, PERM_ALL, PERM_COPY, PERM_NONE, PERM_TRANSFER};
+use vkstorm_inventory::perms::{
+    NULL_ID, PERM_ALL, PERM_COPY, PERM_NONE, PERM_TRANSFER, Permissions, Uuid,
+};
 use vkstorm_inventory::types::AssetType;
 use vkstorm_llsd::Value;
 
@@ -44,7 +48,13 @@ struct GiveItemCase {
 }
 
 fn item_case(id: &str, build: impl Fn(&mut Fake) -> Uuid + 'static) -> GiveItemCase {
-    GiveItemCase { id: id.to_owned(), build: Box::new(build), session: NULL_ID, respond: -1, between: None }
+    GiveItemCase {
+        id: id.to_owned(),
+        build: Box::new(build),
+        session: NULL_ID,
+        respond: -1,
+        between: None,
+    }
 }
 
 #[test]
@@ -52,8 +62,14 @@ fn give_item() {
     let mut cases = Vec::new();
     let nocopy = || perms_simple(&agent(), perm_mask(false, true, true));
     let notrans = || perms_simple(&agent(), perm_mask(true, true, false));
-    for t in [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 17, 18, 19, 20, 21, 22, 24, 25, 26, 40, 45, 49, 56, 57, 58, 59] {
-        cases.push(item_case(&format!("type_{t:02}"), move |f| f.add_item(uid(0x11, 1), root(), t, &full(), b"Gift Item", None).id));
+    for t in [
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 17, 18, 19, 20, 21, 22, 24, 25, 26, 40, 45, 49,
+        56, 57, 58, 59,
+    ] {
+        cases.push(item_case(&format!("type_{t:02}"), move |f| {
+            f.add_item(uid(0x11, 1), root(), t, &full(), b"Gift Item", None)
+                .id
+        }));
     }
     for t in [5, 6, 13, 21] {
         cases.push(item_case(&format!("worn_type_{t:02}"), move |f| {
@@ -69,27 +85,101 @@ fn give_item() {
     }
     cases.push(item_case("link_to_notecard", |f| {
         f.add_item(uid(0x12, 1), root(), 7, &full(), b"Target Notecard", None);
-        f.add_item(uid(0x11, 1), root(), 24, &full(), b"Link", Some(uid(0x12, 1))).id
+        f.add_item(
+            uid(0x11, 1),
+            root(),
+            24,
+            &full(),
+            b"Link",
+            Some(uid(0x12, 1)),
+        )
+        .id
     }));
     cases.push(item_case("link_to_worn_object", |f| {
         f.add_item(uid(0x12, 1), root(), 6, &full(), b"Target Object", None);
         f.attachments.insert(uid(0x12, 1));
-        f.add_item(uid(0x11, 1), root(), 24, &full(), b"Link", Some(uid(0x12, 1))).id
+        f.add_item(
+            uid(0x11, 1),
+            root(),
+            24,
+            &full(),
+            b"Link",
+            Some(uid(0x12, 1)),
+        )
+        .id
     }));
     cases.push(item_case("link_to_link", |f| {
         f.add_item(uid(0x13, 1), root(), 7, &full(), b"Deep Target", None);
-        f.add_item(uid(0x12, 1), root(), 24, &full(), b"Inner Link", Some(uid(0x13, 1)));
-        f.add_item(uid(0x11, 1), root(), 24, &full(), b"Outer Link", Some(uid(0x12, 1))).id
+        f.add_item(
+            uid(0x12, 1),
+            root(),
+            24,
+            &full(),
+            b"Inner Link",
+            Some(uid(0x13, 1)),
+        );
+        f.add_item(
+            uid(0x11, 1),
+            root(),
+            24,
+            &full(),
+            b"Outer Link",
+            Some(uid(0x12, 1)),
+        )
+        .id
     }));
-    cases.push(item_case("link_broken", |f| f.add_item(uid(0x11, 1), root(), 24, &full(), b"Broken Link", Some(uid(0x12, 9))).id));
+    cases.push(item_case("link_broken", |f| {
+        f.add_item(
+            uid(0x11, 1),
+            root(),
+            24,
+            &full(),
+            b"Broken Link",
+            Some(uid(0x12, 9)),
+        )
+        .id
+    }));
     cases.push(item_case("folder_link", |f| {
         f.add_cat(uid(0x14, 1), root(), b"Linked Folder", -1);
-        f.add_item(uid(0x11, 1), root(), 25, &full(), b"Folder Link", Some(uid(0x14, 1))).id
+        f.add_item(
+            uid(0x11, 1),
+            root(),
+            25,
+            &full(),
+            b"Folder Link",
+            Some(uid(0x14, 1)),
+        )
+        .id
     }));
-    cases.push(item_case("folder_link_broken", |f| f.add_item(uid(0x11, 1), root(), 25, &full(), b"Folder Link", Some(uid(0x14, 9))).id));
+    cases.push(item_case("folder_link_broken", |f| {
+        f.add_item(
+            uid(0x11, 1),
+            root(),
+            25,
+            &full(),
+            b"Folder Link",
+            Some(uid(0x14, 9)),
+        )
+        .id
+    }));
     cases.push(item_case("link_nocopy_link_perms", move |f| {
-        f.add_item(uid(0x12, 1), root(), 7, &perms_simple(&agent(), perm_mask(true, true, true)), b"Target", None);
-        f.add_item(uid(0x11, 1), root(), 24, &nocopy(), b"Link", Some(uid(0x12, 1))).id
+        f.add_item(
+            uid(0x12, 1),
+            root(),
+            7,
+            &perms_simple(&agent(), perm_mask(true, true, true)),
+            b"Target",
+            None,
+        );
+        f.add_item(
+            uid(0x11, 1),
+            root(),
+            24,
+            &nocopy(),
+            b"Link",
+            Some(uid(0x12, 1)),
+        )
+        .id
     }));
     let names: Vec<(&str, Vec<u8>, bool)> = vec![
         ("name_empty", b"".to_vec(), false),
@@ -109,55 +199,88 @@ fn give_item() {
     ];
     for (id, name, raw) in names {
         cases.push(item_case(id, move |f| {
-            let it = f.add_item(uid(0x11, 1), root(), 7, &full(), if raw { b"placeholder" } else { &name }, None);
+            let it = f.add_item(
+                uid(0x11, 1),
+                root(),
+                7,
+                &full(),
+                if raw { b"placeholder" } else { &name },
+                None,
+            );
             if raw {
                 f.set_item_raw_name(&it.id, &name);
             }
             it.id
         }));
     }
-    cases.push(item_case("not_transferable", move |f| f.add_item(uid(0x11, 1), root(), 7, &notrans(), b"Kept", None).id));
+    cases.push(item_case("not_transferable", move |f| {
+        f.add_item(uid(0x11, 1), root(), 7, &notrans(), b"Kept", None)
+            .id
+    }));
     cases.push(item_case("not_owner_everyone_copy", |f| {
-        f.add_item(uid(0x11, 1), root(), 7, &make_perms(&other2(), PERM_ALL, PERM_COPY, PERM_ALL, &NULL_ID, false), b"Not Mine", None).id
+        f.add_item(
+            uid(0x11, 1),
+            root(),
+            7,
+            &make_perms(&other2(), PERM_ALL, PERM_COPY, PERM_ALL, &NULL_ID, false),
+            b"Not Mine",
+            None,
+        )
+        .id
     }));
     cases.push(item_case("null_item", |_| NULL_ID));
     cases.push(item_case("avatar_invalid", |f| {
         f.avatar_valid = false;
-        f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None).id
+        f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None)
+            .id
     }));
-    let mut sess = item_case("im_session", |f| f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None).id);
+    let mut sess = item_case("im_session", |f| {
+        f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None)
+            .id
+    });
     sess.session = uid(0x5e, 1);
     cases.push(sess);
     cases.push(item_case("recipient_muted", |f| {
         f.mute_insert(other(), b"other.sender", 1, 0);
-        f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None).id
+        f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None)
+            .id
     }));
     cases.push(item_case("recipient_muted_by_name_only", |f| {
         f.legacy_mutes.insert(b"other.sender".to_vec());
-        f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None).id
+        f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None)
+            .id
     }));
     cases.push(item_case("rlv_share_blocked", |f| {
         f.rlv_enabled = true;
         f.rlv_share_blocked.insert(other());
-        f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None).id
+        f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None)
+            .id
     }));
     cases.push(item_case("rlv_names_hidden_nearby", |f| {
         f.rlv_enabled = true;
         f.rlv_can_show_names = false;
         f.rlv_nearby.insert(other());
-        f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None).id
+        f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None)
+            .id
     }));
     cases.push(item_case("open_im_session_logs_there", |f| {
-        f.im_sessions.insert(give::compute_session_id(&agent(), &other()));
-        f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None).id
+        f.im_sessions
+            .insert(give::compute_session_id(&agent(), &other()));
+        f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None)
+            .id
     }));
     cases.push(item_case("no_particle_effect", |f| {
-        f.settings_b.insert("FSCreateGiveInventoryParticleEffect".into(), false);
-        f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None).id
+        f.settings_b
+            .insert("FSCreateGiveInventoryParticleEffect".into(), false);
+        f.add_item(uid(0x11, 1), root(), 7, &full(), b"Gift", None)
+            .id
     }));
     let nc = |id: &str, respond: i32, session: Uuid, between: Option<fn(&mut Fake)>| GiveItemCase {
         id: id.to_owned(),
-        build: Box::new(move |f: &mut Fake| f.add_item(uid(0x11, 1), root(), 7, &nocopy(), b"No Copy", None).id),
+        build: Box::new(move |f: &mut Fake| {
+            f.add_item(uid(0x11, 1), root(), 7, &nocopy(), b"No Copy", None)
+                .id
+        }),
         session,
         respond,
         between,
@@ -165,7 +288,12 @@ fn give_item() {
     cases.push(nc("nocopy_warning_only", -1, NULL_ID, None));
     cases.push(nc("nocopy_yes", 0, NULL_ID, None));
     cases.push(nc("nocopy_no", 1, NULL_ID, None));
-    cases.push(nc("nocopy_yes_item_gone", 0, NULL_ID, Some(|f| f.act(Action::DeleteObject(uid(0x11, 1))))));
+    cases.push(nc(
+        "nocopy_yes_item_gone",
+        0,
+        NULL_ID,
+        Some(|f| f.act(Action::DeleteObject(uid(0x11, 1)))),
+    ));
     cases.push(nc(
         "nocopy_yes_rlv_share_blocked",
         0,
@@ -175,7 +303,12 @@ fn give_item() {
             f.rlv_share_blocked.insert(other());
         }),
     ));
-    cases.push(nc("nocopy_yes_avatar_invalid", 0, NULL_ID, Some(|f| f.avatar_valid = false)));
+    cases.push(nc(
+        "nocopy_yes_avatar_invalid",
+        0,
+        NULL_ID,
+        Some(|f| f.avatar_valid = false),
+    ));
     cases.push(nc("nocopy_yes_session_lost", 0, uid(0x5e, 1), None));
 
     let mut out = Out::default();
@@ -184,7 +317,12 @@ fn give_item() {
         let id = (c.build)(&mut f);
         f.ev.clear();
         put_world(&mut out, &f, &c.id);
-        f.add(format!("give item {} to {} session {}", us(&id), us(&other()), us(&c.session)));
+        f.add(format!(
+            "give item {} to {} session {}",
+            us(&id),
+            us(&other()),
+            us(&c.session)
+        ));
         let item = f.item(&id);
         let r = give::give_item(&mut f, &other(), item.as_ref(), &c.session);
         f.add(format!("result {}", r as i32));
@@ -197,7 +335,11 @@ fn give_item() {
         f.run_idle();
         out.events(&mut f, &c.id);
     }
-    assert_lines("give/give_item", &compared("give", "give_item.txt"), &out.lines);
+    assert_lines(
+        "give/give_item",
+        &compared("give", "give_item.txt"),
+        &out.lines,
+    );
 }
 
 // ============================================================== folders
@@ -250,7 +392,17 @@ impl Ids {
         }
     }
     fn many(&mut self, n: usize, prefix: &str, copy: bool) -> Vec<Node> {
-        (0..n).map(|i| self.item(format!("{prefix} {i:02}").as_bytes(), if i % 3 == 1 { 0 } else { 7 }, copy, true, 0)).collect()
+        (0..n)
+            .map(|i| {
+                self.item(
+                    format!("{prefix} {i:02}").as_bytes(),
+                    if i % 3 == 1 { 0 } else { 7 },
+                    copy,
+                    true,
+                    0,
+                )
+            })
+            .collect()
     }
 }
 
@@ -264,7 +416,14 @@ fn build(f: &mut Fake, n: &Node, parent: Uuid) {
             build(f, c, n.id);
         }
     } else {
-        let it = f.add_item(n.id, parent, n.ty, &perms_simple(&agent(), perm_mask(n.copy, true, n.transfer)), &n.name, n.link_target);
+        let it = f.add_item(
+            n.id,
+            parent,
+            n.ty,
+            &perms_simple(&agent(), perm_mask(n.copy, true, n.transfer)),
+            &n.name,
+            n.link_target,
+        );
         if n.worn == 1 {
             f.attachments.insert(it.id);
         }
@@ -289,7 +448,16 @@ struct FolderCase {
 }
 
 fn fc(id: &str, tree: Tree) -> FolderCase {
-    FolderCase { id: id.to_owned(), tree, notification: Vec::new(), respond: -1, between: None, before: None, raw_name: None, limit: 42 }
+    FolderCase {
+        id: id.to_owned(),
+        tree,
+        notification: Vec::new(),
+        respond: -1,
+        between: None,
+        before: None,
+        raw_name: None,
+        limit: 42,
+    }
 }
 
 fn give_folder_case(out: &mut Out, c: &FolderCase) {
@@ -452,7 +620,10 @@ fn give_folder() {
         i.cat(b"Mixed", v, false)
     }));
     cases.push(fc("only_excluded", |i| {
-        let v = vec![i.item(b"worn obj", 6, true, true, 1), i.item(b"no transfer", 7, true, false, 0)];
+        let v = vec![
+            i.item(b"worn obj", 6, true, true, 1),
+            i.item(b"no transfer", 7, true, false, 0),
+        ];
         i.cat(b"Nothing", v, false)
     }));
     cases.push(fc("links_inside", |i| {
@@ -507,14 +678,26 @@ fn give_folder() {
     cases.push(nc("nocopy_warning_only", -1, b"", None));
     cases.push(nc("nocopy_yes", 0, b"", None));
     cases.push(nc("nocopy_no", 1, b"", None));
-    cases.push(nc("nocopy_yes_success_notification", 0, b"ItemsShared", None));
+    cases.push(nc(
+        "nocopy_yes_success_notification",
+        0,
+        b"ItemsShared",
+        None,
+    ));
     cases.push(nc(
         "nocopy_yes_count_changed_too_many",
         0,
         b"",
         Some(|f, r| {
             for i in 0..40u64 {
-                f.add_item(uid(0x29, i + 1), r.id, 7, &perms_simple(&agent(), perm_mask(true, true, true)), format!("late {i:02}").as_bytes(), None);
+                f.add_item(
+                    uid(0x29, i + 1),
+                    r.id,
+                    7,
+                    &perms_simple(&agent(), perm_mask(true, true, true)),
+                    format!("late {i:02}").as_bytes(),
+                    None,
+                );
             }
         }),
     ));
@@ -570,12 +753,21 @@ fn give_folder() {
     for c in &cases {
         give_folder_case(&mut out, c);
     }
-    assert_lines("give/give_folder", &compared("give", "give_folder.txt"), &out.lines);
+    assert_lines(
+        "give/give_folder",
+        &compared("give", "give_folder.txt"),
+        &out.lines,
+    );
 }
 
 // =========================================================== predicates
 
-fn functor_out(f: &Fake, name: &str, item: Option<&vkstorm_inventory::exchange::host::ModelItem>, cat: Option<&vkstorm_inventory::exchange::host::ModelCat>) -> (bool, i32) {
+fn functor_out(
+    f: &Fake,
+    name: &str,
+    item: Option<&vkstorm_inventory::exchange::host::ModelItem>,
+    cat: Option<&vkstorm_inventory::exchange::host::ModelCat>,
+) -> (bool, i32) {
     let (r, c) = give::collect_functor(f, Functor::from_name(name).unwrap(), cat, item);
     (r, c.unwrap_or(-1))
 }
@@ -599,7 +791,14 @@ fn predicates() {
     {
         let mut f = setup();
         f.groups.insert(group());
-        f.add_item(uid(0x32, 1), root(), 6, &perms_simple(&agent(), PERM_ALL), b"target", None);
+        f.add_item(
+            uid(0x32, 1),
+            root(),
+            6,
+            &perms_simple(&agent(), PERM_ALL),
+            b"target",
+            None,
+        );
         let lines = [
             format!(
                 "item {} parent={} name=\"item\" (\"link\" when link=1, then type=24 and asset={}, the target) inv_type=default for the type flags=0 finished=1",
@@ -630,20 +829,32 @@ fn predicates() {
                                 let mut f = setup();
                                 f.groups.insert(group());
                                 f.avatar_valid = avatar;
-                                let (copy, modify, transfer) = (mask & 1 != 0, mask & 2 != 0, mask & 4 != 0);
+                                let (copy, modify, transfer) =
+                                    (mask & 1 != 0, mask & 2 != 0, mask & 4 != 0);
                                 let owner_id = [agent(), other2(), NULL_ID][owner];
                                 let perm = make_perms(
                                     &owner_id,
                                     perm_mask(copy, modify, transfer),
                                     if everyone_copy { PERM_COPY } else { PERM_NONE },
-                                    if base_full { PERM_ALL } else { PERM_ALL & !PERM_TRANSFER },
+                                    if base_full {
+                                        PERM_ALL
+                                    } else {
+                                        PERM_ALL & !PERM_TRANSFER
+                                    },
                                     &group(),
                                     owner == 2,
                                 );
                                 let item_id = uid(0x31, 1);
                                 let target = uid(0x32, 1);
                                 if link {
-                                    f.add_item(target, root(), tty, &perms_simple(&agent(), PERM_ALL), b"target", None);
+                                    f.add_item(
+                                        target,
+                                        root(),
+                                        tty,
+                                        &perms_simple(&agent(), PERM_ALL),
+                                        b"target",
+                                        None,
+                                    );
                                     f.add_item(item_id, root(), 24, &perm, b"link", Some(target));
                                 } else {
                                     f.add_item(item_id, root(), tty, &perm, b"item", None);
@@ -690,8 +901,10 @@ fn predicates() {
                                     ),
                                 );
                                 let (gv, gvc) = functor_out(&f, "giveable", Some(&it), None);
-                                let (dt, dtc) = functor_out(&f, "droppable_transfer", Some(&it), None);
-                                let (dn, dnc) = functor_out(&f, "droppable_no_transfer", Some(&it), None);
+                                let (dt, dtc) =
+                                    functor_out(&f, "droppable_transfer", Some(&it), None);
+                                let (dn, dnc) =
+                                    functor_out(&f, "droppable_no_transfer", Some(&it), None);
                                 out.put(
                                     &c,
                                     "out",
@@ -719,9 +932,32 @@ fn predicates() {
         }
     }
     let rules: Vec<(&str, Permissions)> = vec![
-        ("rule_owner_full_base_full", make_perms(&agent(), PERM_ALL, PERM_NONE, PERM_ALL, &NULL_ID, false)),
-        ("rule_owner_copy_base_nocopy", make_perms(&agent(), PERM_ALL, PERM_NONE, PERM_ALL & !PERM_COPY, &NULL_ID, false)),
-        ("rule_owner_transfer_base_notransfer", make_perms(&agent(), PERM_ALL, PERM_NONE, PERM_ALL & !PERM_TRANSFER, &NULL_ID, false)),
+        (
+            "rule_owner_full_base_full",
+            make_perms(&agent(), PERM_ALL, PERM_NONE, PERM_ALL, &NULL_ID, false),
+        ),
+        (
+            "rule_owner_copy_base_nocopy",
+            make_perms(
+                &agent(),
+                PERM_ALL,
+                PERM_NONE,
+                PERM_ALL & !PERM_COPY,
+                &NULL_ID,
+                false,
+            ),
+        ),
+        (
+            "rule_owner_transfer_base_notransfer",
+            make_perms(
+                &agent(),
+                PERM_ALL,
+                PERM_NONE,
+                PERM_ALL & !PERM_TRANSFER,
+                &NULL_ID,
+                false,
+            ),
+        ),
         ("rule_next_owner_copy", {
             let mut p = perms_simple(&agent(), PERM_ALL);
             p.init_masks(PERM_ALL, PERM_ALL, PERM_NONE, PERM_NONE, PERM_ALL);
@@ -729,7 +965,13 @@ fn predicates() {
         }),
         ("rule_next_owner_nocopy", {
             let mut p = perms_simple(&agent(), PERM_ALL);
-            p.init_masks(PERM_ALL, PERM_ALL, PERM_NONE, PERM_NONE, PERM_ALL & !PERM_COPY);
+            p.init_masks(
+                PERM_ALL,
+                PERM_ALL,
+                PERM_NONE,
+                PERM_NONE,
+                PERM_ALL & !PERM_COPY,
+            );
             p
         }),
         ("rule_group_owned_atomic", {
@@ -742,8 +984,14 @@ fn predicates() {
             p.set_owner_and_group(&agent(), &NULL_ID, &group(), false);
             p
         }),
-        ("rule_other_owner_everyone_copy", make_perms(&other2(), PERM_ALL, PERM_COPY, PERM_ALL, &NULL_ID, false)),
-        ("rule_other_owner_everyone_none", make_perms(&other2(), PERM_ALL, PERM_NONE, PERM_ALL, &NULL_ID, false)),
+        (
+            "rule_other_owner_everyone_copy",
+            make_perms(&other2(), PERM_ALL, PERM_COPY, PERM_ALL, &NULL_ID, false),
+        ),
+        (
+            "rule_other_owner_everyone_none",
+            make_perms(&other2(), PERM_ALL, PERM_NONE, PERM_ALL, &NULL_ID, false),
+        ),
     ];
     for (id, perm) in &rules {
         let mut f = setup();
@@ -770,7 +1018,13 @@ fn predicates() {
             ),
         );
     }
-    let fnames = ["giveable", "uncopyable", "droppable_transfer", "droppable_no_transfer", "drop_copyable"];
+    let fnames = [
+        "giveable",
+        "uncopyable",
+        "droppable_transfer",
+        "droppable_no_transfer",
+        "drop_copyable",
+    ];
     let mut f = setup();
     let cc = f.add_cat(uid(0x33, 1), root(), b"cat", -1);
     let parts: Vec<String> = fnames
@@ -799,8 +1053,15 @@ fn predicates() {
             give::transfer_commonly_allowed(&f, None) as i32
         ),
     );
-    assert_lines("give/predicates", &compared("give", "predicates.txt"), &out.lines);
-    println!("give/predicates: {matrix} matrix cases, {} rules", rules.len());
+    assert_lines(
+        "give/predicates",
+        &compared("give", "predicates.txt"),
+        &out.lines,
+    );
+    println!(
+        "give/predicates: {matrix} matrix cases, {} rules",
+        rules.len()
+    );
 }
 
 // ========================================================== will accept
@@ -864,21 +1125,51 @@ fn run_accept(out: &mut Out, a: &AcceptCase, cid: &str) {
     f.rlv_unsit = a.rlv == 3;
     f.rlv_sittp = a.rlv == 4;
     f.sitting = a.rlv >= 3;
-    f.avatar_root = Some(if a.rlv == 3 { uid(0x41, 2) } else { uid(0x41, 1) });
+    f.avatar_root = Some(if a.rlv == 3 {
+        uid(0x41, 2)
+    } else {
+        uid(0x41, 1)
+    });
     let ty = ACCEPT_TYPES[a.ty];
     let perm = make_perms(
-        &if a.item_owner_agent { agent() } else { other2() },
+        &if a.item_owner_agent {
+            agent()
+        } else {
+            other2()
+        },
         perm_mask(true, true, a.item_transfer),
         PERM_NONE,
-        if a.unrestricted { PERM_ALL } else { PERM_ALL & !PERM_TRANSFER },
+        if a.unrestricted {
+            PERM_ALL
+        } else {
+            PERM_ALL & !PERM_TRANSFER
+        },
         &NULL_ID,
         false,
     );
     if ty == 24 {
-        f.add_item(uid(0x42, 2), root(), 7, &perms_simple(&agent(), PERM_ALL), b"target", None);
+        f.add_item(
+            uid(0x42, 2),
+            root(),
+            7,
+            &perms_simple(&agent(), PERM_ALL),
+            b"target",
+            None,
+        );
     }
     let parent = if a.parent_is_object { obj.id } else { root() };
-    f.add_item(uid(0x42, 1), parent, ty, &perm, b"drop", if ty == 24 { Some(uid(0x42, 2)) } else { Some(NULL_ID) });
+    f.add_item(
+        uid(0x42, 1),
+        parent,
+        ty,
+        &perm,
+        b"drop",
+        if ty == 24 {
+            Some(uid(0x42, 2))
+        } else {
+            Some(NULL_ID)
+        },
+    );
     f.items.get_mut(&uid(0x42, 1)).unwrap().rec.finished = a.finished;
     if a.worn {
         if ty == 6 {
@@ -888,7 +1179,11 @@ fn run_accept(out: &mut Out, a: &AcceptCase, cid: &str) {
         }
     }
     let it = f.item(&uid(0x42, 1)).unwrap();
-    let dad = if a.dad_category { DAD_CATEGORY } else { DAD_NOTECARD };
+    let dad = if a.dad_category {
+        DAD_CATEGORY
+    } else {
+        DAD_NOTECARD
+    };
     out.put(
         cid,
         "in",
@@ -903,8 +1198,17 @@ fn run_accept(out: &mut Out, a: &AcceptCase, cid: &str) {
             dad
         ),
     );
-    let r = give::will_object_accept(&f, if a.null_obj { None } else { Some(&obj) }, if a.null_item { None } else { Some(&it) }, dad);
-    out.put(cid, "result", &format!("{} {}", r as i32, NAMES[r as usize]));
+    let r = give::will_object_accept(
+        &f,
+        if a.null_obj { None } else { Some(&obj) },
+        if a.null_item { None } else { Some(&it) },
+        dad,
+    );
+    out.put(
+        cid,
+        "result",
+        &format!("{} {}", r as i32, NAMES[r as usize]),
+    );
 }
 
 fn for_each_accept_case(mut fun: impl FnMut(&AcceptCase)) {
@@ -999,9 +1303,27 @@ fn will_accept() {
         ty: 3,
         ..AcceptCase::default()
     };
-    run_accept(&mut out, &AcceptCase { null_obj: true, ..a }, "null_object");
-    run_accept(&mut out, &AcceptCase { null_item: true, ..a }, "null_item");
-    assert_lines("give/will_accept", &compared("give", "will_accept.txt"), &out.lines);
+    run_accept(
+        &mut out,
+        &AcceptCase {
+            null_obj: true,
+            ..a
+        },
+        "null_object",
+    );
+    run_accept(
+        &mut out,
+        &AcceptCase {
+            null_item: true,
+            ..a
+        },
+        "null_item",
+    );
+    assert_lines(
+        "give/will_accept",
+        &compared("give", "will_accept.txt"),
+        &out.lines,
+    );
     println!("give/will_accept: {n} matrix cases + 2 null cases");
 }
 
@@ -1055,7 +1377,11 @@ fn world_to_agent() {
     let kinds = ['c', 'n', 't', 'x'];
     let mut seqs: Vec<String> = vec![String::new()];
     for len in 1..=3 {
-        let next: Vec<String> = seqs.iter().filter(|p| p.len() == len - 1).flat_map(|p| kinds.iter().map(move |k| format!("{p}{k}"))).collect();
+        let next: Vec<String> = seqs
+            .iter()
+            .filter(|p| p.len() == len - 1)
+            .flat_map(|p| kinds.iter().map(move |k| format!("{p}{k}")))
+            .collect();
         seqs.extend(next);
     }
     for seq in &seqs {
@@ -1068,13 +1394,28 @@ fn world_to_agent() {
                         }
                         let mut f = setup();
                         let obj_id = uid(0x51, 1);
-                        let mut inventory = vec![TaskObject { id: obj_id, ty: AssetType::CATEGORY, perm: None }];
-                        let mut flt = PassFilter { types: match filter { 1 => 1, 2 | 3 => 8, _ => 0 }, passes: BTreeSet::new() };
+                        let mut inventory = vec![TaskObject {
+                            id: obj_id,
+                            ty: AssetType::CATEGORY,
+                            perm: None,
+                        }];
+                        let mut flt = PassFilter {
+                            types: match filter {
+                                1 => 1,
+                                2 | 3 => 8,
+                                _ => 0,
+                            },
+                            passes: BTreeSet::new(),
+                        };
                         let task_owner = if owned { agent() } else { other2() };
                         for (i, k) in seq.chars().enumerate() {
                             let id = uid(0x52, i as u64 + 1);
                             if k == 'x' {
-                                inventory.push(TaskObject { id, ty: AssetType::OBJECT, perm: None });
+                                inventory.push(TaskObject {
+                                    id,
+                                    ty: AssetType::OBJECT,
+                                    perm: None,
+                                });
                                 continue;
                             }
                             let mask = match k {
@@ -1083,9 +1424,16 @@ fn world_to_agent() {
                                 _ => PERM_ALL,
                             };
                             let everyone = if k == 'n' { PERM_NONE } else { PERM_COPY };
-                            let mut perm = make_perms(&task_owner, mask, everyone, PERM_ALL, &NULL_ID, false);
-                            perm.init_masks_for_type(vkstorm_inventory::types::InventoryType::NOTECARD);
-                            inventory.push(TaskObject { id, ty: AssetType::NOTECARD, perm: Some(perm) });
+                            let mut perm =
+                                make_perms(&task_owner, mask, everyone, PERM_ALL, &NULL_ID, false);
+                            perm.init_masks_for_type(
+                                vkstorm_inventory::types::InventoryType::NOTECARD,
+                            );
+                            inventory.push(TaskObject {
+                                id,
+                                ty: AssetType::NOTECARD,
+                                perm: Some(perm),
+                            });
                             if filter == 2 || (filter == 3 && k == 'c') {
                                 flt.passes.insert(id);
                             }
@@ -1115,7 +1463,11 @@ fn world_to_agent() {
                             drop as i32,
                             exists as i32
                         );
-                        let passes: Vec<String> = flt.passes.iter().map(|id| us(id)[24..].to_owned()).collect();
+                        let passes: Vec<String> = flt
+                            .passes
+                            .iter()
+                            .map(|id| us(id)[24..].to_owned())
+                            .collect();
                         out.put(
                             &cid,
                             "input",
@@ -1130,7 +1482,13 @@ fn world_to_agent() {
                             ),
                         );
                         let r = if filter != 0 {
-                            give::world_to_agent(&mut f, &obj_id, &uid(0x54, 1), drop, Some(&mut flt))
+                            give::world_to_agent(
+                                &mut f,
+                                &obj_id,
+                                &uid(0x54, 1),
+                                drop,
+                                Some(&mut flt),
+                            )
                         } else {
                             give::world_to_agent(&mut f, &obj_id, &uid(0x54, 1), drop, None)
                         };
@@ -1141,7 +1499,11 @@ fn world_to_agent() {
             }
         }
     }
-    assert_lines("give/world_to_agent", &compared("give", "world_to_agent.txt"), &out.lines);
+    assert_lines(
+        "give/world_to_agent",
+        &compared("give", "world_to_agent.txt"),
+        &out.lines,
+    );
 }
 
 // ================================================================ share
@@ -1154,7 +1516,12 @@ fn share() {
         ("cancel", vec![(a, 'c')], 1, 1),
         ("two_items", vec![(a, 'c'), (b, 'c')], 1, 0),
         ("folder_first_then_item", vec![(a, 'f'), (b, 'c')], 1, 0),
-        ("item_then_folder_then_item", vec![(a, 'c'), (b, 'f'), (c, 'c')], 1, 0),
+        (
+            "item_then_folder_then_item",
+            vec![(a, 'c'), (b, 'f'), (c, 'c')],
+            1,
+            0,
+        ),
         ("two_folders", vec![(a, 'f'), (b, 'f')], 1, 0),
         ("nocopy_items", vec![(a, 'n'), (b, 'c'), (c, 'n')], 1, 0),
         ("nocopy_two_avatars", vec![(a, 'n'), (b, 'c')], 2, 0),
@@ -1172,15 +1539,35 @@ fn share() {
             selected.insert(*sid);
             if *k == 'f' || *k == 'g' {
                 f.add_cat(*sid, root(), b"Shared Folder", -1);
-                f.add_item(uid(0x62, sid[15] as u64), *sid, 7, &perms_simple(&agent(), perm_mask(*k == 'f', true, true)), b"inside", None);
+                f.add_item(
+                    uid(0x62, sid[15] as u64),
+                    *sid,
+                    7,
+                    &perms_simple(&agent(), perm_mask(*k == 'f', true, true)),
+                    b"inside",
+                    None,
+                );
             } else {
-                f.add_item(*sid, root(), 7, &perms_simple(&agent(), perm_mask(*k == 'c', true, true)), b"Shared Item", None);
+                f.add_item(
+                    *sid,
+                    root(),
+                    7,
+                    &perms_simple(&agent(), perm_mask(*k == 'c', true, true)),
+                    b"Shared Item",
+                    None,
+                );
             }
         }
-        let avatars: Vec<Uuid> = (0..avatars_n).map(|i| if i == 0 { other() } else { other2() }).collect();
+        let avatars: Vec<Uuid> = (0..avatars_n)
+            .map(|i| if i == 0 { other() } else { other2() })
+            .collect();
         f.ev.clear();
         let mut notification = Value::Undefined;
-        insert(&mut notification, "name", Value::string("ShareItemsConfirmation"));
+        insert(
+            &mut notification,
+            "name",
+            Value::string("ShareItemsConfirmation"),
+        );
         let btn = |name: &str, index: i32| {
             let mut e = Value::Undefined;
             insert(&mut e, "type", Value::string("button"));
@@ -1188,13 +1575,31 @@ fn share() {
             insert(&mut e, "index", Value::Integer(index));
             e
         };
-        insert(&mut notification, "form", Value::Array(vec![btn("OK", 0), btn("Cancel", 1)]));
+        insert(
+            &mut notification,
+            "form",
+            Value::Array(vec![btn("OK", 0), btn("Cancel", 1)]),
+        );
         let mut response = Value::Undefined;
-        insert(&mut response, if option == 0 { "OK" } else { "Cancel" }, Value::Boolean(true));
+        insert(
+            &mut response,
+            if option == 0 { "OK" } else { "Cancel" },
+            Value::Boolean(true),
+        );
         put_world(&mut out, &f, id);
         let av: String = avatars.iter().map(|a| format!(" {}", us(a))).collect();
-        out.put(id, "input.90", &format!("share option={option} avatars=[{av} ] selected={}", id_set(&selected)));
-        f.add(format!("share option={option} selected={} avatars={avatars_n}", selected.len()));
+        out.put(
+            id,
+            "input.90",
+            &format!(
+                "share option={option} avatars=[{av} ] selected={}",
+                id_set(&selected)
+            ),
+        );
+        f.add(format!(
+            "share option={option} selected={} avatars={avatars_n}",
+            selected.len()
+        ));
         let sel: Vec<Uuid> = selected.iter().copied().collect();
         give::share(&mut f, &avatars, &notification, &response, &sel);
         f.run_idle();
@@ -1253,7 +1658,10 @@ fn drag_give() {
                 if blocked {
                     f.rlv_share_blocked.insert(other());
                 }
-                let cid = format!("handle_{k:02}_type{ty}_state{state}_blocked{}", blocked as i32);
+                let cid = format!(
+                    "handle_{k:02}_type{ty}_state{state}_blocked{}",
+                    blocked as i32
+                );
                 k += 1;
                 f.ev.clear();
                 out.put(
@@ -1268,8 +1676,19 @@ fn drag_give() {
                         us(&other())
                     ),
                 );
-                let (handled, accept) = give::give_drag_and_drop(&mut f, &other(), &NULL_ID, false, ty, &cargo, &Value::Undefined);
-                f.add(format!("result handled={} accept={} {}", handled as i32, accept as i32, NAMES[accept as usize]));
+                let (handled, accept) = give::give_drag_and_drop(
+                    &mut f,
+                    &other(),
+                    &NULL_ID,
+                    false,
+                    ty,
+                    &cargo,
+                    &Value::Undefined,
+                );
+                f.add(format!(
+                    "result handled={} accept={} {}",
+                    handled as i32, accept as i32, NAMES[accept as usize]
+                ));
                 out.events(&mut f, &cid);
             }
         }
@@ -1286,10 +1705,24 @@ fn drag_give() {
         let cid = uid(0x81, 1);
         let cargo = if folder {
             let c = f.add_cat(cid, root(), b"Dragged Folder", -1);
-            f.add_item(uid(0x83, 1), cid, 7, &perms_simple(&agent(), PERM_ALL), b"inside", None);
+            f.add_item(
+                uid(0x83, 1),
+                cid,
+                7,
+                &perms_simple(&agent(), PERM_ALL),
+                b"inside",
+                None,
+            );
             Cargo::Category(c)
         } else {
-            Cargo::Item(f.add_item(cid, root(), 7, &perms_simple(&agent(), PERM_ALL), b"Dragged", None))
+            Cargo::Item(f.add_item(
+                cid,
+                root(),
+                7,
+                &perms_simple(&agent(), PERM_ALL),
+                b"Dragged",
+                None,
+            ))
         };
         if !name_cached {
             f.avatar_names.remove(&other());
@@ -1309,7 +1742,10 @@ fn drag_give() {
             &cargo,
             &Value::string("avatarpicker"),
         );
-        f.add(format!("result handled={} accept={} {}", handled as i32, accept as i32, NAMES[accept as usize]));
+        f.add(format!(
+            "result handled={} accept={} {}",
+            handled as i32, accept as i32, NAMES[accept as usize]
+        ));
         f.run_idle();
         if !f.pending.is_empty() {
             f.respond_pending(answer);
@@ -1317,7 +1753,11 @@ fn drag_give() {
         f.run_idle();
         out.events(&mut f, id);
     }
-    let kinds = ["dad3dGiveInventoryObject", "dad3dGiveInventory", "dad3dGiveInventoryCategory"];
+    let kinds = [
+        "dad3dGiveInventoryObject",
+        "dad3dGiveInventory",
+        "dad3dGiveInventoryCategory",
+    ];
     for kind in 0..3 {
         for source in 0..2 {
             for state in 0..4 {
@@ -1326,15 +1766,33 @@ fn drag_give() {
                         for drop in [false, true] {
                             let mut f = setup();
                             let it_id = uid(0x84, 1);
-                            f.add_item(it_id, root(), if kind == 0 { 6 } else { 7 }, &perms_simple(&agent(), perm_mask(true, true, state != 2)), b"Dropped", None);
+                            f.add_item(
+                                it_id,
+                                root(),
+                                if kind == 0 { 6 } else { 7 },
+                                &perms_simple(&agent(), perm_mask(true, true, state != 2)),
+                                b"Dropped",
+                                None,
+                            );
                             f.items.get_mut(&it_id).unwrap().rec.finished = state != 1;
                             if state == 3 {
                                 f.attachments.insert(it_id);
                             }
                             let cat = f.add_cat(uid(0x85, 1), root(), b"Dropped Folder", -1);
-                            f.add_item(uid(0x86, 1), cat.id, 7, &perms_simple(&agent(), PERM_ALL), b"inside", None);
+                            f.add_item(
+                                uid(0x86, 1),
+                                cat.id,
+                                7,
+                                &perms_simple(&agent(), PERM_ALL),
+                                b"inside",
+                                None,
+                            );
                             let tool = DragState {
-                                source: if source == 1 { DragSource::World } else { DragSource::Agent },
+                                source: if source == 1 {
+                                    DragSource::World
+                                } else {
+                                    DragSource::Agent
+                                },
                                 item: if kind == 2 { None } else { f.item(&it_id) },
                                 cat: if kind == 2 { Some(cat.clone()) } else { None },
                             };
@@ -1352,7 +1810,11 @@ fn drag_give() {
                                 drop as i32
                             );
                             f.ev.clear();
-                            let rec = if kind == 2 { f.cat_rec_line(&cat) } else { f.item_rec_line(&f.items[&it_id]) };
+                            let rec = if kind == 2 {
+                                f.cat_rec_line(&cat)
+                            } else {
+                                f.item_rec_line(&f.items[&it_id])
+                            };
                             out.put(
                                 &cid,
                                 "input",
@@ -1366,7 +1828,13 @@ fn drag_give() {
                                 ),
                             );
                             let o = other();
-                            let r = give::dad3d_give(&mut f, kind as i32, &tool, if has_obj { Some(&o) } else { None }, drop);
+                            let r = give::dad3d_give(
+                                &mut f,
+                                kind as i32,
+                                &tool,
+                                if has_obj { Some(&o) } else { None },
+                                drop,
+                            );
                             f.add(format!("result accept={} {}", r as i32, NAMES[r as usize]));
                             f.run_idle();
                             if !f.pending.is_empty() {
@@ -1379,7 +1847,11 @@ fn drag_give() {
             }
         }
     }
-    assert_lines("give/drag_give", &compared("give", "drag_give.txt"), &out.lines);
+    assert_lines(
+        "give/drag_give",
+        &compared("give", "drag_give.txt"),
+        &out.lines,
+    );
 }
 
 // ================================================================ sweeps
@@ -1390,13 +1862,25 @@ fn pack_sweep() {
     let mut col = Collect::new(100, 512, false);
     for i in 0..4000 {
         let mut f = setup();
-        let len = if rng.below(4) == 0 { rng.below(1400) } else { rng.below(80) };
+        let len = if rng.below(4) == 0 {
+            rng.below(1400)
+        } else {
+            rng.below(80)
+        };
         let mut name = Vec::with_capacity(len as usize);
         for _ in 0..len {
-            let c = if rng.below(5) == 0 { rng.below(256) as u8 } else { b'a' + rng.below(26) as u8 };
+            let c = if rng.below(5) == 0 {
+                rng.below(256) as u8
+            } else {
+                b'a' + rng.below(26) as u8
+            };
             name.push(c);
         }
-        let bsize = if rng.below(3) == 0 { rng.below(1500) } else { 17 * (1 + rng.below(50)) };
+        let bsize = if rng.below(3) == 0 {
+            rng.below(1500)
+        } else {
+            17 * (1 + rng.below(50))
+        };
         let bucket: Vec<u8> = (0..bsize).map(|_| rng.below(256) as u8).collect();
         let null_bucket = rng.below(10) == 0;
         let dialog = rng.below(43) as i32;
@@ -1416,7 +1900,11 @@ fn pack_sweep() {
             position: [1.0, 2.0, 3.0],
             timestamp: NO_TIMESTAMP,
             // an empty std::vector's data() is null: packed as no bucket
-            bucket: if null_bucket || bucket.is_empty() { None } else { Some(bucket) },
+            bucket: if null_bucket || bucket.is_empty() {
+                None
+            } else {
+                Some(bucket)
+            },
         }));
         f.act(Action::SendPackedToRegion);
         let mut out = Out::default();
@@ -1442,7 +1930,11 @@ fn folder_sweep() {
                 n.children.push(child);
             } else {
                 const TYPES: [i32; 9] = [0, 5, 6, 7, 10, 13, 20, 21, 24];
-                let worn = if rng.below(8) == 0 { 1 + rng.below(2) as i32 } else { 0 };
+                let worn = if rng.below(8) == 0 {
+                    1 + rng.below(2) as i32
+                } else {
+                    0
+                };
                 let transfer = rng.below(6) != 0;
                 let copy = rng.below(4) != 0;
                 let ty = TYPES[rng.below(9) as usize];
@@ -1491,7 +1983,12 @@ fn predicate_sweep() {
         let o = rng.below(3) as usize;
         let with_group = rng.coin();
         let mut perm = Permissions::default();
-        perm.init(&creator(), &owners[o], &owners[o], &if with_group { group() } else { NULL_ID });
+        perm.init(
+            &creator(),
+            &owners[o],
+            &owners[o],
+            &if with_group { group() } else { NULL_ID },
+        );
         let next = rng.next() as u32;
         let grp = rng.next() as u32;
         let everyone = rng.next() as u32;
@@ -1502,8 +1999,26 @@ fn predicate_sweep() {
             perm.set_owner_and_group(&NULL_ID, &NULL_ID, &group(), true);
         }
         let ty = TYPES[rng.below(11) as usize];
-        f.add_item(uid(0x71, 2), root(), 7, &perms_simple(&agent(), PERM_ALL), b"target", None);
-        f.add_item(uid(0x71, 1), root(), ty, &perm, b"item", if ty == 24 { Some(uid(0x71, 2)) } else { Some(NULL_ID) });
+        f.add_item(
+            uid(0x71, 2),
+            root(),
+            7,
+            &perms_simple(&agent(), PERM_ALL),
+            b"target",
+            None,
+        );
+        f.add_item(
+            uid(0x71, 1),
+            root(),
+            ty,
+            &perm,
+            b"item",
+            if ty == 24 {
+                Some(uid(0x71, 2))
+            } else {
+                Some(NULL_ID)
+            },
+        );
         let worn = rng.below(4);
         let wid = if ty == 24 { uid(0x71, 2) } else { uid(0x71, 1) };
         match worn {

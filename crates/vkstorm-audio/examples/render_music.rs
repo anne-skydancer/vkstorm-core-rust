@@ -112,7 +112,8 @@ fn write_wav(path: &str, channels: u16, mask: u32, samples: &[f32]) -> std::io::
     f.write_all(&mask.to_le_bytes())?;
     // KSDATAFORMAT_SUBTYPE_IEEE_FLOAT
     f.write_all(&[
-        0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71,
+        0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B,
+        0x71,
     ])?;
     f.write_all(b"data")?;
     f.write_all(&data_len.to_le_bytes())?;
@@ -176,18 +177,22 @@ fn main() {
     let mut phase_frame = 0u64;
     let mut serial = 0u32;
     let mut tail_left = RATE as u64 / 2;
-    let render_period = |engine: &mut Engine, out: &mut Vec<f32>, rendered: &mut u64, frames: usize| {
-        let v = engine.render_null(frames);
-        out.extend_from_slice(&v);
-        *rendered += frames as u64;
-        engine.set_null_clock(rendered.saturating_sub(LATENCY));
-    };
+    let render_period =
+        |engine: &mut Engine, out: &mut Vec<f32>, rendered: &mut u64, frames: usize| {
+            let v = engine.render_null(frames);
+            out.extend_from_slice(&v);
+            *rendered += frames as u64;
+            engine.set_null_clock(rendered.saturating_sub(LATENCY));
+        };
     loop {
         if a.fast {
             // Wait for decoded audio (the device's period passing)
             let t0 = Instant::now();
             while player.stats().buffered_frames < PERIOD
-                && matches!(player.state(), PlayerState::Connecting | PlayerState::Buffering | PlayerState::Playing)
+                && matches!(
+                    player.state(),
+                    PlayerState::Connecting | PlayerState::Buffering | PlayerState::Playing
+                )
                 && t0.elapsed() < Duration::from_secs(10)
             {
                 std::thread::sleep(Duration::from_millis(1));
@@ -206,9 +211,13 @@ fn main() {
             if wake > now {
                 std::thread::sleep(wake - now);
             }
-            let behind = Instant::now().saturating_duration_since(started).as_secs_f64() * RATE as f64;
+            let behind = Instant::now()
+                .saturating_duration_since(started)
+                .as_secs_f64()
+                * RATE as f64;
             let mut frames = PERIOD;
-            while (rendered + frames as u64 + PERIOD as u64) as f64 <= behind && frames < 8 * PERIOD {
+            while (rendered + frames as u64 + PERIOD as u64) as f64 <= behind && frames < 8 * PERIOD
+            {
                 frames += PERIOD;
             }
             let mut left = frames;
@@ -269,7 +278,11 @@ fn main() {
     }
     let (bus_in, bus_out, bus_under) = {
         let m = engine.mixer();
-        (m.music.input_frames(), m.music.output_frames(), m.music.underrun_frames())
+        (
+            m.music.input_frames(),
+            m.music.output_frames(),
+            m.music.underrun_frames(),
+        )
     };
     write_wav(&a.out, a.channels, mask, &out).expect("write wav");
     let seg = st.segments.first();

@@ -254,7 +254,10 @@ impl InventoryType {
 /// `inventory_and_asset_types_match`: a link asset type matches any inventory
 /// type; otherwise the inventory type must have an entry listing the asset
 /// type.
-pub fn inventory_and_asset_types_match(inventory_type: InventoryType, asset_type: AssetType) -> bool {
+pub fn inventory_and_asset_types_match(
+    inventory_type: InventoryType,
+    asset_type: AssetType,
+) -> bool {
     if asset_type.is_link_type() {
         return true;
     }
@@ -269,6 +272,10 @@ mod tests {
 
     #[test]
     fn entries_are_in_map_order() {
-        assert!(ENTRIES.windows(2).all(|w| w[0].inventory_type.0 < w[1].inventory_type.0));
+        assert!(
+            ENTRIES
+                .windows(2)
+                .all(|w| w[0].inventory_type.0 < w[1].inventory_type.0)
+        );
     }
 }

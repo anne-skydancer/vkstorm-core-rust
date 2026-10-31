@@ -1,7 +1,7 @@
 //! Rung one: JPEG 2000 decoding and encoding via `vkstorm-j2c`.
 
 use std::ffi::c_char;
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::slice;
 
 /// Result of a header read. All fields zero on failure.
@@ -38,7 +38,11 @@ pub extern "C" fn vks_j2c_engine_info() -> *const c_char {
 /// # Safety
 /// `data` must point to `len` readable bytes; `out` must be a valid pointer.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_j2c_metadata(data: *const u8, len: usize, out: *mut VksJ2cMetadata) -> i32 {
+pub unsafe extern "C" fn vks_j2c_metadata(
+    data: *const u8,
+    len: usize,
+    out: *mut VksJ2cMetadata,
+) -> i32 {
     if data.is_null() || out.is_null() {
         return 0;
     }
@@ -46,7 +50,13 @@ pub unsafe extern "C" fn vks_j2c_metadata(data: *const u8, len: usize, out: *mut
     let r = catch_unwind(AssertUnwindSafe(|| vkstorm_j2c::metadata(bytes)));
     match r {
         Ok(Ok(m)) => {
-            unsafe { *out = VksJ2cMetadata { width: m.width, height: m.height, components: m.components } };
+            unsafe {
+                *out = VksJ2cMetadata {
+                    width: m.width,
+                    height: m.height,
+                    components: m.components,
+                }
+            };
             1
         }
         _ => 0,
@@ -73,7 +83,8 @@ pub unsafe extern "C" fn vks_j2c_decode(
     }
     let bytes = unsafe { slice::from_raw_parts(data, len) };
     let r = catch_unwind(AssertUnwindSafe(|| {
-        let inner = vkstorm_j2c::decode(bytes, max_bytes, discard_level, first_channel, max_channels)?;
+        let inner =
+            vkstorm_j2c::decode(bytes, max_bytes, discard_level, first_channel, max_channels)?;
         let comment = vkstorm_j2c::comment(bytes).and_then(|c| std::ffi::CString::new(c).ok());
         Ok::<_, vkstorm_j2c::Error>(VksJ2cDecoded { inner, comment })
     }));
@@ -88,13 +99,27 @@ pub unsafe extern "C" fn vks_j2c_decode(
 /// # Safety
 /// `d` must come from `vks_j2c_decode` and not have been freed.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_j2c_decoded_size(d: *const VksJ2cDecoded, width: *mut u32, height: *mut u32, channels: *mut u32, components: *mut u32) {
+pub unsafe extern "C" fn vks_j2c_decoded_size(
+    d: *const VksJ2cDecoded,
+    width: *mut u32,
+    height: *mut u32,
+    channels: *mut u32,
+    components: *mut u32,
+) {
     let d = unsafe { &*d };
     unsafe {
-        if !width.is_null() { *width = d.inner.width; }
-        if !height.is_null() { *height = d.inner.height; }
-        if !channels.is_null() { *channels = d.inner.channels; }
-        if !components.is_null() { *components = d.inner.components; }
+        if !width.is_null() {
+            *width = d.inner.width;
+        }
+        if !height.is_null() {
+            *height = d.inner.height;
+        }
+        if !channels.is_null() {
+            *channels = d.inner.channels;
+        }
+        if !components.is_null() {
+            *components = d.inner.components;
+        }
     }
 }
 
@@ -105,7 +130,11 @@ pub unsafe extern "C" fn vks_j2c_decoded_size(d: *const VksJ2cDecoded, width: *m
 /// # Safety
 /// `d` must be live; `dst` must point to `dst_len` writable bytes.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn vks_j2c_decoded_copy(d: *const VksJ2cDecoded, dst: *mut u8, dst_len: usize) -> i32 {
+pub unsafe extern "C" fn vks_j2c_decoded_copy(
+    d: *const VksJ2cDecoded,
+    dst: *mut u8,
+    dst_len: usize,
+) -> i32 {
     let d = unsafe { &*d };
     if dst.is_null() || dst_len < d.inner.data.len() {
         return 0;
@@ -166,10 +195,20 @@ pub unsafe extern "C" fn vks_j2c_encode(
     let comment = if comment.is_null() {
         None
     } else {
-        unsafe { std::ffi::CStr::from_ptr(comment) }.to_str().ok().map(str::to_owned)
+        unsafe { std::ffi::CStr::from_ptr(comment) }
+            .to_str()
+            .ok()
+            .map(str::to_owned)
     };
     let r = catch_unwind(AssertUnwindSafe(|| {
-        vkstorm_j2c::encode(bytes, width, height, channels, comment.as_deref(), reversible != 0)
+        vkstorm_j2c::encode(
+            bytes,
+            width,
+            height,
+            channels,
+            comment.as_deref(),
+            reversible != 0,
+        )
     }));
     match r {
         Ok(Ok(bytes)) => Box::into_raw(Box::new(VksJ2cEncoded { bytes })),

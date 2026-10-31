@@ -10,7 +10,7 @@
 //! running pad position never carries over: the transform is a plain
 //! byte-wise XOR and its own inverse.
 
-use crate::perms::{PermissionMask, Uuid, NULL_ID, PERM_ITEM_UNRESTRICTED};
+use crate::perms::{NULL_ID, PERM_ITEM_UNRESTRICTED, PermissionMask, Uuid};
 
 /// `MAGIC_ID` (`llinventory.cpp`): `3c115e51-04f4-523c-9fa6-98aff1034730`.
 pub const MAGIC_ID: Uuid = [
@@ -88,9 +88,21 @@ mod tests {
     #[test]
     fn choice() {
         let a = [7u8; 16];
-        assert_eq!(exported_asset_id(0x7fff_ffff, &a), ExportedAssetId::Asset(a));
-        assert_eq!(exported_asset_id(0x0000_e000, &a), ExportedAssetId::Asset(a));
-        assert_eq!(exported_asset_id(0x7fff_bfff, &a), ExportedAssetId::Shadow(shadow_id(&a)));
-        assert_eq!(exported_asset_id(0, &NULL_ID), ExportedAssetId::Asset(NULL_ID));
+        assert_eq!(
+            exported_asset_id(0x7fff_ffff, &a),
+            ExportedAssetId::Asset(a)
+        );
+        assert_eq!(
+            exported_asset_id(0x0000_e000, &a),
+            ExportedAssetId::Asset(a)
+        );
+        assert_eq!(
+            exported_asset_id(0x7fff_bfff, &a),
+            ExportedAssetId::Shadow(shadow_id(&a))
+        );
+        assert_eq!(
+            exported_asset_id(0, &NULL_ID),
+            ExportedAssetId::Asset(NULL_ID)
+        );
     }
 }

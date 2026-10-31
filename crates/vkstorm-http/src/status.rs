@@ -39,24 +39,36 @@ impl Default for Status {
 }
 
 impl Status {
-    pub const OK: Status = Status { kind: LLCORE, code: he::SUCCESS };
+    pub const OK: Status = Status {
+        kind: LLCORE,
+        code: he::SUCCESS,
+    };
 
     pub const fn llcore(code: i16) -> Status {
         Status { kind: LLCORE, code }
     }
 
     pub const fn easy(code: i32) -> Status {
-        Status { kind: EXT_CURL_EASY, code: code as i16 }
+        Status {
+            kind: EXT_CURL_EASY,
+            code: code as i16,
+        }
     }
 
     pub const fn multi(code: i32) -> Status {
-        Status { kind: EXT_CURL_MULTI, code: code as i16 }
+        Status {
+            kind: EXT_CURL_MULTI,
+            code: code as i16,
+        }
     }
 
     /// An HTTP status: 2xx is success, anything else a reply error.
     pub const fn http(status: i32) -> Status {
         let ok = status >= 200 && status <= 299;
-        Status { kind: status as u16, code: if ok { he::SUCCESS } else { he::REPLY_ERROR } }
+        Status {
+            kind: status as u16,
+            code: if ok { he::SUCCESS } else { he::REPLY_ERROR },
+        }
     }
 
     pub fn is_ok(self) -> bool {
@@ -129,7 +141,9 @@ pub fn llcore_text(code: i16) -> Option<&'static str> {
         "Invalid HTTP status code received from server",
         "Could not allocate required resource",
     ];
-    usize::try_from(code).ok().and_then(|i| TEXT.get(i).copied())
+    usize::try_from(code)
+        .ok()
+        .and_then(|i| TEXT.get(i).copied())
 }
 
 pub fn http_text(status: u16) -> Option<&'static str> {
@@ -176,7 +190,9 @@ pub fn http_text(status: u16) -> Option<&'static str> {
         (504, "Gateway Time-out"),
         (505, "HTTP Version not supported"),
     ];
-    TEXT.binary_search_by_key(&status, |e| e.0).ok().map(|i| TEXT[i].1)
+    TEXT.binary_search_by_key(&status, |e| e.0)
+        .ok()
+        .map(|i| TEXT[i].1)
 }
 
 #[cfg(test)]

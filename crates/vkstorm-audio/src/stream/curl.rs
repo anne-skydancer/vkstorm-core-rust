@@ -71,7 +71,8 @@ const CURLE_OK: CURLcode = 0;
 const CURLE_WRITE_ERROR: CURLcode = 23;
 const CURLE_ABORTED_BY_CALLBACK: CURLcode = 42;
 
-type XferInfoFn = unsafe extern "C" fn(*mut c_void, CurlOffT, CurlOffT, CurlOffT, CurlOffT) -> c_int;
+type XferInfoFn =
+    unsafe extern "C" fn(*mut c_void, CurlOffT, CurlOffT, CurlOffT, CurlOffT) -> c_int;
 
 /// The libcurl entry points the stream code calls (`curl_easy_*`,
 /// `curl_slist_*`), with libcurl's C signatures.
@@ -201,23 +202,42 @@ impl Transfer<'_> {
         let mut url: *const c_char = std::ptr::null();
         // SAFETY: the handle is live for the duration of the transfer.
         unsafe {
-            (self.api.easy_getinfo)(self.handle, CURLINFO_RESPONSE_CODE, &mut code as *mut c_long);
-            (self.api.easy_getinfo)(self.handle, CURLINFO_EFFECTIVE_URL, &mut url as *mut *const c_char);
+            (self.api.easy_getinfo)(
+                self.handle,
+                CURLINFO_RESPONSE_CODE,
+                &mut code as *mut c_long,
+            );
+            (self.api.easy_getinfo)(
+                self.handle,
+                CURLINFO_EFFECTIVE_URL,
+                &mut url as *mut *const c_char,
+            );
         }
-        let header = |n: &str| self.headers.iter().rev().find(|(k, _)| k == n).map(|(_, v)| v.clone());
+        let header = |n: &str| {
+            self.headers
+                .iter()
+                .rev()
+                .find(|(k, _)| k == n)
+                .map(|(_, v)| v.clone())
+        };
         let effective_url = if url.is_null() {
             String::new()
         } else {
             // SAFETY: libcurl returns a NUL-terminated string it owns.
-            unsafe { CStr::from_ptr(url) }.to_string_lossy().into_owned()
+            unsafe { CStr::from_ptr(url) }
+                .to_string_lossy()
+                .into_owned()
         };
         self.head = Head {
             status: u32::try_from(code).unwrap_or(0),
             status_line: self.status_line.clone(),
             content_type: header("content-type").unwrap_or_default(),
             content_length: header("content-length").and_then(|v| v.parse().ok()),
-            chunked: header("transfer-encoding").is_some_and(|v| v.to_ascii_lowercase().contains("chunked")),
-            icy_metaint: header("icy-metaint").and_then(|v| v.parse().ok()).filter(|&n: &usize| n > 0),
+            chunked: header("transfer-encoding")
+                .is_some_and(|v| v.to_ascii_lowercase().contains("chunked")),
+            icy_metaint: header("icy-metaint")
+                .and_then(|v| v.parse().ok())
+                .filter(|&n: &usize| n > 0),
             effective_url,
         };
     }
@@ -234,7 +254,12 @@ unsafe extern "C" fn header_cb(ptr: *mut c_char, size: usize, n: usize, ud: *mut
     let len = size * n;
     let r = catch_unwind(AssertUnwindSafe(|| {
         // SAFETY: libcurl passes `len` bytes and our Transfer.
-        let (t, bytes) = unsafe { (&mut *(ud.cast::<Transfer<'_>>()), std::slice::from_raw_parts(ptr.cast::<u8>(), len)) };
+        let (t, bytes) = unsafe {
+            (
+                &mut *(ud.cast::<Transfer<'_>>()),
+                std::slice::from_raw_parts(ptr.cast::<u8>(), len),
+            )
+        };
         t.last_data = Instant::now();
         let line = String::from_utf8_lossy(bytes);
         let line = line.trim_end_matches(['\r', '\n']);
@@ -243,7 +268,8 @@ unsafe extern "C" fn header_cb(ptr: *mut c_char, size: usize, n: usize, ud: *mut
             t.status_line = line.to_owned();
             t.headers.clear();
         } else if let Some((k, v)) = line.split_once(':') {
-            t.headers.push((k.trim().to_ascii_lowercase(), v.trim().to_owned()));
+            t.headers
+                .push((k.trim().to_ascii_lowercase(), v.trim().to_owned()));
         }
         len
     }));
@@ -254,7 +280,12 @@ unsafe extern "C" fn write_cb(ptr: *mut c_char, size: usize, n: usize, ud: *mut 
     let len = size * n;
     let r = catch_unwind(AssertUnwindSafe(|| {
         // SAFETY: as above.
-        let (t, bytes) = unsafe { (&mut *(ud.cast::<Transfer<'_>>()), std::slice::from_raw_parts(ptr.cast::<u8>(), len)) };
+        let (t, bytes) = unsafe {
+            (
+                &mut *(ud.cast::<Transfer<'_>>()),
+                std::slice::from_raw_parts(ptr.cast::<u8>(), len),
+            )
+        };
         if !t.head_sent && !t.send_head() {
             t.aborted_by_body = true;
             return 0;
@@ -272,7 +303,13 @@ unsafe extern "C" fn write_cb(ptr: *mut c_char, size: usize, n: usize, ud: *mut 
     r.unwrap_or(0)
 }
 
-unsafe extern "C" fn xferinfo_cb(ud: *mut c_void, _: CurlOffT, _: CurlOffT, _: CurlOffT, _: CurlOffT) -> c_int {
+unsafe extern "C" fn xferinfo_cb(
+    ud: *mut c_void,
+    _: CurlOffT,
+    _: CurlOffT,
+    _: CurlOffT,
+    _: CurlOffT,
+) -> c_int {
     let r = catch_unwind(AssertUnwindSafe(|| {
         // SAFETY: our Transfer.
         let t = unsafe { &mut *(ud.cast::<Transfer<'_>>()) };
@@ -301,11 +338,20 @@ struct Outcome {
 }
 
 /// Runs one GET to completion on the calling thread.
-fn perform(url: &str, cfg: &NetConfig, icy: bool, total_timeout: Option<Duration>, body: &mut dyn Body) -> Result<Outcome, String> {
+fn perform(
+    url: &str,
+    cfg: &NetConfig,
+    icy: bool,
+    total_timeout: Option<Duration>,
+    body: &mut dyn Body,
+) -> Result<Outcome, String> {
     let api = api()?;
     let curl_url = CString::new(url).map_err(|_| "invalid URL".to_owned())?;
     let ua = CString::new(cfg.user_agent.as_str()).unwrap_or_default();
-    let ca = cfg.ca_bundle.as_ref().and_then(|p| CString::new(p.to_string_lossy().as_bytes()).ok());
+    let ca = cfg
+        .ca_bundle
+        .as_ref()
+        .and_then(|p| CString::new(p.to_string_lossy().as_bytes()).ok());
     let icy_header = c"Icy-MetaData: 1";
     let alias = c"ICY 200 OK";
     // SAFETY: a fresh easy handle configured with pointers that outlive the
@@ -350,7 +396,11 @@ fn perform(url: &str, cfg: &NetConfig, icy: bool, total_timeout: Option<Duration
         }
         (api.easy_setopt)(h, CURLOPT_SSL_VERIFYPEER, 1 as c_long);
         (api.easy_setopt)(h, CURLOPT_SSL_VERIFYHOST, 2 as c_long);
-        (api.easy_setopt)(h, CURLOPT_CONNECTTIMEOUT, cfg.connect_timeout.as_secs().max(1) as c_long);
+        (api.easy_setopt)(
+            h,
+            CURLOPT_CONNECTTIMEOUT,
+            cfg.connect_timeout.as_secs().max(1) as c_long,
+        );
         if let Some(t) = total_timeout {
             (api.easy_setopt)(h, CURLOPT_TIMEOUT, t.as_secs().max(1) as c_long);
         }
@@ -359,7 +409,11 @@ fn perform(url: &str, cfg: &NetConfig, icy: bool, total_timeout: Option<Duration
         (api.easy_setopt)(h, CURLOPT_WRITEFUNCTION, write_cb as *const c_void);
         (api.easy_setopt)(h, CURLOPT_WRITEDATA, tp);
         (api.easy_setopt)(h, CURLOPT_NOPROGRESS, 0 as c_long);
-        (api.easy_setopt)(h, CURLOPT_XFERINFOFUNCTION, xferinfo_cb as XferInfoFn as *const c_void);
+        (api.easy_setopt)(
+            h,
+            CURLOPT_XFERINFOFUNCTION,
+            xferinfo_cb as XferInfoFn as *const c_void,
+        );
         (api.easy_setopt)(h, CURLOPT_XFERINFODATA, tp);
         let code = (api.easy_perform)(h);
         if !t.head_sent {
@@ -367,7 +421,11 @@ fn perform(url: &str, cfg: &NetConfig, icy: bool, total_timeout: Option<Duration
         }
         let out = Outcome {
             code,
-            error: if code == CURLE_OK { String::new() } else { strerror(api, code) },
+            error: if code == CURLE_OK {
+                String::new()
+            } else {
+                strerror(api, code)
+            },
             head: t.head.clone(),
             head_sent: t.head_sent,
             received: t.received,
@@ -415,8 +473,19 @@ impl Body for StreamBody<'_> {
 /// Streams `url` into `pipe` (ICY metadata stripped, each new StreamTitle
 /// to `on_title`) until the body ends, the transfer fails or `abort`
 /// returns true; then closes the pipe with the reason. Blocks.
-pub(crate) fn stream(url: &str, cfg: &NetConfig, pipe: &Pipe, abort: &dyn Fn() -> bool, on_title: &mut dyn FnMut(String)) {
-    let mut body = StreamBody { pipe, icy: None, on_title, abort };
+pub(crate) fn stream(
+    url: &str,
+    cfg: &NetConfig,
+    pipe: &Pipe,
+    abort: &dyn Fn() -> bool,
+    on_title: &mut dyn FnMut(String),
+) {
+    let mut body = StreamBody {
+        pipe,
+        icy: None,
+        on_title,
+        abort,
+    };
     let end = match perform(url, cfg, true, None, &mut body) {
         Err(e) => PipeEnd::Error(e),
         Ok(o) => {
@@ -429,11 +498,19 @@ pub(crate) fn stream(url: &str, cfg: &NetConfig, pipe: &Pipe, abort: &dyn Fn() -
             if pipe.is_cancelled() || abort() {
                 PipeEnd::Cancelled
             } else if o.code == CURLE_OK {
-                let complete = o.head.content_length.is_some_and(|l| o.received >= l) || o.head.chunked;
-                if complete { PipeEnd::Complete } else { PipeEnd::Eof }
+                let complete =
+                    o.head.content_length.is_some_and(|l| o.received >= l) || o.head.chunked;
+                if complete {
+                    PipeEnd::Complete
+                } else {
+                    PipeEnd::Eof
+                }
             } else if o.stalled {
                 PipeEnd::Error(format!("no data for {} s", cfg.stall_timeout.as_secs()))
-            } else if o.aborted_by_body || o.code == CURLE_WRITE_ERROR || o.code == CURLE_ABORTED_BY_CALLBACK {
+            } else if o.aborted_by_body
+                || o.code == CURLE_WRITE_ERROR
+                || o.code == CURLE_ABORTED_BY_CALLBACK
+            {
                 if (200..300).contains(&o.head.status) {
                     PipeEnd::Cancelled
                 } else {
@@ -472,11 +549,25 @@ impl Body for CollectBody<'_> {
 }
 
 /// A small GET (the Icecast status document): (status, body).
-pub(crate) fn get(url: &str, cfg: &NetConfig, limit: usize, timeout: Duration, abort: &dyn Fn() -> bool) -> Result<(u32, Vec<u8>), String> {
-    let mut body = CollectBody { data: Vec::new(), limit, abort };
+pub(crate) fn get(
+    url: &str,
+    cfg: &NetConfig,
+    limit: usize,
+    timeout: Duration,
+    abort: &dyn Fn() -> bool,
+) -> Result<(u32, Vec<u8>), String> {
+    let mut body = CollectBody {
+        data: Vec::new(),
+        limit,
+        abort,
+    };
     let o = perform(url, cfg, false, Some(timeout), &mut body)?;
     if o.code != CURLE_OK {
-        return Err(if o.stalled { "timed out".into() } else { o.error });
+        return Err(if o.stalled {
+            "timed out".into()
+        } else {
+            o.error
+        });
     }
     Ok((o.head.status, body.data))
 }

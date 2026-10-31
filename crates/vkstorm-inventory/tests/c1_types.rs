@@ -7,11 +7,13 @@ mod common;
 use common::*;
 use vkstorm_inventory::category_obj::Category;
 use vkstorm_inventory::flags::{self, *};
-use vkstorm_inventory::perms::{self, mask_to_string, PERM_COPY, PERM_EXPORT, PERM_MODIFY, PERM_MOVE, PERM_TRANSFER};
+use vkstorm_inventory::perms::{
+    self, PERM_COPY, PERM_EXPORT, PERM_MODIFY, PERM_MOVE, PERM_TRANSFER, mask_to_string,
+};
 use vkstorm_inventory::types::sale::DEFAULT_PRICE;
 use vkstorm_inventory::types::{
-    asset, folder, inventory, inventory_and_asset_types_match, AssetType, FolderType, IconName, InventoryType,
-    SaleType, SettingsType,
+    AssetType, FolderType, IconName, InventoryType, SaleType, SettingsType, asset, folder,
+    inventory, inventory_and_asset_types_match,
 };
 
 const FIXTURE: &str = "c1_types.txt";
@@ -90,13 +92,21 @@ fn c1_lines() -> Lines {
         );
         s.emit(&cs, "sale", &[cstr(SaleType(v).lookup())]);
         let st = SettingsType(v);
-        s.emit(&cs, "settings", &[d(st.icon_name().0), esc_str(st.default_name())]);
+        s.emit(
+            &cs,
+            "settings",
+            &[d(st.icon_name().0), esc_str(st.default_name())],
+        );
     }
 
     for it in -1..=255 {
         let bits: String = (-1..=255)
             .map(|at| {
-                if inventory_and_asset_types_match(InventoryType(it), AssetType(at)) { '1' } else { '0' }
+                if inventory_and_asset_types_match(InventoryType(it), AssetType(at)) {
+                    '1'
+                } else {
+                    '0'
+                }
             })
             .collect();
         s.emit(&format!("c1.match.{it}"), "at-1..255", &[bits]);
@@ -130,10 +140,16 @@ fn c1_lines() -> Lines {
     );
     s.emit_llsd("c1.typenames", "asset", &AssetType::type_names());
     s.emit_llsd("c1.typenames", "folder", &FolderType::type_names());
-    s.emit("c1.badlookup", "values", &[esc_str(asset::BADLOOKUP), esc_str(folder::BAD_LOOKUP)]);
+    s.emit(
+        "c1.badlookup",
+        "values",
+        &[esc_str(asset::BADLOOKUP), esc_str(folder::BAD_LOOKUP)],
+    );
 
     // LLSettingsType::fromInventoryFlags.
-    let flag_values = (0..256u32).chain([0x100, 0x101, 0x1ff, 0x1f1102, 0x7fffffff, 0x80000002, 0xffffffff]);
+    let flag_values = (0..256u32).chain([
+        0x100, 0x101, 0x1ff, 0x1f1102, 0x7fffffff, 0x80000002, 0xffffffff,
+    ]);
     for f in flag_values {
         s.emit(
             &format!("c1.flags.{}", x8(f)),
@@ -170,13 +186,21 @@ fn c1_lines() -> Lines {
     let mut r = Rng::new(0x7631_0000_0000_0001);
     for _ in 0..64 {
         let value = r.next() as u32;
-        s.emit(&format!("c1.catu32.{}", x8(value)), "category", &[x8(Category::new(value).as_u32())]);
+        s.emit(
+            &format!("c1.catu32.{}", x8(value)),
+            "category",
+            &[x8(Category::new(value).as_u32())],
+        );
     }
     let none = Category::default();
     s.emit(
         "c1.cat.default",
         "category",
-        &[x8(none.as_u32()), d(none.sub_category_count()), cstr(none.lookup_name())],
+        &[
+            x8(none.as_u32()),
+            d(none.sub_category_count()),
+            cstr(none.lookup_name()),
+        ],
     );
     s.emit("c1.cat.none", "category", &[x8(Category::NONE.as_u32())]);
 
@@ -190,7 +214,9 @@ fn c1_lines() -> Lines {
             );
         }
     }
-    let bits = |f: fn(u8) -> bool| -> String { (0..=255u8).map(|v| if f(v) { '1' } else { '0' }).collect() };
+    let bits = |f: fn(u8) -> bool| -> String {
+        (0..=255u8).map(|v| if f(v) { '1' } else { '0' }).collect()
+    };
     s.emit("c1.tf.is", "src0..255", &[bits(is_tf_source_group)]);
     s.emit("c1.tf.is", "dst0..255", &[bits(is_tf_dest_group)]);
     s.emit("c1.tf.is", "own0..255", &[bits(is_tf_owner_group)]);
@@ -213,8 +239,17 @@ fn c1_lines() -> Lines {
     for (i, (amount, ta, tb, name, ty, desc)) in tm.iter().enumerate() {
         // The recorder passes (a, b) to both: a is the source of the first
         // message and the destination of the second.
-        let src = build_transfer_message_to_source(*amount, ta, tb, name, *ty, desc, DEFAULT_CURRENCY);
-        let dst = build_transfer_message_to_destination(*amount, ta, tb, name, *ty, desc, DEFAULT_CURRENCY);
+        let src =
+            build_transfer_message_to_source(*amount, ta, tb, name, *ty, desc, DEFAULT_CURRENCY);
+        let dst = build_transfer_message_to_destination(
+            *amount,
+            ta,
+            tb,
+            name,
+            *ty,
+            desc,
+            DEFAULT_CURRENCY,
+        );
         s.emit(&format!("c1.tm.{i}"), "messages", &[esc(&src), esc(&dst)]);
     }
 
@@ -223,7 +258,10 @@ fn c1_lines() -> Lines {
         s.emit(
             &format!("c1.mask.{}", x8(m)),
             "mask_to_string",
-            &[esc_str(&mask_to_string(m, false)), esc_str(&mask_to_string(m, true))],
+            &[
+                esc_str(&mask_to_string(m, false)),
+                esc_str(&mask_to_string(m, true)),
+            ],
         );
     }
 
@@ -316,7 +354,13 @@ fn c1_lines() -> Lines {
 /// The `mask_to_string` inputs: the 32 subsets of {V, M, C, T, X}, then the
 /// mask edges.
 fn c1_masks() -> Vec<u32> {
-    let alphabet = [PERM_MOVE, PERM_MODIFY, PERM_COPY, PERM_TRANSFER, PERM_EXPORT];
+    let alphabet = [
+        PERM_MOVE,
+        PERM_MODIFY,
+        PERM_COPY,
+        PERM_TRANSFER,
+        PERM_EXPORT,
+    ];
     let subsets = (0..32u32).map(|i| {
         alphabet
             .iter()
@@ -343,7 +387,8 @@ fn expected_lines() -> Vec<String> {
             let cols = split_tabs(&line);
             match cols.as_slice() {
                 [case, "mask_to_string", plain, opensim] => {
-                    let mask = u32::from_str_radix(case.trim_start_matches("c1.mask."), 16).expect("mask case id");
+                    let mask = u32::from_str_radix(case.trim_start_matches("c1.mask."), 16)
+                        .expect("mask case id");
                     let x = if mask & PERM_EXPORT != 0 { 'X' } else { ' ' };
                     format!("{case}\tmask_to_string\t{plain}\t{opensim}{x}")
                 }

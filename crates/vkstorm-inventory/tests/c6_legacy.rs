@@ -18,7 +18,7 @@ use vkstorm_inventory::item::Item;
 use vkstorm_inventory::legacy::notecard::Notecard;
 use vkstorm_inventory::legacy::reader::Stream;
 use vkstorm_inventory::object::Object;
-use vkstorm_inventory::perms::{Permissions, PERM_ALL, PERM_COPY, PERM_MODIFY, PERM_TRANSFER};
+use vkstorm_inventory::perms::{PERM_ALL, PERM_COPY, PERM_MODIFY, PERM_TRANSFER, Permissions};
 use vkstorm_inventory::sale::{SaleInfo, SaleType};
 use vkstorm_inventory::types::{AssetType, FolderType, InventoryType};
 
@@ -49,7 +49,14 @@ fn unescape(s: &str) -> Vec<u8> {
 // ---------------------------------------------------------------------------
 
 #[allow(clippy::too_many_arguments)]
-fn make_perm(creator: [u8; 16], owner: [u8; 16], last: [u8; 16], group: [u8; 16], masks: [u32; 5], group_owned: bool) -> Permissions {
+fn make_perm(
+    creator: [u8; 16],
+    owner: [u8; 16],
+    last: [u8; 16],
+    group: [u8; 16],
+    masks: [u32; 5],
+    group_owned: bool,
+) -> Permissions {
     let mut p = Permissions::default();
     p.init(&creator, &owner, &last, &group);
     [p.base, p.owner_mask, p.group_mask, p.everyone, p.next] = masks;
@@ -70,10 +77,20 @@ fn prev_item() -> Item {
             runtime: b"pre-runtime".to_vec(),
             name: b"pre name".to_vec(),
         },
-        permissions: make_perm(u(0x21), u(0x22), u(0x23), u(0x24), [PERM_ALL, 0x0008e000, 0x00002000, 0, 0x00082000], false),
+        permissions: make_perm(
+            u(0x21),
+            u(0x22),
+            u(0x23),
+            u(0x24),
+            [PERM_ALL, 0x0008e000, 0x00002000, 0, 0x00082000],
+            false,
+        ),
         asset: u(0x13),
         description: b"pre desc".to_vec(),
-        sale_info: SaleInfo { sale_type: SaleType(2), price: 25 },
+        sale_info: SaleInfo {
+            sale_type: SaleType(2),
+            price: 25,
+        },
         inv_type: InventoryType(7),
         flags: 0x101,
     }
@@ -95,12 +112,23 @@ fn prev_obj() -> Object {
 
 /// `prev_cat()` as a category.
 fn prev_cat() -> Category {
-    Category { object: prev_obj(), preferred_type: FolderType(5) }
+    Category {
+        object: prev_obj(),
+        preferred_type: FolderType(5),
+    }
 }
 
 fn item_cols(it: &Item) -> Vec<String> {
     let o = &it.object;
-    let mut v = vec![uuid(&o.id), uuid(&o.parent), uuid(&it.asset), uuid(&o.thumbnail), d(o.asset_type.0), d(it.inv_type.0), x8(it.flags)];
+    let mut v = vec![
+        uuid(&o.id),
+        uuid(&o.parent),
+        uuid(&it.asset),
+        uuid(&o.thumbnail),
+        d(o.asset_type.0),
+        d(it.inv_type.0),
+        x8(it.flags),
+    ];
     v.extend(perm_cols(&it.permissions));
     v.extend([
         d(it.sale_info.sale_type.0),
@@ -115,7 +143,16 @@ fn item_cols(it: &Item) -> Vec<String> {
 }
 
 fn obj_cols(o: &Object) -> Vec<String> {
-    vec![uuid(&o.id), uuid(&o.parent), d(o.asset_type.0), uuid(&o.thumbnail), bl(o.favorite), d(o.creation_date), esc(&o.runtime), esc(&o.name)]
+    vec![
+        uuid(&o.id),
+        uuid(&o.parent),
+        d(o.asset_type.0),
+        uuid(&o.thumbnail),
+        bl(o.favorite),
+        d(o.creation_date),
+        esc(&o.runtime),
+        esc(&o.name),
+    ]
 }
 
 fn cat_cols(c: &Category) -> Vec<String> {
@@ -188,7 +225,9 @@ fn long_text(t: &[u8]) -> String {
 fn baseline(case: &str, std_item: &[u8]) -> Option<Vec<u8>> {
     match case {
         "c6.perm.group_owned.junk" | "c6.perm.mask.stale" => Some(std_item.to_vec()),
-        "c6.perm.mask.first_fails" | "c6.perm.group_owned.first_fails" | "c6.perm.id.first_empty" => {
+        "c6.perm.mask.first_fails"
+        | "c6.perm.group_owned.first_fails"
+        | "c6.perm.id.first_empty" => {
             Some(b"\t{\n\tpermissions 0\n\t{\n\t}\n\t}\nNEXT\tline\n".to_vec())
         }
         _ => None,
@@ -197,7 +236,11 @@ fn baseline(case: &str, std_item: &[u8]) -> Option<Vec<u8>> {
 
 /// The notecard limit of a case: `c6.nc.limit64.*` is constructed with 64.
 fn max_text(case: &str) -> i32 {
-    if case.starts_with("c6.nc.limit64.") { 64 } else { Notecard::MAX_SIZE }
+    if case.starts_with("c6.nc.limit64.") {
+        64
+    } else {
+        Notecard::MAX_SIZE
+    }
 }
 
 fn run_case(cs: &str, readers: &str, input: &[u8], base: Option<&[u8]>, s: &mut Lines) {
@@ -212,7 +255,11 @@ fn run_case(cs: &str, readers: &str, input: &[u8], base: Option<&[u8]>, s: &mut 
                     let mut bit = prev_item();
                     bit.import_legacy_stream(&mut Stream::new(b));
                     s.emit(cs, "item.invariants", &[perm_invariants(&it.permissions)]);
-                    s.emit(cs, "item.no_widening", &[no_widening(&it.permissions, &bit.permissions)]);
+                    s.emit(
+                        cs,
+                        "item.no_widening",
+                        &[no_widening(&it.permissions, &bit.permissions)],
+                    );
                 }
                 s.emit(cs, "item.stream", &ret_stream(ok, &is, input));
             }
@@ -241,7 +288,10 @@ fn run_case(cs: &str, readers: &str, input: &[u8], base: Option<&[u8]>, s: &mut 
                 s.emit(cs, "perm.stream", &stream_cols(&is, input));
             }
             'S' => {
-                let mut sale = SaleInfo { sale_type: SaleType(1), price: 77 };
+                let mut sale = SaleInfo {
+                    sale_type: SaleType(1),
+                    price: 77,
+                };
                 let (mut has, mut pm) = (true, 0xa5a5_a5a5u32);
                 let ok = sale.import_legacy_stream(&mut is, &mut has, &mut pm);
                 let mut cols = sale_cols(&sale);
@@ -255,7 +305,13 @@ fn run_case(cs: &str, readers: &str, input: &[u8], base: Option<&[u8]>, s: &mut 
                 s.emit(
                     cs,
                     "notecard",
-                    &[bl(ok), d(nc.version), d(nc.embedded_version), d(nc.items.len() as i64), long_text(&nc.text)],
+                    &[
+                        bl(ok),
+                        d(nc.version),
+                        d(nc.embedded_version),
+                        d(nc.items.len() as i64),
+                        long_text(&nc.text),
+                    ],
                 );
                 for (k, it) in nc.items.iter().enumerate() {
                     s.emit(cs, &format!("notecard.item.{k}"), &item_cols(it));
@@ -284,24 +340,51 @@ fn c6_nc_export(s: &mut Lines) {
             name: b"Base item".to_vec(),
             ..Object::default()
         },
-        permissions: make_perm(id_c(), id_a(), id_b(), id_g(), [base_mask, PERM_ALL, 0, 0, 0x00082000], false),
+        permissions: make_perm(
+            id_c(),
+            id_a(),
+            id_b(),
+            id_g(),
+            [base_mask, PERM_ALL, 0, 0, 0x00082000],
+            false,
+        ),
         asset,
         description: b"Base description".to_vec(),
-        sale_info: SaleInfo { sale_type: SaleType(0), price: 10 },
+        sale_info: SaleInfo {
+            sale_type: SaleType(0),
+            price: 10,
+        },
         inv_type: InventoryType(inv),
         flags: 0,
     };
     let mut nc = Notecard::default();
-    nc.items = vec![base(-1, 255, PERM_ALL, u(0xa3)), base(6, 6, PERM_ALL, u(0xa3)), base(7, 7, 0x7fffdfff, MAGIC)];
+    nc.items = vec![
+        base(-1, 255, PERM_ALL, u(0xa3)),
+        base(6, 6, PERM_ALL, u(0xa3)),
+        base(7, 7, 0x7fffdfff, MAGIC),
+    ];
     nc.text = b"Text with an embedded item \xf4\x80\x80\x80 marker\n".to_vec();
     let mut out = Vec::new();
     let ok = nc.export_stream(&mut out);
     s.emit("c6.nc.export", "notecard.export", &[bl(ok), esc(&out)]);
     let mut back = Notecard::default();
     let rok = back.import_stream(&mut Stream::new(&out));
-    s.emit("c6.nc.export", "notecard.reimport", &[bl(rok), d(back.version), d(back.items.len() as i64), esc(&back.text)]);
+    s.emit(
+        "c6.nc.export",
+        "notecard.reimport",
+        &[
+            bl(rok),
+            d(back.version),
+            d(back.items.len() as i64),
+            esc(&back.text),
+        ],
+    );
     for (k, it) in back.items.iter().enumerate() {
-        s.emit("c6.nc.export", &format!("notecard.reimport.item.{k}"), &item_cols(it));
+        s.emit(
+            "c6.nc.export",
+            &format!("notecard.reimport.item.{k}"),
+            &item_cols(it),
+        );
     }
 }
 
@@ -333,7 +416,13 @@ fn c6_legacy() {
         if v.len() == 4 && v[1] == "input" {
             let input = unescape(v[3]);
             s.emit(v[0], "input", &[v[2].to_owned(), esc(&input)]);
-            run_case(v[0], v[2], &input, baseline(v[0], &std_item).as_deref(), &mut s);
+            run_case(
+                v[0],
+                v[2],
+                &input,
+                baseline(v[0], &std_item).as_deref(),
+                &mut s,
+            );
         }
     }
     c6_nc_export(&mut s);

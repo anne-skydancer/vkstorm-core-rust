@@ -35,10 +35,13 @@ pub mod transport;
 use std::sync::Arc;
 
 pub use hooks::{Hooks, LogLevel, NoHooks, Stat};
-pub use options::{ClassOptions, GlobalOptions, PolicyOption, RequestOptions, DEFAULT_POLICY_ID, GLOBAL_POLICY_ID, INVALID_POLICY_ID};
+pub use options::{
+    ClassOptions, DEFAULT_POLICY_ID, GLOBAL_POLICY_ID, GlobalOptions, INVALID_POLICY_ID,
+    PolicyOption, RequestOptions,
+};
 pub use request::{Method, Reply, ReplyKind, ReplyQueue, Request, TransferStats};
 pub use service::{Service, State};
-pub use status::{he, Status, EXT_CURL_EASY, EXT_CURL_MULTI, LLCORE};
+pub use status::{EXT_CURL_EASY, EXT_CURL_MULTI, LLCORE, Status, he};
 pub use sys::UserPtr;
 
 /// The `User-Agent` the crate's own tests send.
@@ -53,7 +56,11 @@ pub struct Client<'a> {
 
 impl<'a> Client<'a> {
     pub fn new(service: &'a Service) -> Client<'a> {
-        Client { service, queue: service.reply_queue(), last_status: Status::OK }
+        Client {
+            service,
+            queue: service.reply_queue(),
+            last_status: Status::OK,
+        }
     }
 
     /// `HttpRequest::getStatus`: the status of the last issue.
@@ -86,13 +93,26 @@ impl<'a> Client<'a> {
         self.request(req)
     }
 
-    pub fn get_range(&mut self, policy: u32, url: &str, offset: u64, length: u64, options: Option<RequestOptions>) -> Option<u64> {
+    pub fn get_range(
+        &mut self,
+        policy: u32,
+        url: &str,
+        offset: u64,
+        length: u64,
+        options: Option<RequestOptions>,
+    ) -> Option<u64> {
         let mut req = Request::new(policy, Method::Get, url).range(offset, length);
         req.options = options;
         self.request(req)
     }
 
-    pub fn post(&mut self, policy: u32, url: &str, body: Vec<u8>, options: Option<RequestOptions>) -> Option<u64> {
+    pub fn post(
+        &mut self,
+        policy: u32,
+        url: &str,
+        body: Vec<u8>,
+        options: Option<RequestOptions>,
+    ) -> Option<u64> {
         let mut req = Request::new(policy, Method::Post, url).body(body);
         req.options = options;
         self.request(req)
@@ -114,7 +134,13 @@ impl<'a> Client<'a> {
     }
 
     pub fn set_option_long(&mut self, opt: PolicyOption, pclass: u32, value: i64) -> Option<u64> {
-        let r = self.service.set_option_long_dynamic(&self.queue, UserPtr::null(), opt as i32, pclass, value);
+        let r = self.service.set_option_long_dynamic(
+            &self.queue,
+            UserPtr::null(),
+            opt as i32,
+            pclass,
+            value,
+        );
         self.issue(r)
     }
 

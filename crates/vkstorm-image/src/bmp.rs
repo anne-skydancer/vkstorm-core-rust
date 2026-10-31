@@ -7,7 +7,7 @@
 //! compression and OS/2 headers are rejected with the viewer's messages. The
 //! decoded raster always has 3 components; 32-bit alpha is dropped.
 
-use crate::{check_dimensions, fail, Error, Raster};
+use crate::{Error, Raster, check_dimensions, fail};
 
 const FILE_HEADER_SIZE: usize = 14;
 const BITMAP_HEADER_SIZE: usize = 40;
@@ -129,7 +129,11 @@ pub fn parse(data: &[u8]) -> Result<Info, Error> {
     let mut palette = Vec::new();
     let mut palette_colors = 0;
     if bits_per_pixel < 16 {
-        palette_colors = if num_colors == 0 { 1 << bits_per_pixel } else { num_colors };
+        palette_colors = if num_colors == 0 {
+            1 << bits_per_pixel
+        } else {
+            num_colors
+        };
         if palette_colors < 0 {
             return fail("LLImageBMP: invalid colour table size");
         }
@@ -289,7 +293,10 @@ pub fn encode(raster: &Raster, pels_per_meter: i32) -> Result<Vec<u8>, Error> {
     let start = out.len();
     out.resize(file_bytes, 0);
     let dst = &mut out[start..];
-    for (row, d) in src.chunks_exact(width * src_components).zip(dst.chunks_exact_mut(line_bytes)) {
+    for (row, d) in src
+        .chunks_exact(width * src_components)
+        .zip(dst.chunks_exact_mut(line_bytes))
+    {
         match src_components {
             1 => d[..width].copy_from_slice(row),
             2 => {

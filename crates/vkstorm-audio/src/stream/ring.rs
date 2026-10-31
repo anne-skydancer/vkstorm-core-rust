@@ -83,7 +83,8 @@ impl Ring {
     fn set_sizes(&mut self, rate: u32, capacity_ms: u32, start_ms: u32) {
         self.rate = rate;
         self.capacity_frames = (u64::from(rate) * u64::from(capacity_ms) / 1000) as usize;
-        self.start_frames = (u64::from(rate) * u64::from(start_ms) / 1000).min(self.capacity_frames as u64 / 2) as usize;
+        self.start_frames = (u64::from(rate) * u64::from(start_ms) / 1000)
+            .min(self.capacity_frames as u64 / 2) as usize;
     }
 
     pub(crate) fn frames(&self) -> usize {
@@ -178,7 +179,11 @@ impl Ring {
     pub(crate) fn pull(&mut self, out: &mut [f32], max_frames: usize) -> Pulled {
         let layout = self.segments.front().map_or(self.last_layout, |s| s.layout);
         if self.paused || (!self.primed && !self.finished) {
-            return Pulled { frames: 0, layout, ended: false };
+            return Pulled {
+                frames: 0,
+                layout,
+                ended: false,
+            };
         }
         let mut frames = 0;
         if let Some(seg) = self.segments.front_mut() {
@@ -213,7 +218,11 @@ impl Ring {
             self.primed = false;
             self.underruns += 1;
         }
-        Pulled { frames, layout, ended }
+        Pulled {
+            frames,
+            layout,
+            ended,
+        }
     }
 
     /// Converts the buffered audio to a new device rate (device change) and
@@ -246,10 +255,16 @@ impl Ring {
             r.flush(&mut out);
             converted.push((seg.layout, out));
         }
-        let (generation, primed, finished, paused) = (self.generation, self.primed, self.finished, self.paused);
+        let (generation, primed, finished, paused) =
+            (self.generation, self.primed, self.finished, self.paused);
         let (underruns, pulled, pushed) = (self.underruns, self.pulled_frames, self.pushed_frames);
         self.set_sizes(rate, capacity_ms, start_ms);
-        let widest = converted.iter().map(|(l, _)| usize::from(l.channels)).max().unwrap_or(2).max(2);
+        let widest = converted
+            .iter()
+            .map(|(l, _)| usize::from(l.channels))
+            .max()
+            .unwrap_or(2)
+            .max(2);
         self.buf = vec![0.0; self.capacity_frames.max(1) * widest];
         self.head = 0;
         self.len = 0;
@@ -300,7 +315,11 @@ mod tests {
         assert_eq!((p.frames, p.ended), (10, false));
         assert_eq!(r.underruns, 1);
         r.push(MONO, &[2.0; 5]);
-        assert_eq!(r.pull(&mut out, 16).frames, 0, "below the start level again");
+        assert_eq!(
+            r.pull(&mut out, 16).frames,
+            0,
+            "below the start level again"
+        );
         r.finish();
         let p = r.pull(&mut out, 16);
         assert_eq!((p.frames, p.ended), (5, true));
@@ -339,7 +358,10 @@ mod tests {
         let mut r = Ring::new(1000, 100, 1);
         r.reset(1);
         r.push(ST, &[1.0; 20]);
-        let six = ChannelLayout { channels: 6, mask: 0x3f };
+        let six = ChannelLayout {
+            channels: 6,
+            mask: 0x3f,
+        };
         r.push(six, &[2.0; 540]);
         r.finish();
         let mut out = vec![0.0; 800];

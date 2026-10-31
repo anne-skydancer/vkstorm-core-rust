@@ -14,22 +14,30 @@ extern "C" {
 
 #[cfg(not(feature = "guard-alloc"))]
 pub(crate) fn opj_malloc(size: usize) -> *mut c_void {
-  if size == 0 { return core::ptr::null_mut(); }
+  if size == 0 {
+    return core::ptr::null_mut();
+  }
   unsafe { malloc(size) }
 }
 #[cfg(not(feature = "guard-alloc"))]
 pub(crate) fn opj_calloc(num: usize, size: usize) -> *mut c_void {
-  if num == 0 || size == 0 { return core::ptr::null_mut(); }
+  if num == 0 || size == 0 {
+    return core::ptr::null_mut();
+  }
   unsafe { calloc(num, size) }
 }
 #[cfg(not(feature = "guard-alloc"))]
 pub(crate) fn opj_realloc(ptr: *mut c_void, new_size: usize) -> *mut c_void {
-  if new_size == 0 { return core::ptr::null_mut(); }
+  if new_size == 0 {
+    return core::ptr::null_mut();
+  }
   unsafe { realloc(ptr, new_size) }
 }
 #[cfg(not(feature = "guard-alloc"))]
 pub(crate) fn opj_free(ptr: *mut c_void) {
-  if !ptr.is_null() { unsafe { free(ptr) } }
+  if !ptr.is_null() {
+    unsafe { free(ptr) }
+  }
 }
 
 #[cfg(feature = "guard-alloc")]
@@ -59,7 +67,9 @@ mod guard {
 
   pub unsafe fn calloc(size: usize) -> *mut c_void {
     let base = alloc_zeroed(layout(size));
-    if base.is_null() { return core::ptr::null_mut(); }
+    if base.is_null() {
+      return core::ptr::null_mut();
+    }
     *(base as *mut u64) = size as u64;
     *(base.add(8) as *mut u64) = MAGIC;
     core::ptr::write_bytes(base.add(16), CANARY, 16);
@@ -89,7 +99,9 @@ mod guard {
   }
 
   pub unsafe fn realloc(ptr: *mut c_void, new_size: usize) -> *mut c_void {
-    if ptr.is_null() { return malloc(new_size); }
+    if ptr.is_null() {
+      return malloc(new_size);
+    }
     let (_, old) = check(ptr, "realloc");
     let n = malloc(new_size);
     if !n.is_null() {
@@ -102,20 +114,28 @@ mod guard {
 
 #[cfg(feature = "guard-alloc")]
 pub(crate) fn opj_malloc(size: usize) -> *mut c_void {
-  if size == 0 { return core::ptr::null_mut(); }
+  if size == 0 {
+    return core::ptr::null_mut();
+  }
   unsafe { guard::malloc(size) }
 }
 #[cfg(feature = "guard-alloc")]
 pub(crate) fn opj_calloc(num: usize, size: usize) -> *mut c_void {
-  if num == 0 || size == 0 { return core::ptr::null_mut(); }
+  if num == 0 || size == 0 {
+    return core::ptr::null_mut();
+  }
   unsafe { guard::calloc(num * size) }
 }
 #[cfg(feature = "guard-alloc")]
 pub(crate) fn opj_realloc(ptr: *mut c_void, new_size: usize) -> *mut c_void {
-  if new_size == 0 { return core::ptr::null_mut(); }
+  if new_size == 0 {
+    return core::ptr::null_mut();
+  }
   unsafe { guard::realloc(ptr, new_size) }
 }
 #[cfg(feature = "guard-alloc")]
 pub(crate) fn opj_free(ptr: *mut c_void) {
-  if !ptr.is_null() { unsafe { guard::free(ptr) } }
+  if !ptr.is_null() {
+    unsafe { guard::free(ptr) }
+  }
 }

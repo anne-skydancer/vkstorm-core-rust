@@ -108,13 +108,21 @@ pub fn parse_content_range(value: &str) -> ContentRange {
         if first > last || last >= length {
             return ContentRange::Invalid;
         }
-        return ContentRange::Valid { first, last, length };
+        return ContentRange::Valid {
+            first,
+            last,
+            length,
+        };
     }
     if rest.starts_with('*') {
         if first > last {
             return ContentRange::Invalid;
         }
-        return ContentRange::Valid { first, last, length: 0 };
+        return ContentRange::Valid {
+            first,
+            last,
+            length: 0,
+        };
     }
     ContentRange::Unparsed
 }
@@ -160,7 +168,11 @@ pub fn parse_retry_after(value: &str) -> Option<i32> {
         v = v.saturating_mul(10).saturating_add((b - b'0') as i64);
     }
     let v = if neg { -v } else { v };
-    if v > 0 { Some(v.min(i32::MAX as i64) as i32) } else { None }
+    if v > 0 {
+        Some(v.min(i32::MAX as i64) as i32)
+    } else {
+        None
+    }
 }
 
 /// The `Range:` request header of a byte-range request, as the C++ printed
@@ -168,7 +180,11 @@ pub fn parse_retry_after(value: &str) -> Option<i32> {
 /// 63-character buffer.
 pub fn range_line(offset: u64, length: u64) -> String {
     let mut line = if length != 0 {
-        format!("Range: bytes={}-{}", offset, offset.wrapping_add(length).wrapping_sub(1))
+        format!(
+            "Range: bytes={}-{}",
+            offset,
+            offset.wrapping_add(length).wrapping_sub(1)
+        )
     } else {
         format!("Range: bytes={offset}-")
     };
@@ -209,25 +225,61 @@ mod tests {
 
     #[test]
     fn splits_and_normalises() {
-        assert_eq!(split_header(b"Content-Type: text/plain\r\n"), Some(("content-type".into(), Some("text/plain".into()))));
-        assert_eq!(split_header(b"  X-Odd \t:\t  v a l  \r\n"), Some(("x-odd".into(), Some("v a l  ".into()))));
-        assert_eq!(split_header(b"HTTP/1.1 200 OK\r\n"), Some(("HTTP/1.1 200 OK".into(), None)));
+        assert_eq!(
+            split_header(b"Content-Type: text/plain\r\n"),
+            Some(("content-type".into(), Some("text/plain".into())))
+        );
+        assert_eq!(
+            split_header(b"  X-Odd \t:\t  v a l  \r\n"),
+            Some(("x-odd".into(), Some("v a l  ".into())))
+        );
+        assert_eq!(
+            split_header(b"HTTP/1.1 200 OK\r\n"),
+            Some(("HTTP/1.1 200 OK".into(), None))
+        );
         assert_eq!(split_header(b"\r\n"), None);
         assert_eq!(split_header(b"   : v"), None);
-        assert_eq!(split_header(b"Empty:"), Some(("empty".into(), Some(String::new()))));
+        assert_eq!(
+            split_header(b"Empty:"),
+            Some(("empty".into(), Some(String::new())))
+        );
     }
 
     #[test]
     fn content_range_forms() {
-        assert_eq!(parse_content_range("bytes 0-75/2983"), ContentRange::Valid { first: 0, last: 75, length: 2983 });
-        assert_eq!(parse_content_range("BYTES  10-19/*"), ContentRange::Valid { first: 10, last: 19, length: 0 });
+        assert_eq!(
+            parse_content_range("bytes 0-75/2983"),
+            ContentRange::Valid {
+                first: 0,
+                last: 75,
+                length: 2983
+            }
+        );
+        assert_eq!(
+            parse_content_range("BYTES  10-19/*"),
+            ContentRange::Valid {
+                first: 10,
+                last: 19,
+                length: 0
+            }
+        );
         assert_eq!(parse_content_range("bytes 10-5/100"), ContentRange::Invalid);
-        assert_eq!(parse_content_range("bytes 0-100/100"), ContentRange::Invalid);
+        assert_eq!(
+            parse_content_range("bytes 0-100/100"),
+            ContentRange::Invalid
+        );
         assert_eq!(parse_content_range("bytes 7-5/*"), ContentRange::Invalid);
         assert_eq!(parse_content_range("bytes */100"), ContentRange::Unparsed);
         assert_eq!(parse_content_range("items 0-1/2"), ContentRange::Unparsed);
         assert_eq!(parse_content_range(""), ContentRange::Unparsed);
-        assert_eq!(parse_content_range("bytes 0-75/2983trailing"), ContentRange::Valid { first: 0, last: 75, length: 2983 });
+        assert_eq!(
+            parse_content_range("bytes 0-75/2983trailing"),
+            ContentRange::Valid {
+                first: 0,
+                last: 75,
+                length: 2983
+            }
+        );
         assert_eq!(parse_content_range("bytes 0-75"), ContentRange::Unparsed);
     }
 

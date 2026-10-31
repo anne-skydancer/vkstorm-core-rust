@@ -2,7 +2,7 @@
 //! (`HttpPolicyClass`, `HttpPolicyGlobal`), the option descriptor table of
 //! `HttpService` and the limits of `_httpinternal.h`.
 
-use crate::status::{he, Status};
+use crate::status::{Status, he};
 
 pub const POLICY_CLASS_LIMIT: usize = 32;
 
@@ -133,7 +133,13 @@ impl PolicyOption {
     /// `HttpService::sOptionDesc`: (is long, is dynamic, is global, is class,
     /// is callback).
     pub fn descriptor(self) -> OptionDescriptor {
-        let d = |is_long, is_dynamic, is_global, is_class, is_callback| OptionDescriptor { is_long, is_dynamic, is_global, is_class, is_callback };
+        let d = |is_long, is_dynamic, is_global, is_class, is_callback| OptionDescriptor {
+            is_long,
+            is_dynamic,
+            is_global,
+            is_class,
+            is_callback,
+        };
         match self {
             PolicyOption::ConnectionLimit => d(true, true, true, true, false),
             PolicyOption::PerHostConnectionLimit => d(true, true, false, true, false),
@@ -191,9 +197,12 @@ impl Default for ClassOptions {
 impl ClassOptions {
     pub fn set(&mut self, opt: PolicyOption, value: i64) -> Status {
         match opt {
-            PolicyOption::ConnectionLimit => self.connection_limit = clamp(value, CONNECTION_LIMIT_MIN, CONNECTION_LIMIT_MAX),
+            PolicyOption::ConnectionLimit => {
+                self.connection_limit = clamp(value, CONNECTION_LIMIT_MIN, CONNECTION_LIMIT_MAX)
+            }
             PolicyOption::PerHostConnectionLimit => {
-                self.per_host_connection_limit = clamp(value, CONNECTION_LIMIT_MIN, self.connection_limit)
+                self.per_host_connection_limit =
+                    clamp(value, CONNECTION_LIMIT_MIN, self.connection_limit)
             }
             PolicyOption::PipeliningDepth => self.pipelining = clamp(value, 0, PIPELINING_MAX),
             PolicyOption::ThrottleRate => self.throttle_rate = clamp(value, 0, 1_000_000),
@@ -243,7 +252,9 @@ impl Default for GlobalOptions {
 impl GlobalOptions {
     pub fn set_long(&mut self, opt: PolicyOption, value: i64) -> Status {
         match opt {
-            PolicyOption::ConnectionLimit => self.connection_limit = clamp(value, CONNECTION_LIMIT_MIN, CONNECTION_LIMIT_MAX),
+            PolicyOption::ConnectionLimit => {
+                self.connection_limit = clamp(value, CONNECTION_LIMIT_MIN, CONNECTION_LIMIT_MAX)
+            }
             PolicyOption::Trace => self.trace = clamp(value, TRACE_MIN as i64, TRACE_MAX as i64),
             PolicyOption::LlProxy => self.use_llproxy = clamp(value, 0, 1),
             _ => return Status::llcore(he::INVALID_ARG),
@@ -291,7 +302,14 @@ impl GlobalOptions {
 /// The validation `HttpService::{get,set}PolicyOption` applied to every
 /// call: option in range and of the asked type, class in range, global or
 /// class setting permitted, and for a set while running, dynamic.
-pub fn check_option(opt: Option<PolicyOption>, want_long: bool, pclass: u32, last_policy: u32, setting: bool, running: bool) -> Result<PolicyOption, Status> {
+pub fn check_option(
+    opt: Option<PolicyOption>,
+    want_long: bool,
+    pclass: u32,
+    last_policy: u32,
+    setting: bool,
+    running: bool,
+) -> Result<PolicyOption, Status> {
     let opt = opt.ok_or(Status::llcore(he::INVALID_ARG))?;
     let d = opt.descriptor();
     let global = pclass == GLOBAL_POLICY_ID;
@@ -320,18 +338,71 @@ mod tests {
         assert_eq!(c.per_host_connection_limit, 3);
         assert!(c.set(PolicyOption::PipeliningDepth, 99).is_ok());
         assert_eq!(c.pipelining, 20);
-        assert_eq!(c.set(PolicyOption::Trace, 1), Status::llcore(he::INVALID_ARG));
+        assert_eq!(
+            c.set(PolicyOption::Trace, 1),
+            Status::llcore(he::INVALID_ARG)
+        );
     }
 
     #[test]
     fn option_checks() {
-        assert!(check_option(Some(PolicyOption::CaFile), false, GLOBAL_POLICY_ID, 0, true, false).is_ok());
+        assert!(
+            check_option(
+                Some(PolicyOption::CaFile),
+                false,
+                GLOBAL_POLICY_ID,
+                0,
+                true,
+                false
+            )
+            .is_ok()
+        );
         assert!(check_option(Some(PolicyOption::CaFile), false, 0, 0, true, false).is_err());
-        assert!(check_option(Some(PolicyOption::CaFile), true, GLOBAL_POLICY_ID, 0, true, false).is_err());
-        assert!(check_option(Some(PolicyOption::ThrottleRate), true, GLOBAL_POLICY_ID, 0, true, false).is_err());
-        assert!(check_option(Some(PolicyOption::ConnectionLimit), true, 17, 3, true, false).is_err());
+        assert!(
+            check_option(
+                Some(PolicyOption::CaFile),
+                true,
+                GLOBAL_POLICY_ID,
+                0,
+                true,
+                false
+            )
+            .is_err()
+        );
+        assert!(
+            check_option(
+                Some(PolicyOption::ThrottleRate),
+                true,
+                GLOBAL_POLICY_ID,
+                0,
+                true,
+                false
+            )
+            .is_err()
+        );
+        assert!(
+            check_option(
+                Some(PolicyOption::ConnectionLimit),
+                true,
+                17,
+                3,
+                true,
+                false
+            )
+            .is_err()
+        );
         assert!(check_option(Some(PolicyOption::ConnectionLimit), true, 3, 3, true, true).is_ok());
-        assert!(check_option(Some(PolicyOption::CaFile), false, GLOBAL_POLICY_ID, 0, true, true).is_err());
+        assert!(
+            check_option(
+                Some(PolicyOption::CaFile),
+                false,
+                GLOBAL_POLICY_ID,
+                0,
+                true,
+                true
+            )
+            .is_err()
+        );
         assert!(check_option(None, true, 0, 0, true, false).is_err());
     }
 }

@@ -18,12 +18,12 @@
 use vkstorm_llsd::text::{uuid_set, uuid_to_hex};
 use vkstorm_llsd::{Format, Limits, Options, Value};
 
-use super::reader::{c_str, Stream};
+use super::reader::{Stream, c_str};
 use super::sale::MAX_STRING;
-use super::scanf::{sscanf, Scan};
+use super::scanf::{Scan, sscanf};
 use crate::llsd::coerce::{as_boolean, as_string, as_uuid, get, has, insert};
 use crate::object::Object;
-use crate::perms::{Uuid, NULL_ID};
+use crate::perms::{NULL_ID, Uuid};
 use crate::text::correct_inventory_name;
 use crate::types::AssetType;
 
@@ -98,7 +98,11 @@ pub(crate) fn apply_metadata(object: &mut Object, value: &[u8]) {
     object.runtime = as_string(get(get(&metadata, "script"), "runtime"));
     object.thumbnail = if has(&metadata, "thumbnail") {
         let thumbnail = get(&metadata, "thumbnail");
-        if has(thumbnail, "asset_id") { as_uuid(get(thumbnail, "asset_id")) } else { NULL_ID }
+        if has(thumbnail, "asset_id") {
+            as_uuid(get(thumbnail, "asset_id"))
+        } else {
+            NULL_ID
+        }
     } else {
         NULL_ID
     };

@@ -481,7 +481,11 @@ fn opj_idwt53_v(
   mut nb_cols: OPJ_INT32,
 ) {
   // Fast lifting, SIMD across columns when nb_cols is the machine batch; see dwt53.rs.
-  unsafe { super::dwt53::idwt53_v(dwt.mem, dwt.sn, dwt.dn, dwt.cas, tiledp_col, stride, nb_cols) }
+  unsafe {
+    super::dwt53::idwt53_v(
+      dwt.mem, dwt.sn, dwt.dn, dwt.cas, tiledp_col, stride, nb_cols,
+    )
+  }
 }
 fn opj_dwt_encode_step1_combined(
   mut fw: *mut OPJ_FLOAT32,

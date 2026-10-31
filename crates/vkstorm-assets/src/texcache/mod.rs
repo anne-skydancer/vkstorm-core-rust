@@ -26,7 +26,7 @@ use std::sync::{Mutex, MutexGuard, TryLockError};
 use std::time::Instant;
 
 use crate::host::ClockFn;
-use crate::{ll_debugs, ll_infos, ll_warns, uuid_to_string, Uuid};
+use crate::{Uuid, ll_debugs, ll_infos, ll_warns, uuid_to_string};
 
 /// `TEXTURE_CACHE_ENTRY_SIZE` (= `FIRST_PACKET_SIZE`): the header record.
 pub const ENTRY_SIZE: i32 = 600;
@@ -67,7 +67,12 @@ pub struct EntriesInfo {
 
 impl Default for EntriesInfo {
     fn default() -> Self {
-        EntriesInfo { version: 0.0, address_size: 0, encoder_version: [0; HEADER_ENCODER_STRING_SIZE], entries: 0 }
+        EntriesInfo {
+            version: 0.0,
+            address_size: 0,
+            encoder_version: [0; HEADER_ENCODER_STRING_SIZE],
+            entries: 0,
+        }
     }
 }
 
@@ -94,7 +99,11 @@ impl EntriesInfo {
 
     /// The encoder string up to its NUL, as `strcmp` compared it.
     pub fn encoder_str(&self) -> &[u8] {
-        let n = self.encoder_version.iter().position(|&c| c == 0).unwrap_or(HEADER_ENCODER_STRING_SIZE);
+        let n = self
+            .encoder_version
+            .iter()
+            .position(|&c| c == 0)
+            .unwrap_or(HEADER_ENCODER_STRING_SIZE);
         &self.encoder_version[..n]
     }
 }
@@ -159,7 +168,13 @@ pub struct Paths {
 impl Paths {
     /// Builds the paths as `setDirNames` did from a location directory.
     pub fn for_location(location: &str, delim: &str) -> Paths {
-        let join = |a: &str, b: &str| if a.is_empty() { b.to_string() } else { format!("{a}{delim}{b}") };
+        let join = |a: &str, b: &str| {
+            if a.is_empty() {
+                b.to_string()
+            } else {
+                format!("{a}{delim}{b}")
+            }
+        };
         let textures_dir = join(location, "texturecache");
         Paths {
             parent_dir: location.to_string(),
@@ -179,7 +194,10 @@ impl Paths {
 pub fn texture_file_name(paths: &Paths, id: &Uuid) -> String {
     let idstr = uuid_to_string(id);
     let first = &idstr[..1];
-    format!("{}{}{}{}{}.texture", paths.textures_dir, paths.delim, first, paths.delim, idstr)
+    format!(
+        "{}{}{}{}{}.texture",
+        paths.textures_dir, paths.delim, first, paths.delim, idstr
+    )
 }
 
 /// The static configuration the C++ kept in class statics.
@@ -329,7 +347,11 @@ impl TextureCache {
         TextureCache {
             config,
             header: Mutex::new(state),
-            fast: Mutex::new(FastState { file: None, opened: Instant::now(), first_time_done: false }),
+            fast: Mutex::new(FastState {
+                file: None,
+                opened: Instant::now(),
+                first_time_done: false,
+            }),
             do_purge: AtomicBool::new(false),
         }
     }
@@ -414,7 +436,13 @@ impl TextureCache {
     /// index, purges (validating 1/256th of the bodies when `validate_idx`
     /// is given) and opens the fast cache. Returns the unused part of
     /// `max_size`.
-    pub fn init_cache(&self, paths: &Paths, max_size: i64, texture_cache_mismatch: bool, validate_idx: Option<u32>) -> i64 {
+    pub fn init_cache(
+        &self,
+        paths: &Paths,
+        max_size: i64,
+        texture_cache_mismatch: bool,
+        validate_idx: Option<u32>,
+    ) -> i64 {
         let mut max_size = max_size;
         {
             let mut s = self.lock();
@@ -429,7 +457,11 @@ impl TextureCache {
                 s.max_textures_size = max_size;
             }
             max_size -= s.max_textures_size;
-            ll_infos!("Headers: {} Textures size: {} MB", s.max_entries, s.max_textures_size / (1024 * 1024));
+            ll_infos!(
+                "Headers: {} Textures size: {} MB",
+                s.max_entries,
+                s.max_textures_size / (1024 * 1024)
+            );
             s.paths = paths.clone();
             if texture_cache_mismatch {
                 self.purge_all_textures(&mut s, true);
@@ -537,7 +569,13 @@ impl TextureCache {
 
     /// `openAndReadEntry`: finds the entry's index, or creates one when
     /// asked (appending, from the free list, or by evicting the LRU).
-    fn open_and_read_entry(&self, s: &mut HeaderState, id: &Uuid, entry: &mut Entry, create: bool) -> i32 {
+    fn open_and_read_entry(
+        &self,
+        s: &mut HeaderState,
+        id: &Uuid,
+        entry: &mut Entry,
+        create: bool,
+    ) -> i32 {
         let mut idx = s.header_id_map.get(id).copied().unwrap_or(-1);
         if idx < 0 {
             if create && !s.read_only {
@@ -588,7 +626,13 @@ impl TextureCache {
         idx
     }
 
-    fn write_entry_to_header_immediately(&self, s: &mut HeaderState, idx: &mut i32, entry: &Entry, write_header: bool) {
+    fn write_entry_to_header_immediately(
+        &self,
+        s: &mut HeaderState,
+        idx: &mut i32,
+        entry: &Entry,
+        write_header: bool,
+    ) {
         let offset = ENTRIES_INFO_SIZE as i64 + *idx as i64 * ENTRY_RECORD_SIZE as i64;
         if write_header {
             Self::open_header_entries_file(s, false, 0);
@@ -613,7 +657,12 @@ impl TextureCache {
         s.updated_entry_map.remove(idx);
     }
 
-    fn read_entry_from_header_immediately(&self, s: &mut HeaderState, idx: &mut i32, entry: &mut Entry) {
+    fn read_entry_from_header_immediately(
+        &self,
+        s: &mut HeaderState,
+        idx: &mut i32,
+        entry: &mut Entry,
+    ) {
         let offset = ENTRIES_INFO_SIZE as i64 + *idx as i64 * ENTRY_RECORD_SIZE as i64;
         Self::open_header_entries_file(s, true, offset);
         let mut buf = entry.encode();
@@ -649,7 +698,13 @@ impl TextureCache {
 
     /// `updateEntry`: records new sizes and writes the entry at once.
     /// Returns true when nothing changed ("already cached").
-    fn update_entry(&self, idx: &mut i32, entry: &mut Entry, new_image_size: i32, new_data_size: i32) -> bool {
+    fn update_entry(
+        &self,
+        idx: &mut i32,
+        entry: &mut Entry,
+        new_image_size: i32,
+        new_data_size: i32,
+    ) -> bool {
         let new_body_size = (new_data_size - ENTRY_SIZE).max(0);
         if new_image_size == entry.image_size && new_body_size == entry.body_size {
             return true;
@@ -705,7 +760,11 @@ impl TextureCache {
             let mut buf = [0u8; ENTRY_RECORD_SIZE];
             let bytes_read = Self::hf_read(s, &mut buf);
             if bytes_read < ENTRY_RECORD_SIZE as i32 {
-                ll_warns!("Corrupted header entries, failed at {} / {}", idx, num_entries);
+                ll_warns!(
+                    "Corrupted header entries, failed at {} / {}",
+                    idx,
+                    num_entries
+                );
                 Self::close_header_entries_file(s);
                 return 0;
             }
@@ -761,7 +820,8 @@ impl TextureCache {
             }
             let entry_size = ENTRY_RECORD_SIZE as i64;
             let mut prev_idx: i64 = -1;
-            let updated: Vec<(i32, Entry)> = s.updated_entry_map.iter().map(|(k, v)| (*k, *v)).collect();
+            let updated: Vec<(i32, Entry)> =
+                s.updated_entry_map.iter().map(|(k, v)| (*k, *v)).collect();
             for (idx, entry) in updated {
                 let delta_idx = idx as i64 - prev_idx - 1;
                 prev_idx = idx as i64;
@@ -786,7 +846,10 @@ impl TextureCache {
         self.read_entries_header(&mut s);
 
         let encoder_matches = s.info.encoder_str() == self.config.encoder_version.as_bytes();
-        if s.info.version != self.config.version || s.info.address_size != self.config.address_size || !encoder_matches {
+        if s.info.version != self.config.version
+            || s.info.address_size != self.config.address_size
+            || !encoder_matches
+        {
             if !s.read_only {
                 ll_infos!("Texture Cache version mismatch, Purging.");
                 self.purge_all_textures(&mut s, false);
@@ -804,7 +867,12 @@ impl TextureCache {
                     } else {
                         lru.insert((entry.time, i as i32));
                         if entry.body_size > 0 && entry.body_size > entry.image_size {
-                            ll_warns!("Bad entry: {}: {}: BodySize: {}", i, uuid_to_string(&entry.id), entry.body_size);
+                            ll_warns!(
+                                "Bad entry: {}: {}: BodySize: {}",
+                                i,
+                                uuid_to_string(&entry.id),
+                                entry.body_size
+                            );
                             purge_list.insert(i as u32);
                         }
                     }
@@ -895,7 +963,8 @@ impl TextureCache {
             }
             if delete_contents {
                 for c in SUBDIRS.iter() {
-                    let dirname = format!("{}{}{}", s.paths.textures_dir, s.paths.delim, *c as char);
+                    let dirname =
+                        format!("{}{}{}", s.paths.textures_dir, s.paths.delim, *c as char);
                     ll_infos!("Deleting files in directory: {}", dirname);
                     if purge_directories {
                         files::delete_dir_and_contents(&dirname);
@@ -1021,7 +1090,11 @@ impl TextureCache {
                 let uuididx = entries[idx as usize].id[0] as u32;
                 if uuididx == validate {
                     let filename = texture_file_name(&s.paths, &entries[idx as usize].id);
-                    ll_debugs!("Validating: {}Size: {}", filename, entries[idx as usize].body_size);
+                    ll_debugs!(
+                        "Validating: {}Size: {}",
+                        filename,
+                        entries[idx as usize].body_size
+                    );
                     let bodysize = files::file_size(&filename);
                     if bodysize != entries[idx as usize].body_size {
                         ll_warns!(
@@ -1068,7 +1141,13 @@ impl TextureCache {
 
     /// `setHeaderCacheEntry`: creates the entry (retrying once after a
     /// re-read of the index) and records its sizes.
-    fn set_header_cache_entry(&self, id: &Uuid, entry: &mut Entry, imagesize: i32, datasize: i32) -> i32 {
+    fn set_header_cache_entry(
+        &self,
+        id: &Uuid,
+        entry: &mut Entry,
+        imagesize: i32,
+        datasize: i32,
+    ) -> i32 {
         let mut idx = {
             let mut s = self.lock();
             self.open_and_read_entry(&mut s, id, entry, true)
@@ -1081,7 +1160,10 @@ impl TextureCache {
         if idx >= 0 {
             self.update_entry(&mut idx, entry, imagesize, datasize);
         } else {
-            ll_warns!("Failed to set cache entry for image: {}", uuid_to_string(id));
+            ll_warns!(
+                "Failed to set cache entry for image: {}",
+                uuid_to_string(id)
+            );
             let mut s = self.lock();
             s.read_only = true;
             self.clear_corrupted_cache(&mut s);
@@ -1097,7 +1179,11 @@ impl TextureCache {
         let mut data = vec![0u8; size.max(0) as usize];
         let (data_size, image_size) = self.read_into(id, offset, size, &mut data);
         data.truncate(data_size.max(0) as usize);
-        ReadOutcome { data_size, data, image_size }
+        ReadOutcome {
+            data_size,
+            data,
+            image_size,
+        }
     }
 
     /// `read` into the caller's buffer of at least `size` bytes (the C++
@@ -1113,7 +1199,11 @@ impl TextureCache {
         }
         let image_size = entry.image_size;
         if buf.len() < size.max(0) as usize {
-            ll_warns!("LLTextureCacheWorker: {} failed to allocate memory for reading: {}", uuid_to_string(id), data_size);
+            ll_warns!(
+                "LLTextureCacheWorker: {} failed to allocate memory for reading: {}",
+                uuid_to_string(id),
+                data_size
+            );
             return (-1, image_size);
         }
         let paths = self.paths();
@@ -1123,10 +1213,15 @@ impl TextureCache {
             let mut rsize = ENTRY_SIZE - offset;
             rsize = rsize.min(data_size);
             if rsize < 0 {
-                ll_warns!("LLTextureCacheWorker: {} failed to allocate memory for reading: {}", uuid_to_string(id), data_size);
+                ll_warns!(
+                    "LLTextureCacheWorker: {} failed to allocate memory for reading: {}",
+                    uuid_to_string(id),
+                    data_size
+                );
                 return (-1, image_size);
             }
-            let bytes_read = files::read_at(&paths.data_file, file_offset, &mut buf[..rsize as usize]);
+            let bytes_read =
+                files::read_at(&paths.data_file, file_offset, &mut buf[..rsize as usize]);
             if bytes_read != rsize {
                 ll_warns!(
                     "LLTextureCacheWorker: {} incorrect number of bytes read from header: {} / {}",
@@ -1153,7 +1248,11 @@ impl TextureCache {
                 (0, offset - ENTRY_SIZE, data_size)
             };
             debug_assert!(data_offset <= header_bytes.max(data_offset));
-            let bytes_read = files::read_at(&filename, file_offset as i64, &mut buf[data_offset as usize..data_size as usize]);
+            let bytes_read = files::read_at(
+                &filename,
+                file_offset as i64,
+                &mut buf[data_offset as usize..data_size as usize],
+            );
             if bytes_read != file_size {
                 ll_warns!(
                     "LLTextureCacheWorker: {} incorrect number of bytes read from body: {} / {}",
@@ -1175,7 +1274,14 @@ impl TextureCache {
     /// `image_size` bytes of a texture of which `data.len()` are known)
     /// with the fast-cache record for a new entry. Returns false on failure
     /// (the host then removes the entry, as `endWork` did).
-    pub fn write(&self, id: &Uuid, data: &[u8], image_size: i32, discard_level: i32, fast: &FastEntry) -> bool {
+    pub fn write(
+        &self,
+        id: &Uuid,
+        data: &[u8],
+        image_size: i32,
+        discard_level: i32,
+        fast: &FastEntry,
+    ) -> bool {
         let data_size = data.len() as i32;
         if data_size <= 0 || image_size < data_size || discard_level < 0 {
             ll_warns!(
@@ -1200,7 +1306,10 @@ impl TextureCache {
             already_cached = self.update_entry(&mut idx, &mut entry, image_size, data_size);
         }
         if idx < 0 {
-            ll_warns!("LLTextureCacheWorker: {} Unable to create header entry for writing!", uuid_to_string(id));
+            ll_warns!(
+                "LLTextureCacheWorker: {} Unable to create header entry for writing!",
+                uuid_to_string(id)
+            );
             return false;
         }
         if already_cached && data_size <= ENTRY_SIZE {
@@ -1217,7 +1326,10 @@ impl TextureCache {
                 files::write_at(&paths.data_file, offset, &data[..ENTRY_SIZE as usize])
             };
             if bytes_written <= 0 {
-                ll_warns!("LLTextureCacheWorker: {} Unable to write header entry!", uuid_to_string(id));
+                ll_warns!(
+                    "LLTextureCacheWorker: {} Unable to write header entry!",
+                    uuid_to_string(id)
+                );
                 return false;
             }
             if data_size <= bytes_written {
@@ -1275,7 +1387,10 @@ impl TextureCache {
         if idx >= 0 {
             if entry.body_size == 0 {
                 if files::exists(filename) {
-                    ll_warns!("Entry has body size of zero but file {} exists. Deleting this file, too.", filename);
+                    ll_warns!(
+                        "Entry has body size of zero but file {} exists. Deleting this file, too.",
+                        filename
+                    );
                 } else {
                     file_maybe_exists = false;
                 }
@@ -1401,7 +1516,13 @@ impl TextureCache {
             return None;
         }
         Self::close_fast_cache_locked(f, false);
-        Some(FastRecord { width: w, height: h, components: c, discard_level: level, data })
+        Some(FastRecord {
+            width: w,
+            height: h,
+            components: c,
+            discard_level: level,
+            data,
+        })
     }
 
     /// `writeToFastCache` after the host scaled the raw image: writes the
@@ -1444,7 +1565,10 @@ impl TextureCache {
 
 fn make_subdirs(paths: &Paths) {
     for c in SUBDIRS.iter() {
-        files::mkdir(&format!("{}{}{}", paths.textures_dir, paths.delim, *c as char));
+        files::mkdir(&format!(
+            "{}{}{}",
+            paths.textures_dir, paths.delim, *c as char
+        ));
     }
 }
 
@@ -1475,12 +1599,22 @@ mod tests {
 
     #[test]
     fn record_layouts() {
-        let info = EntriesInfo { version: 1.71, address_size: 64, encoder_version: *b"Rust j2c\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0", entries: 7 };
+        let info = EntriesInfo {
+            version: 1.71,
+            address_size: 64,
+            encoder_version: *b"Rust j2c\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+            entries: 7,
+        };
         let b = info.encode();
         assert_eq!(b.len(), 44);
         assert_eq!(EntriesInfo::decode(&b), info);
         assert_eq!(info.encoder_str(), b"Rust j2c");
-        let e = Entry { id: [1; 16], image_size: 1234, body_size: 634, time: 99 };
+        let e = Entry {
+            id: [1; 16],
+            image_size: 1234,
+            body_size: 634,
+            time: 99,
+        };
         let b = e.encode();
         assert_eq!(b.len(), 28);
         assert_eq!(Entry::decode(&b), e);
@@ -1507,7 +1641,10 @@ mod tests {
         assert_eq!(p.entries_file, "C:\\cache\\texturecache\\texture.entries");
         assert_eq!(p.legacy_textures_dir, "C:\\cache\\textures");
         let id = crate::uuid_from_string("a1234567-89ab-cdef-1032-547698badcfe").unwrap();
-        assert_eq!(texture_file_name(&p, &id), "C:\\cache\\texturecache\\a\\a1234567-89ab-cdef-1032-547698badcfe.texture");
+        assert_eq!(
+            texture_file_name(&p, &id),
+            "C:\\cache\\texturecache\\a\\a1234567-89ab-cdef-1032-547698badcfe.texture"
+        );
     }
 
     fn temp_dir(name: &str) -> String {
@@ -1533,7 +1670,13 @@ mod tests {
         cache.init_cache(&paths, 50 * 1024 * 1024, false, Some(0));
         let id = [7u8; 16];
         let data: Vec<u8> = (0..2000u32).map(|i| (i * 7 % 251) as u8).collect();
-        let fast = FastEntry { width: 16, height: 16, components: 3, discard_level: 3, data: vec![9; 768] };
+        let fast = FastEntry {
+            width: 16,
+            height: 16,
+            components: 3,
+            discard_level: 3,
+            data: vec![9; 768],
+        };
         assert!(cache.write(&id, &data, 5000, 3, &fast));
         assert!(cache.is_in_cache(&id));
         let r = cache.read(&id, 0, 4096);
@@ -1544,7 +1687,10 @@ mod tests {
         assert_eq!(r.data_size, 300);
         assert_eq!(&r.data[..], &data[..300]);
         let fr = cache.read_fast(&id).unwrap();
-        assert_eq!((fr.width, fr.height, fr.components, fr.discard_level), (16, 16, 3, 3));
+        assert_eq!(
+            (fr.width, fr.height, fr.components, fr.discard_level),
+            (16, 16, 3, 3)
+        );
         assert_eq!(fr.data, vec![9; 768]);
         // The entries file carries one entry with our sizes.
         let bytes = std::fs::read(&paths.entries_file).unwrap();
@@ -1577,7 +1723,13 @@ mod tests {
         cache.set_read_only(false);
         cache.init_cache(&paths, 50 * 1024 * 1024, false, Some(0));
         let id = [5u8; 16];
-        let fast = FastEntry { width: 8, height: 8, components: 3, discard_level: 2, data: vec![4; 192] };
+        let fast = FastEntry {
+            width: 8,
+            height: 8,
+            components: 3,
+            discard_level: 2,
+            data: vec![4; 192],
+        };
         assert!(cache.write(&id, &[1u8; 600], 1000, 2, &fast));
         assert_eq!(cache.try_read_fast(&[6u8; 16]), FastRead::Miss);
 
@@ -1598,11 +1750,17 @@ mod tests {
             let waited = started.elapsed();
             let _ = release_tx.send(());
             assert_eq!(read, FastRead::Busy);
-            assert!(waited < Duration::from_secs(1), "try_read_fast waited {waited:?}");
+            assert!(
+                waited < Duration::from_secs(1),
+                "try_read_fast waited {waited:?}"
+            );
         });
         match cache.try_read_fast(&id) {
             FastRead::Hit(r) => {
-                assert_eq!((r.width, r.height, r.components, r.discard_level), (8, 8, 3, 2));
+                assert_eq!(
+                    (r.width, r.height, r.components, r.discard_level),
+                    (8, 8, 3, 2)
+                );
                 assert_eq!(r.data, vec![4; 192]);
             }
             other => panic!("expected the record, got {other:?}"),
@@ -1623,7 +1781,13 @@ mod tests {
             let cache = TextureCache::new(cfg.clone());
             cache.set_read_only(false);
             cache.init_cache(&paths, 50 * 1024 * 1024, false, None);
-            let fast = FastEntry { width: 8, height: 8, components: 3, discard_level: 2, data: vec![1; 192] };
+            let fast = FastEntry {
+                width: 8,
+                height: 8,
+                components: 3,
+                discard_level: 2,
+                data: vec![1; 192],
+            };
             assert!(cache.write(&[1; 16], &[5u8; 700], 700, 2, &fast));
             cache.shutdown();
         }

@@ -18,7 +18,10 @@ pub(crate) struct Cancelled;
 pub(crate) const MAX_WINDOW: usize = 4 << 20;
 
 enum Source {
-    Pipe { pipe: Arc<Pipe>, abort: Arc<AtomicBool> },
+    Pipe {
+        pipe: Arc<Pipe>,
+        abort: Arc<AtomicBool>,
+    },
     Memory,
 }
 
@@ -31,11 +34,21 @@ pub(crate) struct Input {
 
 impl Input {
     pub(crate) fn from_pipe(pipe: Arc<Pipe>, abort: Arc<AtomicBool>) -> Input {
-        Input { src: Source::Pipe { pipe, abort }, buf: Vec::with_capacity(1 << 16), start: 0, eof: false }
+        Input {
+            src: Source::Pipe { pipe, abort },
+            buf: Vec::with_capacity(1 << 16),
+            start: 0,
+            eof: false,
+        }
     }
 
     pub(crate) fn from_memory(data: &[u8]) -> Input {
-        Input { src: Source::Memory, buf: data.to_vec(), start: 0, eof: true }
+        Input {
+            src: Source::Memory,
+            buf: data.to_vec(),
+            start: 0,
+            eof: true,
+        }
     }
 
     /// The buffered bytes.

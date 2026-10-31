@@ -7,11 +7,12 @@
 //! the asset id obfuscation both use in [`crate::shadow`].
 
 use crate::flags::{
-    II_FLAGS_OBJECT_PERM_OVERWRITE_EVERYONE, II_FLAGS_OBJECT_PERM_OVERWRITE_GROUP, II_FLAGS_OBJECT_SLAM_PERM,
-    II_FLAGS_OBJECT_SLAM_SALE, II_FLAGS_PERM_OVERWRITE_MASK, II_FLAGS_SUBTYPE_MASK,
+    II_FLAGS_OBJECT_PERM_OVERWRITE_EVERYONE, II_FLAGS_OBJECT_PERM_OVERWRITE_GROUP,
+    II_FLAGS_OBJECT_SLAM_PERM, II_FLAGS_OBJECT_SLAM_SALE, II_FLAGS_PERM_OVERWRITE_MASK,
+    II_FLAGS_SUBTYPE_MASK,
 };
 use crate::object::Object;
-use crate::perms::{uuid_crc32, Permissions, Uuid, NULL_ID};
+use crate::perms::{NULL_ID, Permissions, Uuid, uuid_crc32};
 use crate::sale::SaleInfo;
 use crate::text::{self, correct_inventory_description};
 use crate::types::{AssetType, InventoryType};
@@ -193,7 +194,8 @@ impl Item {
 
     /// `setInventorySubType`: replaces the low byte of the flags.
     pub fn set_inventory_sub_type(&mut self, sub_type: u8) {
-        self.flags = (self.flags & !II_FLAGS_SUBTYPE_MASK) | (u32::from(sub_type) & II_FLAGS_SUBTYPE_MASK);
+        self.flags =
+            (self.flags & !II_FLAGS_SUBTYPE_MASK) | (u32::from(sub_type) & II_FLAGS_SUBTYPE_MASK);
     }
 
     /// `accumulatePermissionSlamBits(old_item)`.

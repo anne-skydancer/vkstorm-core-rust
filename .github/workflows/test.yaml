@@ -13,6 +13,24 @@ permissions:
   contents: read
 
 jobs:
+  # The workspace is kept in rustfmt's default style (no rustfmt.toml).
+  # Run `cargo fmt --all` before committing.
+  fmt:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # rust-toolchain.toml's minimal profile leaves rustfmt out; add it to
+      # the pinned toolchain.
+      - name: Rust toolchain with rustfmt
+        run: |
+          rustup show active-toolchain || rustup toolchain install
+          rustup component add rustfmt
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
   test:
     strategy:
       fail-fast: false

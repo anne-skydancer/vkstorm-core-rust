@@ -25,8 +25,15 @@ fn none(_: &str) -> bool {
 fn report(id: &str, r: &mut Run) {
     let (n, total) = check(id, r, &none);
     let (m, bad) = check_model_fetch_state(id, r);
-    eprintln!("{id}: {n} of {total} lines compared; folder fetch state {}/{m}", m - bad.len());
-    assert!(bad.is_empty(), "{id}: folder fetch state differs from the model dump:\n  {}", bad.join("\n  "));
+    eprintln!(
+        "{id}: {n} of {total} lines compared; folder fetch state {}/{m}",
+        m - bad.len()
+    );
+    assert!(
+        bad.is_empty(),
+        "{id}: folder fetch state differs from the model dump:\n  {}",
+        bad.join("\n  ")
+    );
 }
 
 fn lockstep_walk(r: &mut Run) {
@@ -101,7 +108,9 @@ fn c04_ais_limit() {
     }
     r.frame_note("links_reply_processed");
     let n = r.journal_count("fetch.completed");
-    r.fact(&format!("completion with 19 items still out: fetch.completed={n}"));
+    r.fact(&format!(
+        "completion with 19 items still out: fetch.completed={n}"
+    ));
     r.drain_rounds("items_and_links");
     r.step("items_and_links");
     report(id, &mut r);
@@ -188,7 +197,13 @@ fn legacy_limits(id: &str, other_grid: bool) {
     r.login();
     r.walk();
     let d = b.ids.clone();
-    let pool: Vec<_> = d.user.iter().chain(&d.user_sub).chain(&d.user_leaf).copied().collect();
+    let pool: Vec<_> = d
+        .user
+        .iter()
+        .chain(&d.user_sub)
+        .chain(&d.user_leaf)
+        .copied()
+        .collect();
     let mut next = 0;
     r.legacy_delay = true;
     r.step("held_replies");
@@ -224,8 +239,20 @@ fn legacy_limits(id: &str, other_grid: bool) {
             }
         }
     }
-    let lib_items: Vec<_> = d.lib_items.iter().filter(|i| r.model.items.contains_key(*i)).take(30).copied().collect();
-    let lib_sub: Vec<_> = d.lib_folders.iter().enumerate().filter(|(i, _)| i % 3 != 0).map(|(_, f)| *f).collect();
+    let lib_items: Vec<_> = d
+        .lib_items
+        .iter()
+        .filter(|i| r.model.items.contains_key(*i))
+        .take(30)
+        .copied()
+        .collect();
+    let lib_sub: Vec<_> = d
+        .lib_folders
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| i % 3 != 0)
+        .map(|(_, f)| *f)
+        .collect();
     let (mut ni, mut nl, mut nf) = (0, 0, 0);
     for k in 1..=6 {
         for _ in 0..2 {
@@ -488,7 +515,14 @@ fn c08_postponed() {
         let item = pid(0xa0d00000, k as u64 + 1);
         let before = r.journal_count("callback ");
         for _ in 0..n {
-            r.ais(Command::FetchItem { item_id: item, library: false }, Some("postponed"), vec![]);
+            r.ais(
+                Command::FetchItem {
+                    item_id: item,
+                    library: false,
+                },
+                Some("postponed"),
+                vec![],
+            );
         }
         let pending = r.ais_pending();
         r.fact(&format!("enqueued {n} ais_pending={pending}"));

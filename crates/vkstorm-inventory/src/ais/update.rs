@@ -57,14 +57,14 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use vkstorm_llsd::text::uuid_set;
 use vkstorm_llsd::Value;
+use vkstorm_llsd::text::uuid_set;
 
 use super::command::{CommandType, MAX_FOLDER_DEPTH_REQUEST};
 use crate::category::{Category, VERSION_UNKNOWN};
 use crate::item::Item;
 use crate::llsd::coerce::{as_boolean, as_integer, as_uuid, get, has};
-use crate::perms::{Permissions, Uuid, NULL_ID, PERM_NONE};
+use crate::perms::{NULL_ID, PERM_NONE, Permissions, Uuid};
 use crate::sale::SaleInfo;
 use crate::types::{AssetType, FolderType};
 
@@ -108,7 +108,13 @@ impl Default for ItemRecord {
     /// `LLViewerInventoryItem()`: a default item, incomplete, null
     /// transaction id, not running, not faulted.
     fn default() -> Self {
-        ItemRecord { item: Item::default(), complete: false, transaction_id: NULL_ID, running: false, faulted: false }
+        ItemRecord {
+            item: Item::default(),
+            complete: false,
+            transaction_id: NULL_ID,
+            running: false,
+            faulted: false,
+        }
     }
 }
 
@@ -430,7 +436,11 @@ impl<M: Model + ?Sized> Parser<'_, M> {
         }
 
         parse_uuid_array(update, "_created_items", &mut self.out.created_item_ids);
-        parse_uuid_array(update, "_created_categories", &mut self.out.created_category_ids);
+        parse_uuid_array(
+            update,
+            "_created_categories",
+            &mut self.out.created_category_ids,
+        );
 
         const UCV: &str = "_updated_category_versions";
         if has(update, UCV)
@@ -456,7 +466,10 @@ impl<M: Model + ?Sized> Parser<'_, M> {
         if self.ctx.command == CommandType::FetchCategorySubset {
             // The initial folder is incomplete: only its content.
             if has(update, "_embedded") {
-                self.parse_embedded(get(update, "_embedded"), self.out.fetch_depth.wrapping_sub(1));
+                self.parse_embedded(
+                    get(update, "_embedded"),
+                    self.out.fetch_depth.wrapping_sub(1),
+                );
             }
         } else if has(update, "category_id") && has(update, "parent_id") {
             self.parse_category(update, self.out.fetch_depth);
@@ -518,7 +531,9 @@ impl<M: Model + ?Sized> Parser<'_, M> {
         }
         let parent = new_link.item.object.parent;
         if self.out.fetch {
-            new_link.item.set_permissions(&link_permissions(&self.ctx.agent_id));
+            new_link
+                .item
+                .set_permissions(&link_permissions(&self.ctx.agent_id));
             new_link.item.sale_info = SaleInfo::DEFAULT;
             new_link.complete = true;
             let h = self.push_item(new_link);
@@ -531,7 +546,9 @@ impl<M: Model + ?Sized> Parser<'_, M> {
             self.out.items_updated.insert(item_id, h);
             self.delta(parent);
         } else {
-            new_link.item.set_permissions(&link_permissions(&self.ctx.agent_id));
+            new_link
+                .item
+                .set_permissions(&link_permissions(&self.ctx.agent_id));
             new_link.item.sale_info = SaleInfo::DEFAULT;
             new_link.complete = true;
             let h = self.push_item(new_link);
@@ -635,16 +652,26 @@ impl<M: Model + ?Sized> Parser<'_, M> {
     }
 
     /// `parseDescendentCount`.
-    fn parse_descendent_count(&mut self, category_id: Uuid, preferred_type: FolderType, embedded: &Value) {
+    fn parse_descendent_count(
+        &mut self,
+        category_id: Uuid,
+        preferred_type: FolderType,
+        embedded: &Value,
+    ) {
         if has(embedded, "categories") && has(embedded, "links") && has(embedded, "items") {
-            let n = get(embedded, "categories").len() + get(embedded, "links").len() + get(embedded, "items").len();
+            let n = get(embedded, "categories").len()
+                + get(embedded, "links").len()
+                + get(embedded, "items").len();
             self.out.descendents_known.insert(category_id, n as i32);
         } else if self.out.fetch
             && has(embedded, "links")
-            && (preferred_type == FolderType::CURRENT_OUTFIT || preferred_type == FolderType::OUTFIT)
+            && (preferred_type == FolderType::CURRENT_OUTFIT
+                || preferred_type == FolderType::OUTFIT)
         {
             // COF and outfits hold links only.
-            self.out.descendents_known.insert(category_id, get(embedded, "links").len() as i32);
+            self.out
+                .descendents_known
+                .insert(category_id, get(embedded, "links").len() as i32);
         }
     }
 
@@ -696,7 +723,11 @@ impl<M: Model + ?Sized> Parser<'_, M> {
     /// `parseEmbeddedItem`: a single item (`_embedded` in a link).
     fn parse_embedded_item(&mut self, item: &Value) {
         if has(item, "item_id")
-            && (self.out.fetch || self.out.created_item_ids.contains(&as_uuid(get(item, "item_id"))))
+            && (self.out.fetch
+                || self
+                    .out
+                    .created_item_ids
+                    .contains(&as_uuid(get(item, "item_id"))))
         {
             self.parse_item(item);
         }
@@ -715,7 +746,11 @@ impl<M: Model + ?Sized> Parser<'_, M> {
     /// `parseEmbeddedCategory`: a single folder (`_embedded` in a link).
     fn parse_embedded_category(&mut self, category: &Value, depth: i32) {
         if has(category, "category_id")
-            && (self.out.fetch || self.out.created_category_ids.contains(&as_uuid(get(category, "category_id"))))
+            && (self.out.fetch
+                || self
+                    .out
+                    .created_category_ids
+                    .contains(&as_uuid(get(category, "category_id"))))
         {
             self.parse_category(category, depth);
         }
@@ -770,7 +805,11 @@ impl ParsedUpdate {
             stopped: false,
         };
         model.begin_update();
-        let mut p = Parser { model, ctx: *ctx, out };
+        let mut p = Parser {
+            model,
+            ctx: *ctx,
+            out,
+        };
         p.parse_meta(update);
         p.parse_content(update);
         p.out
@@ -785,8 +824,13 @@ impl ParsedUpdate {
         // Descendent accounting: not for folders this update creates, nor
         // for those AIS did not report as updated.
         for (category, &delta) in &self.descendent_deltas {
-            if !self.categories_created.contains_key(category) && self.versions_updated.contains_key(category) {
-                ops.push(ApplyOp::AccountDescendents { category: *category, delta });
+            if !self.categories_created.contains_key(category)
+                && self.versions_updated.contains_key(category)
+            {
+                ops.push(ApplyOp::AccountDescendents {
+                    category: *category,
+                    delta,
+                });
             }
         }
         for &record in self.categories_created.values() {
@@ -797,7 +841,9 @@ impl ParsedUpdate {
             ops.push(ApplyOp::UpdateCategory { record });
         }
         if !self.items_lost.is_empty() {
-            ops.push(ApplyOp::MoveLostItems { records: self.items_lost.values().copied().collect() });
+            ops.push(ApplyOp::MoveLostItems {
+                records: self.items_lost.values().copied().collect(),
+            });
         }
         for &record in self.items_created.values() {
             ops.push(ApplyOp::CreateItem { record });
@@ -810,7 +856,10 @@ impl ParsedUpdate {
             ops.push(ApplyOp::DeleteObject { id: *id });
         }
         for (category, &version) in &self.versions_updated {
-            ops.push(ApplyOp::VersionUpdate { category: *category, version });
+            ops.push(ApplyOp::VersionUpdate {
+                category: *category,
+                version,
+            });
         }
         ops.push(ApplyOp::Checkpoint);
         ops.push(ApplyOp::NotifyObservers);
@@ -826,7 +875,11 @@ impl ParsedUpdate {
             items_updated: self.items_updated.keys().copied().collect(),
             items_lost: self.items_lost.keys().copied().collect(),
             objects_deleted: self.objects_deleted.iter().copied().collect(),
-            versions: self.versions_updated.iter().map(|(k, v)| (*k, *v)).collect(),
+            versions: self
+                .versions_updated
+                .iter()
+                .map(|(k, v)| (*k, *v))
+                .collect(),
         }
     }
 }

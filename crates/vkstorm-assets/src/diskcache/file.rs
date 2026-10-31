@@ -29,7 +29,8 @@ pub fn file_size(path: &str) -> i32 {
 /// seek fails; 0 bytes read is `Ok(0)`, a failure for the C++ caller).
 pub fn read_at(path: &str, position: i32, buf: &mut [u8]) -> Result<i32, ()> {
     let mut f = File::open(path).map_err(|_| ())?;
-    f.seek(SeekFrom::Start(position.max(0) as u64)).map_err(|_| ())?;
+    f.seek(SeekFrom::Start(position.max(0) as u64))
+        .map_err(|_| ())?;
     let mut total = 0usize;
     while total < buf.len() {
         match f.read(&mut buf[total..]) {
@@ -69,7 +70,11 @@ impl Mode {
 pub fn write_at(path: &str, mode: Mode, position: i32, data: &[u8]) -> Option<i32> {
     match mode {
         Mode::Append => {
-            let mut f = OpenOptions::new().append(true).create(true).open(path).ok()?;
+            let mut f = OpenOptions::new()
+                .append(true)
+                .create(true)
+                .open(path)
+                .ok()?;
             f.write_all(data).ok()?;
             let pos = f.stream_position().ok()?;
             Some(pos.min(i32::MAX as u64) as i32)
@@ -81,14 +86,24 @@ pub fn write_at(path: &str, mode: Mode, position: i32, data: &[u8]) -> Option<i3
                 let pos = f.stream_position().ok()?;
                 Some(pos.min(i32::MAX as u64) as i32)
             } else {
-                let mut f = OpenOptions::new().write(true).create(true).truncate(true).open(path).ok()?;
+                let mut f = OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .truncate(true)
+                    .open(path)
+                    .ok()?;
                 f.write_all(data).ok()?;
                 let pos = f.stream_position().ok()?;
                 Some(pos.min(i32::MAX as u64) as i32)
             }
         }
         _ => {
-            let mut f = OpenOptions::new().write(true).create(true).truncate(true).open(path).ok()?;
+            let mut f = OpenOptions::new()
+                .write(true)
+                .create(true)
+                .truncate(true)
+                .open(path)
+                .ok()?;
             f.write_all(data).ok()?;
             let pos = f.stream_position().ok()?;
             Some(pos.min(i32::MAX as u64) as i32)
@@ -134,15 +149,25 @@ pub fn update_file_access_time(path: &str) {
     const TIME_THRESHOLD: u64 = 60 * 60;
     let cur = SystemTime::now();
     let Ok(m) = fs::metadata(path) else {
-        ll_warns!("Failed to read last write time for cache file {}: not found", path);
+        ll_warns!(
+            "Failed to read last write time for cache file {}: not found",
+            path
+        );
         return;
     };
     let Ok(last) = m.modified() else { return };
     let delta = cur.duration_since(last).unwrap_or(Duration::ZERO);
     if delta.as_secs() > TIME_THRESHOLD {
-        let set = OpenOptions::new().write(true).open(path).and_then(|f| f.set_modified(cur));
+        let set = OpenOptions::new()
+            .write(true)
+            .open(path)
+            .and_then(|f| f.set_modified(cur));
         if let Err(e) = set {
-            ll_warns!("Failed to update last write time for cache file {}: {}", path, e);
+            ll_warns!(
+                "Failed to update last write time for cache file {}: {}",
+                path,
+                e
+            );
         }
     }
 }
@@ -154,7 +179,11 @@ pub fn lfs_read(path: &str, offset: i32, buf: &mut [u8]) -> i32 {
         ll_warns!("LLLFS: Unable to read file: {}", path);
         return 0;
     };
-    let seek = if offset < 0 { f.seek(SeekFrom::End(0)) } else { f.seek(SeekFrom::Start(offset as u64)) };
+    let seek = if offset < 0 {
+        f.seek(SeekFrom::End(0))
+    } else {
+        f.seek(SeekFrom::Start(offset as u64))
+    };
     if seek.is_err() {
         return 0;
     }

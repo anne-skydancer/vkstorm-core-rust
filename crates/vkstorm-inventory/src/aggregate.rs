@@ -4,7 +4,7 @@
 //! An aggregate summarises copy, modify and transfer over a set of masks, each
 //! as one of four values ([`AP_EMPTY`] ... [`AP_ALL`]).
 
-use crate::perms::{PermissionBit, PermissionMask, PERM_COPY, PERM_MODIFY, PERM_TRANSFER};
+use crate::perms::{PERM_COPY, PERM_MODIFY, PERM_TRANSFER, PermissionBit, PermissionMask};
 
 /// `LLAggregatePermissions::AP_EMPTY`: nothing aggregated yet.
 pub const AP_EMPTY: u8 = 0x00;
@@ -33,7 +33,9 @@ pub struct AggregatePermissions {
 impl AggregatePermissions {
     /// `LLAggregatePermissions::empty` and the default constructor: every
     /// value [`AP_EMPTY`].
-    pub const EMPTY: AggregatePermissions = AggregatePermissions { bits: [AP_EMPTY; 3] };
+    pub const EMPTY: AggregatePermissions = AggregatePermissions {
+        bits: [AP_EMPTY; 3],
+    };
 
     /// `perm2PermIndex`: the index of copy, modify or transfer; `None`
     /// (`PI_END`) for any other value, combinations included.
@@ -60,7 +62,9 @@ impl AggregatePermissions {
     /// The state `unpackMessage` reads from a message byte: two bits each
     /// for copy, modify and transfer; bits 6 and 7 are ignored.
     pub fn from_u8(byte: u8) -> AggregatePermissions {
-        AggregatePermissions { bits: [byte & 3, (byte >> 2) & 3, (byte >> 4) & 3] }
+        AggregatePermissions {
+            bits: [byte & 3, (byte >> 2) & 3, (byte >> 4) & 3],
+        }
     }
 
     /// `isEmpty`: every value is [`AP_EMPTY`].

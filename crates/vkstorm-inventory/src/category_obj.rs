@@ -40,11 +40,15 @@ pub struct Category {
 
 impl Category {
     /// `LLCategory::none`, also what `LLCategory()` constructs.
-    pub const NONE: Category = Category { data: [0; CATEGORY_DEPTH] };
+    pub const NONE: Category = Category {
+        data: [0; CATEGORY_DEPTH],
+    };
 
     /// `LLCategory(U32)`: the bytes of `value`, most significant first.
     pub fn new(value: u32) -> Category {
-        Category { data: value.to_be_bytes() }
+        Category {
+            data: value.to_be_bytes(),
+        }
     }
 
     /// `LLCategory::init`.

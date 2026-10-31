@@ -160,7 +160,11 @@ pub fn unpack_viewer_item(sd: &Value, in_open_sim: bool, names: &LocalizedNames)
 /// reply order (each is pushed to the front of the list after the
 /// synthesised `Contents` category); `None` when the reply has no
 /// `contents` key.
-pub fn read_reply_contents(reply: &Value, in_open_sim: bool, names: &LocalizedNames) -> Option<Vec<Entry>> {
+pub fn read_reply_contents(
+    reply: &Value,
+    in_open_sim: bool,
+    names: &LocalizedNames,
+) -> Option<Vec<Entry>> {
     if !has(reply, "contents") {
         return None;
     }

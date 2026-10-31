@@ -159,7 +159,9 @@ impl Parser<'_> {
                         return None;
                     }
                 }
-                Some(Json::Number(String::from_utf8_lossy(&self.b[s..self.i]).into_owned()))
+                Some(Json::Number(
+                    String::from_utf8_lossy(&self.b[s..self.i]).into_owned(),
+                ))
             }
             _ => None,
         }
@@ -196,7 +198,8 @@ impl Parser<'_> {
                         b't' => '\t',
                         b'u' => {
                             let mut u = self.hex4()?;
-                            if (0xD800..0xDC00).contains(&u) && self.b[self.i..].starts_with(b"\\u") {
+                            if (0xD800..0xDC00).contains(&u) && self.b[self.i..].starts_with(b"\\u")
+                            {
                                 self.i += 2;
                                 let lo = self.hex4()?;
                                 if (0xDC00..0xE000).contains(&lo) {

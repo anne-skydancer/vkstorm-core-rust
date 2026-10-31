@@ -77,7 +77,13 @@ pub struct FolderEntry {
     pub is_singleton: bool,
 }
 
-const fn e(v: i32, name: &'static str, is_protected: bool, is_automatic: bool, is_singleton: bool) -> FolderEntry {
+const fn e(
+    v: i32,
+    name: &'static str,
+    is_protected: bool,
+    is_automatic: bool,
+    is_singleton: bool,
+) -> FolderEntry {
     FolderEntry {
         first: FolderType(v),
         last: FolderType(v),
@@ -192,7 +198,10 @@ impl FolderType {
         Value::Array(
             ENTRIES
                 .iter()
-                .filter(|e| !e.first.is_ensemble() && (FolderType::TEXTURE..FolderType::COUNT).contains(&e.first))
+                .filter(|e| {
+                    !e.first.is_ensemble()
+                        && (FolderType::TEXTURE..FolderType::COUNT).contains(&e.first)
+                })
                 .map(|e| Value::string(e.name))
                 .collect(),
         )

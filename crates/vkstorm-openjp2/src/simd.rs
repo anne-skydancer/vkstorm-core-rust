@@ -150,7 +150,10 @@ unsafe fn mct_decode_real_avx2(
     let u = _mm256_loadu_ps(c1.add(i));
     let v = _mm256_loadu_ps(c2.add(i));
     let r = _mm256_add_ps(y, _mm256_mul_ps(v, vrv));
-    let g = _mm256_sub_ps(_mm256_sub_ps(y, _mm256_mul_ps(u, vgu)), _mm256_mul_ps(v, vgv));
+    let g = _mm256_sub_ps(
+      _mm256_sub_ps(y, _mm256_mul_ps(u, vgu)),
+      _mm256_mul_ps(v, vgv),
+    );
     let b = _mm256_add_ps(y, _mm256_mul_ps(u, vbu));
     _mm256_storeu_ps(c0.add(i), r);
     _mm256_storeu_ps(c1.add(i), g);
@@ -163,7 +166,12 @@ unsafe fn mct_decode_real_avx2(
 /// 9/7 inverse lifting, step 1 on the 8-wide interleaved layout:
 /// `w[i*16 .. i*16+8] *= c` for `i` in `start..end`.
 #[inline]
-pub(crate) unsafe fn v8dwt_decode_step1(fw: *mut OPJ_FLOAT32, start: u32, end: u32, c: OPJ_FLOAT32) {
+pub(crate) unsafe fn v8dwt_decode_step1(
+  fw: *mut OPJ_FLOAT32,
+  start: u32,
+  end: u32,
+  c: OPJ_FLOAT32,
+) {
   if has_avx2() {
     v8dwt_decode_step1_avx2(fw, start, end, c)
   } else {
@@ -263,6 +271,9 @@ unsafe fn v8dwt_decode_step2_avx2(
     c += c;
     let vc2 = _mm256_set1_ps(c);
     let prev = _mm256_loadu_ps(fw.sub(8));
-    _mm256_storeu_ps(fw.sub(8), _mm256_add_ps(prev, _mm256_mul_ps(_mm256_loadu_ps(fl), vc2)));
+    _mm256_storeu_ps(
+      fw.sub(8),
+      _mm256_add_ps(prev, _mm256_mul_ps(_mm256_loadu_ps(fl), vc2)),
+    );
   }
 }

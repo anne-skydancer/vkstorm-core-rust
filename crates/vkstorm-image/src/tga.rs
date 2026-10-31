@@ -7,12 +7,12 @@
 //! the viewer always did. Run-length colour-mapped images are flipped
 //! unconditionally, also as the viewer always did.
 
-use crate::{check_dimensions, fail, Error, Raster};
+use crate::{Error, Raster, check_dimensions, fail};
 
 /// 5-bit to 8-bit expansion with best rounding (`LLImageTGA::s5to8bits`).
 const S5TO8BITS: [u8; 32] = [
-    0, 8, 16, 25, 33, 41, 49, 58, 66, 74, 82, 90, 99, 107, 115, 123, 132, 140, 148, 156, 165, 173, 181, 189, 197, 206, 214,
-    222, 230, 239, 247, 255,
+    0, 8, 16, 25, 33, 41, 49, 58, 66, 74, 82, 90, 99, 107, 115, 123, 132, 140, 148, 156, 165, 173,
+    181, 189, 197, 206, 214, 222, 230, 239, 247, 255,
 ];
 
 /// Expand a 16-bit little-endian xRRRRRGGGGGBBBBB pixel to RGB.
@@ -84,7 +84,9 @@ pub fn parse(data: &[u8]) -> Result<Info, Error> {
         0 => return fail("Unable to load file.  TGA file contains no image data."),
         1 => {
             if pixel_size != 8 {
-                return fail("Unable to load file.  Colormapped images must have 8 bits per pixel.");
+                return fail(
+                    "Unable to load file.  Colormapped images must have 8 bits per pixel.",
+                );
             }
         }
         2 | 9 | 10 => {}
@@ -126,7 +128,11 @@ pub fn parse(data: &[u8]) -> Result<Info, Error> {
         data_offset += color_map_bytes;
     }
 
-    let bits_per_pixel = if color_map.is_some() { color_map_depth } else { pixel_size };
+    let bits_per_pixel = if color_map.is_some() {
+        color_map_depth
+    } else {
+        pixel_size
+    };
     let mut is_15bit = false;
     let components = match bits_per_pixel {
         24 => 3,
@@ -171,7 +177,9 @@ pub fn decode_with(info: &Info, data: &[u8]) -> Result<Raster, Error> {
         return fail("LLImageTGA trying to decode an image with no data!");
     }
     if info.components != 1 && info.components != 3 && info.components != 4 {
-        return fail("TGA images with a number of components other than 1, 3, and 4 are not supported.");
+        return fail(
+            "TGA images with a number of components other than 1, 3, and 4 are not supported.",
+        );
     }
     if info.origin_right {
         return fail("TGA images with origin on right side are not supported.");
@@ -190,7 +198,12 @@ pub fn decode_with(info: &Info, data: &[u8]) -> Result<Raster, Error> {
 
 /// Run a TGA run-length stream producing `pixels` pixels of `bpp` bytes.
 /// `emit(src_pixel, repeat)` writes one source pixel `repeat` times.
-fn run_length(src: &[u8], bpp: usize, pixels: usize, mut emit: impl FnMut(&[u8], usize)) -> Result<(), Error> {
+fn run_length(
+    src: &[u8],
+    bpp: usize,
+    pixels: usize,
+    mut emit: impl FnMut(&[u8], usize),
+) -> Result<(), Error> {
     let truncated = || Error::new("LLImageTGA: run-length data is truncated");
     let mut pos = 0usize;
     let mut done = 0usize;
@@ -299,7 +312,12 @@ fn decode_truecolor(info: &Info, src: &[u8], raster: &mut Raster) -> Result<(), 
     Ok(())
 }
 
-fn decode_color_map(info: &Info, map: &ColorMap, src: &[u8], raster: &mut Raster) -> Result<(), Error> {
+fn decode_color_map(
+    info: &Info,
+    map: &ColorMap,
+    src: &[u8],
+    raster: &mut Raster,
+) -> Result<(), Error> {
     if info.pixel_size != 8 {
         return fail("LLImageTGA: colour-mapped images must have 8 bits per pixel");
     }
@@ -350,7 +368,11 @@ fn decode_color_map(info: &Info, map: &ColorMap, src: &[u8], raster: &mut Raster
         }
         let dst_row = width * c;
         for row in 0..height {
-            let src_row = if info.origin_top { height - 1 - row } else { row };
+            let src_row = if info.origin_top {
+                height - 1 - row
+            } else {
+                row
+            };
             let s = &src[src_row * width..src_row * width + width];
             let d = &mut raster.data[row * dst_row..row * dst_row + dst_row];
             for (dp, &index) in d.chunks_exact_mut(c).zip(s) {
@@ -370,7 +392,12 @@ pub fn decode_and_process(data: &[u8], domain: f32, weight: f32) -> Result<Raste
 }
 
 /// [`decode_and_process`] with an already parsed header.
-pub fn decode_and_process_with(info: &Info, data: &[u8], domain: f32, weight: f32) -> Result<Raster, Error> {
+pub fn decode_and_process_with(
+    info: &Info,
+    data: &[u8],
+    domain: f32,
+    weight: f32,
+) -> Result<Raster, Error> {
     if data.is_empty() {
         return fail("LLImageTGA trying to decode an image with no data!");
     }

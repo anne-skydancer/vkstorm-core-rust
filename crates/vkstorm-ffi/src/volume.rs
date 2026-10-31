@@ -14,9 +14,9 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::slice;
 
 use vkstorm_volume::{
-    FaceBuffers, FaceDesc, FaceParams, FaceResult, Path, PathParams, PathPt, Profile,
-    ProfileFace, ProfileParams, V4, build_face, calculate_tangents, face_sizes, generate_path,
-    generate_profile, path_num_points, profile_num_points, sweep_uninit,
+    FaceBuffers, FaceDesc, FaceParams, FaceResult, Path, PathParams, PathPt, Profile, ProfileFace,
+    ProfileParams, V4, build_face, calculate_tangents, face_sizes, generate_path, generate_profile,
+    path_num_points, profile_num_points, sweep_uninit,
 };
 
 thread_local! {
@@ -69,7 +69,15 @@ pub unsafe extern "C" fn vks_volume_profile_generate(
     let r = catch_unwind(AssertUnwindSafe(|| {
         PROFILE.with(|cell| {
             let mut p = cell.borrow_mut();
-            let ok = generate_profile(&params, path_open != 0, detail, split, is_sculpted != 0, sculpt_size, &mut p);
+            let ok = generate_profile(
+                &params,
+                path_open != 0,
+                detail,
+                split,
+                is_sculpted != 0,
+                sculpt_size,
+                &mut p,
+            );
             unsafe {
                 *out = VksProfileOut {
                     points: p.points.as_ptr(),
@@ -110,7 +118,14 @@ pub unsafe extern "C" fn vks_volume_path_generate(
         PATH.with(|cell| {
             let mut p = cell.borrow_mut();
             p.step = 1.0;
-            generate_path(&params, detail, split, is_sculpted != 0, sculpt_size, &mut p);
+            generate_path(
+                &params,
+                detail,
+                split,
+                is_sculpted != 0,
+                sculpt_size,
+                &mut p,
+            );
             unsafe {
                 *out = VksPathOut {
                     points: p.points.as_ptr(),
@@ -143,7 +158,14 @@ pub unsafe extern "C" fn vks_volume_profile_num_points(
     }
     let params = unsafe { *params };
     catch_unwind(AssertUnwindSafe(|| {
-        profile_num_points(&params, path_open != 0, detail, split, is_sculpted != 0, sculpt_size)
+        profile_num_points(
+            &params,
+            path_open != 0,
+            detail,
+            split,
+            is_sculpted != 0,
+            sculpt_size,
+        )
     }))
     .unwrap_or(0)
 }
@@ -162,11 +184,19 @@ pub unsafe extern "C" fn vks_volume_path_num_points(params: *const PathParams, d
 }
 
 unsafe fn slice_or_empty<'a, T>(p: *const T, n: usize) -> &'a [T] {
-    if p.is_null() || n == 0 { &[] } else { unsafe { slice::from_raw_parts(p, n) } }
+    if p.is_null() || n == 0 {
+        &[]
+    } else {
+        unsafe { slice::from_raw_parts(p, n) }
+    }
 }
 
 unsafe fn slice_mut_or_empty<'a, T>(p: *mut T, n: usize) -> &'a mut [T] {
-    if p.is_null() || n == 0 { &mut [] } else { unsafe { slice::from_raw_parts_mut(p, n) } }
+    if p.is_null() || n == 0 {
+        &mut []
+    } else {
+        unsafe { slice::from_raw_parts_mut(p, n) }
+    }
 }
 
 /// The mesh sweep of `LLVolume::generate`: writes `path_count *
@@ -384,7 +414,9 @@ pub unsafe extern "C" fn vks_volume_tangents(
             for t in tangents.iter_mut() {
                 *t = V4::ZERO;
             }
-            vkstorm_volume::tangent::calculate_tangent_array(positions, normals, texcoords, indices, tangents);
+            vkstorm_volume::tangent::calculate_tangent_array(
+                positions, normals, texcoords, indices, tangents,
+            );
         }
         1
     }))

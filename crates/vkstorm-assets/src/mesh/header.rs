@@ -241,21 +241,33 @@ pub fn header_received(data: &[u8], flags: u32) -> Result<HeaderReceipt, Process
             if flags != 0 {
                 header.set_from_flags(flags);
             } else {
-                if header.skin_size > 0 && header_size + (header.skin_offset as i64) + (header.skin_size as i64) < (data_size as i64) {
+                if header.skin_size > 0
+                    && header_size + (header.skin_offset as i64) + (header.skin_size as i64)
+                        < (data_size as i64)
+                {
                     header.skin_in_cache = true;
                 }
                 if header.physics_convex_size > 0
-                    && header_size + (header.physics_convex_offset as i64) + (header.physics_convex_size as i64) < (data_size as i64)
+                    && header_size
+                        + (header.physics_convex_offset as i64)
+                        + (header.physics_convex_size as i64)
+                        < (data_size as i64)
                 {
                     header.physics_convex_in_cache = true;
                 }
                 if header.physics_mesh_size > 0
-                    && header_size + (header.physics_mesh_offset as i64) + (header.physics_mesh_size as i64) < (data_size as i64)
+                    && header_size
+                        + (header.physics_mesh_offset as i64)
+                        + (header.physics_mesh_size as i64)
+                        < (data_size as i64)
                 {
                     header.physics_mesh_in_cache = true;
                 }
                 for i in 0..NUM_LODS {
-                    if header.lod_size[i] > 0 && header_size + (header.lod_offset[i] as i64) + (header.lod_size[i] as i64) < (data_size as i64) {
+                    if header.lod_size[i] > 0
+                        && header_size + (header.lod_offset[i] as i64) + (header.lod_size[i] as i64)
+                            < (data_size as i64)
+                    {
                         header.lod_in_cache[i] = true;
                     }
                 }
@@ -279,7 +291,13 @@ pub fn header_received(data: &[u8], flags: u32) -> Result<HeaderReceipt, Process
     } else {
         header.not_found = true;
     }
-    Ok(HeaderReceipt { header, combined_header_size: header_size, data_size, skin_in_data, lods_in_data })
+    Ok(HeaderReceipt {
+        header,
+        combined_header_size: header_size,
+        data_size,
+        skin_in_data,
+        lods_in_data,
+    })
 }
 
 /// `write_preamble`: the 12-byte cache preamble.
@@ -335,7 +353,10 @@ mod tests {
 
     #[test]
     fn from_llsd_and_lod_choice() {
-        let v = header_value([(0, 100), (100, 0), (100, 300), (400, 500)], Some((900, 50)));
+        let v = header_value(
+            [(0, 100), (100, 0), (100, 300), (400, 500)],
+            Some((900, 50)),
+        );
         let mut h = MeshHeader::from_llsd(&v);
         assert_eq!(h.lod_size, [100, 0, 300, 500]);
         assert_eq!(h.skin_offset, 900);
@@ -357,7 +378,10 @@ mod tests {
 
     #[test]
     fn received_from_network_bytes() {
-        let v = header_value([(0, 100), (100, 200), (300, 300), (600, 500)], Some((1100, 50)));
+        let v = header_value(
+            [(0, 100), (100, 200), (300, 300), (600, 500)],
+            Some((1100, 50)),
+        );
         let (bytes, _) = vkstorm_llsd::format(vkstorm_llsd::Format::Binary, &v, Default::default());
         let hs = bytes.len();
         // A 4096-byte first fetch holding the header and the first two LODs.
@@ -377,7 +401,10 @@ mod tests {
         let r2 = header_received(&data, 0b0100).unwrap();
         assert_eq!(r2.header.lod_in_cache, [false, false, true, false]);
         // Junk.
-        assert_eq!(header_received(b"\x00\x01junk", 0).unwrap_err(), ProcessingResult::ParseFailure);
+        assert_eq!(
+            header_received(b"\x00\x01junk", 0).unwrap_err(),
+            ProcessingResult::ParseFailure
+        );
         assert!(header_received(&[], 0).unwrap().header.not_found);
     }
 

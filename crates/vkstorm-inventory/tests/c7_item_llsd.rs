@@ -14,11 +14,11 @@ use vkstorm_inventory::category::{Category, ViewerCategory};
 use vkstorm_inventory::item::Item;
 use vkstorm_inventory::llsd::coerce::insert;
 use vkstorm_inventory::object::Object;
-use vkstorm_inventory::perms::{Permissions, PERM_ALL};
+use vkstorm_inventory::perms::{PERM_ALL, Permissions};
 use vkstorm_inventory::sale::{SaleInfo, SaleType};
 use vkstorm_inventory::types::{AssetType, FolderType, InventoryType};
-use vkstorm_llsd::text::date_parse;
 use vkstorm_llsd::Value;
+use vkstorm_llsd::text::date_parse;
 
 // ---------------------------------------------------------------------------
 // Field records (the tool's PermF, ItemF, CatF) and raw construction
@@ -143,7 +143,10 @@ fn make_perm(f: &PermF) -> Permissions {
 }
 
 fn make_sale(t: i32, p: i32) -> SaleInfo {
-    SaleInfo { sale_type: SaleType(t), price: p }
+    SaleInfo {
+        sale_type: SaleType(t),
+        price: p,
+    }
 }
 
 /// `make_item` (`RawItem::assign`): every field raw.
@@ -184,12 +187,19 @@ fn make_obj(f: &CatF) -> Object {
 
 /// `make_cat` (`RawCat::assign`).
 fn make_cat(f: &CatF) -> Category {
-    Category { object: make_obj(f), preferred_type: FolderType(f.pref) }
+    Category {
+        object: make_obj(f),
+        preferred_type: FolderType(f.pref),
+    }
 }
 
 /// `make_vcat`: `make_cat` plus the owner and version.
 fn make_vcat(f: &CatF) -> ViewerCategory {
-    ViewerCategory { category: make_cat(f), owner: f.owner, version: f.version }
+    ViewerCategory {
+        category: make_cat(f),
+        owner: f.owner,
+        version: f.version,
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -198,7 +208,15 @@ fn make_vcat(f: &CatF) -> ViewerCategory {
 
 fn item_cols(it: &Item) -> Vec<String> {
     let o = &it.object;
-    let mut v = vec![uuid(&o.id), uuid(&o.parent), uuid(&it.asset), uuid(&o.thumbnail), d(o.asset_type.0), d(it.inv_type.0), x8(it.flags)];
+    let mut v = vec![
+        uuid(&o.id),
+        uuid(&o.parent),
+        uuid(&it.asset),
+        uuid(&o.thumbnail),
+        d(o.asset_type.0),
+        d(it.inv_type.0),
+        x8(it.flags),
+    ];
     let p = perm_cols(&it.permissions);
     v.extend(p);
     v.extend([
@@ -257,12 +275,27 @@ fn with_ret(ret: bool, mut cols: Vec<String>) -> Vec<String> {
 // The cases (the tool's base_item, prev_item, c5_names, c5_item_cases, ...)
 // ---------------------------------------------------------------------------
 
-const ASSET_TYPES: [i32; 36] =
-    [-1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 17, 18, 19, 20, 21, 22, 24, 25, 40, 45, 49, 56, 57, 58, 59, 255, 26, 60, 127, -2, 50, 9];
-const INV_TYPES: [i32; 27] = [0, 1, 2, 3, 6, 7, 8, 9, 10, 15, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 28, -1, 255, 4, 5, 11, 29];
-const BASE_MASKS: [u32; 7] = [PERM_ALL, 0x7fffbfff, 0x7fff7fff, 0x7fffdfff, 0x7fff5fff, 0x00000000, 0x0000e000];
+const ASSET_TYPES: [i32; 36] = [
+    -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 17, 18, 19, 20, 21, 22, 24, 25, 40, 45, 49, 56,
+    57, 58, 59, 255, 26, 60, 127, -2, 50, 9,
+];
+const INV_TYPES: [i32; 27] = [
+    0, 1, 2, 3, 6, 7, 8, 9, 10, 15, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 28, -1, 255, 4, 5, 11,
+    29,
+];
+const BASE_MASKS: [u32; 7] = [
+    PERM_ALL, 0x7fffbfff, 0x7fff7fff, 0x7fffdfff, 0x7fff5fff, 0x00000000, 0x0000e000,
+];
 const FLAGS: [u32; 7] = [0, 1, 0xff, 0x100, 0x1f1100, 0x7fffffff, 0xffffffff];
-const DATES: [i64; 7] = [0, 1, i32::MAX as i64, i32::MIN as i64, 2147483648, 4294967301, -1];
+const DATES: [i64; 7] = [
+    0,
+    1,
+    i32::MAX as i64,
+    i32::MIN as i64,
+    2147483648,
+    4294967301,
+    -1,
+];
 const PRICES: [i32; 5] = [i32::MIN, -1, 0, 10, i32::MAX];
 /// `T_ | V_`: transfer and move.
 const NEXT_DEFAULT: u32 = 0x0008_2000;
@@ -355,11 +388,28 @@ fn c5_item_cases() -> Vec<(String, ItemF)> {
     let mut v = Vec::new();
     let b = base_item();
     for at in ASSET_TYPES {
-        let inv = if (0..60).contains(&at) { InventoryType::default_for_asset_type(AssetType(at)).0 } else { 255 };
-        v.push((format!("c5.at.{at}"), ItemF { ty: at, inv_type: inv, ..b.clone() }));
+        let inv = if (0..60).contains(&at) {
+            InventoryType::default_for_asset_type(AssetType(at)).0
+        } else {
+            255
+        };
+        v.push((
+            format!("c5.at.{at}"),
+            ItemF {
+                ty: at,
+                inv_type: inv,
+                ..b.clone()
+            },
+        ));
     }
     for it in INV_TYPES {
-        v.push((format!("c5.it.{it}"), ItemF { inv_type: it, ..b.clone() }));
+        v.push((
+            format!("c5.it.{it}"),
+            ItemF {
+                inv_type: it,
+                ..b.clone()
+            },
+        ));
     }
     let assets = [NUL, u(0xa3), MAGIC, not_magic()];
     let asset_names = ["null", "a3", "magic", "notmagic"];
@@ -376,7 +426,12 @@ fn c5_item_cases() -> Vec<(String, ItemF)> {
             }
         }
     }
-    let runtimes: [Vec<u8>; 4] = [Vec::new(), b"luau".to_vec(), vec![b'r'; 60], b"lu au".to_vec()];
+    let runtimes: [Vec<u8>; 4] = [
+        Vec::new(),
+        b"luau".to_vec(),
+        vec![b'r'; 60],
+        b"lu au".to_vec(),
+    ];
     for th in 0..2 {
         for fv in 0..2 {
             for (ri, rt) in runtimes.iter().enumerate() {
@@ -396,22 +451,56 @@ fn c5_item_cases() -> Vec<(String, ItemF)> {
     }
     for fl in FLAGS {
         for (t, it) in [(6, 6), (5, 18), (56, 25)] {
-            v.push((format!("c5.flags.{}.{t}", x8(fl)), ItemF { flags: fl, ty: t, inv_type: it, ..b.clone() }));
+            v.push((
+                format!("c5.flags.{}.{t}", x8(fl)),
+                ItemF {
+                    flags: fl,
+                    ty: t,
+                    inv_type: it,
+                    ..b.clone()
+                },
+            ));
         }
     }
     for st in 0..=3 {
         for p in PRICES {
-            v.push((format!("c5.sale.{st}.{p}"), ItemF { sale_type: st, sale_price: p, ..b.clone() }));
+            v.push((
+                format!("c5.sale.{st}.{p}"),
+                ItemF {
+                    sale_type: st,
+                    sale_price: p,
+                    ..b.clone()
+                },
+            ));
         }
     }
     for st in [-1, 4, 200, 255] {
-        v.push((format!("c5.sale.{st}.10"), ItemF { sale_type: st, ..b.clone() }));
+        v.push((
+            format!("c5.sale.{st}.10"),
+            ItemF {
+                sale_type: st,
+                ..b.clone()
+            },
+        ));
     }
     for (i, (n, ds)) in c5_names().into_iter().enumerate() {
-        v.push((format!("c5.name.{i}"), ItemF { name: n, desc: ds, ..b.clone() }));
+        v.push((
+            format!("c5.name.{i}"),
+            ItemF {
+                name: n,
+                desc: ds,
+                ..b.clone()
+            },
+        ));
     }
     for dt in DATES {
-        v.push((format!("c5.date.{dt}"), ItemF { date: dt, ..b.clone() }));
+        v.push((
+            format!("c5.date.{dt}"),
+            ItemF {
+                date: dt,
+                ..b.clone()
+            },
+        ));
     }
     {
         let mut f = b.clone();
@@ -428,7 +517,12 @@ fn c5_item_cases() -> Vec<(String, ItemF)> {
         v.push(("c5.perm.unfixed".to_owned(), f));
     }
     {
-        let mut f = ItemF { ty: 24, inv_type: -1, asset: u(0xc5), ..b.clone() };
+        let mut f = ItemF {
+            ty: 24,
+            inv_type: -1,
+            asset: u(0xc5),
+            ..b.clone()
+        };
         v.push(("c5.link".to_owned(), f.clone()));
         f.ty = 25;
         f.inv_type = 8;
@@ -469,27 +563,79 @@ fn c5_cat_cases() -> Vec<(String, CatF)> {
         ..CatF::default()
     };
     for p in -1..=101 {
-        v.push((format!("c5c.pref.{p}"), CatF { pref: p, ..b.clone() }));
+        v.push((
+            format!("c5c.pref.{p}"),
+            CatF {
+                pref: p,
+                ..b.clone()
+            },
+        ));
     }
-    v.push(("c5c.pref.127".to_owned(), CatF { pref: 127, ..b.clone() }));
-    v.push(("c5c.pref.-128".to_owned(), CatF { pref: -128, ..b.clone() }));
+    v.push((
+        "c5c.pref.127".to_owned(),
+        CatF {
+            pref: 127,
+            ..b.clone()
+        },
+    ));
+    v.push((
+        "c5c.pref.-128".to_owned(),
+        CatF {
+            pref: -128,
+            ..b.clone()
+        },
+    ));
     for p in [0, 8, 46, -1, 127, 58] {
         for k in 1..4 {
-            let f = CatF { pref: p, thumb: if k & 1 != 0 { u(0xb2) } else { NUL }, fav: k & 2 != 0, ..b.clone() };
+            let f = CatF {
+                pref: p,
+                thumb: if k & 1 != 0 { u(0xb2) } else { NUL },
+                fav: k & 2 != 0,
+                ..b.clone()
+            };
             v.push((format!("c5c.meta.{p}.{k}"), f));
         }
     }
     for (i, (n, _)) in c5_names().into_iter().enumerate() {
-        v.push((format!("c5c.name.{i}"), CatF { pref: 0, name: n, ..b.clone() }));
+        v.push((
+            format!("c5c.name.{i}"),
+            CatF {
+                pref: 0,
+                name: n,
+                ..b.clone()
+            },
+        ));
     }
     for t in [-1, 255, 6, 24] {
-        v.push((format!("c5c.type.{t}"), CatF { pref: 0, ty: t, ..b.clone() }));
+        v.push((
+            format!("c5c.type.{t}"),
+            CatF {
+                pref: 0,
+                ty: t,
+                ..b.clone()
+            },
+        ));
     }
-    v.push(("c5c.runtime".to_owned(), CatF { runtime: b"luau".to_vec(), thumb: u(0xb2), ..b.clone() }));
-    v.push(("c5c.nullids".to_owned(), CatF { id: NUL, parent: NUL, owner: NUL, version: -1, ..b.clone() }));
+    v.push((
+        "c5c.runtime".to_owned(),
+        CatF {
+            runtime: b"luau".to_vec(),
+            thumb: u(0xb2),
+            ..b.clone()
+        },
+    ));
+    v.push((
+        "c5c.nullids".to_owned(),
+        CatF {
+            id: NUL,
+            parent: NUL,
+            owner: NUL,
+            version: -1,
+            ..b.clone()
+        },
+    ));
     v
 }
-
 
 // ---------------------------------------------------------------------------
 // The LLSD input values (the tool's llsd_values)
@@ -552,7 +698,10 @@ fn llsd_values() -> Vec<(&'static str, Value)> {
         ("str.0x10", sv("0x10")),
         ("str.7", sv("7")),
         ("str.uuid", sv(&ustr(0x75))),
-        ("str.pipes", Value::String(b"name|with|pipes\x01\xc3\xa9".to_vec())),
+        (
+            "str.pipes",
+            Value::String(b"name|with|pipes\x01\xc3\xa9".to_vec()),
+        ),
         ("uuid.null", Value::Uuid(NUL)),
         ("uuid.75", Value::Uuid(u(0x75))),
         ("date", Value::Date(date)),
@@ -574,7 +723,6 @@ fn llsd_values() -> Vec<(&'static str, Value)> {
     ]
 }
 
-
 /// `LLSD::erase(key)`.
 fn erase(sd: &mut Value, key: &str) {
     if let Value::Map(m) = sd {
@@ -587,8 +735,25 @@ fn erase(sd: &mut Value, key: &str) {
 // ---------------------------------------------------------------------------
 
 const C7_KEYS: [&str; 20] = [
-    "item_id", "parent_id", "permissions", "thumbnail", "thumbnail_id", "favorite", "script", "metadata", "asset_id",
-    "linked_id", "shadow_id", "type", "inv_type", "flags", "sale_info", "name", "desc", "created_at", "callback_id",
+    "item_id",
+    "parent_id",
+    "permissions",
+    "thumbnail",
+    "thumbnail_id",
+    "favorite",
+    "script",
+    "metadata",
+    "asset_id",
+    "linked_id",
+    "shadow_id",
+    "type",
+    "inv_type",
+    "flags",
+    "sale_info",
+    "name",
+    "desc",
+    "created_at",
+    "callback_id",
     "hash_id",
 ];
 
@@ -607,19 +772,31 @@ fn c7_lines() -> Lines {
             let sd = with(key, v.clone());
             for is_new in [1, 0] {
                 let (ok, it) = from_prev(&sd, is_new != 0);
-                s.emit(&format!("c7.{key}.{name}.{is_new}"), "ret+item", &with_ret(ok, item_cols(&it)));
+                s.emit(
+                    &format!("c7.{key}.{name}.{is_new}"),
+                    "ret+item",
+                    &with_ret(ok, item_cols(&it)),
+                );
             }
         }
     }
     // The OpenSim branch: the permissions survive the prologue.
     for vname in ["map.perm", "map.empty", "undef"] {
-        let v = &values.iter().find(|(n, _)| *n == vname).expect("a named value").1;
+        let v = &values
+            .iter()
+            .find(|(n, _)| *n == vname)
+            .expect("a named value")
+            .1;
         let mut sd = with("permissions", v.clone());
         insert(&mut sd, "name", sv("os"));
         for is_new in [1, 0] {
             let mut it = make_item(&prev_item());
             it.from_llsd(&sd, is_new != 0, true);
-            s.emit(&format!("c7.opensim.{vname}.{is_new}"), "item", &item_cols(&it));
+            s.emit(
+                &format!("c7.opensim.{vname}.{is_new}"),
+                "item",
+                &item_cols(&it),
+            );
         }
     }
     // Whole-document non-maps.
@@ -628,7 +805,11 @@ fn c7_lines() -> Lines {
             continue;
         }
         let (ok, it) = from_prev(v, true);
-        s.emit(&format!("c7.doc.{name}"), "ret+item", &with_ret(ok, item_cols(&it)));
+        s.emit(
+            &format!("c7.doc.{name}"),
+            "ret+item",
+            &with_ret(ok, item_cols(&it)),
+        );
     }
     // asset_id / linked_id / shadow_id subsets.
     for mask in 1..8 {
@@ -644,12 +825,23 @@ fn c7_lines() -> Lines {
         }
         for is_new in [1, 0] {
             let (_, it) = from_prev(&sd, is_new != 0);
-            s.emit(&format!("c7.assetkeys.{mask}.{is_new}"), "item", &item_cols(&it));
+            s.emit(
+                &format!("c7.assetkeys.{mask}.{is_new}"),
+                "item",
+                &item_cols(&it),
+            );
         }
     }
     // thumbnail with thumbnail_id.
     for k in 0..4 {
-        let mut sd = with("thumbnail", if k & 1 != 0 { with("asset_id", Value::Uuid(u(0x84))) } else { Value::map() });
+        let mut sd = with(
+            "thumbnail",
+            if k & 1 != 0 {
+                with("asset_id", Value::Uuid(u(0x84)))
+            } else {
+                Value::map()
+            },
+        );
         if k & 2 != 0 {
             insert(&mut sd, "thumbnail_id", Value::Uuid(u(0x85)));
         }
@@ -693,10 +885,18 @@ fn c7_lines() -> Lines {
             insert(&mut sd, "script", with("runtime", sv("direct")));
         }
         if k == 1 || k == 2 {
-            insert(&mut sd, "metadata", with("script", with("runtime", sv("wrapped"))));
+            insert(
+                &mut sd,
+                "metadata",
+                with("script", with("runtime", sv("wrapped"))),
+            );
         }
         if k == 3 {
-            insert(&mut sd, "metadata", with("thumbnail", with("asset_id", Value::Uuid(u(0x86)))));
+            insert(
+                &mut sd,
+                "metadata",
+                with("thumbnail", with("asset_id", Value::Uuid(u(0x86)))),
+            );
         }
         insert(&mut sd, "type", sv("lsltext"));
         for is_new in [1, 0] {
@@ -735,15 +935,27 @@ fn c7_lines() -> Lines {
                     insert(&mut sd, "permissions", p);
                 }
                 let (_, it) = from_prev(&sd, true);
-                s.emit(&format!("c7.permmask.{name}.{with_perm}"), "item", &item_cols(&it));
+                s.emit(
+                    &format!("c7.permmask.{name}.{with_perm}"),
+                    "item",
+                    &item_cols(&it),
+                );
             }
         }
     }
     // permissions map keys x value types.
     {
         let pkeys = [
-            "creator_id", "owner_id", "last_owner_id", "group_id", "is_owner_group", "base_mask", "owner_mask",
-            "group_mask", "everyone_mask", "next_owner_mask",
+            "creator_id",
+            "owner_id",
+            "last_owner_id",
+            "group_id",
+            "is_owner_group",
+            "base_mask",
+            "owner_mask",
+            "group_mask",
+            "everyone_mask",
+            "next_owner_mask",
         ];
         let pvals: Vec<(&str, Value)> = vec![
             ("int.max", Value::Integer(i32::MAX)),
@@ -763,7 +975,11 @@ fn c7_lines() -> Lines {
                 let (_, it) = from_prev(&sd, true);
                 let cs = format!("c7.perm.{pk}.{pn}");
                 s.emit(&cs, "item", &item_cols(&it));
-                s.emit(&cs, "perm_from_sd", &perm_cols(&Permissions::from_llsd(&perm)));
+                s.emit(
+                    &cs,
+                    "perm_from_sd",
+                    &perm_cols(&Permissions::from_llsd(&perm)),
+                );
             }
         }
         let mut p = with("owner_id", Value::Uuid(NUL));
