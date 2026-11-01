@@ -34,7 +34,9 @@ use std::ffi::{CStr, c_char, c_void};
 use std::{ptr, slice};
 
 use vkstorm_inventory::ais::reply::{self, Response};
-use vkstorm_inventory::ais::result::{AlertState, HttpStatus, begin, callback_ids, error_branch};
+use vkstorm_inventory::ais::result::{
+    AlertState, HTTP_RESULTS, HttpStatus, begin, callback_ids, error_branch,
+};
 use vkstorm_inventory::ais::update::{
     CategoryRecord, FetchTimer, Flow, ItemRecord, Model, ModelCategory, ModelRef, ParseContext,
     ParsedUpdate,
@@ -166,15 +168,16 @@ pub unsafe extern "C" fn vks_inv_ais_reply_from_binary(
             return ptr::null_mut();
         }
         let value = v.unwrap_or(Value::Undefined);
-        // The status as getStatusFromLLSD reads it, without changing the
-        // value (the coroutine's own begin() does that).
-        let mut probe = value.clone();
-        let status = begin(&mut probe);
-        let message = match get(get(&probe, "http_result"), "message") {
+        // The status as getStatusFromLLSD reads it, read in place: the
+        // coroutine's own begin() changes the value, and copying the whole
+        // tree to protect it would recurse once per level of an unlimited
+        // depth reply.
+        let results = get(&value, HTTP_RESULTS);
+        let status = HttpStatus::from_results(results);
+        let message = match get(results, "message") {
             Value::String(s) => s.clone(),
             _ => Vec::new(),
         };
-        drop(probe);
         Box::into_raw(Box::new(VksInvAisReply {
             value,
             status,
@@ -760,3 +763,41 @@ const _: () = {
         assert!(size_of::<VksInvAisUpdateView>() == 184);
     }
 };
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A reply nested far deeper than any limit crosses back and forth on a
+    /// small stack: reading its status no longer copies the tree, and
+    /// formatting it no longer recurses.
+    #[test]
+    fn deep_binary_reply_round_trips_on_a_small_stack() {
+        std::thread::Builder::new()
+            .stack_size(128 * 1024)
+            .spawn(|| {
+                let mut v = Value::Integer(7);
+                for _ in 0..100_000 {
+                    v = Value::Array(vec![v]);
+                }
+                let mut top = std::collections::BTreeMap::new();
+                top.insert(b"deep".to_vec(), v);
+                let (input, _) =
+                    vkstorm_llsd::format(Format::Binary, &Value::Map(top), Options::default());
+                let r = unsafe { vks_inv_ais_reply_from_binary(input.as_ptr(), input.len()) };
+                assert!(!r.is_null());
+                let b = unsafe { vks_inv_ais_reply_to_binary(r) };
+                assert!(!b.is_null());
+                let view = unsafe { vks_inv_ais_bytes_view(b) };
+                let out = unsafe { slice::from_raw_parts(view.ptr, view.len) };
+                assert_eq!(out, &input[..]);
+                unsafe {
+                    vks_inv_ais_bytes_free(b);
+                    vks_inv_ais_reply_free(r);
+                }
+            })
+            .unwrap()
+            .join()
+            .unwrap();
+    }
+}
