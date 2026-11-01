@@ -138,6 +138,9 @@ pub struct Skeleton {
     /// `loadSkeleton`'s return value: false when an entry lacked a key or
     /// had a null folder id ("Unable to import near ...").
     pub rv: bool,
+    /// The entries that were not imported (each logs "Unable to import near
+    /// {name}"), by index into the entry list, in order.
+    pub rejected: Vec<usize>,
 }
 
 impl Skeleton {
@@ -150,7 +153,8 @@ impl Skeleton {
     pub fn import(owner: &Uuid, entries: &[SkeletonEntry]) -> Skeleton {
         let mut folders = BTreeMap::new();
         let mut rv = true;
-        for e in entries {
+        let mut rejected = Vec::new();
+        for (index, e) in entries.iter().enumerate() {
             match (&e.name, e.folder_id, e.parent_id, e.version) {
                 (Some(name), Some(id), Some(parent), Some(version)) if id != NULL_ID => {
                     let mut cat = ViewerCategory {
@@ -165,13 +169,17 @@ impl Skeleton {
                     cat.version = version;
                     folders.entry(id).or_insert(cat);
                 }
-                _ => rv = false,
+                _ => {
+                    rv = false;
+                    rejected.push(index);
+                }
             }
         }
         Skeleton {
             owner: *owner,
             folders,
             rv,
+            rejected,
         }
     }
 
@@ -212,6 +220,8 @@ impl Skeleton {
         let loaded = match &decoded {
             Some(d) => {
                 is_cache_obsolete = d.obsolete;
+                plan.cache_obsolete = d.obsolete;
+                plan.null_id_names = d.null_id_names.clone();
                 d.rv()
             }
             None => false,
@@ -243,6 +253,7 @@ impl Skeleton {
                 continue; // in the cache, not in the skeleton
             };
             if decoded.cats_to_update.contains(&id) {
+                plan.folders_to_update.push(id);
                 tcat.version = VERSION_UNKNOWN;
             }
             if cat.version != tcat.version {
@@ -282,8 +293,12 @@ impl Skeleton {
                 continue;
             }
             if is_broken_link(item, &model.view(&temp)) {
+                plan.possibly_broken.push(item.clone());
                 possibly_broken.push(index);
                 continue;
+            }
+            if item.is_link_type() {
+                plan.good_link_count += 1;
             }
             model.add_item(item, &temp);
             added.push(index);
@@ -295,14 +310,17 @@ impl Skeleton {
             let item = &items[index];
             let parent = item.object.parent;
             if is_broken_link(item, &model.view(&temp)) {
+                plan.bad_link_count += 1;
                 invalid.insert(parent);
             } else {
+                plan.recovered_link_count += 1;
                 model.add_item(item, &temp);
                 added.push(index);
                 plan.cached_item_count += 1;
                 *child_counts.entry(parent).or_insert(0) += 1;
             }
         }
+        plan.invalidated = invalid.iter().copied().collect();
         for id in &invalid {
             if model.categories.contains(id) {
                 if let Some(t) = temp.get_mut(id) {
@@ -398,6 +416,27 @@ pub struct LoadPlan {
     pub cached_category_count: usize,
     /// The items added (the log line's count).
     pub cached_item_count: usize,
+    /// The skeleton folders whose cached items include an unknown type, in
+    /// cache file order ("folder to update: {name}").
+    pub folders_to_update: Vec<Uuid>,
+    /// The cached links the first pass deferred as broken, in order (the
+    /// `LL_DEBUGS` "Attempted to add cached link item without baseobj
+    /// present" lines).
+    pub possibly_broken: Vec<Item>,
+    /// The folders invalidated by a link still broken after the second pass,
+    /// skeleton and model folders alike, in UUID order ("Invalidating
+    /// category name ...").
+    pub invalidated: Vec<Uuid>,
+    /// Links added in the first pass, links still broken, and links added
+    /// in the second (the summary `LL_DEBUGS` line).
+    pub good_link_count: usize,
+    /// The cache file was read and found obsolete (version, header or
+    /// parse; `loadFromFile` logged why).
+    pub cache_obsolete: bool,
+    /// [`Decoded::null_id_names`] of the file read.
+    pub null_id_names: Vec<Vec<u8>>,
+    pub bad_link_count: usize,
+    pub recovered_link_count: usize,
 }
 
 /// The model as the load changes it: the skeleton's folders and the added

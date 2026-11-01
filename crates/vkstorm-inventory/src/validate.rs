@@ -43,6 +43,7 @@ use std::fmt::Write as _;
 use vkstorm_llsd::Value;
 
 use crate::llsd::coerce::insert;
+use crate::model::{UuidMap, UuidSet};
 use crate::perms::{NULL_ID, Uuid};
 use crate::types::folder::BAD_LOOKUP;
 use crate::types::{AssetType, FolderType};
@@ -92,9 +93,9 @@ pub struct Snapshot {
     /// The item records.
     pub items: Vec<SnapItem>,
     /// `mCategoryMap`: key to folder (a null pointer is a `null_cat`).
-    pub category_map: BTreeMap<Uuid, Option<usize>>,
+    pub category_map: UuidMap<Option<usize>>,
     /// `mItemMap`: key to item.
-    pub item_map: BTreeMap<Uuid, usize>,
+    pub item_map: UuidMap<usize>,
     /// The order in which the C++ iterates `mCategoryMap`: every key of
     /// [`category_map`](Self::category_map), once each.
     pub category_order: Vec<Uuid>,
@@ -102,15 +103,15 @@ pub struct Snapshot {
     /// [`item_map`](Self::item_map), once each.
     pub item_order: Vec<Uuid>,
     /// `mParentChildCategoryTree`: parent key to the child folder vector.
-    pub category_tree: BTreeMap<Uuid, Vec<Option<usize>>>,
+    pub category_tree: UuidMap<Vec<Option<usize>>>,
     /// `mParentChildItemTree`: parent key to the child item vector.
-    pub item_tree: BTreeMap<Uuid, Vec<Option<usize>>>,
+    pub item_tree: UuidMap<Vec<Option<usize>>>,
     /// `mBacklinkMMap`: (target, link) pairs.
     pub backlinks: Vec<(Uuid, Uuid)>,
     /// The keys of `mCategoryLock` set to true.
-    pub category_locks: BTreeSet<Uuid>,
+    pub category_locks: UuidSet,
     /// The keys of `mItemLock` set to true.
-    pub item_locks: BTreeSet<Uuid>,
+    pub item_locks: UuidSet,
     /// `mLastItem` (an item index), the `getItem` cache.
     pub last_item: Option<usize>,
 }
@@ -121,14 +122,16 @@ impl Snapshot {
     /// the `std::map`s the viewer had before upstream 28fee038e0.
     pub fn use_key_order(&mut self) {
         self.category_order = self.category_map.keys().copied().collect();
+        self.category_order.sort_unstable();
         self.item_order = self.item_map.keys().copied().collect();
+        self.item_order.sort_unstable();
     }
 
     /// Whether the two orders name exactly the keys of their maps.
     pub fn orders_match_maps(&self) -> bool {
-        fn same<V>(order: &[Uuid], map: &BTreeMap<Uuid, V>) -> bool {
+        fn same<V>(order: &[Uuid], map: &UuidMap<V>) -> bool {
             order.len() == map.len()
-                && order.iter().collect::<BTreeSet<_>>().len() == order.len()
+                && order.iter().copied().collect::<UuidSet>().len() == order.len()
                 && order.iter().all(|k| map.contains_key(k))
         }
         same(&self.category_order, &self.category_map) && same(&self.item_order, &self.item_map)
@@ -381,6 +384,187 @@ pub struct Validation {
     pub info: ValidationInfo,
     /// `mLastItem` afterwards.
     pub last_item: Option<usize>,
+    /// The lines the C++ logged, in its order.
+    pub events: Vec<Event>,
+}
+
+/// Where a folder's preferred type was counted (the `LL_DEBUGS` lines of
+/// the folder-type tally).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Place {
+    /// `Under suitcase cat:` (OpenSim only; not counted).
+    Suitcase,
+    /// `Under root cat:`.
+    Root,
+    /// `Elsewhere cat:`.
+    Elsewhere,
+}
+
+/// One line `validate()` logs, in the order the C++ logs them. Record
+/// fields (`cat`, `item`, `target`, `top`) are indices into the snapshot's
+/// records, so the caller can print names and paths; `key` is the map key
+/// (or the folder id under which a child vector was found). The C++ text
+/// of each is on its variant; `Debug` marks `LL_DEBUGS` lines, `Info`
+/// `LL_INFOS`, the rest are `LL_WARNS("Inventory")`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Event {
+    /// "Fatal inventory corruption: no root folder id".
+    NoRootFolder,
+    /// "Fatal inventory corruption: No library root folder id".
+    NoLibraryRootFolder,
+    /// Info: "unexpected sizes: cat map size {cats} parent/child {trees}".
+    UnexpectedSizes { cats: usize, trees: usize },
+    /// "null cat".
+    NullCat,
+    /// `getObjectTopmostAncestor`: "Unable to trace topmost ancestor,
+    /// initial object {object} does not exist".
+    AncestorMissing { object: Uuid },
+    /// `getObjectTopmostAncestor`: "Detected a loop on an object {parent}
+    /// when searching for ancestor of {object}".
+    AncestorLoop { object: Uuid, parent: Uuid },
+    /// `getObjectTopmostAncestor`: "unable to trace topmost ancestor of
+    /// {object}, missing item for uuid {parent}".
+    AncestorParentMissing { object: Uuid, parent: Uuid },
+    /// `isInSuitcase` (OpenSim): "Detected a loop on a cat {parent} when
+    /// searching for ancestor of {cat}".
+    SuitcaseLoop { cat: Uuid, parent: Uuid },
+    /// `isInSuitcase` (OpenSim): "unable to trace parentage of {cat},
+    /// missing item for uuid {parent}".
+    SuitcaseParentMissing { cat: Uuid, parent: Uuid },
+    /// "cat id/index mismatch {key} {cat.id}".
+    CatIdMismatch { key: Uuid, cat: usize },
+    /// "cat {key} has no parent, but is not root ({root}) or library root
+    /// ({library root})".
+    NullParent { key: Uuid },
+    /// Debug: "cat {name} skipped because it is a child of Suitcase".
+    SuitcaseSkipped { cat: usize },
+    /// "invalid direct descendents for {key}".
+    DirectDescendents { key: Uuid },
+    /// "invalid desc count for {key} [{path}] cached {count} expected
+    /// {cats}+{items}={sum}".
+    InvalidDescendentCount {
+        key: Uuid,
+        cat: usize,
+        cats: usize,
+        items: usize,
+    },
+    /// "null item at index {index} for cat {key}".
+    NullItemAtIndex { index: usize, key: Uuid },
+    /// "wrong parent for {item.id} found {item.parent} expected {key}".
+    WrongParent { item: usize, key: Uuid },
+    /// "item {item.id} found as child of {key} but not in top level
+    /// mItemMap".
+    ItemNotInTopMap { item: usize, key: Uuid },
+    /// "item mismatch, item_id {item.id} top level entry is different, uuid
+    /// {top.id}".
+    ItemMismatch { item: usize, top: usize },
+    /// "unable to find topmost ancestor for {item.id}".
+    TopmostNotFound { item: usize },
+    /// "unrecognized top level ancestor for {item.id} got {top} expected
+    /// {root} or {library root}".
+    TopmostNotRecognized { item: usize, top: Uuid },
+    /// "cat {key} name [{name}] orphaned - no child cat array for alleged
+    /// parent {parent}".
+    CatOrphanNoArray { key: Uuid, cat: usize, parent: Uuid },
+    /// "cat {key} name [{name}] orphaned - not found in child cat array of
+    /// alleged parent {parent}".
+    CatOrphanNotFound { key: Uuid, cat: usize, parent: Uuid },
+    /// Debug: "Under suitcase cat: / Under root cat: / Elsewhere cat:
+    /// {path} folder_type {preferred type}".
+    FolderTypeOf { place: Place, cat: usize },
+    /// "item_id {key} does not match {item.id}".
+    ItemIdMismatch { key: Uuid, item: usize },
+    /// "item {key} name [{name}] has null parent id!".
+    ItemNullParent { key: Uuid, item: usize },
+    /// "item {key} name [{name}] orphaned - alleged parent has no child
+    /// items list {parent}".
+    ItemOrphanNoList {
+        key: Uuid,
+        item: usize,
+        parent: Uuid,
+    },
+    /// "item {key} name [{name}] orphaned - not found as child of alleged
+    /// parent {parent}".
+    ItemOrphanNotFound {
+        key: Uuid,
+        item: usize,
+        parent: Uuid,
+    },
+    /// "link {item.id} type {item type} missing backlink info at target_id
+    /// {target}".
+    MissingBacklink { item: usize, target: Uuid },
+    /// "broken item link {name} id {item.id}".
+    BrokenItemLink { item: usize },
+    /// "broken folder link {name} id {item.id}".
+    BrokenFolderLink { item: usize },
+    /// "link {name} references a link item {target name} {target.id}".
+    LinkToLink { item: usize, target: usize },
+    /// "Link item {name} has backlinks!".
+    LinkHasBacklinks { item: usize },
+    /// "invalid backlink from target {name} to {link}".
+    InvalidBacklink { item: usize, link: Uuid },
+    /// Debug: "Folder type {ft} count {count} under root" (`under_root`) or
+    /// "... elsewhere".
+    FolderTypeCount {
+        under_root: bool,
+        folder_type: i32,
+        count: i32,
+    },
+    /// "Expected system folder type {name}({ft}) was not found under root".
+    SystemFolderNotFound { folder_type: i32 },
+    /// "Fatal inventory corruption: Cannot create system folder of type
+    /// {name}({ft})".
+    CannotCreateSystemFolder { folder_type: i32 },
+    /// "Fatal inventory corruption: System folder type has excess copies
+    /// under root, type {name}({ft}) count {count}".
+    ExcessCopiesFatal { folder_type: i32, count: i32 },
+    /// "Non-Fatal inventory corruption: system folder type has excess
+    /// copies under root, type {name}({ft}) count {count}".
+    ExcessCopiesNonFatal { folder_type: i32, count: i32 },
+    /// "Found {count} extra folders of type {name}({ft}) outside of root".
+    ExtraFoldersElsewhere { folder_type: i32, count: i32 },
+    /// Info: "Found locks on some categories: sub-cat arrays {cats}, item
+    /// arrays {items}".
+    Locks { cats: i32, items: i32 },
+    /// Debug (no tag): "Found {count} cats with unknown descendent count".
+    UnknownDescendentCounts { count: i32 },
+    /// Debug: "Found {count} cats with unknown version".
+    UnknownVersions { count: i32 },
+}
+
+/// The ids `getObjectTopmostAncestor` has walked: a short list, which most
+/// walks never outgrow, then a set.
+struct Seen {
+    short: Vec<Uuid>,
+    long: UuidSet,
+}
+
+impl Seen {
+    const SHORT: usize = 32;
+
+    fn new(first: Uuid) -> Seen {
+        let mut short = Vec::with_capacity(Self::SHORT);
+        short.push(first);
+        Seen {
+            short,
+            long: UuidSet::default(),
+        }
+    }
+
+    /// `std::set::insert(...).second`.
+    fn insert(&mut self, id: Uuid) -> bool {
+        if self.long.is_empty() {
+            if self.short.contains(&id) {
+                return false;
+            }
+            if self.short.len() < Self::SHORT {
+                self.short.push(id);
+                return true;
+            }
+            self.long.extend(self.short.iter().copied());
+        }
+        self.long.insert(id)
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -401,7 +585,9 @@ struct Model<'a> {
     last_item: Option<usize>,
     /// `mBacklinkMMap` by target: each target's links in the snapshot's
     /// order (`equal_range`), so a lookup is not a scan of every pair.
-    backlinks: BTreeMap<Uuid, Vec<Uuid>>,
+    backlinks: UuidMap<Vec<Uuid>>,
+    /// The lines logged so far, in order.
+    events: Vec<Event>,
 }
 
 impl Model<'_> {
@@ -457,21 +643,32 @@ impl Model<'_> {
     /// `getObjectTopmostAncestor`.
     fn topmost_ancestor(&mut self, object_id: &Uuid) -> Ancestor {
         let Some(mut object) = self.get_object(object_id) else {
+            self.events
+                .push(Event::AncestorMissing { object: *object_id });
             return Ancestor::Missing;
         };
-        let mut seen: BTreeSet<Uuid> = BTreeSet::new();
-        seen.insert(*object_id);
+        let mut seen = Seen::new(*object_id);
         loop {
             let parent = self.parent_of(object);
             if parent == NULL_ID {
                 break;
             }
             if !seen.insert(parent) {
+                self.events.push(Event::AncestorLoop {
+                    object: *object_id,
+                    parent,
+                });
                 return Ancestor::Loop;
             }
             match self.get_object(&parent) {
                 Some(p) => object = p,
-                None => return Ancestor::Missing,
+                None => {
+                    self.events.push(Event::AncestorParentMissing {
+                        object: *object_id,
+                        parent,
+                    });
+                    return Ancestor::Missing;
+                }
             }
         }
         Ancestor::Ok(self.id_of(object))
@@ -485,7 +682,7 @@ impl Model<'_> {
 
     /// `isInSuitcase` (OpenSim only).
     #[cfg(feature = "opensim")]
-    fn in_suitcase(&self, cat: usize) -> bool {
+    fn in_suitcase(&mut self, cat: usize) -> bool {
         let mut c = self.cat(cat);
         let mut seen: BTreeSet<Uuid> = BTreeSet::new();
         seen.insert(c.id);
@@ -495,9 +692,12 @@ impl Model<'_> {
         while c.parent != NULL_ID {
             let parent = c.parent;
             if !seen.insert(parent) {
+                self.events.push(Event::SuitcaseLoop { cat: c.id, parent });
                 return false;
             }
             let Some(p) = self.get_category(&parent) else {
+                self.events
+                    .push(Event::SuitcaseParentMissing { cat: c.id, parent });
                 return false;
             };
             if self.cat(p).preferred_type == FolderType::MY_SUITCASE {
@@ -528,7 +728,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
     } = options;
     let skip_suitcase = cfg!(feature = "opensim") && in_open_sim;
     let s = snapshot;
-    let mut backlinks: BTreeMap<Uuid, Vec<Uuid>> = BTreeMap::new();
+    let mut backlinks: UuidMap<Vec<Uuid>> = UuidMap::default();
     for (target, link) in &s.backlinks {
         backlinks.entry(*target).or_default().push(*link);
     }
@@ -536,6 +736,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
         s,
         last_item: s.last_item,
         backlinks,
+        events: Vec::new(),
     };
     let mut info = ValidationInfo::default();
     let mut fatal_errs = 0;
@@ -548,17 +749,27 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
     };
 
     if s.root == NULL_ID {
+        m.events.push(Event::NoRootFolder);
         info.fatal_no_root_folder = true;
         fatal_errs += 1;
     }
     if s.library_root == NULL_ID {
+        m.events.push(Event::NoLibraryRootFolder);
         info.log.push_str("No library root folder id\n");
         info.fatal_no_library_root_folder = true;
         fatal_errs += 1;
     }
     if s.category_map.len() + 1 != s.category_tree.len() {
+        m.events.push(Event::UnexpectedSizes {
+            cats: s.category_map.len(),
+            trees: s.category_tree.len(),
+        });
         warn(&mut info, "category_map_size", &mut warning_count);
     }
+    let mut cat_lock = 0;
+    let mut item_lock = 0;
+    let mut desc_unknown_count = 0;
+    let mut version_unknown_count = 0;
 
     let mut under_root: BTreeMap<i32, i32> = BTreeMap::new();
     let mut elsewhere: BTreeMap<i32, i32> = BTreeMap::new();
@@ -566,6 +777,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
     for cat_id in &s.category_order {
         let slot = s.category_map[cat_id];
         let Some(ci) = slot else {
+            m.events.push(Event::NullCat);
             warn(&mut info, "null_cat", &mut warning_count);
             continue;
         };
@@ -583,41 +795,81 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
         };
         let cat = m.cat(ci).clone();
         if *cat_id != cat.id {
+            m.events.push(Event::CatIdMismatch {
+                key: *cat_id,
+                cat: ci,
+            });
             warn(&mut info, "cat_id_index_mismatch", &mut warning_count);
         }
         if cat.parent == NULL_ID && *cat_id != s.root && *cat_id != s.library_root {
+            m.events.push(Event::NullParent { key: *cat_id });
             warn(&mut info, "null_parent", &mut warning_count);
         }
         #[cfg(feature = "opensim")]
         if skip_suitcase && m.in_suitcase(ci) {
+            m.events.push(Event::SuitcaseSkipped { cat: ci });
             continue;
         }
         let (Some(cats), Some(items)) = (s.category_tree.get(cat_id), s.item_tree.get(cat_id))
         else {
+            m.events.push(Event::DirectDescendents { key: *cat_id });
             warn(&mut info, "direct_descendents", &mut warning_count);
             continue;
         };
-        if cat.descendent_count != crate::model::DESCENDENT_COUNT_UNKNOWN
-            && (cats.len() + items.len()) as i64 != i64::from(cat.descendent_count)
+        if cat.descendent_count == crate::model::DESCENDENT_COUNT_UNKNOWN {
+            desc_unknown_count += 1;
+        } else if (cats.len() + items.len()) as i64 != i64::from(cat.descendent_count)
             && (topmost == NULL_ID || topmost != s.library_root)
         {
+            m.events.push(Event::InvalidDescendentCount {
+                key: *cat_id,
+                cat: ci,
+                cats: cats.len(),
+                items: items.len(),
+            });
             warn(&mut info, "invalid_descendent_count", &mut warning_count);
         }
-        for entry in items {
+        if cat.version == crate::category::VERSION_UNKNOWN {
+            version_unknown_count += 1;
+        }
+        if s.category_locks.contains(cat_id) {
+            cat_lock += 1;
+        }
+        if s.item_locks.contains(cat_id) {
+            item_lock += 1;
+        }
+        for (index, entry) in items.iter().enumerate() {
             let Some(ii) = *entry else {
+                m.events.push(Event::NullItemAtIndex {
+                    index,
+                    key: *cat_id,
+                });
                 warn(&mut info, "null_item_at_index", &mut warning_count);
                 continue;
             };
             let item_id = m.item(ii).id;
             if m.item(ii).parent != *cat_id {
+                m.events.push(Event::WrongParent {
+                    item: ii,
+                    key: *cat_id,
+                });
                 warn(&mut info, "wrong_parent_for_item", &mut warning_count);
             }
-            if !s.item_map.contains_key(&item_id) {
-                warn(&mut info, "item_not_in_top_map", &mut warning_count);
+            match s.item_map.get(&item_id) {
+                None => {
+                    m.events.push(Event::ItemNotInTopMap {
+                        item: ii,
+                        key: *cat_id,
+                    });
+                    warn(&mut info, "item_not_in_top_map", &mut warning_count);
+                }
+                Some(&top) if top != ii => m.events.push(Event::ItemMismatch { item: ii, top }),
+                Some(_) => {}
             }
             match m.topmost_ancestor(&item_id) {
                 Ancestor::Ok(top) => {
                     if top != s.root && top != s.library_root {
+                        m.events.push(Event::TopmostNotRecognized { item: ii, top });
                         warn(
                             &mut info,
                             "topmost_ancestor_not_recognized",
@@ -625,14 +877,29 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
                         );
                     }
                 }
-                _ => warn(&mut info, "topmost_ancestor_not_found", &mut warning_count),
+                _ => {
+                    m.events.push(Event::TopmostNotFound { item: ii });
+                    warn(&mut info, "topmost_ancestor_not_found", &mut warning_count)
+                }
             }
         }
         if cat.parent != NULL_ID {
             match s.category_tree.get(&cat.parent) {
-                None => orphaned_count += 1,
+                None => {
+                    m.events.push(Event::CatOrphanNoArray {
+                        key: *cat_id,
+                        cat: ci,
+                        parent: cat.parent,
+                    });
+                    orphaned_count += 1;
+                }
                 Some(siblings) => {
                     if !siblings.iter().any(|e| *e == Some(ci)) {
+                        m.events.push(Event::CatOrphanNotFound {
+                            key: *cat_id,
+                            cat: ci,
+                            parent: cat.parent,
+                        });
                         orphaned_count += 1;
                     }
                 }
@@ -643,12 +910,21 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
         if !in_library {
             #[cfg(feature = "opensim")]
             if skip_suitcase && m.in_suitcase(ci) {
+                m.events.push(Event::FolderTypeOf {
+                    place: Place::Suitcase,
+                    cat: ci,
+                });
                 continue;
             }
-            if s.root != NULL_ID && (cat.id == s.root || cat.parent == s.root) {
+            let place = if s.root != NULL_ID && (cat.id == s.root || cat.parent == s.root) {
                 *under_root.entry(cat.preferred_type.0).or_insert(0) += 1;
+                Place::Root
             } else {
                 *elsewhere.entry(cat.preferred_type.0).or_insert(0) += 1;
+                Place::Elsewhere
+            };
+            if cat.preferred_type != FolderType::NONE {
+                m.events.push(Event::FolderTypeOf { place, cat: ci });
             }
         }
     }
@@ -658,15 +934,35 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
         let ii = s.item_map[item_id];
         let item = m.item(ii).clone();
         if item.id != *item_id {
+            m.events.push(Event::ItemIdMismatch {
+                key: *item_id,
+                item: ii,
+            });
             warn(&mut info, "item_id_mismatch", &mut warning_count);
         }
         if item.parent == NULL_ID {
+            m.events.push(Event::ItemNullParent {
+                key: *item_id,
+                item: ii,
+            });
             orphaned_count += 1;
         } else {
             match s.item_tree.get(&item.parent) {
-                None => orphaned_count += 1,
+                None => {
+                    m.events.push(Event::ItemOrphanNoList {
+                        key: *item_id,
+                        item: ii,
+                        parent: item.parent,
+                    });
+                    orphaned_count += 1;
+                }
                 Some(siblings) => {
                     if !siblings.iter().any(|e| *e == Some(ii)) {
+                        m.events.push(Event::ItemOrphanNotFound {
+                            key: *item_id,
+                            item: ii,
+                            parent: item.parent,
+                        });
                         orphaned_count += 1;
                     }
                 }
@@ -678,12 +974,29 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
             let target_item = m.get_item(&target_id);
             let target_cat = m.get_category(&target_id);
             if !m.has_backlink(&link_id, &target_id) {
+                m.events.push(Event::MissingBacklink {
+                    item: ii,
+                    target: target_id,
+                });
                 orphaned_count += 1;
             }
             if item.asset_type == AssetType::LINK && target_item.is_none() {
+                m.events.push(Event::BrokenItemLink { item: ii });
                 orphaned_count += 1;
             } else if item.asset_type == AssetType::LINK_FOLDER && target_cat.is_none() {
+                m.events.push(Event::BrokenFolderLink { item: ii });
                 orphaned_count += 1;
+            }
+            if let Some(t) = target_item {
+                if m.item(t).is_link() {
+                    m.events.push(Event::LinkToLink {
+                        item: ii,
+                        target: t,
+                    });
+                }
+            }
+            if m.backlinks.get(&link_id).is_some_and(|l| !l.is_empty()) {
+                m.events.push(Event::LinkHasBacklinks { item: ii });
             }
         } else {
             // The backlinks of a non-link item are only logged, but each
@@ -691,8 +1004,24 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
             let target_id = item.id;
             let links: Vec<Uuid> = m.backlinks.get(&target_id).cloned().unwrap_or_default();
             for link_id in links {
-                m.get_item(&link_id);
+                let link_item = m.get_item(&link_id);
+                if !link_item.is_some_and(|l| m.item(l).is_link()) {
+                    m.events.push(Event::InvalidBacklink {
+                        item: ii,
+                        link: link_id,
+                    });
+                }
             }
+        }
+    }
+
+    for (under, counts) in [(true, &under_root), (false, &elsewhere)] {
+        for (&folder_type, &count) in counts {
+            m.events.push(Event::FolderTypeCount {
+                under_root: under,
+                folder_type,
+                count,
+            });
         }
     }
 
@@ -715,7 +1044,11 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
             continue;
         }
         if count_under_root == 0 {
+            m.events
+                .push(Event::SystemFolderNotFound { folder_type: ft });
             if is_automatic {
+                m.events
+                    .push(Event::CannotCreateSystemFolder { folder_type: ft });
                 let _ = writeln!(
                     info.log,
                     "Cannot create system folder of type {}({})",
@@ -737,6 +1070,10 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
                 && folder_type != FolderType::SETTINGS
                 && folder_type != FolderType::MATERIAL
             {
+                m.events.push(Event::ExcessCopiesFatal {
+                    folder_type: ft,
+                    count: count_under_root,
+                });
                 let _ = writeln!(
                     info.log,
                     "System folder type has excess copies under root, type {}({}) count {}",
@@ -747,6 +1084,10 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
                 info.fatal_system_duplicate += 1;
                 fatal_errs += 1;
             } else {
+                m.events.push(Event::ExcessCopiesNonFatal {
+                    folder_type: ft,
+                    count: count_under_root,
+                });
                 warn(
                     &mut info,
                     "non_fatal_system_duplicate_under_root",
@@ -755,12 +1096,33 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
             }
         }
         if count_elsewhere > 0 {
+            m.events.push(Event::ExtraFoldersElsewhere {
+                folder_type: ft,
+                count: count_elsewhere,
+            });
             warn(
                 &mut info,
                 "non_fatal_system_duplicate_elsewhere",
                 &mut warning_count,
             );
         }
+    }
+
+    if cat_lock > 0 || item_lock > 0 {
+        m.events.push(Event::Locks {
+            cats: cat_lock,
+            items: item_lock,
+        });
+    }
+    if desc_unknown_count != 0 {
+        m.events.push(Event::UnknownDescendentCounts {
+            count: desc_unknown_count,
+        });
+    }
+    if version_unknown_count != 0 {
+        m.events.push(Event::UnknownVersions {
+            count: version_unknown_count,
+        });
     }
 
     info.fatal_error_count = fatal_errs;
@@ -770,6 +1132,7 @@ pub fn validate(snapshot: &Snapshot, options: Options<'_>) -> Validation {
     Validation {
         info,
         last_item: m.last_item,
+        events: m.events,
     }
 }
 
