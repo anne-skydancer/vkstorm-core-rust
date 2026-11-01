@@ -431,6 +431,9 @@ pub enum Event {
     /// `isInSuitcase` (OpenSim): "unable to trace parentage of {cat},
     /// missing item for uuid {parent}".
     SuitcaseParentMissing { cat: Uuid, parent: Uuid },
+    /// `isInSuitcase` (OpenSim), debug, for each ancestor it finds: "Parent
+    /// folder is {name}; Folder type {preferred type}" of the folder `cat`.
+    SuitcaseParent { cat: usize },
     /// "cat id/index mismatch {key} {cat.id}".
     CatIdMismatch { key: Uuid, cat: usize },
     /// "cat {key} has no parent, but is not root ({root}) or library root
@@ -700,6 +703,7 @@ impl Model<'_> {
                     .push(Event::SuitcaseParentMissing { cat: c.id, parent });
                 return false;
             };
+            self.events.push(Event::SuitcaseParent { cat: p });
             if self.cat(p).preferred_type == FolderType::MY_SUITCASE {
                 return true;
             }
@@ -1223,6 +1227,79 @@ mod tests {
         assert_eq!(validate(&s, Options::default()).last_item, Some(1));
         s.item_order = vec![id(21), id(20), id(11), id(10)];
         assert_eq!(validate(&s, Options::default()).last_item, Some(0));
+    }
+
+    /// OpenSim: `isInSuitcase` logs "Parent folder is ..." (debug) for each
+    /// ancestor it finds, before it checks that ancestor's type, and
+    /// `validate()` walks a folder outside the suitcase twice (the skip check
+    /// and the folder-type tally).
+    #[cfg(feature = "opensim")]
+    #[test]
+    fn suitcase_walk_logs_each_parent() {
+        let id = |n: u8| [n; 16];
+        let (root, library, suitcase, inside, outside) = (id(1), id(2), id(3), id(4), id(5));
+        let mut s = Snapshot {
+            root,
+            library_root: library,
+            ..Snapshot::default()
+        };
+        let folders = [
+            (root, NULL_ID, FolderType::ROOT_INVENTORY),
+            (library, NULL_ID, FolderType::ROOT_INVENTORY),
+            (suitcase, root, FolderType::MY_SUITCASE),
+            (inside, suitcase, FolderType::NONE),
+            (outside, root, FolderType::NONE),
+        ];
+        for (k, (cid, parent, ft)) in folders.into_iter().enumerate() {
+            s.categories.push(SnapCategory {
+                id: cid,
+                parent,
+                preferred_type: ft,
+                version: 1,
+                descendent_count: crate::model::DESCENDENT_COUNT_UNKNOWN,
+            });
+            s.category_map.insert(cid, Some(k));
+            s.category_tree.entry(parent).or_default().push(Some(k));
+            s.category_tree.entry(cid).or_default();
+            s.item_tree.insert(cid, Vec::new());
+        }
+        s.category_order = vec![root, library, suitcase, inside, outside];
+        let walk = |in_open_sim: bool| -> Vec<Event> {
+            validate(
+                &s,
+                Options {
+                    qa: None,
+                    in_open_sim,
+                },
+            )
+            .events
+            .into_iter()
+            .filter(|e| {
+                matches!(
+                    e,
+                    Event::SuitcaseParent { .. }
+                        | Event::SuitcaseSkipped { .. }
+                        | Event::SuitcaseLoop { .. }
+                        | Event::SuitcaseParentMissing { .. }
+                )
+            })
+            .collect()
+        };
+        assert_eq!(
+            walk(true),
+            vec![
+                // The suitcase itself: its own type, no parent read.
+                Event::SuitcaseSkipped { cat: 2 },
+                // Inside: its parent is the suitcase.
+                Event::SuitcaseParent { cat: 2 },
+                Event::SuitcaseSkipped { cat: 3 },
+                // Outside: the root, once per walk; the root has no parent.
+                Event::SuitcaseParent { cat: 0 },
+                Event::SuitcaseParent { cat: 0 },
+            ]
+        );
+        // On Second Life grids `isInSuitcase` returns before walking.
+        assert_eq!(walk(false), Vec::<Event>::new());
     }
 
     #[test]

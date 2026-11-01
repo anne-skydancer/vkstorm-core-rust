@@ -956,6 +956,7 @@ pub mod vev {
     pub const ANCESTOR_PARENT_MISSING: u32 = 43;
     pub const SUITCASE_LOOP: u32 = 44;
     pub const SUITCASE_PARENT_MISSING: u32 = 45;
+    pub const SUITCASE_PARENT: u32 = 46;
 }
 
 fn event_view(e: &Event) -> VksInvValidationEvent {
@@ -991,6 +992,7 @@ fn event_view(e: &Event) -> VksInvValidationEvent {
         Event::SuitcaseParentMissing { cat, parent } => {
             (v.kind, v.id, v.id2) = (vev::SUITCASE_PARENT_MISSING, cat, parent);
         }
+        Event::SuitcaseParent { cat } => (v.kind, v.cat) = (vev::SUITCASE_PARENT, ix(cat)),
         Event::CatIdMismatch { key, cat } => {
             (v.kind, v.id, v.cat) = (vev::CAT_ID_MISMATCH, key, ix(cat));
         }

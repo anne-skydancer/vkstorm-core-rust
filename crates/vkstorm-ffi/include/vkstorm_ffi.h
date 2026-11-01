@@ -1839,7 +1839,9 @@ typedef struct VksInvWarning {
  *   UNKNOWN_DESCENDENT_COUNTS, UNKNOWN_VERSIONS: a count
  *   ANCESTOR_MISSING: id object (getObjectTopmostAncestor's warnings)
  *   ANCESTOR_LOOP, ANCESTOR_PARENT_MISSING: id object, id2 parent
- *   SUITCASE_LOOP, SUITCASE_PARENT_MISSING: id folder, id2 parent (OpenSim) */
+ *   SUITCASE_LOOP, SUITCASE_PARENT_MISSING: id folder, id2 parent (OpenSim)
+ *   SUITCASE_PARENT: cat, an ancestor isInSuitcase found ("Parent folder is
+ *     <name>; Folder type <type>", debug; OpenSim) */
 #define VKS_INV_VEV_NO_ROOT_FOLDER 1u
 #define VKS_INV_VEV_NO_LIBRARY_ROOT_FOLDER 2u
 #define VKS_INV_VEV_UNEXPECTED_SIZES 3u
@@ -1885,6 +1887,7 @@ typedef struct VksInvWarning {
 #define VKS_INV_VEV_ANCESTOR_PARENT_MISSING 43u
 #define VKS_INV_VEV_SUITCASE_LOOP 44u
 #define VKS_INV_VEV_SUITCASE_PARENT_MISSING 45u
+#define VKS_INV_VEV_SUITCASE_PARENT 46u
 typedef struct VksInvValidationEvent {
     uint32_t kind;
     int64_t cat;
