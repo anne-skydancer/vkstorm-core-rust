@@ -526,8 +526,12 @@ fixtures with 0 differences in all three checks. Nothing recorded depends on
 floating point beyond the timers' `(U64)(F32)(seconds * 1e6)` (8000 and
 10000 ticks) and LLSD's real-to-integer conversion of s17b/s17c (7.0 and
 7.9 read as 7). The PR #181 re-recording (s15h added, every other output
-unchanged but its header) was dumped and replayed on Windows only; s15h has
-not yet been replayed on Linux.
+unchanged but its header) was dumped and replayed on Windows only at first.
+The depth-cap re-recording (b8246e76af) was also dumped on Linux by CI (the
+Build workflow's record_inventory_fixtures run with GCC on Ubuntu 24.04,
+run 41253303267, which built vkstorm-ffi from vkstorm-core-rust source): the
+data, s15h included, is identical to the committed files but for the
+headers, and the Linux build replays them.
 
 ## Mock fidelity
 
