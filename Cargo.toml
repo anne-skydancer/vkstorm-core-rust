@@ -6,7 +6,7 @@ members = ["crates/*", "tools/*"]
 exclude = ["tools/llsd-fixtures", "tools/inventory-fixtures"]
 
 [workspace.package]
-version = "0.4.0"
+version = "0.5.0"
 edition = "2024"
 license = "LGPL-2.1-only"
 repository = "https://github.com/anne-skydancer/vkstorm-core-rust"

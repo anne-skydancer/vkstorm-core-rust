@@ -31,8 +31,12 @@ recording is unchanged but for the headers' commit. Re-recorded again for
 the fix of finding 9 (approved 2026-10-28): `AISUpdate::parseItem()` no
 longer counts a created item of no asset type, which `addItem()` refuses,
 as a new descendant of its folder (the folder's delta entry is still made,
-with 0, as for an updated item). Only s15h reaches it. The fixtures are never
-edited by hand: change the recorder or `gen_cases.py` and regenerate.
+with 0, as for an updated item). Only s15h reaches it. Re-recorded once more
+for the AIS depth cap (approved 2026-10-29): `InvokeAISCommandCoro` sets a
+256-level LLSD depth limit on its adapter, so an over-deep reply reaches the
+coroutine as an unparsable one (`../adapter` records that); every output is
+unchanged but its header. The fixtures are never edited by hand: change the
+recorder or `gen_cases.py` and regenerate.
 
 This directory is identical, byte for byte, in the viewer
 (`indra/newview/tests/fixtures/inventory/ais/update`) and in the crate
@@ -522,8 +526,12 @@ fixtures with 0 differences in all three checks. Nothing recorded depends on
 floating point beyond the timers' `(U64)(F32)(seconds * 1e6)` (8000 and
 10000 ticks) and LLSD's real-to-integer conversion of s17b/s17c (7.0 and
 7.9 read as 7). The PR #181 re-recording (s15h added, every other output
-unchanged but its header) was dumped and replayed on Windows only; s15h has
-not yet been replayed on Linux.
+unchanged but its header) was dumped and replayed on Windows only at first.
+The depth-cap re-recording (b8246e76af) was also dumped on Linux by CI (the
+Build workflow's record_inventory_fixtures run with GCC on Ubuntu 24.04,
+run 41253303267, which built vkstorm-ffi from vkstorm-core-rust source): the
+data, s15h included, is identical to the committed files but for the
+headers, and the Linux build replays them.
 
 ## Mock fidelity
 

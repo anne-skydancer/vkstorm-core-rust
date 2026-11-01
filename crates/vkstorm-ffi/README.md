@@ -21,7 +21,7 @@ static library and need no Rust toolchain.
 | `http` | four | `vkstorm-http`: the HTTP layer |
 | `assets` | five | `vkstorm-assets`: the asset pipeline |
 | `audio` | six | `vkstorm-audio` and `vkstorm-vorbis`: the audio engine, sound decoding, parcel music |
-| `inventory` | seven | `vkstorm-inventory`: the inventory rung: R1 data model, R2 cache file, login load and validate() (`vks_inv_*`) |
+| `inventory` | seven | `vkstorm-inventory`: the inventory rung: R1 data model, R2 cache file, login load and validate(), R3a AIS replies (`vks_inv_*`); enables `vkstorm-llsd` |
 | `full` | all | every rung above |
 | `opensim` | | the legacy UDP paths of the crates that carry them and the OpenSim-only inventory rules (the viewer's `OPENSIM` option) |
 
