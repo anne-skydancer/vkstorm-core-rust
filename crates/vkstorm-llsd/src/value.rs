@@ -158,32 +158,57 @@ impl Value {
         self.len() == 0
     }
 
-    /// Streams this value into a formatter, in document order.
+    /// Streams this value into a formatter, in document order. The walk keeps
+    /// its own stack rather than recursing, so a deeply nested value (one
+    /// parsed with no depth limit, say) cannot overflow the thread's stack.
     pub fn emit<O: Out>(&self, f: &mut Formatter<O>) {
-        match self {
-            Value::Undefined => f.undef(),
-            Value::Boolean(b) => f.boolean(*b),
-            Value::Integer(i) => f.integer(*i),
-            Value::Real(r) => f.real(*r),
-            Value::String(s) => f.string(s),
-            Value::Uuid(u) => f.uuid(u),
-            Value::Date(d) => f.date(*d),
-            Value::Uri(u) => f.uri(u),
-            Value::Binary(b) => f.binary(b),
-            Value::Map(m) => {
-                f.begin_map(m.len());
-                for (k, v) in m {
-                    f.key(k);
-                    v.emit(f);
+        enum Frame<'a> {
+            Map(std::collections::btree_map::Iter<'a, Vec<u8>, Value>),
+            Array(std::slice::Iter<'a, Value>),
+        }
+        let mut stack: Vec<Frame<'_>> = Vec::new();
+        let mut next = Some(self);
+        loop {
+            if let Some(v) = next.take() {
+                match v {
+                    Value::Undefined => f.undef(),
+                    Value::Boolean(b) => f.boolean(*b),
+                    Value::Integer(i) => f.integer(*i),
+                    Value::Real(r) => f.real(*r),
+                    Value::String(s) => f.string(s),
+                    Value::Uuid(u) => f.uuid(u),
+                    Value::Date(d) => f.date(*d),
+                    Value::Uri(u) => f.uri(u),
+                    Value::Binary(b) => f.binary(b),
+                    Value::Map(m) => {
+                        f.begin_map(m.len());
+                        stack.push(Frame::Map(m.iter()));
+                    }
+                    Value::Array(a) => {
+                        f.begin_array(a.len());
+                        stack.push(Frame::Array(a.iter()));
+                    }
                 }
-                f.end_map();
             }
-            Value::Array(a) => {
-                f.begin_array(a.len());
-                for v in a {
-                    v.emit(f);
-                }
-                f.end_array();
+            match stack.last_mut() {
+                None => return,
+                Some(Frame::Map(it)) => match it.next() {
+                    Some((k, v)) => {
+                        f.key(k);
+                        next = Some(v);
+                    }
+                    None => {
+                        stack.pop();
+                        f.end_map();
+                    }
+                },
+                Some(Frame::Array(it)) => match it.next() {
+                    Some(v) => next = Some(v),
+                    None => {
+                        stack.pop();
+                        f.end_array();
+                    }
+                },
             }
         }
     }
@@ -232,6 +257,51 @@ mod tests {
             .unwrap()
             .join()
             .unwrap();
+    }
+
+    /// A deep value formats in every format on a small stack (the walk
+    /// recursed once per level), and its bytes parse back.
+    #[test]
+    fn deep_value_formats_on_a_small_stack() {
+        std::thread::Builder::new()
+            .stack_size(128 * 1024)
+            .spawn(|| {
+                let v = chain(100_000);
+                for format in [
+                    crate::Format::Binary,
+                    crate::Format::Notation,
+                    crate::Format::Xml,
+                ] {
+                    let (bytes, n) = crate::format(format, &v, crate::Options::default());
+                    assert!(n > 0 && !bytes.is_empty(), "{format:?}");
+                }
+            })
+            .unwrap()
+            .join()
+            .unwrap();
+    }
+
+    /// The walk writes what the recursive one wrote: a round trip through
+    /// each format, pretty and plain, gives the value back.
+    #[test]
+    fn emit_order_round_trips() {
+        let v = chain(40);
+        for format in [
+            crate::Format::Binary,
+            crate::Format::Notation,
+            crate::Format::Xml,
+        ] {
+            for pretty in [false, true] {
+                let opts = crate::Options {
+                    pretty,
+                    ..crate::Options::default()
+                };
+                let (bytes, _) = crate::format(format, &v, opts);
+                let (n, back) = crate::parse(format, &bytes, crate::Limits::for_len(bytes.len()));
+                assert!(n > 0, "{format:?} pretty={pretty}");
+                assert_eq!(back.unwrap(), v, "{format:?} pretty={pretty}");
+            }
+        }
     }
 
     /// Dropping one value leaves a clone of it whole.
