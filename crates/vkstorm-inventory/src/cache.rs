@@ -32,7 +32,7 @@ use vkstorm_llsd::{Format, Limits, Reader, SliceSource, Value, ValueBuilder, Xml
 use crate::category::{VERSION_UNKNOWN, ViewerCategory};
 use crate::item::Item;
 use crate::llsd::coerce::insert;
-use crate::model::{ModelLookup, viewer_item_type};
+use crate::model::{ModelLookup, followed_type};
 use crate::perms::{NULL_ID, Uuid};
 use crate::types::AssetType;
 
@@ -119,9 +119,26 @@ pub struct Decoded {
     /// The parents of the items whose viewer type is `AT_UNKNOWN`
     /// (`cats_to_update`, UUID order).
     pub cats_to_update: BTreeSet<Uuid>,
-    /// The names of the items dropped for a null id, in file order (the
-    /// C++ logs "Ignoring inventory with null item id: {name}").
-    pub null_id_names: Vec<Vec<u8>>,
+    /// The items dropped for a null id, in file order (the C++ logs
+    /// "Ignoring inventory with null item id: {getName()}").
+    pub null_id_items: Vec<Item>,
+    /// The lines the item loop logs, in file order.
+    pub lines: Vec<DecodeLine>,
+}
+
+/// A line `loadFromFile`'s item loop logs, in file order.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DecodeLine {
+    /// `LL_DEBUGS(LOG_INV)` "Ignoring inventory with null item id: {name}"
+    /// for [`Decoded::null_id_items`]`[index]`. The C++ formats the line
+    /// with the item's `getName()`, which follows a link into the model
+    /// (and can log "Warning: Accessing link to link") only when the debug
+    /// line is enabled; so the caller does that formatting, not this crate.
+    NullId { index: usize },
+    /// The item filter's `getType()` followed a link to `target`, a link of
+    /// the model: `getLinkedItem` looked `target` up (`getItem`) and logged
+    /// `LL_WARNS(LOG_INV)` "Warning: Accessing link to link".
+    LinkToLink { target: Uuid },
 }
 
 impl Decoded {
@@ -194,10 +211,18 @@ pub fn decode(bytes: &[u8], in_open_sim: bool, lookup: &dyn ModelLookup) -> Deco
                 continue;
             }
             if item.object.id == NULL_ID {
-                out.null_id_names.push(item.object.name);
+                out.lines.push(DecodeLine::NullId {
+                    index: out.null_id_items.len(),
+                });
+                out.null_id_items.push(item);
                 continue;
             }
-            if viewer_item_type(&item, lookup) == AssetType::UNKNOWN {
+            let (viewer_type, link_to_link) = followed_type(&item, lookup);
+            if link_to_link {
+                out.lines
+                    .push(DecodeLine::LinkToLink { target: item.asset });
+            }
+            if viewer_type == AssetType::UNKNOWN {
                 out.cats_to_update.insert(item.object.parent);
             } else {
                 out.items.push(item);

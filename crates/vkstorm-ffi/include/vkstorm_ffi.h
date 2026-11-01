@@ -1618,6 +1618,28 @@ typedef struct VksInvModelHost {
     bool (*category)(void* ctx, const uint8_t* id, int32_t* out_type, int32_t* out_version);
 } VksInvModelHost;
 
+/* A line the cache decode or the login load logs, or an addItem of the
+ * login load, in the C++ order:
+ *   NULL_ID: "Ignoring inventory with null item id: <getName()>" (debug) for
+ *     the null-id item `index`; format it with the item's own getName(), which
+ *     follows a link (and can warn) only when the line is enabled
+ *   LINK_TO_LINK: a getter followed a link to `id`, a link of the model:
+ *     getLinkedItem looked `id` up (getItem, which moves mLastItem) and logged
+ *     LL_WARNS(LOG_INV) "Warning: Accessing link to link"
+ *   DEFERRED: the first pass deferred possibly_broken[index] ("Attempted to
+ *     add cached link item without baseobj present ...", debug, formatted with
+ *     the item's link-following getName() and getAssetUUID())
+ *   ADD: addItem(items[index]) */
+#define VKS_INV_LOAD_NULL_ID 1u
+#define VKS_INV_LOAD_LINK_TO_LINK 2u
+#define VKS_INV_LOAD_DEFERRED 3u
+#define VKS_INV_LOAD_ADD 4u
+typedef struct VksInvLoadLine {
+    uint32_t kind; /* VKS_INV_LOAD_* */
+    size_t index;
+    uint8_t id[16];
+} VksInvLoadLine;
+
 /* loadFromFile over the bytes of the file it opened. obsolete: the
  * is_cache_obsolete flag (loadFromFile returns its negation; no records then).
  * categories, items: in file order (importLLSDMap, fromLLSD with is_new; the
@@ -1633,10 +1655,12 @@ typedef struct VksInvCacheView {
     size_t item_count;
     const uint8_t* cats_to_update;
     size_t cats_to_update_count;
-    /* The names of the items dropped for a null id, in file order (the C++
-     * logged "Ignoring inventory with null item id: <name>"). */
-    const VksInvBytes* null_id_names;
+    /* The items dropped for a null id, in file order, and what the item
+     * loop logged (NULL_ID, LINK_TO_LINK), in file order. */
+    const VksInvItem* null_id_items;
     size_t null_id_count;
+    const VksInvLoadLine* lines;
+    size_t line_count;
 } VksInvCacheView;
 
 VksInvCache* vks_inv_cache_decode(const uint8_t* data, size_t len, bool in_open_sim, const VksInvModelHost* model);
@@ -1716,10 +1740,18 @@ typedef struct VksInvLoginPlanView {
     size_t bad_link_count;
     size_t recovered_link_count;
     /* The cache file was read and was obsolete (log why from its bytes),
-     * and the names of the items dropped for a null id. */
+     * the items dropped for a null id, and what the cache decode logged
+     * (NULL_ID, LINK_TO_LINK), in file order. */
     bool cache_obsolete;
-    const VksInvBytes* null_id_names;
+    const VksInvItem* null_id_items;
     size_t null_id_count;
+    const VksInvLoadLine* decode_lines;
+    size_t decode_line_count;
+    /* The two item passes after the folders are added, in the C++ order:
+     * ADD, DEFERRED, LINK_TO_LINK (apply them in this order, so the model
+     * is as the C++ had it at each line). */
+    const VksInvLoadLine* steps;
+    size_t step_count;
 } VksInvLoginPlanView;
 
 VksInvSkeleton* vks_inv_skeleton_import(const uint8_t* owner, const VksInvSkeletonEntry* entries, size_t count);
@@ -1936,7 +1968,8 @@ static_assert(sizeof(void*) != 8 ||
                    sizeof(VksInvSnapEntry) == 40 && sizeof(VksInvSnapTree) == 32 &&
                    sizeof(VksInvSnapRef) == 24 && sizeof(VksInvSnapshot) == 224 &&
                    sizeof(VksInvWarning) == 24 && sizeof(VksInvValidationEvent) == 80 &&
-                   sizeof(VksInvLoginPlanView) == 176),
+                   sizeof(VksInvLoginPlanView) == 208 && sizeof(VksInvCacheView) == 88 &&
+                   sizeof(VksInvLoadLine) == 32),
               "inventory R2 layout");
 #endif
 

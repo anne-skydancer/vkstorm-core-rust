@@ -26,10 +26,10 @@
 use std::ffi::c_void;
 use std::ptr;
 
-use vkstorm_inventory::cache::{self, Decoded};
+use vkstorm_inventory::cache::{self, DecodeLine, Decoded};
 use vkstorm_inventory::category::ViewerCategory;
 use vkstorm_inventory::item::Item;
-use vkstorm_inventory::login::{CacheInput, LoadPlan, Skeleton, SkeletonEntry};
+use vkstorm_inventory::login::{CacheInput, LoadPlan, LoadStep, Skeleton, SkeletonEntry};
 use vkstorm_inventory::model::ModelLookup;
 use vkstorm_inventory::model::UuidMap;
 use vkstorm_inventory::perms::Uuid;
@@ -119,10 +119,58 @@ pub struct VksInvCacheView {
     /// bytes each, in UUID order.
     pub cats_to_update: *const u8,
     pub cats_to_update_count: usize,
-    /// The names of the items dropped for a null id, in file order (the
-    /// C++ logged "Ignoring inventory with null item id: {name}").
-    pub null_id_names: *const VksInvBytes,
+    /// The items dropped for a null id, in file order (the C++ logged
+    /// "Ignoring inventory with null item id: {getName()}").
+    pub null_id_items: *const VksInvItem,
     pub null_id_count: usize,
+    /// What the item loop logged, in file order ([`VksInvLoadLine`]:
+    /// `VKS_INV_LOAD_NULL_ID`, `VKS_INV_LOAD_LINK_TO_LINK`).
+    pub lines: *const VksInvLoadLine,
+    pub line_count: usize,
+}
+
+/// A line the cache decode or the login load logs, or an `addItem` of the
+/// login load, in the C++ order. `kind` is a `VKS_INV_LOAD_*` value:
+/// - `VKS_INV_LOAD_NULL_ID`: "Ignoring inventory with null item id: {name}"
+///   (debug) for the null-id item `index`; the caller formats it with the
+///   item's `getName()`, which follows a link only when the line is enabled;
+/// - `VKS_INV_LOAD_LINK_TO_LINK`: a getter followed a link to `id`, a link of
+///   the model: `getLinkedItem` looked `id` up (`getItem`) and logged
+///   "Warning: Accessing link to link";
+/// - `VKS_INV_LOAD_DEFERRED`: the first pass deferred the possibly broken
+///   link `index` ("Attempted to add cached link item without baseobj
+///   present ...", debug, formatted with the item's link-following getters);
+/// - `VKS_INV_LOAD_ADD`: `addItem` of the plan's item `index`.
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct VksInvLoadLine {
+    pub kind: u32,
+    pub index: usize,
+    pub id: Uuid,
+}
+
+pub const VKS_INV_LOAD_NULL_ID: u32 = 1;
+pub const VKS_INV_LOAD_LINK_TO_LINK: u32 = 2;
+pub const VKS_INV_LOAD_DEFERRED: u32 = 3;
+pub const VKS_INV_LOAD_ADD: u32 = 4;
+
+fn load_line(kind: u32, index: usize, id: Uuid) -> VksInvLoadLine {
+    VksInvLoadLine { kind, index, id }
+}
+
+fn decode_line(l: &DecodeLine) -> VksInvLoadLine {
+    match *l {
+        DecodeLine::NullId { index } => load_line(VKS_INV_LOAD_NULL_ID, index, [0; 16]),
+        DecodeLine::LinkToLink { target } => load_line(VKS_INV_LOAD_LINK_TO_LINK, 0, target),
+    }
+}
+
+fn load_step(s: &LoadStep) -> VksInvLoadLine {
+    match *s {
+        LoadStep::LinkToLink { target } => load_line(VKS_INV_LOAD_LINK_TO_LINK, 0, target),
+        LoadStep::Deferred { index } => load_line(VKS_INV_LOAD_DEFERRED, index, [0; 16]),
+        LoadStep::Add { index } => load_line(VKS_INV_LOAD_ADD, index, [0; 16]),
+    }
 }
 
 /// A decoded cache file.
@@ -132,7 +180,8 @@ pub struct VksInvCache {
     item_views: Vec<VksInvItem>,
     category_views: Vec<VksInvCategory>,
     cats_to_update: Vec<u8>,
-    null_id_names: Vec<VksInvBytes>,
+    null_id_views: Vec<VksInvItem>,
+    lines: Vec<VksInvLoadLine>,
     view: VksInvCacheView,
 }
 
@@ -160,6 +209,8 @@ pub unsafe extern "C" fn vks_inv_cache_decode(
         let category_views: Vec<VksInvCategory> =
             decoded.categories.iter().map(category_view).collect();
         let cats_to_update: Vec<u8> = decoded.cats_to_update.iter().flatten().copied().collect();
+        let null_id_views: Vec<VksInvItem> = decoded.null_id_items.iter().map(item_view).collect();
+        let lines: Vec<VksInvLoadLine> = decoded.lines.iter().map(decode_line).collect();
         let mut block = Box::new(VksInvCache {
             view: VksInvCacheView {
                 obsolete: decoded.obsolete,
@@ -169,26 +220,24 @@ pub unsafe extern "C" fn vks_inv_cache_decode(
                 item_count: item_views.len(),
                 cats_to_update: cats_to_update.as_ptr(),
                 cats_to_update_count: decoded.cats_to_update.len(),
-                null_id_names: ptr::null(),
-                null_id_count: decoded.null_id_names.len(),
+                null_id_items: null_id_views.as_ptr(),
+                null_id_count: null_id_views.len(),
+                lines: lines.as_ptr(),
+                line_count: lines.len(),
             },
             _decoded: decoded,
             item_views,
             category_views,
             cats_to_update,
-            null_id_names: Vec::new(),
+            null_id_views,
+            lines,
         });
         // The vectors moved with their heap buffers; the pointers hold.
         block.view.items = block.item_views.as_ptr();
         block.view.categories = block.category_views.as_ptr();
         block.view.cats_to_update = block.cats_to_update.as_ptr();
-        block.null_id_names = block
-            ._decoded
-            .null_id_names
-            .iter()
-            .map(|n| VksInvBytes::of(n))
-            .collect();
-        block.view.null_id_names = block.null_id_names.as_ptr();
+        block.view.null_id_items = block.null_id_views.as_ptr();
+        block.view.lines = block.lines.as_ptr();
         Box::into_raw(block)
     })
 }
@@ -442,10 +491,19 @@ pub struct VksInvLoginPlanView {
     pub bad_link_count: usize,
     pub recovered_link_count: usize,
     /// The cache file was read and was obsolete (the viewer logs why from
-    /// its bytes), and the names of the items dropped for a null id.
+    /// its bytes), and the items dropped for a null id.
     pub cache_obsolete: bool,
-    pub null_id_names: *const VksInvBytes,
+    pub null_id_items: *const VksInvItem,
     pub null_id_count: usize,
+    /// What the cache decode logged, in file order
+    /// (`VKS_INV_LOAD_NULL_ID`, `VKS_INV_LOAD_LINK_TO_LINK`).
+    pub decode_lines: *const VksInvLoadLine,
+    pub decode_line_count: usize,
+    /// The two item passes, after the folders are added, in the C++ order:
+    /// `VKS_INV_LOAD_ADD` (`items[index]`), `VKS_INV_LOAD_DEFERRED`
+    /// (`possibly_broken[index]`) and `VKS_INV_LOAD_LINK_TO_LINK`.
+    pub steps: *const VksInvLoadLine,
+    pub step_count: usize,
 }
 
 /// A login plan.
@@ -458,7 +516,9 @@ pub struct VksInvLoginPlan {
     _folders_to_update: Vec<usize>,
     _possibly_broken: Vec<VksInvItem>,
     _invalidated: Vec<u8>,
-    _null_id_names: Vec<VksInvBytes>,
+    _null_id_views: Vec<VksInvItem>,
+    _decode_lines: Vec<VksInvLoadLine>,
+    _steps: Vec<VksInvLoadLine>,
     view: VksInvLoginPlanView,
 }
 
@@ -511,11 +571,9 @@ pub unsafe extern "C" fn vks_inv_skeleton_load(
             .collect();
         let possibly_broken: Vec<VksInvItem> = plan.possibly_broken.iter().map(item_view).collect();
         let invalidated: Vec<u8> = plan.invalidated.iter().flatten().copied().collect();
-        let null_id_names: Vec<VksInvBytes> = plan
-            .null_id_names
-            .iter()
-            .map(|n| VksInvBytes::of(n))
-            .collect();
+        let null_id_views: Vec<VksInvItem> = plan.null_id_items.iter().map(item_view).collect();
+        let decode_lines: Vec<VksInvLoadLine> = plan.decode_lines.iter().map(decode_line).collect();
+        let steps: Vec<VksInvLoadLine> = plan.steps.iter().map(load_step).collect();
         let view = VksInvLoginPlanView {
             rv: plan.rv,
             folders: folder_views.as_ptr(),
@@ -538,8 +596,12 @@ pub unsafe extern "C" fn vks_inv_skeleton_load(
             bad_link_count: plan.bad_link_count,
             recovered_link_count: plan.recovered_link_count,
             cache_obsolete: plan.cache_obsolete,
-            null_id_names: null_id_names.as_ptr(),
-            null_id_count: null_id_names.len(),
+            null_id_items: null_id_views.as_ptr(),
+            null_id_count: null_id_views.len(),
+            decode_lines: decode_lines.as_ptr(),
+            decode_line_count: decode_lines.len(),
+            steps: steps.as_ptr(),
+            step_count: steps.len(),
         };
         Box::into_raw(Box::new(VksInvLoginPlan {
             _plan: plan,
@@ -549,7 +611,9 @@ pub unsafe extern "C" fn vks_inv_skeleton_load(
             _folders_to_update: folders_to_update,
             _possibly_broken: possibly_broken,
             _invalidated: invalidated,
-            _null_id_names: null_id_names,
+            _null_id_views: null_id_views,
+            _decode_lines: decode_lines,
+            _steps: steps,
             view,
         }))
     })
@@ -590,6 +654,7 @@ const _: () = {
         assert!(size_of::<VksInvSkeletonEntry>() == 64);
         assert!(size_of::<VksInvCacheInput>() == 32);
         assert!(size_of::<VksInvLoginFolder>() == 128);
+        assert!(size_of::<VksInvLoadLine>() == 32);
     }
 };
 
@@ -1231,6 +1296,7 @@ const _: () = {
         assert!(size_of::<VksInvSnapshot>() == 224);
         assert!(size_of::<VksInvWarning>() == 24);
         assert!(size_of::<VksInvValidationEvent>() == 80);
-        assert!(size_of::<VksInvLoginPlanView>() == 176);
+        assert!(size_of::<VksInvLoginPlanView>() == 208);
+        assert!(size_of::<VksInvCacheView>() == 88);
     }
 };
