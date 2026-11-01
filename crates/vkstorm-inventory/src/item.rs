@@ -229,13 +229,18 @@ impl Item {
     /// The `inventory_and_asset_types_match` repair the readers end with
     /// (`importLegacyStream`, `fromLLSD`): an `IT_NONE` inventory type, or
     /// one that does not match the asset type, becomes the asset type's
-    /// default; then `initMasks(inv_type)`.
-    pub(crate) fn repair_inventory_type(&mut self) {
-        if self.inv_type == InventoryType::NONE
-            || !crate::types::inventory_and_asset_types_match(self.inv_type, self.object.asset_type)
-        {
+    /// default; then `initMasks(inv_type)`. True when the type was reset
+    /// (the C++ logs `LL_DEBUGS()` "Resetting inventory type for {id}").
+    pub(crate) fn repair_inventory_type(&mut self) -> bool {
+        let reset = self.inv_type == InventoryType::NONE
+            || !crate::types::inventory_and_asset_types_match(
+                self.inv_type,
+                self.object.asset_type,
+            );
+        if reset {
             self.inv_type = InventoryType::default_for_asset_type(self.object.asset_type);
         }
         self.permissions.init_masks_for_type(self.inv_type);
+        reset
     }
 }

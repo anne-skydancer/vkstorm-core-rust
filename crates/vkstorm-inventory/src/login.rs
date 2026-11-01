@@ -49,11 +49,11 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use vkstorm_llsd::Value;
 
-use crate::cache::{self, Decoded};
+use crate::cache::{self, DecodeLine, Decoded};
 use crate::category::{VERSION_UNKNOWN, ViewerCategory};
 use crate::item::Item;
 use crate::llsd::coerce::{as_integer, as_string, as_uuid, get};
-use crate::model::{DESCENDENT_COUNT_UNKNOWN, ModelLookup, is_broken_link, viewer_item_type};
+use crate::model::{DESCENDENT_COUNT_UNKNOWN, ModelLookup, broken_link_check, viewer_item_type};
 use crate::perms::{NULL_ID, Uuid};
 use crate::types::{AssetType, FolderType};
 
@@ -221,7 +221,8 @@ impl Skeleton {
             Some(d) => {
                 is_cache_obsolete = d.obsolete;
                 plan.cache_obsolete = d.obsolete;
-                plan.null_id_names = d.null_id_names.clone();
+                plan.null_id_items = d.null_id_items.clone();
+                plan.decode_lines = d.lines.clone();
                 d.rv()
             }
             None => false,
@@ -292,7 +293,14 @@ impl Skeleton {
             if version == VERSION_UNKNOWN {
                 continue;
             }
-            if is_broken_link(item, &model.view(&temp)) {
+            let (broken, link_to_link) = broken_link_check(item, &model.view(&temp));
+            if link_to_link {
+                plan.steps.push(LoadStep::LinkToLink { target: item.asset });
+            }
+            if broken {
+                plan.steps.push(LoadStep::Deferred {
+                    index: plan.possibly_broken.len(),
+                });
                 plan.possibly_broken.push(item.clone());
                 possibly_broken.push(index);
                 continue;
@@ -301,6 +309,7 @@ impl Skeleton {
                 plan.good_link_count += 1;
             }
             model.add_item(item, &temp);
+            plan.steps.push(LoadStep::Add { index: added.len() });
             added.push(index);
             plan.cached_item_count += 1;
             *child_counts.entry(parent).or_insert(0) += 1;
@@ -309,12 +318,17 @@ impl Skeleton {
         for &index in &possibly_broken {
             let item = &items[index];
             let parent = item.object.parent;
-            if is_broken_link(item, &model.view(&temp)) {
+            let (broken, link_to_link) = broken_link_check(item, &model.view(&temp));
+            if link_to_link {
+                plan.steps.push(LoadStep::LinkToLink { target: item.asset });
+            }
+            if broken {
                 plan.bad_link_count += 1;
                 invalid.insert(parent);
             } else {
                 plan.recovered_link_count += 1;
                 model.add_item(item, &temp);
+                plan.steps.push(LoadStep::Add { index: added.len() });
                 added.push(index);
                 plan.cached_item_count += 1;
                 *child_counts.entry(parent).or_insert(0) += 1;
@@ -403,7 +417,8 @@ pub struct LoadPlan {
     /// `addCategory` for each, in this order (UUID order). The C++
     /// `addCategory` skips `FT_MESH` folders.
     pub folders: Vec<LoginFolder>,
-    /// `addItem` for each, in this order, after the folders.
+    /// `addItem` for each, in this order, after the folders (and in the
+    /// order of [`steps`](Self::steps)).
     pub items: Vec<Item>,
     /// Folders of the model before this call (not of this skeleton) whose
     /// version becomes unknown (a broken link in them), in UUID order.
@@ -423,6 +438,9 @@ pub struct LoadPlan {
     /// `LL_DEBUGS` "Attempted to add cached link item without baseobj
     /// present" lines).
     pub possibly_broken: Vec<Item>,
+    /// The two item passes as the C++ ran them, after the folders were
+    /// added: each `addItem` and each line logged, in order.
+    pub steps: Vec<LoadStep>,
     /// The folders invalidated by a link still broken after the second pass,
     /// skeleton and model folders alike, in UUID order ("Invalidating
     /// category name ...").
@@ -433,12 +451,35 @@ pub struct LoadPlan {
     /// The cache file was read and found obsolete (version, header or
     /// parse; `loadFromFile` logged why).
     pub cache_obsolete: bool,
-    /// [`Decoded::null_id_names`] of the file read.
-    pub null_id_names: Vec<Vec<u8>>,
+    /// [`Decoded::null_id_items`] of the file read.
+    pub null_id_items: Vec<Item>,
+    /// [`Decoded::lines`] of the file read: what `loadFromFile` logged.
+    pub decode_lines: Vec<DecodeLine>,
     pub bad_link_count: usize,
     pub recovered_link_count: usize,
 }
 
+/// One step of the item passes of `loadSkeleton` (the first pass over the
+/// cached items, then the retry of the deferred links), in the C++ order.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LoadStep {
+    /// A broken-link check (`getIsBrokenLink`, through `getType`) followed
+    /// a link to `target`, a link of the model: `getLinkedItem` looked
+    /// `target` up (`getItem`) and logged `LL_WARNS(LOG_INV)` "Warning:
+    /// Accessing link to link" (`newview/llviewerinventory.cpp`). The first
+    /// pass and the retry each check a deferred link, so a link to a link
+    /// logs this twice.
+    LinkToLink { target: Uuid },
+    /// The first pass deferred [`LoadPlan::possibly_broken`]`[index]`: the
+    /// `LL_DEBUGS(LOG_INV)` "Attempted to add cached link item without
+    /// baseobj present ( name: ... )" line. The C++ formats it with the
+    /// item's `getName()` and `getAssetUUID()`, which follow the link (and
+    /// log "Warning: Accessing link to link" for a link to a link) only when
+    /// the debug line is enabled; so the caller does that formatting.
+    Deferred { index: usize },
+    /// `addItem(`[`LoadPlan::items`]`[index])`.
+    Add { index: usize },
+}
 /// The model as the load changes it: the skeleton's folders and the added
 /// items over the model before the call.
 struct Overlay<'a> {
@@ -505,5 +546,174 @@ impl ModelLookup for OverlayView<'_> {
     }
     fn category_version(&self, id: &Uuid) -> Option<i32> {
         self.overlay.version(id, self.temp)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::ModelObjects;
+    use crate::types::InventoryType;
+
+    const FOLDER: Uuid = [0xf0; 16];
+
+    fn item(n: u8, asset_type: AssetType, asset: Uuid) -> Item {
+        let mut i = Item::default();
+        i.object.id = [n; 16];
+        i.object.parent = FOLDER;
+        i.object.asset_type = asset_type;
+        i.inv_type = if asset_type == AssetType::NOTECARD {
+            InventoryType::NOTECARD
+        } else {
+            InventoryType::OBJECT
+        };
+        i.object.name = format!("item {n}").into_bytes();
+        i.asset = asset;
+        i
+    }
+
+    /// The skeleton holds one folder at version 1, cached at version 1 with
+    /// `items` in this file order.
+    fn load(items: &[Item], model: &dyn ModelLookup) -> LoadPlan {
+        let mut cat = ViewerCategory {
+            version: 1,
+            ..ViewerCategory::default()
+        };
+        cat.category.object.id = FOLDER;
+        let bytes = cache::encode([&cat], items);
+        let entry = SkeletonEntry {
+            name: Some(b"Folder".to_vec()),
+            folder_id: Some(FOLDER),
+            parent_id: Some(NULL_ID),
+            version: Some(1),
+            type_default: None,
+        };
+        let input = CacheInput {
+            file: Some(&bytes),
+            ..CacheInput::default()
+        };
+        Skeleton::import(&[9; 16], &[entry]).load(&input, false, model)
+    }
+
+    const A: u8 = 1;
+    const B: u8 = 2;
+    const C: u8 = 3;
+
+    /// A, B -> A, C -> B: the first pass adds A and B, then C's check
+    /// follows a link to a link (logged) and defers C; the retry checks C
+    /// again (logged again) and C stays broken.
+    #[test]
+    fn link_to_link_logged_in_both_passes() {
+        let a = item(A, AssetType::NOTECARD, [0xa5; 16]);
+        let b = item(B, AssetType::LINK, [A; 16]);
+        let c = item(C, AssetType::LINK, [B; 16]);
+        let plan = load(&[a, b, c], &crate::model::EmptyModel);
+        assert_eq!(
+            plan.steps,
+            vec![
+                LoadStep::Add { index: 0 },
+                LoadStep::Add { index: 1 },
+                LoadStep::LinkToLink { target: [B; 16] },
+                LoadStep::Deferred { index: 0 },
+                LoadStep::LinkToLink { target: [B; 16] },
+            ]
+        );
+        assert_eq!(plan.possibly_broken[0].object.id, [C; 16]);
+        assert_eq!(
+            (
+                plan.good_link_count,
+                plan.bad_link_count,
+                plan.recovered_link_count
+            ),
+            (1, 1, 0)
+        );
+        assert_eq!(plan.invalidated, vec![FOLDER]);
+    }
+
+    /// A, C -> B, B -> A: C's target is not in the model yet in the first
+    /// pass (deferred without a line); in the retry B is there and is a
+    /// link (logged once).
+    #[test]
+    fn link_to_link_logged_in_the_retry_only() {
+        let a = item(A, AssetType::NOTECARD, [0xa5; 16]);
+        let b = item(B, AssetType::LINK, [A; 16]);
+        let c = item(C, AssetType::LINK, [B; 16]);
+        let plan = load(&[a, c, b], &crate::model::EmptyModel);
+        assert_eq!(
+            plan.steps,
+            vec![
+                LoadStep::Add { index: 0 },
+                LoadStep::Deferred { index: 0 },
+                LoadStep::Add { index: 1 },
+                LoadStep::LinkToLink { target: [B; 16] },
+            ]
+        );
+        assert_eq!(plan.items.len(), 2);
+    }
+
+    /// A link whose target is a link already in the model (the library's,
+    /// when the agent loads second) is followed by `loadFromFile`'s item
+    /// filter too; a null-id item is listed for its debug line.
+    #[test]
+    fn link_to_link_in_the_decode() {
+        let mut model = ModelObjects::default();
+        model.items.insert([0x77; 16], AssetType::LINK);
+        let d = item(4, AssetType::LINK, [0x77; 16]);
+        let null = item(0, AssetType::LINK, [0x77; 16]);
+        let plan = load(&[null, d], &model);
+        assert_eq!(
+            plan.decode_lines,
+            vec![
+                DecodeLine::NullId { index: 0 },
+                DecodeLine::LinkToLink { target: [0x77; 16] },
+            ]
+        );
+        assert_eq!(plan.null_id_items.len(), 1);
+        assert_eq!(
+            plan.steps,
+            vec![
+                LoadStep::LinkToLink { target: [0x77; 16] },
+                LoadStep::Deferred { index: 0 },
+                LoadStep::LinkToLink { target: [0x77; 16] },
+            ]
+        );
+    }
+
+    /// `fromLLSD`'s inventory type repair is a line of the decode, before
+    /// the item's other lines (the null-id one here).
+    #[test]
+    fn inventory_type_reset_in_the_decode() {
+        let mut odd = item(A, AssetType::NOTECARD, [0xa5; 16]);
+        odd.inv_type = InventoryType::OBJECT;
+        let mut null = item(0, AssetType::NOTECARD, [0xa5; 16]);
+        null.inv_type = InventoryType::NONE;
+        let plan = load(&[odd, null], &crate::model::EmptyModel);
+        assert_eq!(
+            plan.decode_lines,
+            vec![
+                DecodeLine::ResetInventoryType { id: [A; 16] },
+                DecodeLine::ResetInventoryType { id: NULL_ID },
+                DecodeLine::NullId { index: 0 },
+            ]
+        );
+    }
+
+    /// Without links to links, the steps are the adds and deferrals only.
+    #[test]
+    fn plain_links_log_nothing() {
+        let a = item(A, AssetType::NOTECARD, [0xa5; 16]);
+        let b = item(B, AssetType::LINK, [A; 16]);
+        let missing = item(C, AssetType::LINK, [0x55; 16]);
+        let plan = load(&[b, a, missing], &crate::model::EmptyModel);
+        assert_eq!(
+            plan.steps,
+            vec![
+                LoadStep::Deferred { index: 0 },
+                LoadStep::Add { index: 0 },
+                LoadStep::Deferred { index: 1 },
+                LoadStep::Add { index: 1 },
+            ]
+        );
+        assert!(plan.decode_lines.is_empty());
     }
 }

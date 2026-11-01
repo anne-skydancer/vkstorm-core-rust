@@ -75,25 +75,42 @@ impl ModelLookup for ModelObjects {
 /// model has the folder's type (`getLinkedCategory`); otherwise the stored
 /// type.
 pub fn viewer_item_type(item: &Item, lookup: &dyn ModelLookup) -> AssetType {
+    followed_type(item, lookup).0
+}
+
+/// [`viewer_item_type`], and whether following the link logged
+/// `getLinkedItem`'s `LL_WARNS(LOG_INV)` "Warning: Accessing link to link"
+/// (`newview/llviewerinventory.cpp`): an `AT_LINK` whose target is an item of
+/// the model with a link type. The C++ logs that line on every call of a
+/// getter that follows the link (`getType`, `getName`, `getAssetUUID`, ...),
+/// so a caller reports it once per such call it stands for.
+pub fn followed_type(item: &Item, lookup: &dyn ModelLookup) -> (AssetType, bool) {
     let t = item.object.asset_type;
-    if t == AssetType::LINK {
-        if let Some(target) = lookup.item_type(&item.asset) {
-            if !target.is_link_type() {
-                return target;
-            }
-        }
+    let target = if t == AssetType::LINK {
+        lookup.item_type(&item.asset)
     } else if t == AssetType::LINK_FOLDER {
-        if let Some(target) = lookup.category_type(&item.asset) {
-            return target;
-        }
+        lookup.category_type(&item.asset)
+    } else {
+        None
+    };
+    match target {
+        Some(target) if t == AssetType::LINK && target.is_link_type() => (t, true),
+        Some(target) => (target, false),
+        None => (t, false),
     }
-    t
 }
 
 /// `LLViewerInventoryItem::getIsBrokenLink()`: the viewer type is still a
 /// link type (the target is not in the model, or is a link).
 pub fn is_broken_link(item: &Item, lookup: &dyn ModelLookup) -> bool {
     viewer_item_type(item, lookup).is_link_type()
+}
+
+/// [`is_broken_link`], and whether the check logged "Warning: Accessing link
+/// to link" (see [`followed_type`]).
+pub fn broken_link_check(item: &Item, lookup: &dyn ModelLookup) -> (bool, bool) {
+    let (t, link_to_link) = followed_type(item, lookup);
+    (t.is_link_type(), link_to_link)
 }
 
 /// A hasher for UUID keys ([`UuidMap`], [`UuidSet`]): the model's lookups

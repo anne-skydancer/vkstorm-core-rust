@@ -147,6 +147,18 @@ impl Item {
     ///
     /// Returns true (`LLSaleInfo::fromLLSD` never fails).
     pub fn from_llsd(&mut self, sd: &Value, is_new: bool, in_open_sim: bool) -> bool {
+        self.from_llsd_logged(sd, is_new, in_open_sim).is_some()
+    }
+
+    /// [`from_llsd`](Self::from_llsd): `None` when it fails, else whether
+    /// the inventory type repair reset the type (the C++ logs `LL_DEBUGS()`
+    /// "Resetting inventory type for {id}" then).
+    pub fn from_llsd_logged(
+        &mut self,
+        sd: &Value,
+        is_new: bool,
+        in_open_sim: bool,
+    ) -> Option<bool> {
         if is_new {
             self.inv_type = InventoryType::NONE;
             self.asset = NULL_ID;
@@ -167,8 +179,7 @@ impl Item {
             self.object.runtime = as_string(get(script, "runtime"));
         }
         let Value::Map(map) = sd else {
-            self.repair_inventory_type();
-            return true;
+            return Some(self.repair_inventory_type());
         };
         for (label, v) in map {
             match label.as_slice() {
@@ -192,7 +203,7 @@ impl Item {
                         .sale_info
                         .from_llsd(v, &mut has_perm_mask, &mut perm_mask)
                     {
-                        return false;
+                        return None;
                     }
                     if has_perm_mask {
                         self.apply_legacy_perm_mask(perm_mask);
@@ -231,8 +242,7 @@ impl Item {
                 _ => {}
             }
         }
-        self.repair_inventory_type();
-        true
+        Some(self.repair_inventory_type())
     }
 
     /// `ll_create_sd_from_inventory_item`: undefined for an `AT_NONE` item
