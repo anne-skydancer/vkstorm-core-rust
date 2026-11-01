@@ -124,7 +124,8 @@ pub struct VksInvCacheView {
     pub null_id_items: *const VksInvItem,
     pub null_id_count: usize,
     /// What the item loop logged, in file order ([`VksInvLoadLine`]:
-    /// `VKS_INV_LOAD_NULL_ID`, `VKS_INV_LOAD_LINK_TO_LINK`).
+    /// `VKS_INV_LOAD_RESET_INV_TYPE`, `VKS_INV_LOAD_NULL_ID`,
+    /// `VKS_INV_LOAD_LINK_TO_LINK`).
     pub lines: *const VksInvLoadLine,
     pub line_count: usize,
 }
@@ -140,7 +141,9 @@ pub struct VksInvCacheView {
 /// - `VKS_INV_LOAD_DEFERRED`: the first pass deferred the possibly broken
 ///   link `index` ("Attempted to add cached link item without baseobj
 ///   present ...", debug, formatted with the item's link-following getters);
-/// - `VKS_INV_LOAD_ADD`: `addItem` of the plan's item `index`.
+/// - `VKS_INV_LOAD_ADD`: `addItem` of the plan's item `index`;
+/// - `VKS_INV_LOAD_RESET_INV_TYPE`: `fromLLSD` reset the inventory type of
+///   the item `id` ("Resetting inventory type for {id}", debug, untagged).
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct VksInvLoadLine {
@@ -153,6 +156,7 @@ pub const VKS_INV_LOAD_NULL_ID: u32 = 1;
 pub const VKS_INV_LOAD_LINK_TO_LINK: u32 = 2;
 pub const VKS_INV_LOAD_DEFERRED: u32 = 3;
 pub const VKS_INV_LOAD_ADD: u32 = 4;
+pub const VKS_INV_LOAD_RESET_INV_TYPE: u32 = 5;
 
 fn load_line(kind: u32, index: usize, id: Uuid) -> VksInvLoadLine {
     VksInvLoadLine { kind, index, id }
@@ -162,6 +166,7 @@ fn decode_line(l: &DecodeLine) -> VksInvLoadLine {
     match *l {
         DecodeLine::NullId { index } => load_line(VKS_INV_LOAD_NULL_ID, index, [0; 16]),
         DecodeLine::LinkToLink { target } => load_line(VKS_INV_LOAD_LINK_TO_LINK, 0, target),
+        DecodeLine::ResetInventoryType { id } => load_line(VKS_INV_LOAD_RESET_INV_TYPE, 0, id),
     }
 }
 
@@ -496,7 +501,8 @@ pub struct VksInvLoginPlanView {
     pub null_id_items: *const VksInvItem,
     pub null_id_count: usize,
     /// What the cache decode logged, in file order
-    /// (`VKS_INV_LOAD_NULL_ID`, `VKS_INV_LOAD_LINK_TO_LINK`).
+    /// (`VKS_INV_LOAD_RESET_INV_TYPE`, `VKS_INV_LOAD_NULL_ID`,
+    /// `VKS_INV_LOAD_LINK_TO_LINK`).
     pub decode_lines: *const VksInvLoadLine,
     pub decode_line_count: usize,
     /// The two item passes, after the folders are added, in the C++ order:

@@ -553,6 +553,7 @@ impl ModelLookup for OverlayView<'_> {
 mod tests {
     use super::*;
     use crate::model::ModelObjects;
+    use crate::types::InventoryType;
 
     const FOLDER: Uuid = [0xf0; 16];
 
@@ -561,6 +562,11 @@ mod tests {
         i.object.id = [n; 16];
         i.object.parent = FOLDER;
         i.object.asset_type = asset_type;
+        i.inv_type = if asset_type == AssetType::NOTECARD {
+            InventoryType::NOTECARD
+        } else {
+            InventoryType::OBJECT
+        };
         i.object.name = format!("item {n}").into_bytes();
         i.asset = asset;
         i
@@ -669,6 +675,25 @@ mod tests {
                 LoadStep::LinkToLink { target: [0x77; 16] },
                 LoadStep::Deferred { index: 0 },
                 LoadStep::LinkToLink { target: [0x77; 16] },
+            ]
+        );
+    }
+
+    /// `fromLLSD`'s inventory type repair is a line of the decode, before
+    /// the item's other lines (the null-id one here).
+    #[test]
+    fn inventory_type_reset_in_the_decode() {
+        let mut odd = item(A, AssetType::NOTECARD, [0xa5; 16]);
+        odd.inv_type = InventoryType::OBJECT;
+        let mut null = item(0, AssetType::NOTECARD, [0xa5; 16]);
+        null.inv_type = InventoryType::NONE;
+        let plan = load(&[odd, null], &crate::model::EmptyModel);
+        assert_eq!(
+            plan.decode_lines,
+            vec![
+                DecodeLine::ResetInventoryType { id: [A; 16] },
+                DecodeLine::ResetInventoryType { id: NULL_ID },
+                DecodeLine::NullId { index: 0 },
             ]
         );
     }

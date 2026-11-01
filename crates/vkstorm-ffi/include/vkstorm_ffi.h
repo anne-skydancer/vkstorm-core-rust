@@ -1629,11 +1629,14 @@ typedef struct VksInvModelHost {
  *   DEFERRED: the first pass deferred possibly_broken[index] ("Attempted to
  *     add cached link item without baseobj present ...", debug, formatted with
  *     the item's link-following getName() and getAssetUUID())
- *   ADD: addItem(items[index]) */
+ *   ADD: addItem(items[index])
+ *   RESET_INV_TYPE: fromLLSD reset the inventory type of the item `id`
+ *     (LL_DEBUGS() "Resetting inventory type for <id>") */
 #define VKS_INV_LOAD_NULL_ID 1u
 #define VKS_INV_LOAD_LINK_TO_LINK 2u
 #define VKS_INV_LOAD_DEFERRED 3u
 #define VKS_INV_LOAD_ADD 4u
+#define VKS_INV_LOAD_RESET_INV_TYPE 5u
 typedef struct VksInvLoadLine {
     uint32_t kind; /* VKS_INV_LOAD_* */
     size_t index;
@@ -1656,7 +1659,7 @@ typedef struct VksInvCacheView {
     const uint8_t* cats_to_update;
     size_t cats_to_update_count;
     /* The items dropped for a null id, in file order, and what the item
-     * loop logged (NULL_ID, LINK_TO_LINK), in file order. */
+     * loop logged (RESET_INV_TYPE, NULL_ID, LINK_TO_LINK), in file order. */
     const VksInvItem* null_id_items;
     size_t null_id_count;
     const VksInvLoadLine* lines;
@@ -1741,7 +1744,7 @@ typedef struct VksInvLoginPlanView {
     size_t recovered_link_count;
     /* The cache file was read and was obsolete (log why from its bytes),
      * the items dropped for a null id, and what the cache decode logged
-     * (NULL_ID, LINK_TO_LINK), in file order. */
+     * (RESET_INV_TYPE, NULL_ID, LINK_TO_LINK), in file order. */
     bool cache_obsolete;
     const VksInvItem* null_id_items;
     size_t null_id_count;

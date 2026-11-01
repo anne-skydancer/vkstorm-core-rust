@@ -139,6 +139,11 @@ pub enum DecodeLine {
     /// the model: `getLinkedItem` looked `target` up (`getItem`) and logged
     /// `LL_WARNS(LOG_INV)` "Warning: Accessing link to link".
     LinkToLink { target: Uuid },
+    /// `fromLLSD` reset the item's inventory type (`IT_NONE`, or one that
+    /// does not match its asset type): `LL_DEBUGS()` "Resetting inventory
+    /// type for {id}" (`llinventory/llinventory.cpp`), with the id read
+    /// (null for an item the null-id line then drops).
+    ResetInventoryType { id: Uuid },
 }
 
 impl Decoded {
@@ -207,8 +212,12 @@ pub fn decode(bytes: &[u8], in_open_sim: bool, lookup: &dyn ModelLookup) -> Deco
     if let Some(Value::Array(items)) = map.get(b"items".as_slice()) {
         for sd in items {
             let mut item = Item::default();
-            if !item.from_llsd(sd, true, in_open_sim) {
+            let Some(reset) = item.from_llsd_logged(sd, true, in_open_sim) else {
                 continue;
+            };
+            if reset {
+                out.lines
+                    .push(DecodeLine::ResetInventoryType { id: item.object.id });
             }
             if item.object.id == NULL_ID {
                 out.lines.push(DecodeLine::NullId {
@@ -261,9 +270,22 @@ mod tests {
         );
         // fromLLSD normalises the item (inventory type, masks); from then on
         // the bytes round-trip.
+        // The first read reset the item's inventory type (it had none), so
+        // it logged that; the second has nothing to log.
+        assert_eq!(
+            d.lines,
+            vec![DecodeLine::ResetInventoryType { id: [2; 16] }]
+        );
         let again = encode(&d.categories, &d.items);
         let d2 = decode(&again, false, &EmptyModel);
-        assert_eq!(d2, d);
+        assert!(d2.lines.is_empty());
+        assert_eq!(
+            d2,
+            Decoded {
+                lines: Vec::new(),
+                ..d.clone()
+            }
+        );
         assert_eq!(encode(&d2.categories, &d2.items), again);
         // Another version, a short header, a cut body.
         let mut v4 = bytes.clone();
