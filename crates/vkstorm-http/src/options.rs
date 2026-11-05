@@ -211,6 +211,20 @@ impl ClassOptions {
         Status::OK
     }
 
+    /// The requests the class may have in flight at once, and so also the
+    /// connections libcurl may open for it. libcurl 7.62 and later have no
+    /// HTTP/1.1 pipelining: a deep-queue class (pipelining depth above 1)
+    /// runs per-host limit x depth requests, each on its own HTTP/1.1
+    /// connection, or as HTTP/2 streams where the server offers h2. Other
+    /// classes run up to their connection limit.
+    pub fn active_limit(&self) -> i64 {
+        if self.pipelining > 1 {
+            self.per_host_connection_limit * self.pipelining
+        } else {
+            self.connection_limit
+        }
+    }
+
     pub fn get(&self, opt: PolicyOption) -> Result<i64, Status> {
         Ok(match opt {
             PolicyOption::ConnectionLimit => self.connection_limit,
@@ -342,6 +356,18 @@ mod tests {
             c.set(PolicyOption::Trace, 1),
             Status::llcore(he::INVALID_ARG)
         );
+    }
+
+    #[test]
+    fn active_limit_is_per_host_times_depth_for_deep_queues() {
+        let mut c = ClassOptions::default();
+        assert!(c.set(PolicyOption::ConnectionLimit, 16).is_ok());
+        assert!(c.set(PolicyOption::PerHostConnectionLimit, 8).is_ok());
+        assert_eq!(c.active_limit(), 16);
+        assert!(c.set(PolicyOption::PipeliningDepth, 1).is_ok());
+        assert_eq!(c.active_limit(), 16);
+        assert!(c.set(PolicyOption::PipeliningDepth, 5).is_ok());
+        assert_eq!(c.active_limit(), 40);
     }
 
     #[test]

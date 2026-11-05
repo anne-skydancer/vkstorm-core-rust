@@ -141,7 +141,6 @@ pub struct RequestOp {
     pub reply_headers: Option<Vec<(String, String)>>,
     pub content_type: String,
     pub retry_after: i32,
-    pub xll_url: String,
     pub stats: TransferStats,
 
     // Policy state.
@@ -204,7 +203,6 @@ impl RequestOp {
             reply_headers: None,
             content_type: String::new(),
             retry_after: 0,
-            xll_url: String::new(),
             stats: TransferStats::default(),
             retries: 0,
             retries_503: 0,

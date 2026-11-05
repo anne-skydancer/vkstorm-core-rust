@@ -1,7 +1,8 @@
 //! The libcurl binding layer: the handful of libcurl functions, options and
 //! codes the transport uses, declared by hand against the stable libcurl ABI
-//! (option numbers and result codes have been fixed since libcurl 7.x; the
-//! viewer ships 7.54.1 and the constants here exist in that version).
+//! (option numbers and result codes have been fixed since libcurl 7.x). The
+//! viewer links curl 8; `CURLMOPT_MAX_CONCURRENT_STREAMS` (7.67) is the
+//! newest constant here.
 //!
 //! No `curl-sys`: its build script either finds a system libcurl (vcpkg on
 //! Windows, pkg-config elsewhere) or builds its bundled copy with the
@@ -105,6 +106,8 @@ pub const CURLOPT_SSL_CTX_DATA: CURLoption = OBJECTPOINT + 109;
 pub const CURLOPT_IPRESOLVE: CURLoption = LONG + 113;
 pub const CURLOPT_SEEKFUNCTION: CURLoption = FUNCTIONPOINT + 167;
 pub const CURLOPT_SEEKDATA: CURLoption = OBJECTPOINT + 168;
+/// Wait for a connection that can multiplex (HTTP/2) rather than open one.
+pub const CURLOPT_PIPEWAIT: CURLoption = LONG + 237;
 /// Added in 7.59.0; the viewer's 7.54.1 does not have it, so the transport
 /// uses `CURLOPT_TIMEVALUE` (a `long`), as the C++ did for that version.
 pub const CURLOPT_TIMEVALUE_LARGE: CURLoption = OFF_T + 270;
@@ -113,6 +116,12 @@ pub const CURLMOPT_PIPELINING: CURLMoption = LONG + 3;
 pub const CURLMOPT_MAX_HOST_CONNECTIONS: CURLMoption = LONG + 7;
 pub const CURLMOPT_MAX_PIPELINE_LENGTH: CURLMoption = LONG + 8;
 pub const CURLMOPT_MAX_TOTAL_CONNECTIONS: CURLMoption = LONG + 13;
+pub const CURLMOPT_MAX_CONCURRENT_STREAMS: CURLMoption = LONG + 16;
+
+/// `CURLMOPT_PIPELINING` values. `CURLPIPE_HTTP1` (HTTP/1.1 pipelining) is
+/// ignored since 7.62, so it is not bound.
+pub const CURLPIPE_NOTHING: c_long = 0;
+pub const CURLPIPE_MULTIPLEX: c_long = 2;
 
 const CURLINFO_STRING: CURLINFO = 0x100000;
 const CURLINFO_LONG: CURLINFO = 0x200000;

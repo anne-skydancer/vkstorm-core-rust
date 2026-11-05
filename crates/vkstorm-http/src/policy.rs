@@ -1,7 +1,6 @@
 //! `HttpPolicy`: the per-class ready and retry queues, the concurrency
-//! limit and the request-rate throttle of each class, the retry decision
-//! with its backoff, and the stall used while a class's multi handle is
-//! reconfigured.
+//! limit and the request-rate throttle of each class, and the retry
+//! decision with its backoff.
 
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, VecDeque};
@@ -55,7 +54,6 @@ pub struct ClassState {
     pub throttle_end: u64,
     pub throttle_left: i64,
     pub request_count: i64,
-    pub stall_staging: bool,
 }
 
 impl ClassState {
@@ -182,10 +180,6 @@ impl Policy {
             let mut staged: Vec<Box<RequestOp>> = Vec::new();
             {
                 let state = &mut self.classes[pclass];
-                if state.stall_staging {
-                    result = LoopSpeed::Normal;
-                    continue;
-                }
                 if state.retry.is_empty() && state.ready.is_empty() {
                     continue;
                 }
@@ -196,11 +190,7 @@ impl Policy {
                     continue;
                 }
                 let active = transport.active_count_in_class(pclass as u32) as i64;
-                let active_limit = if state.options.pipelining > 1 {
-                    state.options.per_host_connection_limit * state.options.pipelining
-                } else {
-                    state.options.connection_limit
-                };
+                let active_limit = state.options.active_limit();
                 let mut needed = active_limit - active;
                 if needed > 0 {
                     let mut throttled = false;
@@ -320,15 +310,6 @@ impl Policy {
         self.classes
             .get(pclass as usize)
             .map_or(0, |s| s.ready.len() + s.retry.len())
-    }
-
-    /// `HttpPolicy::stallPolicy`: sets the class's stall and returns the
-    /// previous value.
-    pub fn stall_policy(&mut self, pclass: u32, stall: bool) -> bool {
-        match self.classes.get_mut(pclass as usize) {
-            Some(s) => std::mem::replace(&mut s.stall_staging, stall),
-            None => false,
-        }
     }
 
     /// `HttpPolicy::shutdown`: every queued request, for cancellation.
