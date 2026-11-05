@@ -130,6 +130,10 @@ unsafe fn setopt_long(h: *mut CURL, opt: sys::CURLoption, v: c_long, hooks: &dyn
     check_easy(unsafe { sys::easy_setopt_long(h, opt, v) }, opt, hooks);
 }
 
+unsafe fn setopt_off_t(h: *mut CURL, opt: sys::CURLoption, v: sys::curl_off_t, hooks: &dyn Hooks) {
+    check_easy(unsafe { sys::easy_setopt_off_t(h, opt, v) }, opt, hooks);
+}
+
 unsafe fn setopt_ptr(h: *mut CURL, opt: sys::CURLoption, v: *const c_void, hooks: &dyn Hooks) {
     check_easy(unsafe { sys::easy_setopt_ptr(h, opt, v) }, opt, hooks);
 }
@@ -325,9 +329,10 @@ impl Transport {
             setopt_long(h, sys::CURLOPT_NOPROGRESS, 1, hooks);
             setopt_str(h, sys::CURLOPT_URL, &op.url_c, hooks);
             setopt_ptr(h, sys::CURLOPT_PRIVATE, op_ptr, hooks);
-            // libcurl before 7.81 (the viewer's is 7.54.1): ask for every
-            // supported content encoding, as the C++ did for that version.
-            setopt_str(h, sys::CURLOPT_ACCEPT_ENCODING, c"", hooks);
+            // No Accept-Encoding here: the C++ asks for content encodings
+            // only with libcurl before 7.81 (Firestorm: AWS answers with
+            // `Content-Encoding: binary/octet-stream`, which newer libcurl
+            // rejects); POST still asks, below, as the C++ does.
             setopt_long(h, sys::CURLOPT_AUTOREFERER, 1, hooks);
             setopt_long(
                 h,
@@ -394,7 +399,14 @@ impl Transport {
                     sys::CURL_TIMECOND_IFMODSINCE,
                     hooks,
                 );
-                setopt_long(h, sys::CURLOPT_TIMEVALUE, last_modified as c_long, hooks);
+                // 64-bit on every platform (libcurl 7.59 and later), as the
+                // C++ does there; CURLOPT_TIMEVALUE is a 32-bit long on Windows.
+                setopt_off_t(
+                    h,
+                    sys::CURLOPT_TIMEVALUE_LARGE,
+                    last_modified as sys::curl_off_t,
+                    hooks,
+                );
             }
             setopt_long(h, sys::CURLOPT_DNS_CACHE_TIMEOUT, dns_cache_timeout, hooks);
         }

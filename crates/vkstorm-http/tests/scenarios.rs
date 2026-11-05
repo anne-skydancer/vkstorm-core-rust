@@ -82,7 +82,8 @@ fn get_ok_with_headers() {
     assert_eq!(rec[0].header("User-Agent"), Some(TEST_USER_AGENT));
     assert_eq!(rec[0].header("Connection"), Some("keep-alive"));
     assert_eq!(rec[0].header("Keep-alive"), Some("300"));
-    assert_eq!(rec[0].header("Accept-Encoding"), Some("deflate, gzip"));
+    // No Accept-Encoding on GET with libcurl 7.81 and later, as the C++.
+    assert!(rec[0].header("Accept-Encoding").is_none());
     assert!(rec[0].header("Pragma").is_none());
     assert_eq!(rec[1].conn, rec[0].conn, "keep-alive reuses the connection");
     let n = c.noop().unwrap();
