@@ -542,6 +542,18 @@ impl Connection {
                 );
                 false
             }
+            // A 206 for bytes 0-9 whatever range was asked.
+            "fixedrange" => self.send(
+                206,
+                "Partial Content",
+                &[
+                    ("Content-Range", "bytes 0-9/100".into()),
+                    ct("application/octet-stream"),
+                ],
+                &pattern(10),
+                true,
+                false,
+            ),
             "badrange" => self.send(
                 206,
                 "Partial Content",

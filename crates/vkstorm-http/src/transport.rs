@@ -648,6 +648,27 @@ impl Transport {
             );
         }
 
+        // The pipelining desync check is gone, but a 206 whose
+        // Content-Range starts elsewhere than the request asked is still
+        // refused, with the retryable HE_INV_CONTENT_RANGE_HDR and nothing
+        // switched off: the texture fetcher cannot tell a reply that starts
+        // at 0 from one without a Content-Range and would append it to the
+        // data it has. A longer reply at the asked offset is delivered
+        // (BUG-2295). As the C++ `HttpLibcurl::completeRequest`.
+        if op.status == Status::http(206)
+            && op.reply_length != 0
+            && op.req.offset != op.reply_offset
+        {
+            hooks.log(
+                LogLevel::Warn,
+                &format!(
+                    "Partial content at offset {} for a request at offset {}, url {}",
+                    op.reply_offset, op.req.offset, op.req.url
+                ),
+            );
+            op.status = Status::llcore(he::INV_CONTENT_RANGE_HDR);
+        }
+
         if !multi.is_null() && !handle.is_null() {
             unsafe { sys::curl_multi_remove_handle(multi, handle) };
             self.cache.free(op.curl.0);
