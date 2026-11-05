@@ -4,8 +4,8 @@ description = "Ogg Vorbis decoding for Vulkanstorm: a port of the libogg 1.3.5 a
 version.workspace = true
 edition.workspace = true
 # The decoder is a port of Xiph's BSD-3-Clause libogg/libvorbis (notice in
-# LICENSE-xiph); the crate is part of the LGPL-2.1 Vulkanstorm core.
-license = "BSD-3-Clause AND LGPL-2.1-only"
+# LICENSE-xiph); the crate is part of the dual-licensed Vulkanstorm core.
+license = "BSD-3-Clause AND (LGPL-2.1-only OR GPL-3.0-or-later)"
 repository.workspace = true
 
 # No dependencies: the decoder is plain safe Rust over std (libm through

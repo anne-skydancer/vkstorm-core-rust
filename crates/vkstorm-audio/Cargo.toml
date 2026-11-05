@@ -4,7 +4,7 @@ description = "The viewer's audio engine for Vulkanstorm: the sound-effect mixer
 version.workspace = true
 edition.workspace = true
 # The mixer is derived from SoLoud (zlib; LICENSE-soloud).
-license = "LGPL-2.1-only AND Zlib"
+license = "(LGPL-2.1-only OR GPL-3.0-or-later) AND Zlib"
 repository.workspace = true
 
 [features]

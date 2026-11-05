@@ -11,7 +11,8 @@ built with the rungs it has adopted. The stage receives:
     lib/release/vkstorm_ffi.lib | libvkstorm_ffi.a   the static library
     lib/release/vkstorm_ffi.native-libs.txt          system libraries it needs at link time
     include/vkstorm_ffi.h                            the C ABI
-    LICENSES/vkstorm-core-rust.txt                   this repository's licence
+    LICENSES/vkstorm-core-rust.txt                   this repository's licence: LICENSE, then
+                                                     the LGPL-2.1 and GPL-3.0 texts
     LICENSES/third-party.txt                         every crate built in, with its licence
     VERSION.txt                                      <version>.<commit>.<rungs>
 
@@ -71,7 +72,11 @@ def main():
     shutil.copy2(target / library, stage / "lib/release" / library)
     (stage / "lib/release/vkstorm_ffi.native-libs.txt").write_text(native[-1].strip() + "\n", encoding="utf-8")
     shutil.copy2(ROOT / "crates" / CRATE / "include" / "vkstorm_ffi.h", stage / "include" / "vkstorm_ffi.h")
-    shutil.copy2(ROOT / "LICENSE", stage / "LICENSES" / "vkstorm-core-rust.txt")
+    # Dual licence (NOTICE.md): the statement followed by both licence texts.
+    texts = [(ROOT / name).read_text(encoding="utf-8").strip("\n")
+             for name in ("LICENSE", "LICENSE-LGPL-2.1", "LICENSE-GPL-3.0")]
+    separator = "\n" + "=" * 75 + "\n\n"
+    (stage / "LICENSES" / "vkstorm-core-rust.txt").write_text(separator.join(texts) + "\n", encoding="utf-8")
 
     # Every package compiled into the library (the resolved graph for these features).
     meta = json.loads(run("cargo", "metadata", "--format-version", "1", "--locked",
