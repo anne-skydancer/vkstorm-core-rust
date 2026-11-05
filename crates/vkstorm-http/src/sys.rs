@@ -108,8 +108,7 @@ pub const CURLOPT_SEEKFUNCTION: CURLoption = FUNCTIONPOINT + 167;
 pub const CURLOPT_SEEKDATA: CURLoption = OBJECTPOINT + 168;
 /// Wait for a connection that can multiplex (HTTP/2) rather than open one.
 pub const CURLOPT_PIPEWAIT: CURLoption = LONG + 237;
-/// Added in 7.59.0; the viewer's 7.54.1 does not have it, so the transport
-/// uses `CURLOPT_TIMEVALUE` (a `long`), as the C++ did for that version.
+/// Added in 7.59.0: `CURLOPT_TIMEVALUE` as a `curl_off_t`.
 pub const CURLOPT_TIMEVALUE_LARGE: CURLoption = OFF_T + 270;
 
 pub const CURLMOPT_PIPELINING: CURLMoption = LONG + 3;
@@ -218,6 +217,12 @@ mod typed {
     /// # Safety
     /// `h` must be a live easy handle; `v` NUL-terminated.
     pub unsafe fn easy_setopt_str(h: *mut CURL, opt: CURLoption, v: *const c_char) -> CURLcode {
+        unsafe { curl_easy_setopt(h, opt, v) }
+    }
+
+    /// # Safety
+    /// `h` must be a live easy handle; `opt` a `curl_off_t` option.
+    pub unsafe fn easy_setopt_off_t(h: *mut CURL, opt: CURLoption, v: curl_off_t) -> CURLcode {
         unsafe { curl_easy_setopt(h, opt, v) }
     }
 
@@ -337,6 +342,9 @@ mod stubs {
         unlinked()
     }
     pub unsafe fn easy_setopt_str(h: *mut CURL, opt: CURLoption, v: *const c_char) -> CURLcode {
+        unlinked()
+    }
+    pub unsafe fn easy_setopt_off_t(h: *mut CURL, opt: CURLoption, v: curl_off_t) -> CURLcode {
         unlinked()
     }
     pub unsafe fn multi_setopt_long(m: *mut CURLM, opt: CURLMoption, v: c_long) -> CURLMcode {
