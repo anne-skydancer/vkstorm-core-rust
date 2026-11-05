@@ -697,11 +697,35 @@ fn odd_bodies() {
         min_backoff: 200_000,
         ..RequestOptions::default()
     };
-    c.get_range(DEFAULT_POLICY_ID, &m.url("/badrange/"), 0, 3, Some(opts))
-        .unwrap();
+    c.get_range(
+        DEFAULT_POLICY_ID,
+        &m.url("/badrange/"),
+        0,
+        3,
+        Some(opts.clone()),
+    )
+    .unwrap();
     let r = c.wait_for(1, WAIT).pop().unwrap();
     assert_eq!(r.status, Status::llcore(he::INV_CONTENT_RANGE_HDR));
     assert_eq!(r.retries, 1);
+    // A 206 that starts elsewhere than asked is refused (retryable); one
+    // that starts where asked is delivered, even if longer (BUG-2295).
+    c.get_range(
+        DEFAULT_POLICY_ID,
+        &m.url("/fixedrange/"),
+        20,
+        10,
+        Some(opts.clone()),
+    )
+    .unwrap();
+    let r = c.wait_for(1, WAIT).pop().unwrap();
+    assert_eq!(r.status, Status::llcore(he::INV_CONTENT_RANGE_HDR));
+    assert_eq!(r.retries, 1);
+    c.get_range(DEFAULT_POLICY_ID, &m.url("/fixedrange/"), 0, 5, Some(opts))
+        .unwrap();
+    let r = c.wait_for(1, WAIT).pop().unwrap();
+    assert_eq!(r.status, Status::http(206));
+    assert_eq!(r.body, pattern(10));
     stop(c, &s);
 }
 
