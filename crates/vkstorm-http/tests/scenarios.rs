@@ -721,11 +721,35 @@ fn odd_bodies() {
     let r = c.wait_for(1, WAIT).pop().unwrap();
     assert_eq!(r.status, Status::llcore(he::INV_CONTENT_RANGE_HDR));
     assert_eq!(r.retries, 1);
-    c.get_range(DEFAULT_POLICY_ID, &m.url("/fixedrange/"), 0, 5, Some(opts))
-        .unwrap();
+    c.get_range(
+        DEFAULT_POLICY_ID,
+        &m.url("/fixedrange/"),
+        0,
+        5,
+        Some(opts.clone()),
+    )
+    .unwrap();
     let r = c.wait_for(1, WAIT).pop().unwrap();
     assert_eq!(r.status, Status::http(206));
     assert_eq!(r.body, pattern(10));
+    // A 206 without a usable Content-Range reads as offset 0: refused for a
+    // request at a later offset, delivered for one at offset 0.
+    for path in ["/norange/", "/oddrange/"] {
+        c.get_range(DEFAULT_POLICY_ID, &m.url(path), 20, 10, Some(opts.clone()))
+            .unwrap();
+        let r = c.wait_for(1, WAIT).pop().unwrap();
+        assert_eq!(
+            r.status,
+            Status::llcore(he::INV_CONTENT_RANGE_HDR),
+            "{path}"
+        );
+        assert_eq!(r.retries, 1, "{path}");
+        c.get_range(DEFAULT_POLICY_ID, &m.url(path), 0, 10, Some(opts.clone()))
+            .unwrap();
+        let r = c.wait_for(1, WAIT).pop().unwrap();
+        assert_eq!(r.status, Status::http(206), "{path}");
+        assert_eq!(r.body, pattern(10), "{path}");
+    }
     stop(c, &s);
 }
 

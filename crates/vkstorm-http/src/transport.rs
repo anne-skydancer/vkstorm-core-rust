@@ -648,17 +648,16 @@ impl Transport {
             );
         }
 
-        // The pipelining desync check is gone, but a 206 whose
-        // Content-Range starts elsewhere than the request asked is still
-        // refused, with the retryable HE_INV_CONTENT_RANGE_HDR and nothing
-        // switched off: the texture fetcher cannot tell a reply that starts
-        // at 0 from one without a Content-Range and would append it to the
-        // data it has. A longer reply at the asked offset is delivered
-        // (BUG-2295). As the C++ `HttpLibcurl::completeRequest`.
-        if op.status == Status::http(206)
-            && op.reply_length != 0
-            && op.req.offset != op.reply_offset
-        {
+        // The pipelining desync check is gone, but its offset test stays: a
+        // 206 that does not start where the request asked is refused, with
+        // the retryable HE_INV_CONTENT_RANGE_HDR and nothing switched off. A
+        // 206 without a usable Content-Range reads as offset 0, so it passes
+        // only for a request at offset 0 (the texture fetcher then assumes
+        // it got what it asked for); the fetcher cannot tell such a reply
+        // from one starting at 0 and would append it to the data it has. A
+        // longer reply at the asked offset is delivered (BUG-2295). As the
+        // C++ `HttpLibcurl::completeRequest`.
+        if op.status == Status::http(206) && op.req.offset != op.reply_offset {
             hooks.log(
                 LogLevel::Warn,
                 &format!(
