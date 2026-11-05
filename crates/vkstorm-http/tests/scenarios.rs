@@ -458,6 +458,65 @@ fn concurrency_limits_and_throttle() {
     stop(c, &s);
 }
 
+// A deep-queue class (pipelining depth above 1) has per-host limit x depth
+// requests in flight, each on a connection of its own: libcurl 8 has no
+// HTTP/1.1 pipelining, and the class may open that many connections, so no
+// request waits in libcurl's pending queue.
+#[test]
+fn deep_queue_runs_per_host_times_depth_on_own_connections() {
+    let mut s = service();
+    let d = s.create_policy_class();
+    assert_eq!(
+        s.set_option_long(PolicyOption::ConnectionLimit as i32, d, 4),
+        Ok(4)
+    );
+    assert_eq!(
+        s.set_option_long(PolicyOption::PerHostConnectionLimit as i32, d, 2),
+        Ok(2)
+    );
+    assert_eq!(
+        s.set_option_long(PolicyOption::PipeliningDepth as i32, d, 3),
+        Ok(3)
+    );
+    s.start_thread();
+    let m = MockServer::start();
+    let mut c = Client::new(&s);
+    for i in 0..12 {
+        c.get(d, &m.url(&format!("/slow/300/D/{i}")), None).unwrap();
+    }
+    let replies = c.wait_for(12, WAIT);
+    assert_eq!(replies.len(), 12);
+    assert!(replies.iter().all(|r| r.status == Status::http(200)));
+    let rec = m.records();
+    let overlapping = |x: &mock::Recorded, y: &mock::Recorded| {
+        y.t_ms <= x.t_ms && y.answered_ms.unwrap() > x.t_ms
+    };
+    let overlap = rec
+        .iter()
+        .map(|x| rec.iter().filter(|y| overlapping(x, y)).count())
+        .max()
+        .unwrap_or(0);
+    assert_eq!(overlap, 6, "per-host limit 2 x depth 3 in flight");
+    for x in &rec {
+        for y in &rec {
+            if x.seq != y.seq && x.conn == y.conn {
+                assert!(
+                    !overlapping(x, y),
+                    "two requests at once on connection {}",
+                    x.conn
+                );
+            }
+        }
+    }
+    let connections: std::collections::HashSet<u32> = rec.iter().map(|r| r.conn).collect();
+    assert!(
+        connections.len() <= 6,
+        "{} connections for 6 in flight",
+        connections.len()
+    );
+    stop(c, &s);
+}
+
 #[test]
 fn cancellation() {
     let (s, m) = started();
@@ -683,9 +742,11 @@ fn shutdown_cancels_pending_requests() {
 #[test]
 fn status_strings() {
     sys::global_init();
-    assert_eq!(
-        Status::easy(sys::CURLE_COULDNT_CONNECT).message(),
-        "Couldn't connect to server"
+    // libcurl's own text: curl 8 says "Could not", 7.54.1 said "Couldn't".
+    let couldnt = Status::easy(sys::CURLE_COULDNT_CONNECT).message();
+    assert!(
+        couldnt == "Could not connect to server" || couldnt == "Couldn't connect to server",
+        "{couldnt}"
     );
     assert_eq!(Status::http(404).message(), "Not Found");
     assert_eq!(

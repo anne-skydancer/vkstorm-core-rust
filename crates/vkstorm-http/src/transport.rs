@@ -1,9 +1,8 @@
 //! `HttpLibcurl`: the libcurl transport. One multi handle per policy class,
 //! a cache of easy handles (the first one freed is the template the others
 //! are duplicated from), the per-request option setup of
-//! `HttpOpRequest::prepareRequest`, the libcurl callbacks, request
-//! completion and cancellation, and the stall used to reconfigure a class's
-//! multi handle while it has no active request.
+//! `HttpOpRequest::prepareRequest`, the libcurl callbacks, and request
+//! completion and cancellation.
 //!
 //! This module and [`crate::sys`] hold all of the crate's `unsafe`: every
 //! libcurl call, and the callbacks that get their request record back from
@@ -19,9 +18,8 @@ use crate::headers::{
 };
 use crate::hooks::{Hooks, LogLevel, Stat};
 use crate::options::{
-    PolicyOption, REDIRECTS_DEFAULT, REQUEST_TIMEOUT_DEFAULT, REQUEST_TIMEOUT_MAX,
-    REQUEST_TIMEOUT_MIN, REQUEST_XFER_TIMEOUT_DEFAULT, TRACE_CURL_BODIES, TRACE_CURL_HEADERS,
-    TRACE_OFF,
+    REDIRECTS_DEFAULT, REQUEST_TIMEOUT_DEFAULT, REQUEST_TIMEOUT_MAX, REQUEST_TIMEOUT_MIN,
+    REQUEST_XFER_TIMEOUT_DEFAULT, TRACE_CURL_BODIES, TRACE_CURL_HEADERS, TRACE_OFF,
 };
 use crate::policy::{CANCELED, LoopSpeed, Policy};
 use crate::request::{
@@ -82,7 +80,6 @@ pub struct Transport {
     hooks: Arc<dyn Hooks>,
     multis: Vec<*mut CURLM>,
     active_counts: Vec<i32>,
-    dirty: Vec<bool>,
     active: HashMap<u64, Box<RequestOp>>,
     cache: HandleCache,
     user_agent: CString,
@@ -168,7 +165,6 @@ impl Transport {
             hooks,
             multis: Vec::new(),
             active_counts: Vec::new(),
-            dirty: Vec::new(),
             active: HashMap::new(),
             cache: HandleCache::new(),
             user_agent: cstr(user_agent),
@@ -186,7 +182,6 @@ impl Transport {
         debug_assert!(self.multis.is_empty());
         self.multis.clear();
         self.active_counts = vec![0; policy_count];
-        self.dirty = vec![false; policy_count];
         for pclass in 0..policy_count {
             let m = unsafe { sys::curl_multi_init() };
             if m.is_null() {
@@ -210,9 +205,6 @@ impl Transport {
                 continue;
             }
             if self.active_counts[pclass] == 0 {
-                if self.dirty[pclass] {
-                    self.policy_updated(pclass as u32, policy);
-                }
                 continue;
             }
             loop {
@@ -479,19 +471,16 @@ impl Transport {
             xfer_timeout = timeout;
         }
         if class.pipelining > 1 {
-            // Pipelined requests wait behind each other: twice the transfer
-            // timeout. HTTP/2 only under the VIEWERASSET override, as before.
+            // A deep-queue class runs per-host limit x depth transfers at
+            // once. With no HTTP/1.1 pipelining they share the link side by
+            // side instead of queueing on a few connections, so the last one
+            // still finishes no sooner than the last of a pipeline did: the
+            // transfer timeout stays doubled. Where the server offers h2,
+            // wait for a stream on an open connection rather than opening
+            // another (libcurl's default HTTP version negotiates h2 over TLS
+            // only; the VIEWERASSET test switch to HTTP/2 is gone).
             xfer_timeout *= 2;
-            if std::env::var_os("VIEWERASSET").is_some() {
-                unsafe {
-                    setopt_long(
-                        h,
-                        sys::CURLOPT_HTTP_VERSION,
-                        sys::CURL_HTTP_VERSION_2_0,
-                        hooks,
-                    )
-                };
-            }
+            unsafe { setopt_long(h, sys::CURLOPT_PIPEWAIT, 1, hooks) };
         }
         unsafe {
             setopt_long(h, sys::CURLOPT_TIMEOUT, xfer_timeout as c_long, hooks);
@@ -647,65 +636,6 @@ impl Transport {
             );
         }
 
-        // Pipelining sanity checks: an X-LL-URL header naming another
-        // request's URL, or a partial reply for a range other than the one
-        // asked, mean the pipeline went out of sync; fail with a 503 (which
-        // retries) and turn pipelining off on every class.
-        let mut failed = false;
-        if !op.xll_url.is_empty() {
-            let mut uri = op.req.url.clone();
-            if let Some(i) = uri.find("://")
-                && let Some(j) = uri[i + 3..].find('/')
-            {
-                uri = uri[i + 3 + j..].to_owned();
-            }
-            if uri != op.xll_url {
-                hooks.log(
-                    LogLevel::Warn,
-                    &format!(
-                        "HTTP pipelining out of sync! Asked for: {} got {}",
-                        uri, op.xll_url
-                    ),
-                );
-                op.status = Status::http(503);
-                failed = true;
-            }
-        }
-        if !failed
-            && (op.req.offset != 0 || op.req.length != 0)
-            && op.status == Status::http(206)
-            && (op.req.offset != op.reply_offset
-                || (op.req.length != 0 && op.req.length < op.reply_length))
-        {
-            let wanted_end = if op.req.length != 0 {
-                format!("{}", op.req.offset + op.req.length - 1)
-            } else {
-                String::new()
-            };
-            hooks.log(
-                    LogLevel::Warn,
-                    &format!(
-                        "HTTP pipelining possibly out of sync, request wanted: {}-{} got: {}-{} url: {}",
-                        op.req.offset,
-                        wanted_end,
-                        op.reply_offset,
-                        op.reply_offset.wrapping_add(op.reply_length).wrapping_sub(1),
-                        op.req.url
-                    ),
-                );
-            op.status = Status::http(503);
-            failed = true;
-        }
-        if failed {
-            for i in 0..self.multis.len() {
-                let options = policy.class_options_mut(i as u32);
-                if options.pipelining != 0 {
-                    options.set(PolicyOption::PipeliningDepth, 0);
-                    self.dirty[i] = true;
-                    self.policy_updated(i as u32, policy);
-                }
-            }
-        }
         if !multi.is_null() && !handle.is_null() {
             unsafe { sys::curl_multi_remove_handle(multi, handle) };
             self.cache.free(op.curl.0);
@@ -746,56 +676,55 @@ impl Transport {
     }
 
     /// `HttpLibcurl::policyUpdated`: applies the class's connection and
-    /// pipelining options to its multi handle when it has no active
-    /// request; otherwise marks it dirty and stalls the class until it has
-    /// none (libcurl 7.37 corrupted memory when a pipelining multi handle
-    /// with active requests was switched off).
-    pub fn policy_updated(&mut self, pclass: u32, policy: &mut Policy) {
+    /// multiplexing options to its multi handle, at once. (The stall that
+    /// waited for the class to go idle first protected libcurl 7.37, which
+    /// corrupted memory when HTTP/1.1 pipelining was switched off under
+    /// active requests; there is no HTTP/1.1 pipelining to switch now.)
+    ///
+    /// A deep-queue class may open as many connections per host as it runs
+    /// requests, so libcurl runs every request it is handed and none waits
+    /// unseen in libcurl's pending queue with its timeout running; where a
+    /// server offers h2, up to `depth` streams share a connection.
+    pub fn policy_updated(&mut self, pclass: u32, policy: &Policy) {
         let i = pclass as usize;
         if i >= self.multis.len() {
             return;
         }
         let hooks = self.hooks.clone();
-        if self.active_counts[i] == 0 {
-            let options = policy.class_options(pclass).clone();
-            let multi = self.multis[i];
-            policy.stall_policy(pclass, false);
-            self.dirty[i] = false;
-            unsafe {
-                if options.pipelining > 1 {
-                    msetopt_long(multi, sys::CURLMOPT_PIPELINING, 1, &*hooks);
-                    msetopt_long(
-                        multi,
-                        sys::CURLMOPT_MAX_PIPELINE_LENGTH,
-                        options.pipelining as c_long,
-                        &*hooks,
-                    );
-                    msetopt_long(
-                        multi,
-                        sys::CURLMOPT_MAX_HOST_CONNECTIONS,
-                        options.per_host_connection_limit as c_long,
-                        &*hooks,
-                    );
-                    msetopt_long(
-                        multi,
-                        sys::CURLMOPT_MAX_TOTAL_CONNECTIONS,
-                        options.connection_limit as c_long,
-                        &*hooks,
-                    );
-                } else {
-                    msetopt_long(multi, sys::CURLMOPT_PIPELINING, 0, &*hooks);
-                    msetopt_long(multi, sys::CURLMOPT_MAX_HOST_CONNECTIONS, 0, &*hooks);
-                    msetopt_long(
-                        multi,
-                        sys::CURLMOPT_MAX_TOTAL_CONNECTIONS,
-                        options.connection_limit as c_long,
-                        &*hooks,
-                    );
-                }
+        let options = policy.class_options(pclass);
+        let multi = self.multis[i];
+        unsafe {
+            if options.pipelining > 1 {
+                let limit = options.active_limit() as c_long;
+                msetopt_long(
+                    multi,
+                    sys::CURLMOPT_PIPELINING,
+                    sys::CURLPIPE_MULTIPLEX,
+                    &*hooks,
+                );
+                msetopt_long(multi, sys::CURLMOPT_MAX_HOST_CONNECTIONS, limit, &*hooks);
+                msetopt_long(multi, sys::CURLMOPT_MAX_TOTAL_CONNECTIONS, limit, &*hooks);
+                msetopt_long(
+                    multi,
+                    sys::CURLMOPT_MAX_CONCURRENT_STREAMS,
+                    options.pipelining as c_long,
+                    &*hooks,
+                );
+            } else {
+                msetopt_long(
+                    multi,
+                    sys::CURLMOPT_PIPELINING,
+                    sys::CURLPIPE_NOTHING,
+                    &*hooks,
+                );
+                msetopt_long(multi, sys::CURLMOPT_MAX_HOST_CONNECTIONS, 0, &*hooks);
+                msetopt_long(
+                    multi,
+                    sys::CURLMOPT_MAX_TOTAL_CONNECTIONS,
+                    options.connection_limit as c_long,
+                    &*hooks,
+                );
             }
-        } else if !self.dirty[i] {
-            self.dirty[i] = true;
-            policy.stall_policy(pclass, true);
         }
     }
 
@@ -816,7 +745,6 @@ impl Transport {
             }
         }
         self.active_counts.clear();
-        self.dirty.clear();
     }
 }
 
@@ -1005,11 +933,6 @@ unsafe extern "C" fn header_callback(
     let Some((name, value)) = split_header(hdr) else {
         return hdr_size;
     };
-    if let Some(v) = &value
-        && name == "x-ll-url"
-    {
-        op.xll_url = v.clone();
-    }
     if is_header && op.proc_flags & PF_SAVE_HEADERS != 0 {
         op.reply_headers
             .get_or_insert_with(Vec::new)
