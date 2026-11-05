@@ -518,6 +518,82 @@ fn deep_queue_runs_per_host_times_depth_on_own_connections() {
     stop(c, &s);
 }
 
+// Options apply at once, also under active requests (the stall that let
+// a class go idle first protected libcurl 7.37's pipelining switch): turning
+// a deep-queue class's depth to 0 while its requests run loses or fails
+// none of them, and later requests run under the new limit (the connection
+// limit, 4).
+#[test]
+fn options_change_under_active_requests() {
+    let mut s = service();
+    let d = s.create_policy_class();
+    assert_eq!(
+        s.set_option_long(PolicyOption::ConnectionLimit as i32, d, 4),
+        Ok(4)
+    );
+    assert_eq!(
+        s.set_option_long(PolicyOption::PerHostConnectionLimit as i32, d, 2),
+        Ok(2)
+    );
+    assert_eq!(
+        s.set_option_long(PolicyOption::PipeliningDepth as i32, d, 3),
+        Ok(3)
+    );
+    s.start_thread();
+    let m = MockServer::start();
+    let mut c = Client::new(&s);
+    for i in 0..6 {
+        c.get(d, &m.url(&format!("/slow/600/E/{i}")), None).unwrap();
+    }
+    // Let all six get under way, then switch while they run.
+    let start = std::time::Instant::now();
+    while m.records().len() < 6 && start.elapsed() < Duration::from_secs(10) {
+        std::thread::sleep(Duration::from_millis(5));
+    }
+    assert_eq!(
+        m.records().len(),
+        6,
+        "six requests in flight before the switch"
+    );
+    let h = c
+        .set_option_long(PolicyOption::PipeliningDepth, d, 0)
+        .unwrap();
+    for i in 0..8 {
+        c.get(d, &m.url(&format!("/slow/200/F/{i}")), None).unwrap();
+    }
+    let replies = c.wait_for(15, WAIT);
+    assert_eq!(replies.len(), 15);
+    let set = replies.iter().find(|r| r.handle == h).unwrap();
+    assert_eq!(
+        (set.kind, set.status, set.long_value),
+        (ReplyKind::SetGet, Status::OK, 0)
+    );
+    assert!(
+        replies
+            .iter()
+            .filter(|r| r.handle != h)
+            .all(|r| r.status == Status::http(200)),
+        "every request completes"
+    );
+    let rec = m.records();
+    let f: Vec<_> = rec.iter().filter(|r| r.target.contains("/F/")).collect();
+    assert_eq!(f.len(), 8);
+    let overlap = f
+        .iter()
+        .map(|x| {
+            f.iter()
+                .filter(|y| y.t_ms <= x.t_ms && y.answered_ms.unwrap() > x.t_ms)
+                .count()
+        })
+        .max()
+        .unwrap_or(0);
+    assert!(
+        overlap <= 4,
+        "{overlap} in flight after the switch, limit 4"
+    );
+    stop(c, &s);
+}
+
 #[test]
 fn cancellation() {
     let (s, m) = started();
