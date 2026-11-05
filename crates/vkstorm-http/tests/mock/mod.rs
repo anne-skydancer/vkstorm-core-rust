@@ -542,6 +542,27 @@ impl Connection {
                 );
                 false
             }
+            // A 206 without Content-Range, and one with a Content-Range the
+            // parser ignores (not in bytes).
+            "norange" => self.send(
+                206,
+                "Partial Content",
+                &[ct("application/octet-stream")],
+                &pattern(10),
+                true,
+                false,
+            ),
+            "oddrange" => self.send(
+                206,
+                "Partial Content",
+                &[
+                    ("Content-Range", "items 0-9/100".into()),
+                    ct("application/octet-stream"),
+                ],
+                &pattern(10),
+                true,
+                false,
+            ),
             // A 206 for bytes 0-9 whatever range was asked.
             "fixedrange" => self.send(
                 206,
