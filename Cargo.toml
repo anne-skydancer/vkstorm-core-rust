@@ -6,7 +6,7 @@ members = ["crates/*", "tools/*"]
 exclude = ["tools/llsd-fixtures", "tools/inventory-fixtures"]
 
 [workspace.package]
-version = "0.5.1"
+version = "0.5.2"
 edition = "2024"
 # Ports of Linden Lab and Firestorm code (NOTICE.md); a wholly original crate
 # uses "LGPL-2.1-or-later OR GPL-3.0-or-later" in its own Cargo.toml.
