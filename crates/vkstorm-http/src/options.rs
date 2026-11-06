@@ -211,15 +211,19 @@ impl ClassOptions {
         Status::OK
     }
 
-    /// The requests the class may have in flight at once, and so also the
-    /// connections libcurl may open for it. libcurl 7.62 and later have no
-    /// HTTP/1.1 pipelining: a deep-queue class (pipelining depth above 1)
-    /// runs per-host limit x depth requests, each on its own HTTP/1.1
-    /// connection, or as HTTP/2 streams where the server offers h2. Other
-    /// classes run up to their connection limit.
+    /// The requests the class may have in flight at once. With HTTP/1.1
+    /// pipelining (libcurl before 7.62) a deep-queue class (pipelining depth
+    /// above 1) ran per-host limit x depth requests over per-host limit
+    /// connections. libcurl 7.62 and later have no pipelining, and the
+    /// transport speaks HTTP/1.1 to every server, so such a class runs one
+    /// request per connection: the rest wait in the policy's ready queue,
+    /// where no timeout runs, not in libcurl's, where the wait for a
+    /// connection would count against CURLOPT_CONNECTTIMEOUT. Other classes
+    /// run up to their connection limit. As the C++
+    /// `HttpPolicyClass::activeLimit()` with curl 8.
     pub fn active_limit(&self) -> i64 {
         if self.pipelining > 1 {
-            self.per_host_connection_limit * self.pipelining
+            self.per_host_connection_limit
         } else {
             self.connection_limit
         }
@@ -359,7 +363,7 @@ mod tests {
     }
 
     #[test]
-    fn active_limit_is_per_host_times_depth_for_deep_queues() {
+    fn active_limit_is_one_per_connection_for_deep_queues() {
         let mut c = ClassOptions::default();
         assert!(c.set(PolicyOption::ConnectionLimit, 16).is_ok());
         assert!(c.set(PolicyOption::PerHostConnectionLimit, 8).is_ok());
@@ -367,7 +371,8 @@ mod tests {
         assert!(c.set(PolicyOption::PipeliningDepth, 1).is_ok());
         assert_eq!(c.active_limit(), 16);
         assert!(c.set(PolicyOption::PipeliningDepth, 5).is_ok());
-        assert_eq!(c.active_limit(), 40);
+        // no pipelining: one request per (per-host) connection, the rest queued
+        assert_eq!(c.active_limit(), 8);
     }
 
     #[test]

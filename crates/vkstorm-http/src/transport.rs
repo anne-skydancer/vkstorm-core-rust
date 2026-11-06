@@ -325,14 +325,23 @@ impl Transport {
         op.ssl.url = op.url_c.as_ptr();
         unsafe {
             setopt_long(h, sys::CURLOPT_IPRESOLVE, sys::CURL_IPRESOLVE_V4, hooks);
+            // HTTP/1.1 to every server, as libcurl 7.54.1 spoke by default
+            // (7.62 and later negotiate h2 over TLS); as the C++.
+            setopt_long(
+                h,
+                sys::CURLOPT_HTTP_VERSION,
+                sys::CURL_HTTP_VERSION_1_1,
+                hooks,
+            );
+            // Accept-Encoding is sent with the request headers below and
+            // the reply decoded in complete_request (crate::decode), not by
+            // libcurl, which fails a Content-Encoding it does not know
+            // (the asset CDN's `binary/octet-stream`); as the C++.
+            setopt_long(h, sys::CURLOPT_HTTP_CONTENT_DECODING, 0, hooks);
             setopt_long(h, sys::CURLOPT_NOSIGNAL, 1, hooks);
             setopt_long(h, sys::CURLOPT_NOPROGRESS, 1, hooks);
             setopt_str(h, sys::CURLOPT_URL, &op.url_c, hooks);
             setopt_ptr(h, sys::CURLOPT_PRIVATE, op_ptr, hooks);
-            // No Accept-Encoding here: the C++ asks for content encodings
-            // only with libcurl before 7.81 (Firestorm: AWS answers with
-            // `Content-Encoding: binary/octet-stream`, which newer libcurl
-            // rejects); POST still asks, below, as the C++ does.
             setopt_long(h, sys::CURLOPT_AUTOREFERER, 1, hooks);
             setopt_long(
                 h,
@@ -434,7 +443,6 @@ impl Transport {
             }
             Method::Post => unsafe {
                 setopt_long(h, sys::CURLOPT_POST, 1, hooks);
-                setopt_str(h, sys::CURLOPT_ACCEPT_ENCODING, c"", hooks);
                 setopt_ptr(h, sys::CURLOPT_POSTFIELDS, std::ptr::null(), hooks);
                 setopt_long(h, sys::CURLOPT_POSTFIELDSIZE, body_size, hooks);
                 slist = slist_append(slist, "Expect:");
@@ -500,6 +508,16 @@ impl Transport {
         }
         for (name, value) in &op.req.headers {
             slist = slist_append(slist, &header_line(name, value));
+        }
+        // What libcurl 7.54.1's CURLOPT_ENCODING "" sent, unless the caller
+        // gave its own, which libcurl let win; as the C++.
+        if !op
+            .req
+            .headers
+            .iter()
+            .any(|(name, _)| name.eq_ignore_ascii_case("Accept-Encoding"))
+        {
+            slist = slist_append(slist, "Accept-Encoding: deflate, gzip");
         }
         op.slist = SendPtr(slist as *mut c_void);
         unsafe { setopt_ptr(h, sys::CURLOPT_HTTPHEADER, slist as *const c_void, hooks) };
@@ -648,6 +666,42 @@ impl Transport {
             );
         }
 
+        // The reply decoding libcurl 7.54.1 did (crate::decode): gzip and
+        // deflate undone, anything else passed through, data that does not
+        // decode refused with the original body kept; as the C++.
+        let mut encoding: *mut sys::curl_header = std::ptr::null_mut();
+        if unsafe {
+            sys::curl_easy_header(
+                handle,
+                c"Content-Encoding".as_ptr(),
+                0,
+                sys::CURLH_HEADER,
+                -1,
+                &mut encoding,
+            )
+        } == sys::CURLHE_OK
+            && !encoding.is_null()
+            && !unsafe { (*encoding).value }.is_null()
+        {
+            let value = unsafe { CStr::from_ptr((*encoding).value) }
+                .to_string_lossy()
+                .into_owned();
+            match crate::decode::decode_reply(&value, &op.reply_body) {
+                crate::decode::Decoded::Body(body) => op.reply_body = body,
+                crate::decode::Decoded::Passthrough => {}
+                crate::decode::Decoded::Refused => {
+                    hooks.log(
+                        LogLevel::Warn,
+                        &format!(
+                            "Could not undo Content-Encoding {value}, url {}",
+                            op.req.url
+                        ),
+                    );
+                    op.status = Status::easy(sys::CURLE_BAD_CONTENT_ENCODING);
+                }
+            }
+        }
+
         // The pipelining desync check is gone, but its offset test stays: a
         // 206 that does not start where the request asked is refused, with
         // the retryable HE_INV_CONTENT_RANGE_HDR and nothing switched off.
@@ -715,10 +769,12 @@ impl Transport {
     /// corrupted memory when HTTP/1.1 pipelining was switched off under
     /// active requests; there is no HTTP/1.1 pipelining to switch now.)
     ///
-    /// A deep-queue class may open as many connections per host as it runs
-    /// requests, so libcurl runs every request it is handed and none waits
-    /// unseen in libcurl's pending queue with its timeout running; where a
-    /// server offers h2, up to `depth` streams share a connection.
+    /// A deep-queue class keeps the connections it had with HTTP/1.1
+    /// pipelining: its per-host limit to a host and its connection limit in
+    /// all. It runs one request per connection
+    /// ([`ClassOptions::active_limit`](crate::options::ClassOptions::active_limit)),
+    /// so libcurl runs every request it is handed and none waits in its
+    /// pending queue with its timeout running. As the C++ with curl 8.
     pub fn policy_updated(&mut self, pclass: u32, policy: &Policy) {
         let i = pclass as usize;
         if i >= self.multis.len() {
@@ -729,15 +785,24 @@ impl Transport {
         let multi = self.multis[i];
         unsafe {
             if options.pipelining > 1 {
-                let limit = options.active_limit() as c_long;
                 msetopt_long(
                     multi,
                     sys::CURLMOPT_PIPELINING,
                     sys::CURLPIPE_MULTIPLEX,
                     &*hooks,
                 );
-                msetopt_long(multi, sys::CURLMOPT_MAX_HOST_CONNECTIONS, limit, &*hooks);
-                msetopt_long(multi, sys::CURLMOPT_MAX_TOTAL_CONNECTIONS, limit, &*hooks);
+                msetopt_long(
+                    multi,
+                    sys::CURLMOPT_MAX_HOST_CONNECTIONS,
+                    options.per_host_connection_limit as c_long,
+                    &*hooks,
+                );
+                msetopt_long(
+                    multi,
+                    sys::CURLMOPT_MAX_TOTAL_CONNECTIONS,
+                    options.connection_limit as c_long,
+                    &*hooks,
+                );
                 msetopt_long(
                     multi,
                     sys::CURLMOPT_MAX_CONCURRENT_STREAMS,

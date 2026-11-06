@@ -22,6 +22,7 @@
 //! [`Client`] is the crate's own front door, used by its tests and benches:
 //! one reply queue and the request methods of `HttpRequest`.
 
+pub mod decode;
 pub mod headers;
 pub mod hooks;
 pub mod options;

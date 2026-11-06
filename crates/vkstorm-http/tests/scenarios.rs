@@ -6,7 +6,7 @@ mod mock;
 use std::sync::Arc;
 use std::time::Duration;
 
-use mock::{LLSD_OK, MockServer, pattern};
+use mock::{LLSD_OK, MockServer, encoding_text, pattern};
 use vkstorm_http::{
     Client, DEFAULT_POLICY_ID, GLOBAL_POLICY_ID, Method, NoHooks, PolicyOption, ReplyKind, Request,
     RequestOptions, Service, Status, TEST_USER_AGENT, he, sys,
@@ -82,8 +82,9 @@ fn get_ok_with_headers() {
     assert_eq!(rec[0].header("User-Agent"), Some(TEST_USER_AGENT));
     assert_eq!(rec[0].header("Connection"), Some("keep-alive"));
     assert_eq!(rec[0].header("Keep-alive"), Some("300"));
-    // No Accept-Encoding on GET with libcurl 7.81 and later, as the C++.
-    assert!(rec[0].header("Accept-Encoding").is_none());
+    // Accept-Encoding as libcurl 7.54.1 sent it, the transport decoding the
+    // reply itself (crate::decode), as the C++.
+    assert_eq!(rec[0].header("Accept-Encoding"), Some("deflate, gzip"));
     assert!(rec[0].header("Pragma").is_none());
     assert_eq!(rec[1].conn, rec[0].conn, "keep-alive reuses the connection");
     let n = c.noop().unwrap();
@@ -459,12 +460,13 @@ fn concurrency_limits_and_throttle() {
     stop(c, &s);
 }
 
-// A deep-queue class (pipelining depth above 1) has per-host limit x depth
-// requests in flight, each on a connection of its own: libcurl 8 has no
-// HTTP/1.1 pipelining, and the class may open that many connections, so no
-// request waits in libcurl's pending queue.
+// A deep-queue class (pipelining depth above 1) keeps the connections it
+// had with HTTP/1.1 pipelining and runs one request on each: libcurl 8 has
+// no pipelining and the transport speaks HTTP/1.1, so the rest wait in the
+// policy's queue, never in libcurl's, where the wait for a connection would
+// count against the connect timeout. As the C++ with curl 8.
 #[test]
-fn deep_queue_runs_per_host_times_depth_on_own_connections() {
+fn deep_queue_runs_one_request_per_connection() {
     let mut s = service();
     let d = s.create_policy_class();
     assert_eq!(
@@ -497,7 +499,7 @@ fn deep_queue_runs_per_host_times_depth_on_own_connections() {
         .map(|x| rec.iter().filter(|y| overlapping(x, y)).count())
         .max()
         .unwrap_or(0);
-    assert_eq!(overlap, 6, "per-host limit 2 x depth 3 in flight");
+    assert_eq!(overlap, 2, "one request per connection, per-host limit 2");
     for x in &rec {
         for y in &rec {
             if x.seq != y.seq && x.conn == y.conn {
@@ -511,8 +513,8 @@ fn deep_queue_runs_per_host_times_depth_on_own_connections() {
     }
     let connections: std::collections::HashSet<u32> = rec.iter().map(|r| r.conn).collect();
     assert!(
-        connections.len() <= 6,
-        "{} connections for 6 in flight",
+        connections.len() <= 2,
+        "{} connections, per-host limit 2",
         connections.len()
     );
     stop(c, &s);
@@ -545,15 +547,16 @@ fn options_change_under_active_requests() {
     for i in 0..6 {
         c.get(d, &m.url(&format!("/slow/600/E/{i}")), None).unwrap();
     }
-    // Let all six get under way, then switch while they run.
+    // Let the first two (one per connection, per-host limit 2) get under
+    // way, then switch while they run.
     let start = std::time::Instant::now();
-    while m.records().len() < 6 && start.elapsed() < Duration::from_secs(10) {
+    while m.records().len() < 2 && start.elapsed() < Duration::from_secs(10) {
         std::thread::sleep(Duration::from_millis(5));
     }
     assert_eq!(
         m.records().len(),
-        6,
-        "six requests in flight before the switch"
+        2,
+        "two requests in flight before the switch"
     );
     let h = c
         .set_option_long(PolicyOption::PipeliningDepth, d, 0)
@@ -879,4 +882,42 @@ fn status_strings() {
         "Operation canceled"
     );
     assert!(!sys::version().is_empty());
+}
+
+// Content-Encoding as libcurl 7.54.1 handled it and the C++ llcorehttp does
+// (its test 24): gzip (gzip or zlib wrapper, several members, trailing
+// bytes) and deflate (zlib or raw) are undone, any other value passes
+// through, and gzip data that does not decode fails with
+// CURLE_BAD_CONTENT_ENCODING (61).
+#[test]
+fn content_encoding() {
+    let (s, m) = started();
+    let mut c = Client::new(&s);
+    let text = encoding_text();
+    for (kind, ok) in [
+        ("gzip", true),
+        ("gzipzlib", true),
+        ("gzipmulti", true),
+        ("gziptrail", true),
+        ("deflate", true),
+        ("rawdeflate", true),
+        ("binary", true),
+        ("none", true),
+        ("badgzip", false),
+    ] {
+        c.get(
+            DEFAULT_POLICY_ID,
+            &m.url(&format!("/encoding/{kind}/")),
+            None,
+        )
+        .unwrap();
+        let r = c.wait_for(1, WAIT).pop().unwrap();
+        if ok {
+            assert_eq!(r.status, Status::http(200), "{kind}");
+            assert_eq!(r.body, text, "{kind}: decoded body");
+        } else {
+            assert_eq!(r.status, Status::easy(61), "{kind}: refused");
+        }
+    }
+    stop(c, &s);
 }

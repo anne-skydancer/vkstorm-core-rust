@@ -612,6 +612,9 @@ dependencies = [
 [[package]]
 name = "vkstorm-http"
 version = "0.5.1"
+dependencies = [
+ "flate2",
+]
 
 [[package]]
 name = "vkstorm-image"

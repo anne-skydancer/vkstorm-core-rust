@@ -1,8 +1,8 @@
 //! The libcurl binding layer: the handful of libcurl functions, options and
 //! codes the transport uses, declared by hand against the stable libcurl ABI
 //! (option numbers and result codes have been fixed since libcurl 7.x). The
-//! viewer links curl 8; `CURLMOPT_MAX_CONCURRENT_STREAMS` (7.67) is the
-//! newest constant here.
+//! viewer links curl 8; `curl_easy_header()` (7.83) is the newest entry
+//! point here.
 //!
 //! No `curl-sys`: its build script either finds a system libcurl (vcpkg on
 //! Windows, pkg-config elsewhere) or builds its bundled copy with the
@@ -108,6 +108,7 @@ pub const CURLOPT_SEEKFUNCTION: CURLoption = FUNCTIONPOINT + 167;
 pub const CURLOPT_SEEKDATA: CURLoption = OBJECTPOINT + 168;
 /// Wait for a connection that can multiplex (HTTP/2) rather than open one.
 pub const CURLOPT_PIPEWAIT: CURLoption = LONG + 237;
+pub const CURLOPT_HTTP_CONTENT_DECODING: CURLoption = LONG + 158;
 /// Added in 7.59.0: `CURLOPT_TIMEVALUE` as a `curl_off_t`.
 pub const CURLOPT_TIMEVALUE_LARGE: CURLoption = OFF_T + 270;
 
@@ -133,6 +134,7 @@ pub const CURLINFO_CONTENT_TYPE: CURLINFO = CURLINFO_STRING + 18;
 pub const CURLINFO_PRIVATE: CURLINFO = CURLINFO_STRING + 21;
 
 pub const CURL_IPRESOLVE_V4: c_long = 1;
+pub const CURL_HTTP_VERSION_1_1: c_long = 2;
 pub const CURL_HTTP_VERSION_2_0: c_long = 3;
 pub const CURL_TIMECOND_IFMODSINCE: c_long = 1;
 pub const CURLPROXY_HTTP: c_long = 0;
@@ -158,6 +160,21 @@ pub const CURLE_OPERATION_TIMEDOUT: CURLcode = 28;
 pub const CURLE_HTTP_POST_ERROR: CURLcode = 34;
 pub const CURLE_SEND_ERROR: CURLcode = 55;
 pub const CURLE_RECV_ERROR: CURLcode = 56;
+pub const CURLE_BAD_CONTENT_ENCODING: CURLcode = 61;
+
+/// `curl_easy_header()` (7.83.0): a header of the response itself, and success.
+pub const CURLH_HEADER: std::ffi::c_uint = 1;
+pub const CURLHE_OK: c_int = 0;
+
+#[repr(C)]
+pub struct curl_header {
+    pub name: *mut c_char,
+    pub value: *mut c_char,
+    pub amount: usize,
+    pub index: usize,
+    pub origin: std::ffi::c_uint,
+    pub anchor: *mut c_void,
+}
 
 pub const CURLM_CALL_MULTI_PERFORM: CURLMcode = -1;
 pub const CURLM_OK: CURLMcode = 0;
@@ -194,6 +211,14 @@ unsafe extern "C" {
     pub fn curl_multi_strerror(code: CURLMcode) -> *const c_char;
     pub fn curl_slist_append(list: *mut curl_slist, string: *const c_char) -> *mut curl_slist;
     pub fn curl_slist_free_all(list: *mut curl_slist);
+    pub fn curl_easy_header(
+        handle: *mut CURL,
+        name: *const c_char,
+        index: usize,
+        origin: std::ffi::c_uint,
+        request: c_int,
+        hout: *mut *mut curl_header,
+    ) -> c_int;
 }
 
 /// The variadic calls, typed. Everything outside this module goes through
@@ -333,6 +358,16 @@ mod stubs {
         unlinked()
     }
     pub unsafe fn curl_slist_free_all(list: *mut curl_slist) {
+        unlinked()
+    }
+    pub unsafe fn curl_easy_header(
+        handle: *mut CURL,
+        name: *const c_char,
+        index: usize,
+        origin: std::ffi::c_uint,
+        request: c_int,
+        hout: *mut *mut curl_header,
+    ) -> c_int {
         unlinked()
     }
     pub unsafe fn easy_setopt_long(h: *mut CURL, opt: CURLoption, v: c_long) -> CURLcode {
