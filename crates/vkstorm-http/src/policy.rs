@@ -192,13 +192,36 @@ impl Policy {
                 let active = transport.active_count_in_class(pclass as u32) as i64;
                 let active_limit = state.options.active_limit();
                 let mut needed = active_limit - active;
+                // Per-host admission for a deep-queue class (host_limit):
+                // a request to a host with all its connections busy waits
+                // here, never in libcurl; as the C++ processReadyQueue.
+                let host_limit = state.options.host_limit();
+                let mut staged_hosts: std::collections::HashMap<String, i64> =
+                    std::collections::HashMap::new();
+                let host_free =
+                    |op: &RequestOp, staged: &std::collections::HashMap<String, i64>| {
+                        if host_limit <= 0 {
+                            return true;
+                        }
+                        let host = op.req.host_key();
+                        transport.active_count_for_host(pclass as u32, &host) as i64
+                            + staged.get(&host).copied().unwrap_or(0)
+                            < host_limit
+                    };
                 if needed > 0 {
                     let mut throttled = false;
                     while needed > 0 && !state.retry.is_empty() {
-                        if state.retry.peek().is_none_or(|e| e.0.retry_at > now) {
+                        if state
+                            .retry
+                            .peek()
+                            .is_none_or(|e| e.0.retry_at > now || !host_free(&e.0, &staged_hosts))
+                        {
                             break;
                         }
                         let op = state.retry.pop().map(|e| e.0).expect("non-empty");
+                        if host_limit > 0 {
+                            *staged_hosts.entry(op.req.host_key()).or_insert(0) += 1;
+                        }
                         staged.push(op);
                         state.request_count += 1;
                         needed -= 1;
@@ -209,7 +232,18 @@ impl Policy {
                     }
                     if !throttled {
                         while needed > 0 && !state.ready.is_empty() {
-                            let op = state.ready.pop_front().expect("non-empty");
+                            // the oldest request whose host has a free connection
+                            let Some(pick) = state
+                                .ready
+                                .iter()
+                                .position(|op| host_free(op, &staged_hosts))
+                            else {
+                                break;
+                            };
+                            let op = state.ready.remove(pick).expect("in range");
+                            if host_limit > 0 {
+                                *staged_hosts.entry(op.req.host_key()).or_insert(0) += 1;
+                            }
                             staged.push(op);
                             state.request_count += 1;
                             needed -= 1;

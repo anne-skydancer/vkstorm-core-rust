@@ -649,6 +649,12 @@ fn encoded(kind: &str) -> (Vec<u8>, Option<&'static str>) {
             e.write_all(&text).unwrap();
             (e.finish().unwrap(), Some("deflate"))
         }
+        "gzipraw" => {
+            let mut e = DeflateEncoder::new(Vec::new(), Compression::best());
+            e.write_all(&text).unwrap();
+            (e.finish().unwrap(), Some("gzip"))
+        }
+        "gziplist" => (gz(&text), Some("gzip, identity")),
         "binary" => (text, Some("binary/octet-stream")),
         "badgzip" => (b"this is not gzip data at all".to_vec(), Some("gzip")),
         _ => (text, None),

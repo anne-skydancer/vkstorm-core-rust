@@ -520,6 +520,63 @@ fn deep_queue_runs_one_request_per_connection() {
     stop(c, &s);
 }
 
+// Per-host admission: a deep-queue class runs up to its per-host limit to
+// any one host and its connection limit in all, so a busy host does not
+// hold back another one (the texture and mesh2 classes keep 16 in all, 8
+// per host, for region crossings). 127.0.0.1 and localhost are two hosts
+// to the class. As the C++ HttpPolicy::processReadyQueue with curl 8.
+#[test]
+fn deep_queue_admits_per_host() {
+    let mut s = service();
+    let d = s.create_policy_class();
+    assert_eq!(
+        s.set_option_long(PolicyOption::ConnectionLimit as i32, d, 4),
+        Ok(4)
+    );
+    assert_eq!(
+        s.set_option_long(PolicyOption::PerHostConnectionLimit as i32, d, 2),
+        Ok(2)
+    );
+    assert_eq!(
+        s.set_option_long(PolicyOption::PipeliningDepth as i32, d, 3),
+        Ok(3)
+    );
+    s.start_thread();
+    let m = MockServer::start();
+    let mut c = Client::new(&s);
+    let other = m.url("").replace("127.0.0.1", "localhost");
+    for i in 0..6 {
+        c.get(d, &m.url(&format!("/slow/300/H/{i}")), None).unwrap();
+    }
+    for i in 0..6 {
+        c.get(d, &format!("{other}/slow/300/L/{i}"), None).unwrap();
+    }
+    let replies = c.wait_for(12, WAIT);
+    assert_eq!(replies.len(), 12);
+    assert!(replies.iter().all(|r| r.status == Status::http(200)));
+    let rec = m.records();
+    let overlapping = |x: &mock::Recorded, y: &mock::Recorded| {
+        y.t_ms <= x.t_ms && y.answered_ms.unwrap() > x.t_ms
+    };
+    let in_flight = |pick: &dyn Fn(&mock::Recorded) -> bool| {
+        rec.iter()
+            .filter(|x| pick(x))
+            .map(|x| rec.iter().filter(|y| pick(y) && overlapping(x, y)).count())
+            .max()
+            .unwrap_or(0)
+    };
+    let to_localhost = |r: &mock::Recorded| r.target.contains("/L/");
+    let to_ip = |r: &mock::Recorded| r.target.contains("/H/");
+    assert_eq!(in_flight(&to_ip), 2, "per-host limit 2 to 127.0.0.1");
+    assert_eq!(in_flight(&to_localhost), 2, "per-host limit 2 to localhost");
+    assert_eq!(
+        in_flight(&|_| true),
+        4,
+        "both hosts at once, connection limit 4"
+    );
+    stop(c, &s);
+}
+
 // Options apply at once, also under active requests (the stall that let
 // a class go idle first protected libcurl 7.37's pipelining switch): turning
 // a deep-queue class's depth to 0 while its requests run loses or fails
@@ -886,8 +943,8 @@ fn status_strings() {
 
 // Content-Encoding as libcurl 7.54.1 handled it and the C++ llcorehttp does
 // (its test 24): gzip (gzip or zlib wrapper, several members, trailing
-// bytes) and deflate (zlib or raw) are undone, any other value passes
-// through, and gzip data that does not decode fails with
+// bytes, raw deflate, the first of a coding list) and deflate (zlib or raw)
+// are undone, any other value passes through, and gzip data that does not decode fails with
 // CURLE_BAD_CONTENT_ENCODING (61).
 #[test]
 fn content_encoding() {
@@ -901,6 +958,8 @@ fn content_encoding() {
         ("gziptrail", true),
         ("deflate", true),
         ("rawdeflate", true),
+        ("gzipraw", true),
+        ("gziplist", true),
         ("binary", true),
         ("none", true),
         ("badgzip", false),

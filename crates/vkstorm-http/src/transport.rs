@@ -80,6 +80,9 @@ pub struct Transport {
     hooks: Arc<dyn Hooks>,
     multis: Vec<*mut CURLM>,
     active_counts: Vec<i32>,
+    /// Active requests per host, per class (`Request::host_key`), for the
+    /// policy's per-host admission.
+    active_hosts: Vec<std::collections::HashMap<String, i32>>,
     active: HashMap<u64, Box<RequestOp>>,
     cache: HandleCache,
     user_agent: CString,
@@ -169,6 +172,7 @@ impl Transport {
             hooks,
             multis: Vec::new(),
             active_counts: Vec::new(),
+            active_hosts: Vec::new(),
             active: HashMap::new(),
             cache: HandleCache::new(),
             user_agent: cstr(user_agent),
@@ -186,6 +190,7 @@ impl Transport {
         debug_assert!(self.multis.is_empty());
         self.multis.clear();
         self.active_counts = vec![0; policy_count];
+        self.active_hosts = vec![std::collections::HashMap::new(); policy_count];
         for pclass in 0..policy_count {
             let m = unsafe { sys::curl_multi_init() };
             if m.is_null() {
@@ -271,6 +276,9 @@ impl Transport {
         }
         op.active = true;
         self.active_counts[pclass] += 1;
+        *self.active_hosts[pclass]
+            .entry(op.req.host_key())
+            .or_insert(0) += 1;
         if op.common.tracing > TRACE_OFF {
             hooks.log(
                 LogLevel::Info,
@@ -543,6 +551,7 @@ impl Transport {
         };
         let pclass = op.policy() as usize;
         self.active_counts[pclass] -= 1;
+        self.release_host(pclass, &op.req.host_key());
         self.cancel_request(op);
         true
     }
@@ -602,6 +611,7 @@ impl Transport {
         }
         let pclass = op.policy() as usize;
         self.active_counts[pclass] -= 1;
+        self.release_host(pclass, &op.req.host_key());
         op.active = false;
 
         // The verification callback's decision, when it failed the request.
@@ -669,11 +679,14 @@ impl Transport {
         // The reply decoding libcurl 7.54.1 did (crate::decode): gzip and
         // deflate undone, anything else passed through, data that does not
         // decode refused with the original body kept; as the C++.
+        // The last Content-Encoding line of the final response, as 7.54.1
+        // kept the last it read.
         let mut encoding: *mut sys::curl_header = std::ptr::null_mut();
+        let name = c"Content-Encoding";
         if unsafe {
             sys::curl_easy_header(
                 handle,
-                c"Content-Encoding".as_ptr(),
+                name.as_ptr(),
                 0,
                 sys::CURLH_HEADER,
                 -1,
@@ -681,8 +694,21 @@ impl Transport {
             )
         } == sys::CURLHE_OK
             && !encoding.is_null()
-            && !unsafe { (*encoding).value }.is_null()
+            && unsafe { (*encoding).amount } > 1
         {
+            let last = unsafe { (*encoding).amount } - 1;
+            unsafe {
+                sys::curl_easy_header(
+                    handle,
+                    name.as_ptr(),
+                    last,
+                    sys::CURLH_HEADER,
+                    -1,
+                    &mut encoding,
+                )
+            };
+        }
+        if !encoding.is_null() && !unsafe { (*encoding).value }.is_null() {
             let value = unsafe { CStr::from_ptr((*encoding).value) }
                 .to_string_lossy()
                 .into_owned();
@@ -753,6 +779,27 @@ impl Transport {
 
     pub fn active_count(&self) -> usize {
         self.active.len()
+    }
+
+    /// Active requests of the class to one host (`Request::host_key`); as
+    /// the C++ `HttpLibcurl::getActiveCountForHost`.
+    pub fn active_count_for_host(&self, pclass: u32, host: &str) -> i32 {
+        self.active_hosts
+            .get(pclass as usize)
+            .and_then(|h| h.get(host))
+            .copied()
+            .unwrap_or(0)
+    }
+
+    fn release_host(&mut self, pclass: usize, host: &str) {
+        if let Some(hosts) = self.active_hosts.get_mut(pclass)
+            && let Some(n) = hosts.get_mut(host)
+        {
+            *n -= 1;
+            if *n <= 0 {
+                hosts.remove(host);
+            }
+        }
     }
 
     /// `HttpLibcurl::getActiveCountInClass`.

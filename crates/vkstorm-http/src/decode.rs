@@ -1,13 +1,21 @@
 // SPDX-License-Identifier: LGPL-2.1-or-later OR GPL-3.0-or-later
 // Copyright (C) 2026, Anne Skydancer (Vulkanstorm)
-//! Reply decoding as the C++ llcorehttp does it (#338, `_httplibcurl.cpp`
-//! `inflate_reply`/`decode_reply`), which is how libcurl 7.54.1 decoded:
-//! `gzip`/`x-gzip` detect a gzip or zlib wrapper per member (zlib's
-//! `MAX_WBITS + 32`), every member of a concatenation is decoded, bytes after
-//! a complete stream that do not start another member are ignored, a
-//! truncated stream keeps what decoded; `deflate` is zlib, then raw deflate;
-//! any other Content-Encoding passes through; data that does not decode is
-//! refused (the caller keeps the original body).
+//! Reply decoding as the C++ llcorehttp does it (vulkanstorm #338 and #343,
+//! `_httplibcurl.cpp` `inflate_reply`/`decode_reply`), which is how libcurl
+//! 7.54.1 decoded (`lib/http.c`, `lib/content_encoding.c`) less two of its
+//! defects (output lost when it was still pending in zlib at the end of the
+//! input, and gzip members after the first dropped):
+//! - the Content-Encoding value is matched by a case-insensitive prefix
+//!   after leading white space, so only a list's first coding counts:
+//!   `identity`, `deflate`, `gzip`, `x-gzip`; anything else (the asset
+//!   CDN's `binary/octet-stream`) passes through;
+//! - gzip detects a gzip or zlib wrapper per member (zlib's
+//!   `MAX_WBITS + 32`), deflate is zlib; for either, data that does not
+//!   start a valid stream is retried as raw deflate;
+//! - every member of a concatenation is decoded, bytes after a complete
+//!   stream that do not start another member are ignored, a truncated
+//!   stream keeps what decoded; data that does not decode is refused (the
+//!   caller keeps the original body).
 
 use flate2::{Decompress, FlushDecompress, Status};
 
@@ -30,24 +38,48 @@ enum Wrapper {
     Raw,
 }
 
-/// `decode_reply()`: `encoding` is the reply's Content-Encoding value.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Coding {
+    None,
+    Gzip,
+    Deflate,
+}
+
+/// libcurl 7.54.1's matching: white space skipped, then a case-insensitive
+/// prefix (its `checkprefix`), in its order.
+fn coding(value: &str) -> Coding {
+    let v = value
+        .trim_start_matches(|c: char| c.is_ascii_whitespace())
+        .as_bytes();
+    let prefix = |p: &str| v.len() >= p.len() && v[..p.len()].eq_ignore_ascii_case(p.as_bytes());
+    if prefix("identity") {
+        Coding::None
+    } else if prefix("deflate") {
+        Coding::Deflate
+    } else if prefix("gzip") || prefix("x-gzip") {
+        Coding::Gzip
+    } else {
+        Coding::None
+    }
+}
+
+/// `decode_reply()`: `encoding` is the reply's (last) Content-Encoding value.
 pub fn decode_reply(encoding: &str, body: &[u8]) -> Decoded {
-    let enc = encoding
-        .trim_matches(|c| c == ' ' || c == '\t')
-        .to_ascii_lowercase();
-    let gzip = enc == "gzip" || enc == "x-gzip";
-    if !gzip && enc != "deflate" {
+    let coding = coding(encoding);
+    if coding == Coding::None {
         return Decoded::Passthrough;
     }
     if body.is_empty() {
         return Decoded::Body(Vec::new());
     }
-    let decoded = if gzip {
-        inflate_reply(body, Wrapper::Auto)
+    let wrapper = if coding == Coding::Gzip {
+        Wrapper::Auto
     } else {
-        inflate_reply(body, Wrapper::Zlib).or_else(|| inflate_reply(body, Wrapper::Raw))
+        Wrapper::Zlib
     };
-    decoded.map_or(Decoded::Refused, Decoded::Body)
+    inflate_reply(body, wrapper)
+        .or_else(|| inflate_reply(body, Wrapper::Raw))
+        .map_or(Decoded::Refused, Decoded::Body)
 }
 
 fn new_member(rest: &[u8], wrapper: Wrapper) -> Member {
@@ -102,9 +134,9 @@ fn run_member(member: Member, input: &[u8], out: &mut Vec<u8>) -> (usize, Option
 }
 
 /// The decoded size to reserve: a gzip stream's trailer holds it (ISIZE,
-/// modulo 2^32; exact for one member, a lower bound for several); otherwise
-/// twelve times the input (LLSD XML deflates about tenfold), the vector
-/// growing from there. Capped at 64 MiB.
+/// modulo 2^32; exact for one member, a lower bound for several) when it is
+/// at most 64 times the input; otherwise twelve times the input (LLSD XML
+/// deflates about tenfold), the vector growing from there. Capped at 64 MiB.
 fn size_hint(body: &[u8], wrapper: Wrapper) -> usize {
     const CAP: usize = 64 << 20;
     let fallback = body.len().saturating_mul(12).min(CAP);
@@ -112,7 +144,11 @@ fn size_hint(body: &[u8], wrapper: Wrapper) -> usize {
         let n = body.len();
         let isize =
             u32::from_le_bytes([body[n - 4], body[n - 3], body[n - 2], body[n - 1]]) as usize;
-        if isize >= body.len() / 2 && isize <= CAP {
+        // The last four bytes may be trailing bytes, not a trailer: a size
+        // beyond 64 times the input (well above what LLSD and XML deflate
+        // to) is not taken from them, so a short reply cannot reserve a
+        // large buffer.
+        if isize >= body.len() / 2 && isize <= body.len().saturating_mul(64).min(CAP) {
             return isize;
         }
     }
@@ -189,14 +225,41 @@ mod tests {
             ("trailing padding", "gzip", [gz(&t), vec![0u8; 4]].concat()),
             ("deflate (zlib)", "deflate", zl(&t)),
             ("deflate (raw)", "deflate", raw(&t)),
+            ("raw deflate labelled gzip", "gzip", raw(&t)),
+            ("a coding list: the first counts", "gzip, identity", gz(&t)),
+            ("a prefix, as checkprefix", "gzipped", gz(&t)),
         ] {
             assert_eq!(decode_reply(enc, &body), Decoded::Body(t.clone()), "{name}");
         }
     }
 
     #[test]
+    fn drains_output_pending_at_the_end_of_the_input() {
+        let a = vec![b'A'; 16400];
+        assert_eq!(decode_reply("deflate", &raw(&a)), Decoded::Body(a.clone()));
+        let b = vec![b'A'; 70000];
+        assert_eq!(decode_reply("gzip", &gz(&b)), Decoded::Body(b));
+    }
+
+    #[test]
+    fn trailing_bytes_do_not_inflate_the_reservation() {
+        // a one-byte gzip body followed by bytes that read as ISIZE 64 MiB
+        let mut body = gz(b"x");
+        body.extend_from_slice(&(64u32 << 20).to_le_bytes());
+        assert!(size_hint(&body, Wrapper::Auto) <= body.len() * 64);
+        assert_eq!(decode_reply("gzip", &body), Decoded::Body(b"x".to_vec()));
+    }
+
+    #[test]
     fn passes_other_encodings_through() {
-        for enc in ["", "identity", "binary/octet-stream", "br", "compress"] {
+        for enc in [
+            "",
+            "identity",
+            "identity, gzip",
+            "binary/octet-stream",
+            "br",
+            "compress",
+        ] {
             assert_eq!(decode_reply(enc, &text()), Decoded::Passthrough, "{enc:?}");
         }
     }

@@ -216,16 +216,24 @@ impl ClassOptions {
     /// above 1) ran per-host limit x depth requests over per-host limit
     /// connections. libcurl 7.62 and later have no pipelining, and the
     /// transport speaks HTTP/1.1 to every server, so such a class runs one
-    /// request per connection: the rest wait in the policy's ready queue,
-    /// where no timeout runs, not in libcurl's, where the wait for a
-    /// connection would count against CURLOPT_CONNECTTIMEOUT. Other classes
-    /// run up to their connection limit. As the C++
+    /// request per connection: up to its connection limit in all and up to
+    /// [`host_limit`](Self::host_limit) to any one host, admitted per host by
+    /// the policy. The rest wait in the policy's ready queue, where no
+    /// timeout runs, not in libcurl's, where the wait for a connection would
+    /// count against CURLOPT_CONNECTTIMEOUT. As the C++
     /// `HttpPolicyClass::activeLimit()` with curl 8.
     pub fn active_limit(&self) -> i64 {
+        self.connection_limit
+    }
+
+    /// The most requests a deep-queue class runs to one host (its per-host
+    /// limit, never above its connection limit); 0 for other classes, which
+    /// are not admitted per host. As the C++ `HttpPolicyClass::hostLimit()`.
+    pub fn host_limit(&self) -> i64 {
         if self.pipelining > 1 {
-            self.per_host_connection_limit
+            self.per_host_connection_limit.min(self.connection_limit)
         } else {
-            self.connection_limit
+            0
         }
     }
 
@@ -363,16 +371,19 @@ mod tests {
     }
 
     #[test]
-    fn active_limit_is_one_per_connection_for_deep_queues() {
+    fn deep_queues_run_one_request_per_connection() {
         let mut c = ClassOptions::default();
         assert!(c.set(PolicyOption::ConnectionLimit, 16).is_ok());
         assert!(c.set(PolicyOption::PerHostConnectionLimit, 8).is_ok());
-        assert_eq!(c.active_limit(), 16);
+        assert_eq!((c.active_limit(), c.host_limit()), (16, 0));
         assert!(c.set(PolicyOption::PipeliningDepth, 1).is_ok());
-        assert_eq!(c.active_limit(), 16);
+        assert_eq!((c.active_limit(), c.host_limit()), (16, 0));
         assert!(c.set(PolicyOption::PipeliningDepth, 5).is_ok());
-        // no pipelining: one request per (per-host) connection, the rest queued
-        assert_eq!(c.active_limit(), 8);
+        // no pipelining: the connection limit in all, the per-host limit to a host
+        assert_eq!((c.active_limit(), c.host_limit()), (16, 8));
+        // a total below the per-host limit bounds the per-host admission too
+        assert!(c.set(PolicyOption::ConnectionLimit, 2).is_ok());
+        assert_eq!(c.host_limit(), 2);
     }
 
     #[test]
