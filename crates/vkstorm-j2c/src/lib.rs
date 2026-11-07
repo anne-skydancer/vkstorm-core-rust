@@ -448,7 +448,11 @@ pub fn encode(
     reversible: bool,
 ) -> Result<Vec<u8>, Error> {
     let (w, h, c) = (width as usize, height as usize, channels as usize);
-    if w == 0 || h == 0 || !(1..=4).contains(&c) || data.len() < w * h * c {
+    // Any component count of at least one is accepted, as by the viewer's
+    // OpenJPEG encoder (the bake uses five: colour, alpha, auxiliary); the
+    // J2K limit is 16384 components.
+    let needed = w.checked_mul(h).and_then(|n| n.checked_mul(c));
+    if w == 0 || h == 0 || !(1..=16384).contains(&c) || needed.is_none_or(|n| data.len() < n) {
         return Err(Error::Encode(format!(
             "invalid raw image {width}x{height}x{channels} ({} bytes)",
             data.len()
@@ -477,6 +481,8 @@ pub fn encode(
             }
         }
         params.cp_comment = comment_c.as_ptr() as *mut _;
+        // Colour transform on the first three components only; any further
+        // components (alpha, auxiliary) are coded independently.
         params.tcp_mct = if channels >= 3 { 1 } else { 0 };
         if let Some(res) = resolutions_for(width, height) {
             params.numresolution = res as i32;

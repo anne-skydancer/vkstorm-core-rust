@@ -130,9 +130,63 @@ fn real_raster_matches_c_encoder() {
 #[test]
 fn invalid_input_is_an_error() {
     assert!(encode(&[0u8; 16], 0, 16, 4, None, false).is_err());
-    assert!(encode(&[0u8; 16], 4, 4, 5, None, false).is_err());
+    assert!(encode(&[0u8; 16], 4, 4, 0, None, false).is_err());
     assert!(
         encode(&[0u8; 16], 4, 4, 4, None, false).is_err(),
         "too few bytes"
     );
+}
+
+/// The avatar bake is five components: colour, alpha, auxiliary.
+fn five(w: u32, h: u32) -> Vec<u8> {
+    synthetic(w, h, 5)
+}
+
+#[test]
+fn five_components_lossless_round_trip() {
+    let (w, h) = (48u32, 40u32);
+    let src = five(w, h);
+    let j2c = encode(&src, w, h, 5, None, true).unwrap();
+    let d = decode(&j2c, 0, 0, 0, 5).unwrap();
+    assert_eq!((d.width, d.height, d.channels, d.components), (w, h, 5, 5));
+    assert_eq!(d.data, src);
+}
+
+#[test]
+fn five_components_lossy_round_trip() {
+    let (w, h) = (64u32, 64u32);
+    let src = five(w, h);
+    let j2c = encode(&src, w, h, 5, None, false).unwrap();
+    let d = decode(&j2c, 0, 0, 0, 5).unwrap();
+    assert_eq!((d.width, d.height, d.channels, d.components), (w, h, 5, 5));
+    assert_eq!(d.data.len(), src.len());
+    let sum: u64 = src
+        .iter()
+        .zip(&d.data)
+        .map(|(a, b)| u64::from(a.abs_diff(*b)))
+        .sum();
+    assert!(sum / (src.len() as u64) < 8, "mean error too large");
+}
+
+#[test]
+fn five_components_auxiliary_channel_decode() {
+    let (w, h) = (32u32, 32u32);
+    let src = five(w, h);
+    let j2c = encode(&src, w, h, 5, None, true).unwrap();
+    let d = decode(&j2c, 0, 0, 4, 1).unwrap();
+    assert_eq!((d.channels, d.components), (1, 5));
+    let aux: Vec<u8> = src.chunks(5).map(|p| p[4]).collect();
+    assert_eq!(d.data, aux);
+    let d = decode(&j2c, 0, 0, 3, 2).unwrap();
+    assert_eq!(d.channels, 2);
+    let tail: Vec<u8> = src.chunks(5).flat_map(|p| [p[3], p[4]]).collect();
+    assert_eq!(d.data, tail);
+}
+
+#[test]
+fn six_components_round_trip() {
+    let (w, h) = (16u32, 16u32);
+    let src = synthetic(w, h, 6);
+    let j2c = encode(&src, w, h, 6, None, true).unwrap();
+    assert_eq!(decode(&j2c, 0, 0, 0, 6).unwrap().data, src);
 }
