@@ -36,9 +36,14 @@ viewer's link.
 
     Windows (Git Bash):
 
-        export VKS_HTTP_CURL_LIB_DIR='C:\path\to\build-vc170-64\packages\lib\release'
-        export VKS_HTTP_CURL_LIBS='static=libcurl;static=libssl;static=libcrypto;static=nghttp2;static=zlib;ws2_32;crypt32;wldap32;normaliz;advapi32;user32;gdi32'
+        export VKS_HTTP_CURL_LIB_DIR='C:\path\to\build-vc180-64\packages\lib\release'
+        export VKS_HTTP_CURL_LIBS='static=libcurl;static=libssl;static=libcrypto;static=nghttp2;static=zlib;ws2_32;crypt32;advapi32;user32;bcrypt;iphlpapi'
         cargo test -p vkstorm-http --features link-curl
+
+    That is the list for the curl 8 + OpenSSL 3.5 packages, which are
+    HTTP(S) only (no LDAP or IDN, so no `wldap32` or `normaliz`) and need
+    `bcrypt` (OpenSSL 3, curl 8) and `iphlpapi` (curl 8). LL's curl 7.54.1
+    on OpenSSL 1.1.1 needed `wldap32;normaliz;gdi32` instead.
 
     Linux:
 

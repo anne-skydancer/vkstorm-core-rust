@@ -58,6 +58,16 @@ pub struct Request {
 }
 
 impl Request {
+    /// The connection key for per-host admission: scheme and authority,
+    /// lower case; as the C++ `HttpOpRequest::mReqHost`.
+    pub fn host_key(&self) -> String {
+        let start = self.url.find("://").map_or(0, |i| i + 3);
+        let end = self.url[start..]
+            .find(['/', '?', '#'])
+            .map_or(self.url.len(), |i| start + i);
+        self.url[..end].to_ascii_lowercase()
+    }
+
     pub fn new(policy: u32, method: Method, url: impl Into<String>) -> Request {
         Request {
             policy,
@@ -141,7 +151,6 @@ pub struct RequestOp {
     pub reply_headers: Option<Vec<(String, String)>>,
     pub content_type: String,
     pub retry_after: i32,
-    pub xll_url: String,
     pub stats: TransferStats,
 
     // Policy state.
@@ -204,7 +213,6 @@ impl RequestOp {
             reply_headers: None,
             content_type: String::new(),
             retry_after: 0,
-            xll_url: String::new(),
             stats: TransferStats::default(),
             retries: 0,
             retries_503: 0,

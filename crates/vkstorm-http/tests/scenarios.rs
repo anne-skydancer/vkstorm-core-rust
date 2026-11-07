@@ -6,7 +6,7 @@ mod mock;
 use std::sync::Arc;
 use std::time::Duration;
 
-use mock::{LLSD_OK, MockServer, pattern};
+use mock::{LLSD_OK, MockServer, encoding_text, pattern};
 use vkstorm_http::{
     Client, DEFAULT_POLICY_ID, GLOBAL_POLICY_ID, Method, NoHooks, PolicyOption, ReplyKind, Request,
     RequestOptions, Service, Status, TEST_USER_AGENT, he, sys,
@@ -82,6 +82,8 @@ fn get_ok_with_headers() {
     assert_eq!(rec[0].header("User-Agent"), Some(TEST_USER_AGENT));
     assert_eq!(rec[0].header("Connection"), Some("keep-alive"));
     assert_eq!(rec[0].header("Keep-alive"), Some("300"));
+    // Accept-Encoding as libcurl 7.54.1 sent it, the transport decoding the
+    // reply itself (crate::decode), as the C++.
     assert_eq!(rec[0].header("Accept-Encoding"), Some("deflate, gzip"));
     assert!(rec[0].header("Pragma").is_none());
     assert_eq!(rec[1].conn, rec[0].conn, "keep-alive reuses the connection");
@@ -458,6 +460,200 @@ fn concurrency_limits_and_throttle() {
     stop(c, &s);
 }
 
+// A deep-queue class (pipelining depth above 1) keeps the connections it
+// had with HTTP/1.1 pipelining and runs one request on each: libcurl 8 has
+// no pipelining and the transport speaks HTTP/1.1, so the rest wait in the
+// policy's queue, never in libcurl's, where the wait for a connection would
+// count against the connect timeout. As the C++ with curl 8.
+#[test]
+fn deep_queue_runs_one_request_per_connection() {
+    let mut s = service();
+    let d = s.create_policy_class();
+    assert_eq!(
+        s.set_option_long(PolicyOption::ConnectionLimit as i32, d, 4),
+        Ok(4)
+    );
+    assert_eq!(
+        s.set_option_long(PolicyOption::PerHostConnectionLimit as i32, d, 2),
+        Ok(2)
+    );
+    assert_eq!(
+        s.set_option_long(PolicyOption::PipeliningDepth as i32, d, 3),
+        Ok(3)
+    );
+    s.start_thread();
+    let m = MockServer::start();
+    let mut c = Client::new(&s);
+    for i in 0..12 {
+        c.get(d, &m.url(&format!("/slow/300/D/{i}")), None).unwrap();
+    }
+    let replies = c.wait_for(12, WAIT);
+    assert_eq!(replies.len(), 12);
+    assert!(replies.iter().all(|r| r.status == Status::http(200)));
+    let rec = m.records();
+    let overlapping = |x: &mock::Recorded, y: &mock::Recorded| {
+        y.t_ms <= x.t_ms && y.answered_ms.unwrap() > x.t_ms
+    };
+    let overlap = rec
+        .iter()
+        .map(|x| rec.iter().filter(|y| overlapping(x, y)).count())
+        .max()
+        .unwrap_or(0);
+    assert_eq!(overlap, 2, "one request per connection, per-host limit 2");
+    for x in &rec {
+        for y in &rec {
+            if x.seq != y.seq && x.conn == y.conn {
+                assert!(
+                    !overlapping(x, y),
+                    "two requests at once on connection {}",
+                    x.conn
+                );
+            }
+        }
+    }
+    let connections: std::collections::HashSet<u32> = rec.iter().map(|r| r.conn).collect();
+    assert!(
+        connections.len() <= 2,
+        "{} connections, per-host limit 2",
+        connections.len()
+    );
+    stop(c, &s);
+}
+
+// Per-host admission: a deep-queue class runs up to its per-host limit to
+// any one host and its connection limit in all, so a busy host does not
+// hold back another one (the texture and mesh2 classes keep 16 in all, 8
+// per host, for region crossings). 127.0.0.1 and localhost are two hosts
+// to the class. As the C++ HttpPolicy::processReadyQueue with curl 8.
+#[test]
+fn deep_queue_admits_per_host() {
+    let mut s = service();
+    let d = s.create_policy_class();
+    assert_eq!(
+        s.set_option_long(PolicyOption::ConnectionLimit as i32, d, 4),
+        Ok(4)
+    );
+    assert_eq!(
+        s.set_option_long(PolicyOption::PerHostConnectionLimit as i32, d, 2),
+        Ok(2)
+    );
+    assert_eq!(
+        s.set_option_long(PolicyOption::PipeliningDepth as i32, d, 3),
+        Ok(3)
+    );
+    s.start_thread();
+    let m = MockServer::start();
+    let mut c = Client::new(&s);
+    let other = m.url("").replace("127.0.0.1", "localhost");
+    for i in 0..6 {
+        c.get(d, &m.url(&format!("/slow/300/H/{i}")), None).unwrap();
+    }
+    for i in 0..6 {
+        c.get(d, &format!("{other}/slow/300/L/{i}"), None).unwrap();
+    }
+    let replies = c.wait_for(12, WAIT);
+    assert_eq!(replies.len(), 12);
+    assert!(replies.iter().all(|r| r.status == Status::http(200)));
+    let rec = m.records();
+    let overlapping = |x: &mock::Recorded, y: &mock::Recorded| {
+        y.t_ms <= x.t_ms && y.answered_ms.unwrap() > x.t_ms
+    };
+    let in_flight = |pick: &dyn Fn(&mock::Recorded) -> bool| {
+        rec.iter()
+            .filter(|x| pick(x))
+            .map(|x| rec.iter().filter(|y| pick(y) && overlapping(x, y)).count())
+            .max()
+            .unwrap_or(0)
+    };
+    let to_localhost = |r: &mock::Recorded| r.target.contains("/L/");
+    let to_ip = |r: &mock::Recorded| r.target.contains("/H/");
+    assert_eq!(in_flight(&to_ip), 2, "per-host limit 2 to 127.0.0.1");
+    assert_eq!(in_flight(&to_localhost), 2, "per-host limit 2 to localhost");
+    assert_eq!(
+        in_flight(&|_| true),
+        4,
+        "both hosts at once, connection limit 4"
+    );
+    stop(c, &s);
+}
+
+// Options apply at once, also under active requests (the stall that let
+// a class go idle first protected libcurl 7.37's pipelining switch): turning
+// a deep-queue class's depth to 0 while its requests run loses or fails
+// none of them, and later requests run under the new limit (the connection
+// limit, 4).
+#[test]
+fn options_change_under_active_requests() {
+    let mut s = service();
+    let d = s.create_policy_class();
+    assert_eq!(
+        s.set_option_long(PolicyOption::ConnectionLimit as i32, d, 4),
+        Ok(4)
+    );
+    assert_eq!(
+        s.set_option_long(PolicyOption::PerHostConnectionLimit as i32, d, 2),
+        Ok(2)
+    );
+    assert_eq!(
+        s.set_option_long(PolicyOption::PipeliningDepth as i32, d, 3),
+        Ok(3)
+    );
+    s.start_thread();
+    let m = MockServer::start();
+    let mut c = Client::new(&s);
+    for i in 0..6 {
+        c.get(d, &m.url(&format!("/slow/600/E/{i}")), None).unwrap();
+    }
+    // Let the first two (one per connection, per-host limit 2) get under
+    // way, then switch while they run.
+    let start = std::time::Instant::now();
+    while m.records().len() < 2 && start.elapsed() < Duration::from_secs(10) {
+        std::thread::sleep(Duration::from_millis(5));
+    }
+    assert_eq!(
+        m.records().len(),
+        2,
+        "two requests in flight before the switch"
+    );
+    let h = c
+        .set_option_long(PolicyOption::PipeliningDepth, d, 0)
+        .unwrap();
+    for i in 0..8 {
+        c.get(d, &m.url(&format!("/slow/200/F/{i}")), None).unwrap();
+    }
+    let replies = c.wait_for(15, WAIT);
+    assert_eq!(replies.len(), 15);
+    let set = replies.iter().find(|r| r.handle == h).unwrap();
+    assert_eq!(
+        (set.kind, set.status, set.long_value),
+        (ReplyKind::SetGet, Status::OK, 0)
+    );
+    assert!(
+        replies
+            .iter()
+            .filter(|r| r.handle != h)
+            .all(|r| r.status == Status::http(200)),
+        "every request completes"
+    );
+    let rec = m.records();
+    let f: Vec<_> = rec.iter().filter(|r| r.target.contains("/F/")).collect();
+    assert_eq!(f.len(), 8);
+    let overlap = f
+        .iter()
+        .map(|x| {
+            f.iter()
+                .filter(|y| y.t_ms <= x.t_ms && y.answered_ms.unwrap() > x.t_ms)
+                .count()
+        })
+        .max()
+        .unwrap_or(0);
+    assert!(
+        overlap <= 4,
+        "{overlap} in flight after the switch, limit 4"
+    );
+    stop(c, &s);
+}
+
 #[test]
 fn cancellation() {
     let (s, m) = started();
@@ -561,11 +757,59 @@ fn odd_bodies() {
         min_backoff: 200_000,
         ..RequestOptions::default()
     };
-    c.get_range(DEFAULT_POLICY_ID, &m.url("/badrange/"), 0, 3, Some(opts))
-        .unwrap();
+    c.get_range(
+        DEFAULT_POLICY_ID,
+        &m.url("/badrange/"),
+        0,
+        3,
+        Some(opts.clone()),
+    )
+    .unwrap();
     let r = c.wait_for(1, WAIT).pop().unwrap();
     assert_eq!(r.status, Status::llcore(he::INV_CONTENT_RANGE_HDR));
     assert_eq!(r.retries, 1);
+    // A 206 that starts elsewhere than asked is refused (retryable); one
+    // that starts where asked is delivered, even if longer (BUG-2295).
+    c.get_range(
+        DEFAULT_POLICY_ID,
+        &m.url("/fixedrange/"),
+        20,
+        10,
+        Some(opts.clone()),
+    )
+    .unwrap();
+    let r = c.wait_for(1, WAIT).pop().unwrap();
+    assert_eq!(r.status, Status::llcore(he::INV_CONTENT_RANGE_HDR));
+    assert_eq!(r.retries, 1);
+    c.get_range(
+        DEFAULT_POLICY_ID,
+        &m.url("/fixedrange/"),
+        0,
+        5,
+        Some(opts.clone()),
+    )
+    .unwrap();
+    let r = c.wait_for(1, WAIT).pop().unwrap();
+    assert_eq!(r.status, Status::http(206));
+    assert_eq!(r.body, pattern(10));
+    // A 206 without a usable Content-Range reads as offset 0: refused for a
+    // request at a later offset, delivered for one at offset 0.
+    for path in ["/norange/", "/oddrange/"] {
+        c.get_range(DEFAULT_POLICY_ID, &m.url(path), 20, 10, Some(opts.clone()))
+            .unwrap();
+        let r = c.wait_for(1, WAIT).pop().unwrap();
+        assert_eq!(
+            r.status,
+            Status::llcore(he::INV_CONTENT_RANGE_HDR),
+            "{path}"
+        );
+        assert_eq!(r.retries, 1, "{path}");
+        c.get_range(DEFAULT_POLICY_ID, &m.url(path), 0, 10, Some(opts.clone()))
+            .unwrap();
+        let r = c.wait_for(1, WAIT).pop().unwrap();
+        assert_eq!(r.status, Status::http(206), "{path}");
+        assert_eq!(r.body, pattern(10), "{path}");
+    }
     stop(c, &s);
 }
 
@@ -683,9 +927,11 @@ fn shutdown_cancels_pending_requests() {
 #[test]
 fn status_strings() {
     sys::global_init();
-    assert_eq!(
-        Status::easy(sys::CURLE_COULDNT_CONNECT).message(),
-        "Couldn't connect to server"
+    // libcurl's own text: curl 8 says "Could not", 7.54.1 said "Couldn't".
+    let couldnt = Status::easy(sys::CURLE_COULDNT_CONNECT).message();
+    assert!(
+        couldnt == "Could not connect to server" || couldnt == "Couldn't connect to server",
+        "{couldnt}"
     );
     assert_eq!(Status::http(404).message(), "Not Found");
     assert_eq!(
@@ -693,4 +939,44 @@ fn status_strings() {
         "Operation canceled"
     );
     assert!(!sys::version().is_empty());
+}
+
+// Content-Encoding as libcurl 7.54.1 handled it and the C++ llcorehttp does
+// (its test 24): gzip (gzip or zlib wrapper, several members, trailing
+// bytes, raw deflate, the first of a coding list) and deflate (zlib or raw)
+// are undone, any other value passes through, and gzip data that does not decode fails with
+// CURLE_BAD_CONTENT_ENCODING (61).
+#[test]
+fn content_encoding() {
+    let (s, m) = started();
+    let mut c = Client::new(&s);
+    let text = encoding_text();
+    for (kind, ok) in [
+        ("gzip", true),
+        ("gzipzlib", true),
+        ("gzipmulti", true),
+        ("gziptrail", true),
+        ("deflate", true),
+        ("rawdeflate", true),
+        ("gzipraw", true),
+        ("gziplist", true),
+        ("binary", true),
+        ("none", true),
+        ("badgzip", false),
+    ] {
+        c.get(
+            DEFAULT_POLICY_ID,
+            &m.url(&format!("/encoding/{kind}/")),
+            None,
+        )
+        .unwrap();
+        let r = c.wait_for(1, WAIT).pop().unwrap();
+        if ok {
+            assert_eq!(r.status, Status::http(200), "{kind}");
+            assert_eq!(r.body, text, "{kind}: decoded body");
+        } else {
+            assert_eq!(r.status, Status::easy(61), "{kind}: refused");
+        }
+    }
+    stop(c, &s);
 }

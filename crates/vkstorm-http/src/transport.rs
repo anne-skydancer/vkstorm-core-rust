@@ -1,9 +1,8 @@
 //! `HttpLibcurl`: the libcurl transport. One multi handle per policy class,
 //! a cache of easy handles (the first one freed is the template the others
 //! are duplicated from), the per-request option setup of
-//! `HttpOpRequest::prepareRequest`, the libcurl callbacks, request
-//! completion and cancellation, and the stall used to reconfigure a class's
-//! multi handle while it has no active request.
+//! `HttpOpRequest::prepareRequest`, the libcurl callbacks, and request
+//! completion and cancellation.
 //!
 //! This module and [`crate::sys`] hold all of the crate's `unsafe`: every
 //! libcurl call, and the callbacks that get their request record back from
@@ -19,9 +18,8 @@ use crate::headers::{
 };
 use crate::hooks::{Hooks, LogLevel, Stat};
 use crate::options::{
-    PolicyOption, REDIRECTS_DEFAULT, REQUEST_TIMEOUT_DEFAULT, REQUEST_TIMEOUT_MAX,
-    REQUEST_TIMEOUT_MIN, REQUEST_XFER_TIMEOUT_DEFAULT, TRACE_CURL_BODIES, TRACE_CURL_HEADERS,
-    TRACE_OFF,
+    REDIRECTS_DEFAULT, REQUEST_TIMEOUT_DEFAULT, REQUEST_TIMEOUT_MAX, REQUEST_TIMEOUT_MIN,
+    REQUEST_XFER_TIMEOUT_DEFAULT, TRACE_CURL_BODIES, TRACE_CURL_HEADERS, TRACE_OFF,
 };
 use crate::policy::{CANCELED, LoopSpeed, Policy};
 use crate::request::{
@@ -82,7 +80,9 @@ pub struct Transport {
     hooks: Arc<dyn Hooks>,
     multis: Vec<*mut CURLM>,
     active_counts: Vec<i32>,
-    dirty: Vec<bool>,
+    /// Active requests per host, per class (`Request::host_key`), for the
+    /// policy's per-host admission.
+    active_hosts: Vec<std::collections::HashMap<String, i32>>,
     active: HashMap<u64, Box<RequestOp>>,
     cache: HandleCache,
     user_agent: CString,
@@ -133,6 +133,10 @@ unsafe fn setopt_long(h: *mut CURL, opt: sys::CURLoption, v: c_long, hooks: &dyn
     check_easy(unsafe { sys::easy_setopt_long(h, opt, v) }, opt, hooks);
 }
 
+unsafe fn setopt_off_t(h: *mut CURL, opt: sys::CURLoption, v: sys::curl_off_t, hooks: &dyn Hooks) {
+    check_easy(unsafe { sys::easy_setopt_off_t(h, opt, v) }, opt, hooks);
+}
+
 unsafe fn setopt_ptr(h: *mut CURL, opt: sys::CURLoption, v: *const c_void, hooks: &dyn Hooks) {
     check_easy(unsafe { sys::easy_setopt_ptr(h, opt, v) }, opt, hooks);
 }
@@ -168,7 +172,7 @@ impl Transport {
             hooks,
             multis: Vec::new(),
             active_counts: Vec::new(),
-            dirty: Vec::new(),
+            active_hosts: Vec::new(),
             active: HashMap::new(),
             cache: HandleCache::new(),
             user_agent: cstr(user_agent),
@@ -186,7 +190,7 @@ impl Transport {
         debug_assert!(self.multis.is_empty());
         self.multis.clear();
         self.active_counts = vec![0; policy_count];
-        self.dirty = vec![false; policy_count];
+        self.active_hosts = vec![std::collections::HashMap::new(); policy_count];
         for pclass in 0..policy_count {
             let m = unsafe { sys::curl_multi_init() };
             if m.is_null() {
@@ -210,9 +214,6 @@ impl Transport {
                 continue;
             }
             if self.active_counts[pclass] == 0 {
-                if self.dirty[pclass] {
-                    self.policy_updated(pclass as u32, policy);
-                }
                 continue;
             }
             loop {
@@ -275,6 +276,9 @@ impl Transport {
         }
         op.active = true;
         self.active_counts[pclass] += 1;
+        *self.active_hosts[pclass]
+            .entry(op.req.host_key())
+            .or_insert(0) += 1;
         if op.common.tracing > TRACE_OFF {
             hooks.log(
                 LogLevel::Info,
@@ -329,13 +333,23 @@ impl Transport {
         op.ssl.url = op.url_c.as_ptr();
         unsafe {
             setopt_long(h, sys::CURLOPT_IPRESOLVE, sys::CURL_IPRESOLVE_V4, hooks);
+            // HTTP/1.1 to every server, as libcurl 7.54.1 spoke by default
+            // (7.62 and later negotiate h2 over TLS); as the C++.
+            setopt_long(
+                h,
+                sys::CURLOPT_HTTP_VERSION,
+                sys::CURL_HTTP_VERSION_1_1,
+                hooks,
+            );
+            // Accept-Encoding is sent with the request headers below and
+            // the reply decoded in complete_request (crate::decode), not by
+            // libcurl, which fails a Content-Encoding it does not know
+            // (the asset CDN's `binary/octet-stream`); as the C++.
+            setopt_long(h, sys::CURLOPT_HTTP_CONTENT_DECODING, 0, hooks);
             setopt_long(h, sys::CURLOPT_NOSIGNAL, 1, hooks);
             setopt_long(h, sys::CURLOPT_NOPROGRESS, 1, hooks);
             setopt_str(h, sys::CURLOPT_URL, &op.url_c, hooks);
             setopt_ptr(h, sys::CURLOPT_PRIVATE, op_ptr, hooks);
-            // libcurl before 7.81 (the viewer's is 7.54.1): ask for every
-            // supported content encoding, as the C++ did for that version.
-            setopt_str(h, sys::CURLOPT_ACCEPT_ENCODING, c"", hooks);
             setopt_long(h, sys::CURLOPT_AUTOREFERER, 1, hooks);
             setopt_long(
                 h,
@@ -402,7 +416,14 @@ impl Transport {
                     sys::CURL_TIMECOND_IFMODSINCE,
                     hooks,
                 );
-                setopt_long(h, sys::CURLOPT_TIMEVALUE, last_modified as c_long, hooks);
+                // 64-bit on every platform (libcurl 7.59 and later), as the
+                // C++ does there; CURLOPT_TIMEVALUE is a 32-bit long on Windows.
+                setopt_off_t(
+                    h,
+                    sys::CURLOPT_TIMEVALUE_LARGE,
+                    last_modified as sys::curl_off_t,
+                    hooks,
+                );
             }
             setopt_long(h, sys::CURLOPT_DNS_CACHE_TIMEOUT, dns_cache_timeout, hooks);
         }
@@ -430,7 +451,6 @@ impl Transport {
             }
             Method::Post => unsafe {
                 setopt_long(h, sys::CURLOPT_POST, 1, hooks);
-                setopt_str(h, sys::CURLOPT_ACCEPT_ENCODING, c"", hooks);
                 setopt_ptr(h, sys::CURLOPT_POSTFIELDS, std::ptr::null(), hooks);
                 setopt_long(h, sys::CURLOPT_POSTFIELDSIZE, body_size, hooks);
                 slist = slist_append(slist, "Expect:");
@@ -479,19 +499,16 @@ impl Transport {
             xfer_timeout = timeout;
         }
         if class.pipelining > 1 {
-            // Pipelined requests wait behind each other: twice the transfer
-            // timeout. HTTP/2 only under the VIEWERASSET override, as before.
+            // A deep-queue class runs per-host limit x depth transfers at
+            // once. With no HTTP/1.1 pipelining they share the link side by
+            // side instead of queueing on a few connections, so the last one
+            // still finishes no sooner than the last of a pipeline did: the
+            // transfer timeout stays doubled. Where the server offers h2,
+            // wait for a stream on an open connection rather than opening
+            // another (libcurl's default HTTP version negotiates h2 over TLS
+            // only; the VIEWERASSET test switch to HTTP/2 is gone).
             xfer_timeout *= 2;
-            if std::env::var_os("VIEWERASSET").is_some() {
-                unsafe {
-                    setopt_long(
-                        h,
-                        sys::CURLOPT_HTTP_VERSION,
-                        sys::CURL_HTTP_VERSION_2_0,
-                        hooks,
-                    )
-                };
-            }
+            unsafe { setopt_long(h, sys::CURLOPT_PIPEWAIT, 1, hooks) };
         }
         unsafe {
             setopt_long(h, sys::CURLOPT_TIMEOUT, xfer_timeout as c_long, hooks);
@@ -499,6 +516,16 @@ impl Transport {
         }
         for (name, value) in &op.req.headers {
             slist = slist_append(slist, &header_line(name, value));
+        }
+        // What libcurl 7.54.1's CURLOPT_ENCODING "" sent, unless the caller
+        // gave its own, which libcurl let win; as the C++.
+        if !op
+            .req
+            .headers
+            .iter()
+            .any(|(name, _)| name.eq_ignore_ascii_case("Accept-Encoding"))
+        {
+            slist = slist_append(slist, "Accept-Encoding: deflate, gzip");
         }
         op.slist = SendPtr(slist as *mut c_void);
         unsafe { setopt_ptr(h, sys::CURLOPT_HTTPHEADER, slist as *const c_void, hooks) };
@@ -524,6 +551,7 @@ impl Transport {
         };
         let pclass = op.policy() as usize;
         self.active_counts[pclass] -= 1;
+        self.release_host(pclass, &op.req.host_key());
         self.cancel_request(op);
         true
     }
@@ -583,6 +611,7 @@ impl Transport {
         }
         let pclass = op.policy() as usize;
         self.active_counts[pclass] -= 1;
+        self.release_host(pclass, &op.req.host_key());
         op.active = false;
 
         // The verification callback's decision, when it failed the request.
@@ -647,65 +676,80 @@ impl Transport {
             );
         }
 
-        // Pipelining sanity checks: an X-LL-URL header naming another
-        // request's URL, or a partial reply for a range other than the one
-        // asked, mean the pipeline went out of sync; fail with a 503 (which
-        // retries) and turn pipelining off on every class.
-        let mut failed = false;
-        if !op.xll_url.is_empty() {
-            let mut uri = op.req.url.clone();
-            if let Some(i) = uri.find("://")
-                && let Some(j) = uri[i + 3..].find('/')
-            {
-                uri = uri[i + 3 + j..].to_owned();
-            }
-            if uri != op.xll_url {
-                hooks.log(
-                    LogLevel::Warn,
-                    &format!(
-                        "HTTP pipelining out of sync! Asked for: {} got {}",
-                        uri, op.xll_url
-                    ),
-                );
-                op.status = Status::http(503);
-                failed = true;
-            }
-        }
-        if !failed
-            && (op.req.offset != 0 || op.req.length != 0)
-            && op.status == Status::http(206)
-            && (op.req.offset != op.reply_offset
-                || (op.req.length != 0 && op.req.length < op.reply_length))
+        // The reply decoding libcurl 7.54.1 did (crate::decode): gzip and
+        // deflate undone, anything else passed through, data that does not
+        // decode refused with the original body kept; as the C++.
+        // The last Content-Encoding line of the final response, as 7.54.1
+        // kept the last it read.
+        let mut encoding: *mut sys::curl_header = std::ptr::null_mut();
+        let name = c"Content-Encoding";
+        if unsafe {
+            sys::curl_easy_header(
+                handle,
+                name.as_ptr(),
+                0,
+                sys::CURLH_HEADER,
+                -1,
+                &mut encoding,
+            )
+        } == sys::CURLHE_OK
+            && !encoding.is_null()
+            && unsafe { (*encoding).amount } > 1
         {
-            let wanted_end = if op.req.length != 0 {
-                format!("{}", op.req.offset + op.req.length - 1)
-            } else {
-                String::new()
+            let last = unsafe { (*encoding).amount } - 1;
+            unsafe {
+                sys::curl_easy_header(
+                    handle,
+                    name.as_ptr(),
+                    last,
+                    sys::CURLH_HEADER,
+                    -1,
+                    &mut encoding,
+                )
             };
-            hooks.log(
-                    LogLevel::Warn,
-                    &format!(
-                        "HTTP pipelining possibly out of sync, request wanted: {}-{} got: {}-{} url: {}",
-                        op.req.offset,
-                        wanted_end,
-                        op.reply_offset,
-                        op.reply_offset.wrapping_add(op.reply_length).wrapping_sub(1),
-                        op.req.url
-                    ),
-                );
-            op.status = Status::http(503);
-            failed = true;
         }
-        if failed {
-            for i in 0..self.multis.len() {
-                let options = policy.class_options_mut(i as u32);
-                if options.pipelining != 0 {
-                    options.set(PolicyOption::PipeliningDepth, 0);
-                    self.dirty[i] = true;
-                    self.policy_updated(i as u32, policy);
+        if !encoding.is_null() && !unsafe { (*encoding).value }.is_null() {
+            let value = unsafe { CStr::from_ptr((*encoding).value) }
+                .to_string_lossy()
+                .into_owned();
+            match crate::decode::decode_reply(&value, &op.reply_body) {
+                crate::decode::Decoded::Body(body) => op.reply_body = body,
+                crate::decode::Decoded::Passthrough => {}
+                crate::decode::Decoded::Refused => {
+                    hooks.log(
+                        LogLevel::Warn,
+                        &format!(
+                            "Could not undo Content-Encoding {value}, url {}",
+                            op.req.url
+                        ),
+                    );
+                    op.status = Status::easy(sys::CURLE_BAD_CONTENT_ENCODING);
                 }
             }
         }
+
+        // The pipelining desync check is gone, but its offset test stays: a
+        // 206 that does not start where the request asked is refused, with
+        // the retryable HE_INV_CONTENT_RANGE_HDR and nothing switched off.
+        // The texture fetcher skips its realignment for a reply at offset 0
+        // and would append a wrong one to the data it has. A 206 without a
+        // usable Content-Range reads as offset 0 here, so it is refused for a
+        // request at a later offset, as Firestorm's check did, although the
+        // texture and mesh fetchers would take it as the asked range (LL's
+        // fallback for services that scrub headers). A longer reply at the
+        // asked offset is delivered (BUG-2295). As the C++
+        // `HttpLibcurl::completeRequest`.
+        if op.status == Status::http(206) && op.req.offset != op.reply_offset {
+            hooks.log(
+                LogLevel::Warn,
+                &format!(
+                    "Partial content at offset {} for a request at offset {}, url {}",
+                    op.reply_offset, op.req.offset, op.req.url
+                ),
+            );
+            op.status = Status::llcore(he::INV_CONTENT_RANGE_HDR);
+        }
+
         if !multi.is_null() && !handle.is_null() {
             unsafe { sys::curl_multi_remove_handle(multi, handle) };
             self.cache.free(op.curl.0);
@@ -737,6 +781,27 @@ impl Transport {
         self.active.len()
     }
 
+    /// Active requests of the class to one host (`Request::host_key`); as
+    /// the C++ `HttpLibcurl::getActiveCountForHost`.
+    pub fn active_count_for_host(&self, pclass: u32, host: &str) -> i32 {
+        self.active_hosts
+            .get(pclass as usize)
+            .and_then(|h| h.get(host))
+            .copied()
+            .unwrap_or(0)
+    }
+
+    fn release_host(&mut self, pclass: usize, host: &str) {
+        if let Some(hosts) = self.active_hosts.get_mut(pclass)
+            && let Some(n) = hosts.get_mut(host)
+        {
+            *n -= 1;
+            if *n <= 0 {
+                hosts.remove(host);
+            }
+        }
+    }
+
     /// `HttpLibcurl::getActiveCountInClass`.
     pub fn active_count_in_class(&self, pclass: u32) -> i32 {
         self.active_counts
@@ -746,56 +811,66 @@ impl Transport {
     }
 
     /// `HttpLibcurl::policyUpdated`: applies the class's connection and
-    /// pipelining options to its multi handle when it has no active
-    /// request; otherwise marks it dirty and stalls the class until it has
-    /// none (libcurl 7.37 corrupted memory when a pipelining multi handle
-    /// with active requests was switched off).
-    pub fn policy_updated(&mut self, pclass: u32, policy: &mut Policy) {
+    /// multiplexing options to its multi handle, at once. (The stall that
+    /// waited for the class to go idle first protected libcurl 7.37, which
+    /// corrupted memory when HTTP/1.1 pipelining was switched off under
+    /// active requests; there is no HTTP/1.1 pipelining to switch now.)
+    ///
+    /// A deep-queue class keeps the connections it had with HTTP/1.1
+    /// pipelining: its per-host limit to a host and its connection limit in
+    /// all. It runs one request per connection
+    /// ([`ClassOptions::active_limit`](crate::options::ClassOptions::active_limit)),
+    /// so libcurl runs every request it is handed and none waits in its
+    /// pending queue with its timeout running. As the C++ with curl 8.
+    pub fn policy_updated(&mut self, pclass: u32, policy: &Policy) {
         let i = pclass as usize;
         if i >= self.multis.len() {
             return;
         }
         let hooks = self.hooks.clone();
-        if self.active_counts[i] == 0 {
-            let options = policy.class_options(pclass).clone();
-            let multi = self.multis[i];
-            policy.stall_policy(pclass, false);
-            self.dirty[i] = false;
-            unsafe {
-                if options.pipelining > 1 {
-                    msetopt_long(multi, sys::CURLMOPT_PIPELINING, 1, &*hooks);
-                    msetopt_long(
-                        multi,
-                        sys::CURLMOPT_MAX_PIPELINE_LENGTH,
-                        options.pipelining as c_long,
-                        &*hooks,
-                    );
-                    msetopt_long(
-                        multi,
-                        sys::CURLMOPT_MAX_HOST_CONNECTIONS,
-                        options.per_host_connection_limit as c_long,
-                        &*hooks,
-                    );
-                    msetopt_long(
-                        multi,
-                        sys::CURLMOPT_MAX_TOTAL_CONNECTIONS,
-                        options.connection_limit as c_long,
-                        &*hooks,
-                    );
-                } else {
-                    msetopt_long(multi, sys::CURLMOPT_PIPELINING, 0, &*hooks);
-                    msetopt_long(multi, sys::CURLMOPT_MAX_HOST_CONNECTIONS, 0, &*hooks);
-                    msetopt_long(
-                        multi,
-                        sys::CURLMOPT_MAX_TOTAL_CONNECTIONS,
-                        options.connection_limit as c_long,
-                        &*hooks,
-                    );
-                }
+        let options = policy.class_options(pclass);
+        let multi = self.multis[i];
+        unsafe {
+            if options.pipelining > 1 {
+                msetopt_long(
+                    multi,
+                    sys::CURLMOPT_PIPELINING,
+                    sys::CURLPIPE_MULTIPLEX,
+                    &*hooks,
+                );
+                msetopt_long(
+                    multi,
+                    sys::CURLMOPT_MAX_HOST_CONNECTIONS,
+                    options.per_host_connection_limit as c_long,
+                    &*hooks,
+                );
+                msetopt_long(
+                    multi,
+                    sys::CURLMOPT_MAX_TOTAL_CONNECTIONS,
+                    options.connection_limit as c_long,
+                    &*hooks,
+                );
+                msetopt_long(
+                    multi,
+                    sys::CURLMOPT_MAX_CONCURRENT_STREAMS,
+                    options.pipelining as c_long,
+                    &*hooks,
+                );
+            } else {
+                msetopt_long(
+                    multi,
+                    sys::CURLMOPT_PIPELINING,
+                    sys::CURLPIPE_NOTHING,
+                    &*hooks,
+                );
+                msetopt_long(multi, sys::CURLMOPT_MAX_HOST_CONNECTIONS, 0, &*hooks);
+                msetopt_long(
+                    multi,
+                    sys::CURLMOPT_MAX_TOTAL_CONNECTIONS,
+                    options.connection_limit as c_long,
+                    &*hooks,
+                );
             }
-        } else if !self.dirty[i] {
-            self.dirty[i] = true;
-            policy.stall_policy(pclass, true);
         }
     }
 
@@ -816,7 +891,6 @@ impl Transport {
             }
         }
         self.active_counts.clear();
-        self.dirty.clear();
     }
 }
 
@@ -1005,11 +1079,6 @@ unsafe extern "C" fn header_callback(
     let Some((name, value)) = split_header(hdr) else {
         return hdr_size;
     };
-    if let Some(v) = &value
-        && name == "x-ll-url"
-    {
-        op.xll_url = v.clone();
-    }
     if is_header && op.proc_flags & PF_SAVE_HEADERS != 0 {
         op.reply_headers
             .get_or_insert_with(Vec::new)

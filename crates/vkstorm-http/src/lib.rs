@@ -7,7 +7,7 @@
 //! (`HttpPolicy`, `HttpPolicyClass`, `HttpPolicyGlobal`, `HttpRetryQueue`),
 //! the operations (`HttpOperation` and its subclasses, `HttpOpRequest`'s
 //! libcurl setup and callbacks), the libcurl multi-handle transport with
-//! its easy-handle cache and the pipelining stall (`HttpLibcurl`), the
+//! its easy-handle cache (`HttpLibcurl`), the
 //! reply queues, the status type (`HttpStatus`) and the header parsing.
 //! Behaviour is that of the C++ it replaces, request for request on the
 //! wire, with the differences stated in the rung notes of the viewer's
@@ -22,6 +22,7 @@
 //! [`Client`] is the crate's own front door, used by its tests and benches:
 //! one reply queue and the request methods of `HttpRequest`.
 
+pub mod decode;
 pub mod headers;
 pub mod hooks;
 pub mod options;

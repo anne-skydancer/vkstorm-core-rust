@@ -324,6 +324,15 @@ impl Connection {
         let ct = |v: &str| ("Content-Type", v.to_owned());
         match kind {
             "mark" => self.send(200, "OK", &[ct("text/plain")], b"", true, false),
+            // Content-Encoding handling, the C++ llcorehttp test 24 set.
+            "encoding" => {
+                let (body, enc) = encoded(parts.get(1).copied().unwrap_or(""));
+                let mut hdrs = vec![ct("text/plain")];
+                if let Some(e) = enc {
+                    hdrs.push(("Content-Encoding", e.to_owned()));
+                }
+                self.send(200, "OK", &hdrs, &body, true, false)
+            }
             "ok" => self.send(
                 200,
                 "OK",
@@ -542,6 +551,39 @@ impl Connection {
                 );
                 false
             }
+            // A 206 without Content-Range, and one with a Content-Range the
+            // parser ignores (not in bytes).
+            "norange" => self.send(
+                206,
+                "Partial Content",
+                &[ct("application/octet-stream")],
+                &pattern(10),
+                true,
+                false,
+            ),
+            "oddrange" => self.send(
+                206,
+                "Partial Content",
+                &[
+                    ("Content-Range", "items 0-9/100".into()),
+                    ct("application/octet-stream"),
+                ],
+                &pattern(10),
+                true,
+                false,
+            ),
+            // A 206 for bytes 0-9 whatever range was asked.
+            "fixedrange" => self.send(
+                206,
+                "Partial Content",
+                &[
+                    ("Content-Range", "bytes 0-9/100".into()),
+                    ct("application/octet-stream"),
+                ],
+                &pattern(10),
+                true,
+                false,
+            ),
             "badrange" => self.send(
                 206,
                 "Partial Content",
@@ -570,5 +612,51 @@ impl Connection {
                 false,
             ),
         }
+    }
+}
+
+/// The body behind `/encoding/<kind>/`, and its Content-Encoding.
+pub fn encoding_text() -> Vec<u8> {
+    b"Vulkanstorm content encoding test body. ".repeat(40)
+}
+
+fn encoded(kind: &str) -> (Vec<u8>, Option<&'static str>) {
+    use flate2::Compression;
+    use flate2::write::{DeflateEncoder, GzEncoder, ZlibEncoder};
+    fn gz(data: &[u8]) -> Vec<u8> {
+        let mut e = GzEncoder::new(Vec::new(), Compression::best());
+        e.write_all(data).unwrap();
+        e.finish().unwrap()
+    }
+    fn zl(data: &[u8]) -> Vec<u8> {
+        let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
+        e.write_all(data).unwrap();
+        e.finish().unwrap()
+    }
+    let text = encoding_text();
+    let half = text.len() / 2;
+    match kind {
+        "gzip" => (gz(&text), Some("gzip")),
+        "gzipzlib" => (zl(&text), Some("gzip")),
+        "gzipmulti" => (
+            [gz(&text[..half]), gz(&text[half..])].concat(),
+            Some("gzip"),
+        ),
+        "gziptrail" => ([gz(&text), vec![0u8; 4]].concat(), Some("gzip")),
+        "deflate" => (zl(&text), Some("deflate")),
+        "rawdeflate" => {
+            let mut e = DeflateEncoder::new(Vec::new(), Compression::best());
+            e.write_all(&text).unwrap();
+            (e.finish().unwrap(), Some("deflate"))
+        }
+        "gzipraw" => {
+            let mut e = DeflateEncoder::new(Vec::new(), Compression::best());
+            e.write_all(&text).unwrap();
+            (e.finish().unwrap(), Some("gzip"))
+        }
+        "gziplist" => (gz(&text), Some("gzip, identity")),
+        "binary" => (text, Some("binary/octet-stream")),
+        "badgzip" => (b"this is not gzip data at all".to_vec(), Some("gzip")),
+        _ => (text, None),
     }
 }

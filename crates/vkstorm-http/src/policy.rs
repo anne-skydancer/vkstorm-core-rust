@@ -1,7 +1,6 @@
 //! `HttpPolicy`: the per-class ready and retry queues, the concurrency
-//! limit and the request-rate throttle of each class, the retry decision
-//! with its backoff, and the stall used while a class's multi handle is
-//! reconfigured.
+//! limit and the request-rate throttle of each class, and the retry
+//! decision with its backoff.
 
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, VecDeque};
@@ -55,7 +54,6 @@ pub struct ClassState {
     pub throttle_end: u64,
     pub throttle_left: i64,
     pub request_count: i64,
-    pub stall_staging: bool,
 }
 
 impl ClassState {
@@ -182,10 +180,6 @@ impl Policy {
             let mut staged: Vec<Box<RequestOp>> = Vec::new();
             {
                 let state = &mut self.classes[pclass];
-                if state.stall_staging {
-                    result = LoopSpeed::Normal;
-                    continue;
-                }
                 if state.retry.is_empty() && state.ready.is_empty() {
                     continue;
                 }
@@ -196,19 +190,38 @@ impl Policy {
                     continue;
                 }
                 let active = transport.active_count_in_class(pclass as u32) as i64;
-                let active_limit = if state.options.pipelining > 1 {
-                    state.options.per_host_connection_limit * state.options.pipelining
-                } else {
-                    state.options.connection_limit
-                };
+                let active_limit = state.options.active_limit();
                 let mut needed = active_limit - active;
+                // Per-host admission for a deep-queue class (host_limit):
+                // a request to a host with all its connections busy waits
+                // here, never in libcurl; as the C++ processReadyQueue.
+                let host_limit = state.options.host_limit();
+                let mut staged_hosts: std::collections::HashMap<String, i64> =
+                    std::collections::HashMap::new();
+                let host_free =
+                    |op: &RequestOp, staged: &std::collections::HashMap<String, i64>| {
+                        if host_limit <= 0 {
+                            return true;
+                        }
+                        let host = op.req.host_key();
+                        transport.active_count_for_host(pclass as u32, &host) as i64
+                            + staged.get(&host).copied().unwrap_or(0)
+                            < host_limit
+                    };
                 if needed > 0 {
                     let mut throttled = false;
                     while needed > 0 && !state.retry.is_empty() {
-                        if state.retry.peek().is_none_or(|e| e.0.retry_at > now) {
+                        if state
+                            .retry
+                            .peek()
+                            .is_none_or(|e| e.0.retry_at > now || !host_free(&e.0, &staged_hosts))
+                        {
                             break;
                         }
                         let op = state.retry.pop().map(|e| e.0).expect("non-empty");
+                        if host_limit > 0 {
+                            *staged_hosts.entry(op.req.host_key()).or_insert(0) += 1;
+                        }
                         staged.push(op);
                         state.request_count += 1;
                         needed -= 1;
@@ -219,7 +232,18 @@ impl Policy {
                     }
                     if !throttled {
                         while needed > 0 && !state.ready.is_empty() {
-                            let op = state.ready.pop_front().expect("non-empty");
+                            // the oldest request whose host has a free connection
+                            let Some(pick) = state
+                                .ready
+                                .iter()
+                                .position(|op| host_free(op, &staged_hosts))
+                            else {
+                                break;
+                            };
+                            let op = state.ready.remove(pick).expect("in range");
+                            if host_limit > 0 {
+                                *staged_hosts.entry(op.req.host_key()).or_insert(0) += 1;
+                            }
                             staged.push(op);
                             state.request_count += 1;
                             needed -= 1;
@@ -320,15 +344,6 @@ impl Policy {
         self.classes
             .get(pclass as usize)
             .map_or(0, |s| s.ready.len() + s.retry.len())
-    }
-
-    /// `HttpPolicy::stallPolicy`: sets the class's stall and returns the
-    /// previous value.
-    pub fn stall_policy(&mut self, pclass: u32, stall: bool) -> bool {
-        match self.classes.get_mut(pclass as usize) {
-            Some(s) => std::mem::replace(&mut s.stall_staging, stall),
-            None => false,
-        }
     }
 
     /// `HttpPolicy::shutdown`: every queued request, for cancellation.

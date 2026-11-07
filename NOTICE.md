@@ -64,6 +64,13 @@ Apache-2.0, Zlib, ISC, BSD, Unlicense, Unicode-3.0, IJG and MPL-2.0
 (Symphonia). MPL-2.0 is GPL-compatible through its section 3.3 (Secondary
 Licenses). None is GPL-only or proprietary.
 
+vkstorm-http's reply decoding brings `flate2` (MIT OR Apache-2.0, used
+under MIT) built on `zlib-rs` (Zlib) and nothing else (`cargo tree -p
+vkstorm-http -e normal`: flate2 1.1.10, zlib-rs 0.6.8). MIT and Zlib are
+permissive and compatible with both LGPL-2.1 and GPL-3.0. With flate2 in
+`vkstorm-ffi`, the `png` crate's flate2 (vkstorm-image) builds on zlib-rs
+too; inflate output is the same either way.
+
 ## GPL-only code
 
 There is none, and there must be none: code available only under the GPL

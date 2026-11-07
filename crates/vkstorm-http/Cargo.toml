@@ -15,6 +15,7 @@ default = []
 link-curl = []
 
 [dependencies]
+flate2.workspace = true
 
 [dev-dependencies]
 
