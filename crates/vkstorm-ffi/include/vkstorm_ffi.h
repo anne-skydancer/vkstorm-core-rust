@@ -1315,10 +1315,16 @@ int32_t  vks_music_stats(VksAudio* a, VksMusicStats* out, VksAudioStrFn cb, void
  * Legacy text. A reader takes the whole REST of the C++ stream as one window
  * (data, len): its end is the stream's end-of-file. The caller has read the
  * block's header line (e.g. "inv_item\t0"). VksInvStream.state holds the
- * stream's rdstate() bits on entry; on return it holds the state afterwards
- * and consumed the bytes read from the window, so the caller clears the
- * stream, seeks to its start position + consumed (or, for a stream it has
- * read whole, continues from window + consumed), then setstate(state). The
+ * stream's state on entry as VKS_INV_STREAM_* bits (EOF 1, FAIL 2, BAD 4).
+ * These are not the C++ library's iostate values (libstdc++ uses eofbit 2,
+ * failbit 4, badbit 1), so the caller maps eofbit/failbit/badbit to them bit
+ * by bit and never passes rdstate() through. On return it holds the state
+ * afterwards in the same bits and consumed the bytes read from the window, so
+ * the caller first clears the stream (reading the window can leave failbit
+ * set, and a failed stream cannot seek), seeks it to its start position +
+ * consumed (or, for a stream it has read whole, continues from window +
+ * consumed), and only then maps the bits back to ios_base flags and sets
+ * them with clear(flags) (the entry bits are already included). The
  * window is the bytes as the C++ stream delivers them: for a file opened in
  * Windows text mode (llifstream), after CRLF -> LF translation and with the
  * stream ending at a Ctrl-Z; a binary-mode read of the same file is not the
@@ -1422,7 +1428,7 @@ typedef struct VksInvCategory
 typedef struct VksInvStream
 {
     size_t consumed; /* out */
-    uint32_t state;  /* in: rdstate(); out: the state afterwards */
+    uint32_t state;  /* VKS_INV_STREAM_* bits, not iostate values: in = rdstate() mapped bit by bit; out = the state afterwards */
 } VksInvStream;
 
 /* asset: the AssetID slot, or TransactionID (LLViewerInventoryItem). */
