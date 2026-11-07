@@ -59,7 +59,7 @@ const char* vks_j2c_decoded_comment(const VksJ2cDecoded* d);
 void vks_j2c_decoded_free(VksJ2cDecoded* d);
 
 /* Encode width*height*channels interleaved, bottom-up 8-bit samples into a raw
- * J2K codestream with the viewer's upload rules; any channel count from 1 up (the
+ * J2K codestream with the viewer's upload rules; 1 to 16384 channels (the
  * avatar bake uses 5). comment may be null (then
  * "no comment"); reversible selects lossless coding. Null on failure. */
 VksJ2cEncoded* vks_j2c_encode(const uint8_t* data, size_t len, uint32_t width, uint32_t height,

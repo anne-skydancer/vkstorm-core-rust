@@ -434,7 +434,7 @@ pub fn resolutions_for(width: u32, height: u32) -> Option<u32> {
 }
 
 /// Encode an 8-bit image given as interleaved, bottom-up rows (the LLImageRaw
-/// layout) with `channels` components, into a raw J2K codestream.
+/// layout) with `channels` components (1 to 16384), into a raw J2K codestream.
 ///
 /// `reversible` selects lossless 5/3 coding with a single layer; otherwise
 /// 9/7 lossy coding with the viewer layer and ratio rules. `comment` goes
