@@ -1320,10 +1320,11 @@ int32_t  vks_music_stats(VksAudio* a, VksMusicStats* out, VksAudioStrFn cb, void
  * failbit 4, badbit 1), so the caller maps eofbit/failbit/badbit to them bit
  * by bit and never passes rdstate() through. On return it holds the state
  * afterwards in the same bits and consumed the bytes read from the window, so
- * the caller maps the bits back to ios_base flags, seeks the stream to its
- * start position + consumed (or, for a stream it has read whole, continues
- * from window + consumed), then sets the state with clear(flags) (the entry
- * bits are already included). The
+ * the caller first clears the stream (reading the window can leave failbit
+ * set, and a failed stream cannot seek), seeks it to its start position +
+ * consumed (or, for a stream it has read whole, continues from window +
+ * consumed), and only then maps the bits back to ios_base flags and sets
+ * them with clear(flags) (the entry bits are already included). The
  * window is the bytes as the C++ stream delivers them: for a file opened in
  * Windows text mode (llifstream), after CRLF -> LF translation and with the
  * stream ending at a Ctrl-Z; a binary-mode read of the same file is not the

@@ -100,7 +100,9 @@ def main():
             continue
         crate_dir = pathlib.Path(package["manifest_path"]).parent
         for name in upstream[package["name"]]:
-            shutil.copy2(crate_dir / name, stage / "LICENSES" / (package["name"] + "-" + name))
+            # The manifests (autobuild.xml) ship LICENSES/*.txt only.
+            stem = name[:-3] if name.endswith(".md") else name
+            shutil.copy2(crate_dir / name, stage / "LICENSES" / (package["name"] + "-" + stem + ".txt"))
 
     version = meta_version(meta)
     commit = subprocess.run(["git", "rev-parse", "--short=10", "HEAD"], cwd=ROOT, check=True,
