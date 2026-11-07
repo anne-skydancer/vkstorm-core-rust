@@ -11,7 +11,12 @@
 //!   CDN's `binary/octet-stream`) passes through;
 //! - gzip detects a gzip or zlib wrapper per member (zlib's
 //!   `MAX_WBITS + 32`), deflate is zlib; for either, data that does not
-//!   start a valid stream is retried as raw deflate;
+//!   start a valid stream is retried as raw deflate. Only a format error
+//!   before any output counts (the first decompress call of the reply fails
+//!   having produced nothing), as libcurl 7.54.1 restarted only before
+//!   inflate() had returned Z_OK; a stream that fails later (corrupt data, a
+//!   bad CRC-32 or Adler-32) is refused, never raw-decoded (vulkanstorm #354
+//!   review);
 //! - every member of a concatenation is decoded, bytes after a complete
 //!   stream that do not start another member are ignored, a truncated
 //!   stream keeps what decoded; data that does not decode is refused (the
@@ -77,9 +82,23 @@ pub fn decode_reply(encoding: &str, body: &[u8]) -> Decoded {
     } else {
         Wrapper::Zlib
     };
-    inflate_reply(body, wrapper)
-        .or_else(|| inflate_reply(body, Wrapper::Raw))
-        .map_or(Decoded::Refused, Decoded::Body)
+    match inflate_reply(body, wrapper) {
+        Ok(out) => Decoded::Body(out),
+        Err(Failure::NotAStream) => {
+            inflate_reply(body, Wrapper::Raw).map_or(Decoded::Refused, Decoded::Body)
+        }
+        Err(Failure::Bad) => Decoded::Refused,
+    }
+}
+
+/// Why a stream did not decode.
+#[derive(Debug, PartialEq, Eq)]
+enum Failure {
+    /// The first decompress call failed with no output: not a zlib or gzip
+    /// stream (the raw-deflate fallback's case).
+    NotAStream,
+    /// Any later failure.
+    Bad,
 }
 
 fn new_member(rest: &[u8], wrapper: Wrapper) -> Member {
@@ -100,12 +119,14 @@ fn gzip_member() -> Member {
 }
 
 /// Decodes one member from `input` into `out`. Returns the bytes consumed,
-/// and whether the member ended (`Some(true)`), ran out of input
-/// (`Some(false)`), or is bad data (`None`).
-fn run_member(member: Member, input: &[u8], out: &mut Vec<u8>) -> (usize, Option<bool>) {
+/// whether the member ended (`Some(true)`), ran out of input
+/// (`Some(false)`), or is bad data (`None`), and whether bad data failed on
+/// the first decompress call with no output.
+fn run_member(member: Member, input: &[u8], out: &mut Vec<u8>) -> (usize, Option<bool>, bool) {
     match member {
         Member::Flate(mut d) => {
             let mut used = 0usize;
+            let mut first = true;
             loop {
                 // grow only when full: a size taken from the gzip trailer is exact
                 if out.capacity() == out.len() {
@@ -116,15 +137,17 @@ fn run_member(member: Member, input: &[u8], out: &mut Vec<u8>) -> (usize, Option
                 let consumed = (d.total_in() - in0) as usize;
                 let produced = (d.total_out() - out0) as usize;
                 used += consumed;
+                let at_start = first && produced == 0;
+                first = false;
                 match status {
-                    Err(_) => return (used, None),
-                    Ok(Status::StreamEnd) => return (used, Some(true)),
+                    Err(_) => return (used, None, at_start),
+                    Ok(Status::StreamEnd) => return (used, Some(true), false),
                     Ok(Status::Ok) | Ok(Status::BufError) => {
                         if used == input.len() && produced == 0 {
-                            return (used, Some(false)); // all input used: truncated keeps what decoded
+                            return (used, Some(false), false); // all input used: truncated keeps what decoded
                         }
                         if consumed == 0 && produced == 0 {
-                            return (used, None); // no progress with input left
+                            return (used, None, false); // no progress with input left
                         }
                     }
                 }
@@ -155,26 +178,27 @@ fn size_hint(body: &[u8], wrapper: Wrapper) -> usize {
     fallback
 }
 
-/// `inflate_reply()`: `None` when the data does not decode.
-fn inflate_reply(body: &[u8], wrapper: Wrapper) -> Option<Vec<u8>> {
+/// `inflate_reply()`: an error when the data does not decode.
+fn inflate_reply(body: &[u8], wrapper: Wrapper) -> Result<Vec<u8>, Failure> {
     let mut out = Vec::with_capacity(size_hint(body, wrapper));
     let mut pos = 0usize;
     let mut next_member = false;
     loop {
         let rest = &body[pos..];
         let start = out.len();
-        let (used, end) = run_member(new_member(rest, wrapper), rest, &mut out);
+        let (used, end, at_start) = run_member(new_member(rest, wrapper), rest, &mut out);
         match end {
             None if next_member && out.len() == start => {
                 out.truncate(start);
-                return Some(out); // trailing bytes that are not another member: ignored
+                return Ok(out); // trailing bytes that are not another member: ignored
             }
-            None => return None,
-            Some(false) => return Some(out),
+            None if !next_member && at_start => return Err(Failure::NotAStream),
+            None => return Err(Failure::Bad),
+            Some(false) => return Ok(out),
             Some(true) => {
                 pos += used;
                 if pos >= body.len() {
-                    return Some(out);
+                    return Ok(out);
                 }
                 next_member = true;
             }
@@ -282,5 +306,64 @@ mod tests {
             panic!("a truncated stream is not refused");
         };
         assert!(!part.is_empty() && long.starts_with(&part));
+    }
+
+    /// A zlib stream (one 65,534-byte stored block) whose bytes, read as raw
+    /// deflate, are also a complete stream: the two bytes 01 58.
+    fn zlib_twin(break_adler: bool) -> (Vec<u8>, Vec<u8>) {
+        let mut text = b"\x01\x00\xfe\xffX\x01\x00\x00\xff\xff".to_vec();
+        text.resize(65534, b'A');
+        let (mut s1, mut s2) = (1u32, 0u32);
+        for &b in &text {
+            s1 = (s1 + u32::from(b)) % 65521;
+            s2 = (s2 + s1) % 65521;
+        }
+        let adler = ((s2 << 16) | s1) ^ u32::from(break_adler);
+        let mut body = vec![0x78, 0x01, 0x00, 0xfe, 0xff, 0x01, 0x00];
+        body.extend_from_slice(&text);
+        body.extend_from_slice(&[0x01, 0x00, 0x00, 0xff, 0xff]);
+        body.extend_from_slice(&adler.to_be_bytes());
+        (body, text)
+    }
+
+    #[test]
+    fn falls_back_to_raw_deflate_only_at_the_start() {
+        let t = text();
+        // a failure after the header is refused, not raw-decoded
+        let (bad, _) = zlib_twin(true);
+        assert_eq!(
+            decode_reply("deflate", &bad),
+            Decoded::Refused,
+            "corrupt twin"
+        );
+        let mut z = zl(&t);
+        *z.last_mut().unwrap() ^= 1;
+        assert_eq!(
+            decode_reply("deflate", &z),
+            Decoded::Refused,
+            "bad Adler-32"
+        );
+        let mut g = gz(&t);
+        let n = g.len();
+        g[n - 8] ^= 1;
+        assert_eq!(decode_reply("gzip", &g), Decoded::Refused, "bad CRC-32");
+        // a valid zlib stream decodes as zlib; raw deflate still decodes
+        let (good, text65534) = zlib_twin(false);
+        assert_eq!(
+            decode_reply("deflate", &good),
+            Decoded::Body(text65534),
+            "valid twin"
+        );
+        assert_eq!(
+            decode_reply("deflate", &raw(&t)),
+            Decoded::Body(t.clone()),
+            "raw deflate"
+        );
+        assert_eq!(
+            decode_reply("gzip", &raw(&t)),
+            Decoded::Body(t.clone()),
+            "raw labelled gzip"
+        );
+        assert_eq!(decode_reply("deflate", &zl(&t)), Decoded::Body(t), "zlib");
     }
 }
