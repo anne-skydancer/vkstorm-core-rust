@@ -140,7 +140,10 @@ fn run_member(member: Member, input: &[u8], out: &mut Vec<u8>) -> (usize, Option
                 let at_start = first && produced == 0;
                 first = false;
                 match status {
-                    Err(_) => return (used, None, at_start),
+                    // A preset-dictionary request has a valid zlib header: it is
+                    // refused, never raw-decoded (zlib's Z_NEED_DICT, which curl
+                    // 7.54.1 did not fall back on either).
+                    Err(e) => return (used, None, at_start && e.needs_dictionary().is_none()),
                     Ok(Status::StreamEnd) => return (used, Some(true), false),
                     Ok(Status::Ok) | Ok(Status::BufError) => {
                         if used == input.len() && produced == 0 {
@@ -347,6 +350,16 @@ mod tests {
         let n = g.len();
         g[n - 8] ^= 1;
         assert_eq!(decode_reply("gzip", &g), Decoded::Refused, "bad CRC-32");
+        // a valid header asking for a preset dictionary (FDICT) is refused: its
+        // data also reads as a 32-byte raw stored block, which must not be taken
+        let mut dict = vec![0x78, 0x20, 0x00, 0xdf, 0xff];
+        dict.extend_from_slice(&[b'A'; 32]);
+        dict.extend_from_slice(&[0x01, 0x00, 0x00, 0xff, 0xff]);
+        assert_eq!(
+            decode_reply("deflate", &dict),
+            Decoded::Refused,
+            "preset dictionary"
+        );
         // a valid zlib stream decodes as zlib; raw deflate still decodes
         let (good, text65534) = zlib_twin(false);
         assert_eq!(
