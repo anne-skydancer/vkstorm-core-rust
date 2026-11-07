@@ -202,13 +202,16 @@ pub struct VksInvCategory {
     pub version: i32,
 }
 
-/// `std::ios_base::iostate` bits of [`VksInvStream`].
+/// The stream-state bits of [`VksInvStream`]. They mirror the three
+/// `std::ios_base` error bits but are NOT their values (libstdc++ uses
+/// eofbit 2, failbit 4, badbit 1): the C++ caller maps each bit explicitly
+/// in both directions and applies the result with `clear(flags)`.
 pub const VKS_INV_STREAM_EOF: u32 = 1;
 pub const VKS_INV_STREAM_FAIL: u32 = 2;
 pub const VKS_INV_STREAM_BAD: u32 = 4;
 
 /// A legacy reader's stream: on entry `state` holds the C++ stream's state
-/// bits; on return `consumed` is the bytes the reader took from the window
+/// as `VKS_INV_STREAM_*` bits (not raw `rdstate()` values); on return `consumed` is the bytes the reader took from the window
 /// and `state` the stream's state afterwards (the entry bits included).
 #[repr(C)]
 #[derive(Clone, Copy, Default)]
@@ -563,7 +566,11 @@ pub unsafe extern "C" fn vks_inv_perms_init(
                 uuid_arg(group),
             )
         };
-        unsafe { (*p).init(&c, &o, &l, &g) }
+        // Write a valid value; never form a reference to caller storage that
+        // may be uninitialised.
+        let mut value = Permissions::default();
+        value.init(&c, &o, &l, &g);
+        unsafe { ptr::write(p, value) }
     })
 }
 

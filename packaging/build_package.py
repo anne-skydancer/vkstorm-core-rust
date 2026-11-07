@@ -92,6 +92,16 @@ def main():
     (stage / "LICENSES/third-party.txt").write_text(
         "Crates compiled into vkstorm-ffi (" + feature_arg + "):\n\n" + "\n".join(sorted(rows)) + "\n", encoding="utf-8")
 
+    # Upstream licence notices that travel with the vendored codecs compiled into the library.
+    upstream = {"vkstorm-openjp2": ("LICENSE", "NOTICE.md"), "vkstorm-vorbis": ("LICENSE-xiph",)}
+    for package in meta["packages"]:
+        key = package["name"] + " " + "v" + package["version"]
+        if key not in built or package["name"] not in upstream:
+            continue
+        crate_dir = pathlib.Path(package["manifest_path"]).parent
+        for name in upstream[package["name"]]:
+            shutil.copy2(crate_dir / name, stage / "LICENSES" / (package["name"] + "-" + name))
+
     version = meta_version(meta)
     commit = subprocess.run(["git", "rev-parse", "--short=10", "HEAD"], cwd=ROOT, check=True,
                             stdout=subprocess.PIPE, universal_newlines=True).stdout.strip()
