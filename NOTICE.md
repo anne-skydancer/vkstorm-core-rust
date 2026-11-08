@@ -15,7 +15,7 @@ audit of what it links with.
 
 | Crate | `license` (`Cargo.toml`) | Why |
 |---|---|---|
-| vkstorm-assets, vkstorm-core, vkstorm-ffi, vkstorm-http, vkstorm-image, vkstorm-inventory, vkstorm-j2c, vkstorm-llsd, vkstorm-messages, vkstorm-volume | `GPL-3.0-or-later` (inherited from `[workspace.package]`) | Ports of the viewer's C++ (Linden Lab and Firestorm code, LGPL-2.1, used under the GPL) and original code: each crate states that it mirrors, and is behaviour- or byte-identical to, the C++ it replaces. `vkstorm-ffi` is the C ABI over those ports, shaped by the C++ callers |
+| vkstorm-assets, vkstorm-core, vkstorm-ffi, vkstorm-http, vkstorm-image, vkstorm-inventory, vkstorm-j2c, vkstorm-llsd, vkstorm-messages, vkstorm-volume | `GPL-3.0-or-later` (inherited from `[workspace.package]`) | Ports of the viewer's C++ (Linden Lab and Firestorm code, LGPL-2.1) and original code: each crate states that it mirrors, and is behaviour- or byte-identical to, the C++ it replaces. `vkstorm-ffi` is the C ABI over those ports, shaped by the C++ callers |
 | vkstorm-audio | `GPL-3.0-or-later AND Zlib` | The viewer's audio engine port, with a mixer derived from SoLoud (Zlib, `LICENSE-soloud`) |
 | vkstorm-vorbis | `BSD-3-Clause AND GPL-3.0-or-later` | A port of Xiph's libogg/libvorbis decoder (BSD-3-Clause, `LICENSE-xiph`) behind the viewer's decode contract |
 | vkstorm-openjp2 | `BSD-2-Clause` | A port of OpenJPEG via the `openjp2` crate; keeps its own licence (`LICENSE`, `NOTICE.md` there). BSD-2-Clause is GPL-3.0 compatible, so it can be linked into a GPL-3.0 library |
@@ -26,29 +26,9 @@ file header is used; the crate's `Cargo.toml` states the expression either way.
 The ported Linden Lab and Firestorm code keeps its headers (the few that exist,
 such as `$LicenseInfo` in `crates/vkstorm-ffi/include/vkstorm_ffi.h`) unchanged.
 
-## Linden Lab and Firestorm code: LGPL-2.1 used under the GPL
+## Linden Lab and Firestorm code
 
-Linden Lab and Firestorm license their code under LGPL-2.1 only. This
-repository uses the ported code under the ordinary GNU GPL, as section 3 of
-LGPL-2.1 allows:
-
-> 3. You may opt to apply the terms of the ordinary GNU General Public
-> License instead of this License to a given copy of the Library.  To do
-> this, you must alter all the notices that refer to this License, so
-> that they refer to the ordinary GNU General Public License, version 2,
-> instead of to this License.  (If a newer version than version 2 of the
-> ordinary GNU General Public License has appeared, then you can specify
-> that version instead if you wish.)  Do not make any other change in
-> these notices.
->
-> Once this change is made in a given copy, it is irreversible for
-> that copy, so the ordinary GNU General Public License applies to all
-> subsequent copies and derivative works made from that copy.
-
-The headers of Linden Lab and Firestorm material are left unchanged (decision
-of the project owner, 2026-11-08); the viewer repository's `doc/licensing.md`
-records that as a finding, because section 3 asks for the notices of a
-converted copy to be altered.
+Linden Lab and Firestorm code stays LGPL-2.1, with its headers unchanged, and is combined into Vulkanstorm, which as a whole is licensed GPL-3.0-or-later (LGPL-2.1 is compatible with inclusion in a GPL-3.0 work).
 
 The BSD-2-Clause, BSD-3-Clause and Zlib parts stay under those licences; all
 three are compatible with GPL-3.0.
