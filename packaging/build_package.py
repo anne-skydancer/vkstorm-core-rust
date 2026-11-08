@@ -11,8 +11,9 @@ built with the rungs it has adopted. The stage receives:
     lib/release/vkstorm_ffi.lib | libvkstorm_ffi.a   the static library
     lib/release/vkstorm_ffi.native-libs.txt          system libraries it needs at link time
     include/vkstorm_ffi.h                            the C ABI
-    LICENSES/vkstorm-core-rust.txt                   this repository's licence: LICENSE, then
-                                                     the LGPL-2.1 and GPL-3.0 texts
+    LICENSES/vkstorm-core-rust.txt                   this repository's licence: NOTICE.md, then the
+                                                     GPL-3.0 text (LICENSE) and the LGPL-2.1 text the
+                                                     ported Linden Lab headers refer to
     LICENSES/third-party.txt                         every crate built in, with its licence
     VERSION.txt                                      <version>.<commit>.<rungs>
 
@@ -72,9 +73,10 @@ def main():
     shutil.copy2(target / library, stage / "lib/release" / library)
     (stage / "lib/release/vkstorm_ffi.native-libs.txt").write_text(native[-1].strip() + "\n", encoding="utf-8")
     shutil.copy2(ROOT / "crates" / CRATE / "include" / "vkstorm_ffi.h", stage / "include" / "vkstorm_ffi.h")
-    # Dual licence (NOTICE.md): the statement followed by both licence texts.
+    # GPL-3.0-or-later (NOTICE.md): the statement, the GPL-3.0 text, then the LGPL-2.1 text
+    # that the ported Linden Lab and Firestorm headers refer to.
     texts = [(ROOT / name).read_text(encoding="utf-8").strip("\n")
-             for name in ("LICENSE", "LICENSE-LGPL-2.1", "LICENSE-GPL-3.0")]
+             for name in ("NOTICE.md", "LICENSE", "LICENSE-LGPL-2.1")]
     separator = "\n" + "=" * 75 + "\n\n"
     (stage / "LICENSES" / "vkstorm-core-rust.txt").write_text(separator.join(texts) + "\n", encoding="utf-8")
 
@@ -93,7 +95,8 @@ def main():
         "Crates compiled into vkstorm-ffi (" + feature_arg + "):\n\n" + "\n".join(sorted(rows)) + "\n", encoding="utf-8")
 
     # Upstream licence notices that travel with the vendored codecs compiled into the library.
-    upstream = {"vkstorm-openjp2": ("LICENSE", "NOTICE.md"), "vkstorm-vorbis": ("LICENSE-xiph",)}
+    upstream = {"vkstorm-openjp2": ("LICENSE", "NOTICE.md"), "vkstorm-vorbis": ("LICENSE-xiph",),
+                "vkstorm-audio": ("LICENSE-soloud",)}
     for package in meta["packages"]:
         key = package["name"] + " " + "v" + package["version"]
         if key not in built or package["name"] not in upstream:

@@ -8,9 +8,10 @@ exclude = ["tools/llsd-fixtures", "tools/inventory-fixtures"]
 [workspace.package]
 version = "0.5.3"
 edition = "2024"
-# Ports of Linden Lab and Firestorm code (NOTICE.md); a wholly original crate
-# uses "LGPL-2.1-or-later OR GPL-3.0-or-later" in its own Cargo.toml.
-license = "LGPL-2.1-only OR GPL-3.0-or-later"
+# GPL-3.0-or-later (NOTICE.md): the crates port Linden Lab and Firestorm code
+# (LGPL-2.1, used under the GPL) or are original; a vendored port that keeps
+# its own licence says so in its own Cargo.toml.
+license = "GPL-3.0-or-later"
 repository = "https://github.com/anne-skydancer/vkstorm-core-rust"
 
 [workspace.dependencies]

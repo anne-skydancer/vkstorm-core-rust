@@ -24,5 +24,7 @@ jobs:
           persist-credentials: false
       - name: Checker regression tests
         run: python3 scripts/tests/test_check_no_base_merges.py
+      - name: Licence files and Cargo licences
+        run: python3 scripts/tests/test_licence.py
       - name: No merges of a base line into the PR branch
         run: python3 scripts/check_no_base_merges.py "origin/${{ github.base_ref }}" "${{ github.event.pull_request.head.sha }}"
