@@ -31,6 +31,13 @@ the Build workflow's `record_inventory_fixtures` input), each with its own
 `index.txt` and `manifest.txt`. This README and `.gitattributes` are shared.
 `VKS_INVFETCH_FIXTURES` names one library's tree.
 
+`libstdcxx/` was recorded with GCC 15 on Ubuntu 26.04 at 9564f23272 (Build
+run 40739185954). A GCC 14 recording in the `ubuntu:24.04` build container at
+5a10dd7b0b (run 40854647665) gave identical data: only the header lines
+(commit, platform, the concurrent scenarios' `# measured` lines) differ, and
+the `manifest.txt` digests that cover them. The shipped Linux viewer builds
+with GCC 14. The crate's `libstdcxx/` (vkstorm-core-rust) is the same bytes.
+
 ## The code under test
 
 `INTEGRATION_TEST_llinvfetch_parity` (`indra/newview/tests/inventory/r3-fetch.cmake`)

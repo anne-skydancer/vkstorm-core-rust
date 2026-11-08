@@ -2,13 +2,13 @@
 # a recursive start of the root alone: not everything fetched
 # generator: INTEGRATION_TEST_llinvfetch_parity with VKS_INVFETCH_DUMP (indra/newview/tests/llinvfetch_parity_test.cpp)
 #            under indra/newview/tests/vksinventory_mock_server.py
-# viewer commit: 9564f23272
+# viewer commit: 558b100dbc
 # platform: linux-gcc15
 # seed: none (patterned ids, no random input; tid and viewer-generated ids normalised)
 # format: README.md
 == s23_root_only_start
 count requests=1 caps=inv:1 methods=GET:1 status503=0
-wire 1 GET /cap/inv/category/c0000000-0000-4000-8000-000000000001/children?depth=50 status=200 head=GET /cap/inv/category/c0000000-0000-4000-8000-000000000001/children?depth=50 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n\r\n body= resp=82794:c667ab2d4946d373 rtype=application/llsd+xml
+wire 1 GET /cap/inv/category/c0000000-0000-4000-8000-000000000001/children?depth=50 status=200 head=GET /cap/inv/category/c0000000-0000-4000-8000-000000000001/children?depth=50 HTTP/1.1\r\nHost: 127.0.0.1:{PORT}\r\nUser-Agent: Vulkanstorm\r\nKeep-alive: 300\r\nAccept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\n\r\n body= resp=82794:c667ab2d4946d373 rtype=application/llsd+xml
 tids requests=0 distinct=0 fresh=yes
 jrn step begin s23_root_only_start
 jrn sch act=00 st=0000 fc=0 ffc=0 fq=[] iq=[] exp=[] force=[]
