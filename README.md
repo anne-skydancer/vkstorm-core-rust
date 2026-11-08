@@ -65,11 +65,10 @@ each viewer line pins its archive by URL and hash in its own `autobuild.xml`:
 
 ## Licence
 
-Dual-licensed: the GNU Lesser General Public License, version 2.1
-([LICENSE-LGPL-2.1](LICENSE-LGPL-2.1)), or, at your choice, the GNU General
-Public License, version 3 or later ([LICENSE-GPL-3.0](LICENSE-GPL-3.0)). The
-crates port Linden Lab and Firestorm code and are
-`LGPL-2.1-only OR GPL-3.0-or-later`; the ported OpenJPEG, libogg/libvorbis and
-SoLoud parts keep their BSD-2-Clause, BSD-3-Clause and Zlib licences. See
-[LICENSE](LICENSE) and [NOTICE.md](NOTICE.md); contributions are accepted
-under the same terms.
+Licensed under the GNU General Public License, version 3 or (at your option)
+any later version ([LICENSE](LICENSE), `GPL-3.0-or-later`; decided 2026-11-08, the
+LGPL-2.1 option is dropped). The crates port Linden Lab and Firestorm code
+(LGPL-2.1, used under the GPL as section 3 of LGPL-2.1 allows) or are original;
+the ported OpenJPEG, libogg/libvorbis and SoLoud parts keep their BSD-2-Clause,
+BSD-3-Clause and Zlib licences. See [NOTICE.md](NOTICE.md); contributions are
+accepted under the same terms.

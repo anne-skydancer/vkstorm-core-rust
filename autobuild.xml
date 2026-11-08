@@ -8,7 +8,7 @@
         <key>canonical_repo</key><string>https://github.com/anne-skydancer/vkstorm-core-rust</string>
         <key>name</key><string>vkstorm-ffi</string>
         <key>description</key><string>The Rust port's C ABI (vkstorm-ffi) over the vkstorm-core-rust crates, as a static library for the Vulkanstorm viewer; the rungs built in are named in VERSION.txt</string>
-        <key>license</key><string>LGPL-2.1-only OR GPL-3.0-or-later</string>
+        <key>license</key><string>GPL-3.0-or-later</string>
         <key>license_file</key><string>LICENSES/vkstorm-core-rust.txt</string>
         <key>copyright</key><string>Copyright (C) 2026, Vulkanstorm Viewer Project</string>
         <key>version_file</key><string>VERSION.txt</string>
