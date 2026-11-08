@@ -1311,23 +1311,23 @@ pub fn escape_text(s: &[u8]) -> String {
 /// The AIS coroutine adapter's request head (the transport's header set).
 pub fn ais_head(method: &str, target: &str, destination: Option<&str>, body_len: usize) -> String {
     let mut h = format!(
-        "{method} {target} HTTP/1.1\r\nHost: 127.0.0.1:{{PORT}}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\n"
+        "{method} {target} HTTP/1.1\r\nHost: 127.0.0.1:{{PORT}}\r\nUser-Agent: Vulkanstorm\r\nKeep-alive: 300\r\n"
     );
     if let Some(d) = destination {
         h.push_str(&format!("Destination: {d}\r\n"));
     }
-    h.push_str("Accept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\n");
+    h.push_str("Accept: application/llsd+xml\r\nContent-Type: application/llsd+xml\r\nX-SecondLife-UDP-Listen-Port: {UDPPORT}\r\nAccept-Encoding: deflate, gzip\r\n");
     if body_len > 0 {
         h.push_str(&format!("Content-Length: {body_len}\r\n"));
     }
-    h.push_str("\r\n");
+    h.push_str("Connection: keep-alive\r\n\r\n");
     h
 }
 
 /// `requestPost`'s request head.
 pub fn legacy_head(target: &str, body_len: usize) -> String {
     format!(
-        "POST {target} HTTP/1.1\r\nHost: 127.0.0.1:{{PORT}}\r\nUser-Agent: Vulkanstorm\r\nAccept-Encoding: deflate, gzip\r\nConnection: keep-alive\r\nKeep-alive: 300\r\nContent-Type: application/llsd+xml\r\nAccept: application/llsd+xml\r\nContent-Length: {body_len}\r\n\r\n"
+        "POST {target} HTTP/1.1\r\nHost: 127.0.0.1:{{PORT}}\r\nUser-Agent: Vulkanstorm\r\nKeep-alive: 300\r\nContent-Type: application/llsd+xml\r\nAccept: application/llsd+xml\r\nAccept-Encoding: deflate, gzip\r\nContent-Length: {body_len}\r\nConnection: keep-alive\r\n\r\n"
     )
 }
 
