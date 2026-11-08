@@ -46,7 +46,9 @@ class LicenceTest(unittest.TestCase):
             head = path.read_bytes()[:400].decode("utf-8", "replace")
             if "SPDX-License-Identifier:" in head:
                 with self.subTest(path=str(path.relative_to(ROOT))):
-                    self.assertIn("SPDX-License-Identifier: GPL-3.0-or-later", head)
+                    line = [l for l in head.splitlines() if "SPDX-License-Identifier:" in l][0]
+                    self.assertEqual(line.split("SPDX-License-Identifier:", 1)[1].strip(), "GPL-3.0-or-later")
+                    self.assertNotIn("LGPL", line)
 
     def test_packaging_ships_the_gpl3_and_vendored_notices(self):
         script = (ROOT / "packaging" / "build_package.py").read_text(encoding="utf-8")
