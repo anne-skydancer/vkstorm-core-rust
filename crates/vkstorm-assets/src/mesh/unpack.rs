@@ -139,6 +139,18 @@ pub fn unpack_volume_faces_llsd(mdl: &Value, sculpt_type: u8) -> Result<Vec<Face
 
         let num_verts = pos.len() / 6;
         face.num_vertices = num_verts as i32;
+        // A triangle index at or past the vertex count would make every
+        // consumer read out of bounds: the face keeps its shape but every
+        // index is zeroed (the C++ drops the face's indices the same way).
+        if face.indices.iter().any(|&ix| ix as usize >= num_verts) {
+            crate::ll_warns!(
+                "Face has triangle indices out of range of its {} vertices, indices zeroed. face index: {} Total: {}",
+                num_verts,
+                i,
+                face_count
+            );
+            face.indices.iter_mut().for_each(|ix| *ix = 0);
+        }
         face.positions = vec![[0.0; 4]; num_verts];
         face.normals = vec![[0.0; 4]; num_verts];
         let tc_entries = num_verts + (num_verts & 1);
@@ -472,6 +484,23 @@ mod tests {
         let faces = unpack_volume_faces_llsd(&v, SCULPT_FLAG_MIRROR).unwrap();
         assert_eq!(faces[0].indices, vec![0, 2, 1]);
         assert_eq!(faces[0].normals[0][3], 1.0);
+    }
+
+    #[test]
+    fn out_of_range_indices_are_zeroed() {
+        let verts = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.5]];
+        let v = Value::Array(vec![face_value(&verts, &[0, 1, 3], true)]);
+        let faces = unpack_volume_faces_llsd(&v, 0).unwrap();
+        assert_eq!(faces[0].num_vertices, 3);
+        assert_eq!(faces[0].indices, vec![0, 0, 0]);
+        let v = Value::Array(vec![face_value(&verts, &[0, 1, 65535], true)]);
+        let faces = unpack_volume_faces_llsd(&v, 0).unwrap();
+        assert!(
+            faces[0]
+                .indices
+                .iter()
+                .all(|&i| (i as i32) < faces[0].num_vertices)
+        );
     }
 
     #[test]
