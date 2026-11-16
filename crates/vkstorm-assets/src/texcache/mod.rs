@@ -278,6 +278,27 @@ pub enum FastRead {
 
 /// `writeToFastCache`'s search for the level that fits the record: the
 /// number of halvings of the raw image's dimensions.
+/// The highest discard level a record may carry (the viewer's
+/// `MAX_DISCARD_LEVEL`).
+pub const FAST_MAX_DISCARD_LEVEL: i32 = 12;
+
+/// The data size of a fast cache record read from disk, or `None` when its
+/// header is not one the writer could have produced: positive dimensions,
+/// 1 to 4 components, a discard level of 0 to 12, and at most
+/// [`FAST_DATA_SIZE`] bytes of samples.
+fn fast_record_size(w: i32, h: i32, c: i32, level: i32) -> Option<usize> {
+    if w <= 0 || h <= 0 || !(1..=4).contains(&c) || !(0..=FAST_MAX_DISCARD_LEVEL).contains(&level) {
+        return None;
+    }
+    let size = i64::from(w)
+        .checked_mul(i64::from(h))?
+        .checked_mul(i64::from(c))?;
+    if size > i64::from(FAST_DATA_SIZE) {
+        return None;
+    }
+    Some(size as usize)
+}
+
 pub fn fast_cache_level(width: i32, height: i32, components: i32) -> i32 {
     let mut i = 0;
     while ((width >> i) * (height >> i) * components) > FAST_DATA_SIZE {
@@ -1501,15 +1522,14 @@ impl TextureCache {
         let h = i32::from_le_bytes([head[4], head[5], head[6], head[7]]);
         let c = i32::from_le_bytes([head[8], head[9], head[10], head[11]]);
         let level = i32::from_le_bytes([head[12], head[13], head[14], head[15]]);
-        let image_size = w.wrapping_mul(h).wrapping_mul(c);
-        if image_size <= 0 || image_size > FAST_DATA_SIZE || level < 0 {
+        let Some(image_size) = fast_record_size(w, h, c, level) else {
             Self::close_fast_cache_locked(f, false);
             return None;
-        }
+        };
         let mut data = vec![0u8; image_size as usize];
         let file = f.file.as_mut().and_then(|x| x.as_mut());
         let ok = match file {
-            Some(file) => file.read(&mut data) == image_size,
+            Some(file) => file.read(&mut data) == image_size as i32,
             None => false,
         };
         if !ok {
@@ -1534,7 +1554,10 @@ impl TextureCache {
         record[4..8].copy_from_slice(&fast.height.to_le_bytes());
         record[8..12].copy_from_slice(&fast.components.to_le_bytes());
         record[12..16].copy_from_slice(&fast.discard_level.to_le_bytes());
-        let copy_size = fast.width * fast.height * fast.components;
+        let copy_size = i64::from(fast.width)
+            .saturating_mul(i64::from(fast.height))
+            .saturating_mul(i64::from(fast.components))
+            .clamp(0, i64::from(i32::MAX)) as i32;
         if copy_size > 0 {
             let copy_size = (copy_size.min(FAST_DATA_SIZE) as usize).min(fast.data.len());
             record[FAST_ENTRY_OVERHEAD as usize..FAST_ENTRY_OVERHEAD as usize + copy_size]
@@ -1657,6 +1680,56 @@ mod tests {
 
     fn fixed_clock() -> u32 {
         1_700_000_000
+    }
+
+    #[test]
+    fn fast_record_header_is_validated() {
+        assert_eq!(fast_record_size(16, 16, 3, 3), Some(768));
+        assert_eq!(fast_record_size(16, 16, 4, 12), Some(1024));
+        // Negative dimensions whose product is positive.
+        assert_eq!(fast_record_size(-1, -1, 1, 0), None);
+        assert_eq!(fast_record_size(-16, -16, 1, 0), None);
+        // A product that wrapped to a small value in 32 bits.
+        assert_eq!(fast_record_size(65536, 65537, 1, 0), None);
+        assert_eq!(fast_record_size(1 << 16, 1 << 16, 1, 0), None);
+        assert_eq!(fast_record_size(i32::MAX, i32::MAX, i32::MAX, 0), None);
+        assert_eq!(fast_record_size(0, 16, 3, 0), None);
+        assert_eq!(fast_record_size(16, 16, 0, 0), None);
+        assert_eq!(fast_record_size(16, 16, 5, 0), None);
+        assert_eq!(fast_record_size(16, 16, -3, 0), None);
+        assert_eq!(fast_record_size(16, 16, 3, -1), None);
+        assert_eq!(fast_record_size(16, 16, 3, 13), None);
+        assert_eq!(fast_record_size(32, 32, 2, 0), None);
+    }
+
+    #[test]
+    fn read_fast_refuses_a_corrupt_header_on_disk() {
+        let dir = temp_dir("corrupt_fast");
+        let delim = std::path::MAIN_SEPARATOR.to_string();
+        let paths = Paths::for_location(&dir, &delim);
+        let mut cfg = Config::new("test-engine", 64);
+        cfg.clock = fixed_clock;
+        let cache = TextureCache::new(cfg);
+        cache.set_read_only(false);
+        cache.init_cache(&paths, 50 * 1024 * 1024, false, Some(0));
+        let id = [8u8; 16];
+        let fast = FastEntry {
+            width: 16,
+            height: 16,
+            components: 3,
+            discard_level: 3,
+            data: vec![9; 768],
+        };
+        assert!(cache.write(&id, &[1u8; 100], 200, 3, &fast));
+        // Width and height -1 multiply to a small positive size.
+        let mut bytes = std::fs::read(&paths.fast_file).unwrap();
+        bytes[0..4].copy_from_slice(&(-1i32).to_le_bytes());
+        bytes[4..8].copy_from_slice(&(-1i32).to_le_bytes());
+        bytes[8..12].copy_from_slice(&1i32.to_le_bytes());
+        std::fs::write(&paths.fast_file, &bytes).unwrap();
+        assert!(cache.read_fast(&id).is_none());
+        cache.shutdown();
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
