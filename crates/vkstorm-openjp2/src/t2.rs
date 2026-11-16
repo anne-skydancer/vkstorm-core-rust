@@ -507,7 +507,7 @@ pub(crate) fn opj_t2_decode_packets(
  * @param       p_image         Source or destination image
  * @param       p_cp            Image coding parameters.
  * @return              a new T2 handle if successful, NULL otherwise.
-*/
+ */
 
 pub(crate) fn opj_t2_create(
   mut p_image: *mut opj_image_t,

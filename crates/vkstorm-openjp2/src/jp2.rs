@@ -254,7 +254,7 @@ fn opj_jp2_read_ihdr(jp2: &mut opj_jp2, mut buf: &[u8], p_manager: &mut opj_even
 /* *
  * Writes the Image Header box - Image Header box.
  *
-*/
+ */
 fn opj_jp2_write_ihdr(mut jp2: &mut opj_jp2, buf: &mut Vec<u8>) -> bool {
   // IHDR
   let mut header = Jp2BoxHeader::new(Jp2BoxType::IHDR);
@@ -280,7 +280,7 @@ fn opj_jp2_write_ihdr(mut jp2: &mut opj_jp2, buf: &mut Vec<u8>) -> bool {
 /* *
  * Writes the Bit per Component box.
  *
-*/
+ */
 fn opj_jp2_write_bpcc(mut jp2: &mut opj_jp2, buf: &mut Vec<u8>) -> bool {
   let mut header = Jp2BoxHeader::new(Jp2BoxType::BPCC);
   header.length += jp2.comps.len() as u32;
@@ -346,7 +346,7 @@ fn opj_jp2_write_cdef(mut jp2: &mut opj_jp2, buf: &mut Vec<u8>) -> bool {
 /* *
  * Writes the Colour Specification box.
  *
-*/
+ */
 fn opj_jp2_write_colr(mut jp2: &mut opj_jp2, buf: &mut Vec<u8>) -> bool {
   let meth = jp2.meth as u8;
   let mut header = Jp2BoxHeader::new(Jp2BoxType::COLR);
@@ -656,7 +656,7 @@ fn opj_jp2_apply_pclr(
  * @param p_manager
  *
  * @return Returns true if successful, returns false otherwise
-*/
+ */
 fn opj_jp2_read_pclr(jp2: &mut opj_jp2, mut buf: &[u8], p_manager: &mut opj_event_mgr) -> OPJ_BOOL {
   if jp2.color.jp2_pclr.is_some() {
     return 0;
@@ -732,7 +732,7 @@ fn opj_jp2_read_pclr(jp2: &mut opj_jp2, mut buf: &[u8], p_manager: &mut opj_even
  * @param p_manager           FIXME DOC
  *
  * @return Returns true if successful, returns false otherwise
-*/
+ */
 fn opj_jp2_read_cmap(jp2: &mut opj_jp2, mut buf: &[u8], p_manager: &mut opj_event_mgr) -> OPJ_BOOL {
   /* Need nr_channels: */
   let mut pclr = if let Some(pclr) = &mut jp2.color.jp2_pclr {
@@ -900,7 +900,7 @@ fn opj_jp2_read_cdef(jp2: &mut opj_jp2, mut buf: &[u8], p_manager: &mut opj_even
  * @param   p_manager                   the user event manager.
  *
  * @return  true if the bpc header is valid, false else.
-*/
+ */
 fn opj_jp2_read_colr(jp2: &mut opj_jp2, mut buf: &[u8], p_manager: &mut opj_event_mgr) -> OPJ_BOOL {
   let total_size = buf.len() as u32;
   if buf.len() < 3 {
@@ -1175,7 +1175,7 @@ fn opj_jp2_write_ftyp(
  * @param   p_manager   user event manager.
  *
  * @return true if writing was successful.
-*/
+ */
 fn opj_jp2_write_jp2c(
   jp2: &mut opj_jp2,
   stream: &mut Stream,
@@ -1861,7 +1861,7 @@ fn opj_jpip_skip_iptr(
  * @param   p_manager       the user event manager.
  *
  * @return true if the JP2 Header box was successfully recognized.
-*/
+ */
 fn opj_jp2_read_jp2h(jp2: &mut opj_jp2, mut buf: &[u8], p_manager: &mut opj_event_mgr) -> OPJ_BOOL {
   let mut header = Jp2BoxHeader::default();
   let mut l_has_ihdr = false;

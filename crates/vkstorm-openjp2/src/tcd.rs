@@ -1406,8 +1406,8 @@ pub(crate) fn opj_tcd_reinit_segment(mut seg: *mut opj_tcd_seg_t) {
 /* can do bp = data - 1, and opj_mqc_byteout() can safely dereference */
 /* it. */
 /* *
-* Allocates memory for a decoding code block.
-*/
+ * Allocates memory for a decoding code block.
+ */
 /* *
  * Allocates memory for a decoding code block.
  */
