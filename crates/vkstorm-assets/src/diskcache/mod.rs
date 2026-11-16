@@ -33,7 +33,8 @@ pub fn uuid_text_of_cache_file(path: &str) -> String {
         return String::new();
     }
     let end = (start + 36).min(base.len());
-    base[start..end].to_string()
+    // A non-ASCII name may put start or end inside a character.
+    base.get(start..end).unwrap_or_default().to_string()
 }
 
 fn mtime_secs(m: &fs::Metadata) -> i64 {
@@ -247,7 +248,6 @@ impl DiskCache {
             if !should_remove {
                 break;
             }
-            deleted_size_total += this_file_size;
             let uuid_as_string = uuid_text_of_cache_file(path);
             let action;
             if self.skip_list.iter().any(|s| *s == uuid_as_string) {
@@ -263,8 +263,9 @@ impl DiskCache {
                 actions.push((path.clone(), action));
             }
             if should_remove {
-                if let Err(e) = fs::remove_file(path) {
-                    ll_warns!("Failed to delete cache file {}: {}", path, e);
+                match fs::remove_file(path) {
+                    Ok(()) => deleted_size_total += this_file_size,
+                    Err(e) => ll_warns!("Failed to delete cache file {}: {}", path, e),
                 }
             }
         }
@@ -482,6 +483,16 @@ mod tests {
     }
 
     #[test]
+    fn uuid_text_survives_non_ascii_names() {
+        // Multi-byte characters straddling the 9 and 45 byte offsets.
+        assert_eq!(uuid_text_of_cache_file("/c/sl_cacheé_x.asset"), "");
+        let long = format!("/c/sl_cache_{}.asset", "é".repeat(30));
+        let _ = uuid_text_of_cache_file(&long);
+        let odd = format!("/c/sl_cach{}.asset", "é".repeat(30));
+        let _ = uuid_text_of_cache_file(&odd);
+    }
+
+    #[test]
     fn purge_by_age() {
         let dir = std::env::temp_dir().join(format!("vks_diskcache_{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
@@ -507,15 +518,17 @@ mod tests {
         let r = cache.purge();
         assert!(r.purged);
         assert_eq!(r.files, 10);
-        // 1000 bytes > 900 high water; target 500: the five oldest go, the
-        // static one among them is skipped (and counted).
+        // 1000 bytes > 900 high water; target 500: the static file is
+        // skipped and its bytes are not freed, so five others go.
         assert_eq!(r.skipped, 1);
-        assert_eq!(r.deleted, 4);
-        assert_eq!(r.kept, 5);
+        assert_eq!(r.deleted, 5);
+        assert_eq!(r.deleted_size, 500);
+        assert_eq!(r.kept, 4);
         assert!(Path::new(&cache.filepath(&ids[0])).exists());
         assert!(!Path::new(&cache.filepath(&ids[1])).exists());
-        assert!(Path::new(&cache.filepath(&ids[5])).exists());
-        assert_eq!(cache.dir_file_size(true), 600);
+        assert!(!Path::new(&cache.filepath(&ids[5])).exists());
+        assert!(Path::new(&cache.filepath(&ids[6])).exists());
+        assert_eq!(cache.dir_file_size(true), 500);
         cache.clear_cache();
         assert_eq!(cache.dir_file_size(true), 0);
         let _ = fs::remove_dir_all(&dir);
