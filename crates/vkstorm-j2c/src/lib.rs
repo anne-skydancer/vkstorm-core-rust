@@ -185,6 +185,71 @@ impl Drop for Handles {
 
 const STREAM_CHUNK: usize = 1 << 16;
 
+/// Largest width or height (after the discard factor) a decode may produce:
+/// the viewer's `MAX_IMAGE_SIZE` rule (`LLImageJ2COJ`).
+pub const MAX_DECODE_DIMENSION: u32 = 16384;
+
+/// Largest width or height of a decoded image the output may report.
+const MAX_OUTPUT_DIMENSION: u32 = 65535;
+
+/// Most channels a decode may output: the avatar bake carries 5 and the
+/// tests 6, so the usual 1..=4 does not apply here.
+const MAX_OUTPUT_CHANNELS: usize = 16;
+
+/// `ceil(extent / 2^reduce)`, the size of an axis after `reduce` resolution
+/// reductions (OpenJPEG's `opj_uint_ceildivpow2`).
+fn reduced_extent(x0: u32, x1: u32, reduce: u32) -> u64 {
+    let extent = u64::from(x1.saturating_sub(x0));
+    if reduce >= 32 {
+        return u64::from(extent > 0);
+    }
+    extent.div_ceil(1u64 << reduce)
+}
+
+/// Refuse a decode whose dimensions after the discard factor exceed
+/// [`MAX_DECODE_DIMENSION`] (also when the header gives an empty image).
+fn check_decode_size(x0: u32, x1: u32, y0: u32, y1: u32, reduce: u32) -> Result<(), Error> {
+    let w = reduced_extent(x0, x1, reduce);
+    let h = reduced_extent(y0, y1, reduce);
+    if w == 0
+        || h == 0
+        || w > u64::from(MAX_DECODE_DIMENSION)
+        || h > u64::from(MAX_DECODE_DIMENSION)
+    {
+        return Err(Error::Decode(format!(
+            "image size {w}x{h} (discard level {reduce}) is outside 1..={MAX_DECODE_DIMENSION}"
+        )));
+    }
+    Ok(())
+}
+
+/// `w * h * c` with every limit applied, or an error.
+fn output_len(w: usize, h: usize, c: usize) -> Result<usize, Error> {
+    if !(1..=MAX_OUTPUT_CHANNELS).contains(&c) {
+        return Err(Error::Decode(format!(
+            "{c} channels are outside 1..={MAX_OUTPUT_CHANNELS}"
+        )));
+    }
+    if w == 0 || h == 0 || w > MAX_OUTPUT_DIMENSION as usize || h > MAX_OUTPUT_DIMENSION as usize {
+        return Err(Error::Decode(format!(
+            "decoded size {w}x{h} is out of range"
+        )));
+    }
+    w.checked_mul(h)
+        .and_then(|n| n.checked_mul(c))
+        .ok_or_else(|| Error::Decode("decoded size overflows".into()))
+}
+
+/// A zeroed buffer of `len` bytes; an allocation failure is an error, not an
+/// abort.
+fn alloc_zeroed(len: usize) -> Result<Vec<u8>, Error> {
+    let mut v: Vec<u8> = Vec::new();
+    v.try_reserve_exact(len)
+        .map_err(|_| Error::Decode(format!("cannot allocate {len} bytes for the decoded image")))?;
+    v.resize(len, 0);
+    Ok(v)
+}
+
 fn open_decoder<'a>(mem: &mut ReadMem<'a>, reduce: u32) -> Result<Handles, Error> {
     unsafe {
         let stream = opj_stream_create(STREAM_CHUNK, 1);
@@ -303,6 +368,8 @@ pub fn decode_only(data: &[u8], max_bytes: usize, discard_level: u32) -> Result<
 /// Apply the discard level and decode the codestream into the image planes.
 unsafe fn run_decode(h: &Handles, discard_level: u32) -> Result<(), Error> {
     unsafe {
+        let img = &*h.image;
+        check_decode_size(img.x0, img.x1, img.y0, img.y1, discard_level)?;
         if discard_level > 0 && opj_set_decoded_resolution_factor(h.codec, discard_level) == 0 {
             return Err(Error::Decode(format!(
                 "discard level {discard_level} not available"
@@ -322,7 +389,7 @@ unsafe fn run_decode(h: &Handles, discard_level: u32) -> Result<(), Error> {
 unsafe fn convert(img: &opj_image_t, fc: usize, c: usize) -> Result<(u32, u32, Vec<u8>), Error> {
     let comps = unsafe { std::slice::from_raw_parts(img.comps, img.numcomps as usize) };
     let (w, h) = (comps[0].w as usize, comps[0].h as usize);
-    let mut out = vec![0u8; w * h * c];
+    let mut out = alloc_zeroed(output_len(w, h, c)?)?;
     for (k, comp) in comps[fc..fc + c].iter().enumerate() {
         if comp.data.is_null() {
             return Err(Error::Decode("component without data".into()));
@@ -564,6 +631,41 @@ pub fn encode(
 
 #[cfg(test)]
 mod engine_info_tests {
+    use super::*;
+
+    #[test]
+    fn decode_size_guard() {
+        // 16384 passes, 16385 does not; the discard factor is applied first.
+        assert!(check_decode_size(0, 16384, 0, 16384, 0).is_ok());
+        assert!(check_decode_size(0, 16385, 0, 16384, 0).is_err());
+        assert!(check_decode_size(0, 16385, 0, 16384, 1).is_ok());
+        assert!(check_decode_size(0, 70000, 0, 100, 3).is_ok());
+        // Sane sizes keep decoding.
+        assert!(check_decode_size(0, 5000, 0, 5000, 0).is_ok());
+        assert!(check_decode_size(0, 8192, 0, 8192, 0).is_ok());
+        // Empty and absurd discard factors.
+        assert!(check_decode_size(0, 0, 0, 10, 0).is_err());
+        assert!(check_decode_size(0, 100, 0, 100, 40).is_ok());
+        assert!(check_decode_size(0, u32::MAX, 0, 10, 0).is_err());
+    }
+
+    #[test]
+    fn output_len_is_checked() {
+        assert_eq!(output_len(8192, 8192, 4).unwrap(), 8192 * 8192 * 4);
+        assert!(output_len(65536, 1, 3).is_err());
+        assert!(output_len(1, 65536, 3).is_err());
+        assert!(output_len(0, 4, 3).is_err());
+        assert!(output_len(4, 4, 0).is_err());
+        assert!(output_len(4, 4, 5).is_ok());
+        assert!(output_len(4, 4, 17).is_err());
+    }
+
+    #[test]
+    fn allocation_failure_is_an_error() {
+        assert_eq!(alloc_zeroed(16).unwrap(), vec![0u8; 16]);
+        assert!(alloc_zeroed(usize::MAX).is_err());
+    }
+
     #[test]
     fn engine_info_matches_baseline() {
         let v = vkstorm_openjp2::UPSTREAM_BASELINE.version;
