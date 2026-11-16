@@ -189,15 +189,23 @@ const STREAM_CHUNK: usize = 1 << 16;
 /// the viewer's `MAX_IMAGE_SIZE` rule (`LLImageJ2COJ`).
 pub const MAX_DECODE_DIMENSION: u32 = 16384;
 
-/// Largest width or height of a decoded image the output may report.
+/// Hard ceiling of the output type: `LLImageRaw` stores width and height as
+/// U16 (65535). Unreachable today because [`check_decode_size`] already caps
+/// decodes at [`MAX_DECODE_DIMENSION`]; kept so a raised decode cap cannot
+/// overflow the U16 raw image.
 const MAX_OUTPUT_DIMENSION: u32 = 65535;
 
-/// Most channels a decode may output: the avatar bake carries 5 and the
-/// tests 6, so the usual 1..=4 does not apply here.
+/// Most channels a decode may output, and most components a codestream may
+/// declare: the avatar bake carries 5 and the tests 6, so the usual 1..=4
+/// does not apply here (the viewer's own ceiling is `MAX_IMAGE_COMPONENTS`,
+/// 8).
 const MAX_OUTPUT_CHANNELS: usize = 16;
 
-/// `ceil(extent / 2^reduce)`, the size of an axis after `reduce` resolution
-/// reductions (OpenJPEG's `opj_uint_ceildivpow2`).
+/// `ceil((x1 - x0) / 2^reduce)`, the size of an axis after `reduce`
+/// resolution reductions, in the extent-based form of the C++ guard in
+/// `llimagej2coj.cpp`. OpenJPEG's own component size is
+/// `ceildivpow2(x1) - ceildivpow2(x0)`, which this bounds from above (they
+/// differ by at most 1 when `x0 != 0`).
 fn reduced_extent(x0: u32, x1: u32, reduce: u32) -> u64 {
     let extent = u64::from(x1.saturating_sub(x0));
     if reduce >= 32 {
@@ -218,6 +226,19 @@ fn check_decode_size(x0: u32, x1: u32, y0: u32, y1: u32, reduce: u32) -> Result<
     {
         return Err(Error::Decode(format!(
             "image size {w}x{h} (discard level {reduce}) is outside 1..={MAX_DECODE_DIMENSION}"
+        )));
+    }
+    Ok(())
+}
+
+/// Refuse a codestream that declares no component or more than
+/// [`MAX_OUTPUT_CHANNELS`]: OpenJPEG allocates the tile structures of every
+/// declared component before any data is read, so the count bounds the
+/// memory a small hostile header can drive.
+fn check_decode_components(numcomps: u32) -> Result<(), Error> {
+    if numcomps == 0 || numcomps as usize > MAX_OUTPUT_CHANNELS {
+        return Err(Error::Decode(format!(
+            "{numcomps} components are outside 1..={MAX_OUTPUT_CHANNELS}"
         )));
     }
     Ok(())
@@ -370,6 +391,7 @@ unsafe fn run_decode(h: &Handles, discard_level: u32) -> Result<(), Error> {
     unsafe {
         let img = &*h.image;
         check_decode_size(img.x0, img.x1, img.y0, img.y1, discard_level)?;
+        check_decode_components(img.numcomps)?;
         if discard_level > 0 && opj_set_decoded_resolution_factor(h.codec, discard_level) == 0 {
             return Err(Error::Decode(format!(
                 "discard level {discard_level} not available"
@@ -630,7 +652,7 @@ pub fn encode(
 }
 
 #[cfg(test)]
-mod engine_info_tests {
+mod tests {
     use super::*;
 
     #[test]
@@ -666,6 +688,38 @@ mod engine_info_tests {
         assert!(alloc_zeroed(usize::MAX).is_err());
     }
 
+    #[test]
+    fn decode_component_guard() {
+        assert!(check_decode_components(1).is_ok());
+        assert!(check_decode_components(16).is_ok());
+        assert!(check_decode_components(0).is_err());
+        assert!(check_decode_components(17).is_err());
+        assert!(check_decode_components(16384).is_err());
+    }
+
+    /// The guards are wired into `decode` and `decode_only`: an image past
+    /// the cap is refused at discard 0 and decodes once the discard factor
+    /// brings it under; a wide but legal one decodes at full size.
+    #[test]
+    fn decode_applies_the_guards() {
+        let wide = vec![0x55u8; 16385 * 16];
+        let j2c = encode(&wide, 16385, 16, 1, None, true).unwrap();
+        assert!(matches!(decode(&j2c, 0, 0, 0, 1), Err(Error::Decode(_))));
+        assert!(matches!(decode_only(&j2c, 0, 0), Err(Error::Decode(_))));
+        let d = decode(&j2c, 0, 1, 0, 1).unwrap();
+        assert_eq!(d.width, 8193);
+        assert_eq!(d.data.len(), (d.width * d.height * d.channels) as usize);
+
+        let ok = vec![0x55u8; 5000 * 16];
+        let j2c = encode(&ok, 5000, 16, 1, None, true).unwrap();
+        let d = decode(&j2c, 0, 0, 0, 1).unwrap();
+        assert_eq!((d.width, d.height), (5000, 16));
+        assert_eq!(d.data.len(), 5000 * 16);
+    }
+}
+
+#[cfg(test)]
+mod engine_info_tests {
     #[test]
     fn engine_info_matches_baseline() {
         let v = vkstorm_openjp2::UPSTREAM_BASELINE.version;

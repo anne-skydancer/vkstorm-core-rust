@@ -276,11 +276,10 @@ pub enum FastRead {
     Hit(FastRecord),
 }
 
-/// `writeToFastCache`'s search for the level that fits the record: the
-/// number of halvings of the raw image's dimensions.
-/// The highest discard level a record may carry (the viewer's
-/// `MAX_DISCARD_LEVEL`).
-pub const FAST_MAX_DISCARD_LEVEL: i32 = 12;
+/// The highest discard level a record header may carry. A bound above any
+/// level the writer produces: the viewer's `MAX_DISCARD_LEVEL` is 5, and
+/// `readFromFastCache` rescales higher levels down to 5.
+const FAST_MAX_DISCARD_LEVEL: i32 = 12;
 
 /// The data size of a fast cache record read from disk, or `None` when its
 /// header is not one the writer could have produced: positive dimensions,
@@ -299,6 +298,8 @@ fn fast_record_size(w: i32, h: i32, c: i32, level: i32) -> Option<usize> {
     Some(size as usize)
 }
 
+/// `writeToFastCache`'s search for the level that fits the record: the
+/// number of halvings of the raw image's dimensions.
 pub fn fast_cache_level(width: i32, height: i32, components: i32) -> i32 {
     let mut i = 0;
     while ((width >> i) * (height >> i) * components) > FAST_DATA_SIZE {
@@ -1526,7 +1527,7 @@ impl TextureCache {
             Self::close_fast_cache_locked(f, false);
             return None;
         };
-        let mut data = vec![0u8; image_size as usize];
+        let mut data = vec![0u8; image_size];
         let file = f.file.as_mut().and_then(|x| x.as_mut());
         let ok = match file {
             Some(file) => file.read(&mut data) == image_size as i32,
