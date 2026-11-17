@@ -106,13 +106,38 @@ fn viewer_buffer_defaults_and_fade() {
 }
 
 #[test]
-fn truncated_data_is_zero_filled() {
+fn truncated_data_ends_at_the_last_whole_frame() {
     let mut b = wav_bytes(&vec![0.25; 1000], 1, 44100, Enc::S16, false);
     b.truncate(44 + 600 * 2 + 1);
     let d = decode(&b).unwrap();
-    assert_eq!(d.sample_count, 1000);
-    assert!(d.data[599] != 0.0);
-    assert!(d.data[600..].iter().all(|&x| x == 0.0));
+    assert_eq!(d.sample_count, 600);
+    assert!(d.data.iter().all(|&x| x != 0.0));
+}
+
+#[test]
+fn header_frame_claim_is_bounded_by_the_data_present() {
+    // 8-channel, 8-bit PCM claiming ~8M frames over a 1 KB file.
+    for (tag, bits) in [(1u16, 8u16), (1, 16), (1, 24), (1, 32), (3, 32)] {
+        let ch = 8u16;
+        let bpf = (bits / 8 * ch) as u32;
+        let mut b = Vec::new();
+        b.extend_from_slice(b"RIFF");
+        b.extend_from_slice(&u32::MAX.to_le_bytes());
+        b.extend_from_slice(b"WAVEfmt ");
+        b.extend_from_slice(&16u32.to_le_bytes());
+        b.extend_from_slice(&tag.to_le_bytes());
+        b.extend_from_slice(&ch.to_le_bytes());
+        b.extend_from_slice(&44100u32.to_le_bytes());
+        b.extend_from_slice(&(44100 * bpf).to_le_bytes());
+        b.extend_from_slice(&(bpf as u16).to_le_bytes());
+        b.extend_from_slice(&bits.to_le_bytes());
+        b.extend_from_slice(b"data");
+        b.extend_from_slice(&u32::MAX.to_le_bytes());
+        b.extend(std::iter::repeat_n(0x40u8, 10 * bpf as usize + 3));
+        let d = decode(&b).unwrap();
+        assert_eq!(d.sample_count, 10, "tag {tag} bits {bits}");
+        assert_eq!(d.data.len(), 10 * ch as usize);
+    }
 }
 
 #[test]

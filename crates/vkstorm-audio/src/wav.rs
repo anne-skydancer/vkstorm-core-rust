@@ -27,12 +27,12 @@
 //! - More than 8 channels is rejected (SoLoud overruns its 8-channel stack
 //!   block); an A-law/µ-law file whose frame size is not one byte per
 //!   channel is rejected (dr_wav divides by zero); a header claiming more
-//!   than 8 frames per file byte is rejected (SoLoud would allocate it).
+//!   than the file holds is cut to the frames present (SoLoud would allocate
+//!   and zero-fill the claim: a 1 MB file could cost hundreds of MiB).
 //! - A data chunk longer than the file: SoLoud ignores the short read and
-//!   keeps whatever its stack block held; the missing samples are zero here.
-//!   dr_wav's byte accounting is kept, including the loss of a partial
-//!   frame's bytes on a short read and the 32-bit float fast path's
-//!   partial-frame samples.
+//!   keeps whatever its stack block held; here the buffer ends with the last
+//!   whole frame present (a trailing partial frame is dropped). Within the
+//!   frames present, dr_wav's byte accounting is kept.
 
 #![forbid(unsafe_code)]
 #![allow(clippy::needless_range_loop, clippy::excessive_precision)]
@@ -547,18 +547,24 @@ pub fn decode(bytes: &[u8]) -> Result<WavData, WavLoadError> {
     if dec.channels > 8 {
         return Err(WavLoadError::TooManyChannels(dec.channels));
     }
-    let samples = dec.total_frames;
+    let ch = dec.channels as usize;
+    // The header's frame count is a claim; only the frames the file really
+    // holds are decoded and allocated (a 1 MB file claiming 8M frames x 8
+    // channels would otherwise cost 256 MiB).
+    let present = (bytes.len() - dec.r.pos) as u64;
+    let samples = dec.total_frames.min(present / dec.bytes_per_frame() as u64);
     if samples == 0 {
         return Err(WavLoadError::Empty);
     }
-    let ch = dec.channels as usize;
-    // SoLoud stores the count in an unsigned int and allocates it up front;
-    // a header claiming far more than the file can hold is refused here.
-    if samples * ch as u64 > u32::MAX as u64 || samples > (bytes.len() as u64).saturating_mul(8) {
+    // SoLoud stores the count in an unsigned int.
+    if samples * ch as u64 > u32::MAX as u64 {
         return Err(WavLoadError::Invalid);
     }
     let sample_count = samples as usize;
-    let mut data = vec![0.0f32; sample_count * ch];
+    let mut data = Vec::new();
+    data.try_reserve_exact(sample_count * ch)
+        .map_err(|_| WavLoadError::Invalid)?;
+    data.resize(sample_count * ch, 0.0f32);
     let mut tmp = [0.0f32; 512 * 8];
     let mut raw = vec![0u8; 512 * 8 * 4];
     let mut i = 0usize;

@@ -23,6 +23,8 @@ static LOG: OnceLock<LogFn> = OnceLock::new();
 /// Installs the log sink. A second call is ignored.
 pub fn set_logger(f: LogFn) {
     let _ = LOG.set(f);
+    // The LLSD parsers warn (node budget spent) through the same sink.
+    vkstorm_llsd::set_warn_hook(Box::new(|msg| log(LogLevel::Warn, msg)));
 }
 
 pub fn log(level: LogLevel, msg: &str) {

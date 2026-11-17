@@ -101,6 +101,7 @@ fn parse_body(r: &Response<'_>) -> (bool, Value) {
     let limits = Limits {
         max_bytes: None,
         max_depth: r.max_depth,
+        max_nodes: vkstorm_llsd::DEFAULT_MAX_NODES,
     };
     let (n, v) = vkstorm_llsd::parse(Format::Xml, bytes, limits);
     if n == PARSE_FAILURE {

@@ -10,6 +10,9 @@
 //! object, as the C++ parsers left it. Otherwise the reader pulls chunks and
 //! reports how many buffered bytes went unconsumed, for the caller to seek back.
 
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+
 /// Supplies bytes to a [`Reader`].
 pub trait Source {
     /// Reads up to `buf.len()` bytes; 0 means end of input.
@@ -60,6 +63,8 @@ pub struct Reader<'a> {
     eof: bool,
     /// Bytes handed to the parser so far (prefix bytes included).
     consumed: usize,
+    /// When set, the input ends at the next refill (see `set_abort`).
+    abort: Option<Arc<AtomicBool>>,
 }
 
 impl<'a> Reader<'a> {
@@ -73,7 +78,14 @@ impl<'a> Reader<'a> {
             end: 0,
             eof: false,
             consumed: 0,
+            abort: None,
         }
+    }
+
+    /// Ends the input at the next refill once `flag` is set, so a parser whose
+    /// output was cut off stops within one buffered window.
+    pub fn set_abort(&mut self, flag: Option<Arc<AtomicBool>>) {
+        self.abort = flag;
     }
 
     /// A reader whose first bytes are `prefix`, followed by the source.
@@ -119,6 +131,14 @@ impl<'a> Reader<'a> {
     /// Makes room and pulls more bytes. Returns the number pulled (0 at EOF).
     fn refill(&mut self, want: usize) -> usize {
         if self.eof {
+            return 0;
+        }
+        if self
+            .abort
+            .as_ref()
+            .is_some_and(|a| a.load(Ordering::Relaxed))
+        {
+            self.eof = true;
             return 0;
         }
         if self.pos == self.end {

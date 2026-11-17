@@ -850,6 +850,7 @@ mod tests {
         Limits {
             max_bytes: None,
             max_depth,
+            max_nodes: 0,
         }
     }
 
