@@ -101,6 +101,9 @@ fn parse_body(r: &Response<'_>) -> (bool, Value) {
     let limits = Limits {
         max_bytes: None,
         max_depth: r.max_depth,
+        // The HTTP decode cap (256 MiB) binds before this does on a
+        // compressed reply; the budget guards the values built from it.
+        max_nodes: vkstorm_llsd::http_max_nodes(bytes.len()),
     };
     let (n, v) = vkstorm_llsd::parse(Format::Xml, bytes, limits);
     if n == PARSE_FAILURE {

@@ -226,7 +226,9 @@ pub fn header_received(data: &[u8], flags: u32) -> Result<HeaderReceipt, Process
         let (body, stripped) = strip_deprecated_header(data);
         header_size = stripped as i64;
         data_size = body.len() as i32;
-        let Some((header_data, consumed)) = parse_binary(body, data_size as i64, -1) else {
+        let Some((header_data, consumed)) =
+            parse_binary(body, data_size as i64, super::inflate::UNZIP_LLSD_MAX_DEPTH)
+        else {
             return Err(ProcessingResult::ParseFailure);
         };
         if !is_map(&header_data) {

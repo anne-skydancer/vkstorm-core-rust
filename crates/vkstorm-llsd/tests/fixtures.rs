@@ -88,7 +88,8 @@ fn run() -> Counts {
                 let lines = f[5] == "1";
                 let expected_count: i32 = f[6].parse().unwrap();
                 let input = read(&format!("{name}.in"));
-                let limits = Limits::from_cpp(max_bytes, max_depth);
+                let limits =
+                    Limits::from_cpp(max_bytes, max_depth, vkstorm_llsd::DEFAULT_MAX_NODES);
                 let mode = if lines {
                     XmlMode::Lines
                 } else {

@@ -361,6 +361,7 @@ mod tests {
             Limits {
                 max_bytes: Some(input.len() as i64),
                 max_depth: -1,
+                max_nodes: 0,
             },
         );
         (n, b.finish())

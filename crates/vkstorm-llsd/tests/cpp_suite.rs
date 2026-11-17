@@ -391,6 +391,7 @@ fn ensure_parse(
         Limits {
             max_bytes: Some(input.len() as i64),
             max_depth: depth,
+            max_nodes: 0,
         },
     );
     assert_eq!(n, count, "{msg} (count)");

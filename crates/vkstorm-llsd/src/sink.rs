@@ -28,6 +28,11 @@ pub trait Sink {
     fn end_map(&mut self);
     fn begin_array(&mut self);
     fn end_array(&mut self);
+
+    /// A parser met an element inside a subtree it skips (XML only) and holds
+    /// it on its element stack without building a value; a node budget counts
+    /// it. Not called for the skipped subtree's root.
+    fn skipped(&mut self) {}
 }
 
 /// What a map does with a repeated key. The viewer's notation and binary

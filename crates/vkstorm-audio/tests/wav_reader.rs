@@ -106,13 +106,91 @@ fn viewer_buffer_defaults_and_fade() {
 }
 
 #[test]
-fn truncated_data_is_zero_filled() {
+fn truncated_data_ends_at_the_last_whole_frame() {
     let mut b = wav_bytes(&vec![0.25; 1000], 1, 44100, Enc::S16, false);
     b.truncate(44 + 600 * 2 + 1);
     let d = decode(&b).unwrap();
-    assert_eq!(d.sample_count, 1000);
-    assert!(d.data[599] != 0.0);
-    assert!(d.data[600..].iter().all(|&x| x == 0.0));
+    assert_eq!(d.sample_count, 600);
+    assert!(d.data.iter().all(|&x| x != 0.0));
+}
+
+#[test]
+fn multichannel_file_truncated_mid_frame_keeps_the_whole_frames() {
+    let sig: Vec<f64> = (0..600).map(|i| ((i % 97) as f64 - 48.0) / 50.0).collect();
+    let full = wav_bytes(&sig, 6, 44100, Enc::S16, false);
+    let whole = decode(&full).unwrap();
+    assert_eq!(whole.sample_count, 100);
+    // 37 whole frames of 12 bytes and 7 bytes of the next.
+    let cut = &full[..44 + 37 * 12 + 7];
+    let d = decode(cut).unwrap();
+    assert_eq!(d.sample_count, 37);
+    assert_eq!(d.data.len(), 37 * 6);
+    for ch in 0..6 {
+        assert_eq!(
+            d.data[ch * 37..(ch + 1) * 37],
+            whole.data[ch * 100..ch * 100 + 37]
+        );
+    }
+    // No whole frame: nothing to play.
+    assert_eq!(decode(&full[..44 + 11]), Err(WavLoadError::Empty));
+}
+
+/// Offset of the data chunk's size field (after the `data` tag).
+fn data_size_at(b: &[u8]) -> usize {
+    b.windows(4).position(|w| w == b"data").unwrap() + 4
+}
+
+#[test]
+fn header_frame_claim_is_bounded_by_the_data_present() {
+    // 8 channels, 10 frames present, a data chunk claiming 4 GiB, for every
+    // encoding: PCM 8/16/24/32, float 32/64, A-law, mu-law, extensible.
+    let sig: Vec<f64> = (0..80)
+        .map(|i| ((i * 7 % 31) as f64 - 15.0) / 16.0)
+        .collect();
+    for enc in [
+        Enc::U8,
+        Enc::S16,
+        Enc::S24,
+        Enc::S32,
+        Enc::F32,
+        Enc::F64,
+        Enc::Alaw,
+        Enc::Mulaw,
+        Enc::Ext16,
+    ] {
+        let honest = wav_bytes(&sig, 8, 44100, enc, false);
+        let mut lying = honest.clone();
+        let at = data_size_at(&lying);
+        lying[at..at + 4].copy_from_slice(&u32::MAX.to_le_bytes());
+        let d = decode(&lying).unwrap();
+        assert_eq!(d.sample_count, 10);
+        assert_eq!(d.data.len(), 80);
+        // Same samples as the honest file.
+        assert_eq!(d, decode(&honest).unwrap());
+    }
+}
+
+#[test]
+fn odd_bit_pcm_in_a_wider_container_still_loads() {
+    // 12-bit PCM in 16-bit blocks: block alignment 2 bytes per sample.
+    let mut b = wav_bytes(&[0.25; 20], 2, 44100, Enc::S16, false);
+    b[34..36].copy_from_slice(&12u16.to_le_bytes());
+    let d = decode(&b).unwrap();
+    assert_eq!(d.sample_count, 10);
+}
+
+#[test]
+fn a_block_smaller_than_its_samples_is_invalid() {
+    // 8 channels of 1-bit samples in a 1-byte block would decode to 32 bytes
+    // per input byte.
+    let mut b = wav_bytes(&vec![0.25; 64], 8, 44100, Enc::U8, false);
+    b[34..36].copy_from_slice(&1u16.to_le_bytes());
+    b[32..34].copy_from_slice(&1u16.to_le_bytes());
+    assert_eq!(decode(&b), Err(WavLoadError::Invalid));
+    // 16-bit stereo with a 2-byte block.
+    let mut c = wav_bytes(&[0.25; 20], 2, 44100, Enc::S16, false);
+    c[32..34].copy_from_slice(&2u16.to_le_bytes());
+    assert_eq!(decode(&c), Err(WavLoadError::Invalid));
 }
 
 #[test]
