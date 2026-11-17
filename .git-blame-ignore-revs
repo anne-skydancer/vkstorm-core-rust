@@ -3,3 +3,6 @@
 
 # Format the workspace with rustfmt (default style)
 5153331774bcfb67f8dbc35743d13583f6e85120
+
+# Format with the rustfmt of Rust 1.100.0
+5017b5e72adba5c3ab2fc26e9fe9960840e13f6c

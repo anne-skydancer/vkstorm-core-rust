@@ -1080,7 +1080,7 @@ fn opj_j2k_calculate_tp(
  * @param       p_stream                        the stream to write data to.
  * @param       p_j2k                   J2K codec.
  * @param       p_manager       the user event manager.
-*/
+ */
 fn opj_j2k_write_soc(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -1109,13 +1109,13 @@ fn opj_j2k_write_soc(
  * @param       p_j2k           the jpeg2000 file codec.
  * @param       p_stream        XXX needs data
  * @param       p_manager       the user event manager.
-*/
+ */
 /* *
  * Reads a SOC marker (Start of Codestream)
  * @param       p_j2k           the jpeg2000 file codec.
  * @param       p_stream        FIXME DOC
  * @param       p_manager       the user event manager.
-*/
+ */
 fn opj_j2k_read_soc(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -1164,7 +1164,7 @@ fn opj_j2k_read_soc(
  * @param       p_j2k           J2K codec.
  * @param       p_stream        the stream to write data to.
  * @param       p_manager       the user event manager.
-*/
+ */
 fn opj_j2k_write_siz(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -1269,14 +1269,14 @@ fn opj_j2k_write_siz(
  * @param       p_header_data   the data contained in the SIZ box.
  * @param       p_header_size   the size of the data contained in the SIZ marker.
  * @param       p_manager       the user event manager.
-*/
+ */
 /* *
  * Reads a SIZ marker (image and tile size)
  * @param       p_j2k           the jpeg2000 file codec.
  * @param       p_header_data   the data contained in the SIZ box.
  * @param       p_header_size   the size of the data contained in the SIZ marker.
  * @param       p_manager       the user event manager.
-*/
+ */
 fn opj_j2k_read_siz(
   mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -1674,7 +1674,7 @@ fn opj_j2k_read_siz(
  * @param       p_stream                        the stream to write data to.
  * @param       p_j2k                   J2K codec.
  * @param       p_manager       the user event manager.
-*/
+ */
 fn opj_j2k_write_com(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -1745,14 +1745,14 @@ fn opj_j2k_write_com(
  * @param       p_header_data   the data contained in the COM box.
  * @param       p_header_size   the size of the data contained in the COM marker.
  * @param       p_manager       the user event manager.
-*/
+ */
 /* *
  * Reads a COM marker (comments)
  * @param       p_j2k           the jpeg2000 file codec.
  * @param       p_header_data   the data contained in the COM box.
  * @param       p_header_size   the size of the data contained in the COM marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_com(
   mut _p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -1771,7 +1771,7 @@ fn opj_j2k_read_com(
  * @param       p_stream                        the stream to write data to.
  * @param       p_j2k                   J2K codec.
  * @param       p_manager       the user event manager.
-*/
+ */
 fn opj_j2k_write_cod(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -1868,7 +1868,7 @@ fn opj_j2k_write_cod(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the COD marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_cod(
   mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -1980,7 +1980,7 @@ fn opj_j2k_read_cod(
  * @param       p_comp_no   the index of the component to output.
  * @param       p_stream    the stream to write data to.
  * @param       p_manager   the user event manager.
-*/
+ */
 fn opj_j2k_write_coc(
   mut p_j2k: &mut opj_j2k,
   mut p_comp_no: OPJ_UINT32,
@@ -2091,7 +2091,7 @@ fn opj_j2k_compare_coc(
  * @param       p_data          FIXME DOC
  * @param       p_data_written  FIXME DOC
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_write_coc_in_memory(
   mut p_j2k: &mut opj_j2k,
   mut p_comp_no: OPJ_UINT32,
@@ -2190,14 +2190,14 @@ fn opj_j2k_get_max_coc_size(mut p_j2k: &mut opj_j2k) -> OPJ_UINT32 {
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the COC marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 /* *
  * Reads a COC marker (Coding Style Component)
  * @param       p_header_data   the data contained in the COC box.
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the COC marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_coc(
   mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -2272,7 +2272,7 @@ fn opj_j2k_read_coc(
  * @param       p_j2k                   J2K codec.
  * @param       p_stream                the stream to write data to.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_write_qcd(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -2355,14 +2355,14 @@ fn opj_j2k_write_qcd(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the QCD marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 /* *
  * Reads a QCD marker (Quantization defaults)
  * @param       p_header_data   the data contained in the QCD box.
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the QCD marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_qcd(
   mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -2399,7 +2399,7 @@ fn opj_j2k_read_qcd(
  * @param       p_stream                the stream to write data to.
  * @param       p_j2k                   J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_write_qcc(
   mut p_j2k: &mut opj_j2k,
   mut p_comp_no: OPJ_UINT32,
@@ -2492,7 +2492,7 @@ fn opj_j2k_compare_qcc(
  * @param       p_data          FIXME DOC
  * @param       p_data_written  the stream to write data to.
  * @param       p_manager       the user event manager.
-*/
+ */
 fn opj_j2k_write_qcc_in_memory(
   mut p_j2k: &mut opj_j2k,
   mut p_comp_no: OPJ_UINT32,
@@ -2565,14 +2565,14 @@ fn opj_j2k_get_max_qcc_size(mut p_j2k: &mut opj_j2k) -> OPJ_UINT32 {
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the QCC marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 /* *
  * Reads a QCC marker (Quantization component)
  * @param       p_header_data   the data contained in the QCC box.
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the QCC marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_qcc(
   mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -2638,7 +2638,7 @@ fn opj_j2k_read_qcc(
  * @param       p_stream                                the stream to write data to.
  * @param       p_j2k                           J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_write_poc(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -2901,7 +2901,7 @@ fn opj_j2k_get_specific_header_sizes(mut p_j2k: &mut opj_j2k) -> OPJ_UINT32 {
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the POC marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 /* *
  * Reads a POC marker (Progression Order Change)
  *
@@ -2909,7 +2909,7 @@ fn opj_j2k_get_specific_header_sizes(mut p_j2k: &mut opj_j2k) -> OPJ_UINT32 {
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the POC marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_poc(
   mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -3000,7 +3000,7 @@ fn opj_j2k_read_poc(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the TLM marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 /* *
  * Reads a CRG marker (Component registration)
  *
@@ -3008,7 +3008,7 @@ fn opj_j2k_read_poc(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the TLM marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_crg(
   mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -3046,7 +3046,7 @@ fn opj_j2k_read_crg(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the TLM marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 /* *
  * Reads a TLM marker (Tile Length Marker)
  *
@@ -3054,7 +3054,7 @@ fn opj_j2k_read_crg(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the TLM marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_tlm(
   mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -3195,7 +3195,7 @@ fn opj_j2k_read_tlm(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the TLM marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 /* *
  * Reads a PLM marker (Packet length, main header marker)
  *
@@ -3203,7 +3203,7 @@ fn opj_j2k_read_tlm(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the TLM marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_plm(
   mut _p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -3271,7 +3271,7 @@ fn opj_j2k_read_plm(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the PLT marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 /* *
  * Reads a PLT marker (Packet length, tile-part header)
  *
@@ -3279,7 +3279,7 @@ fn opj_j2k_read_plm(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the PLT marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_plt(
   mut _p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -3620,7 +3620,7 @@ fn opj_j2k_merge_ppm(mut p_cp: *mut opj_cp_t, mut p_manager: &mut opj_event_mgr)
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the PPT marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 /* *
  * Reads a PPT marker (Packed packet headers, tile-part header)
  *
@@ -3628,7 +3628,7 @@ fn opj_j2k_merge_ppm(mut p_cp: *mut opj_cp_t, mut p_manager: &mut opj_event_mgr)
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the PPT marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_ppt(
   mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -3815,7 +3815,7 @@ fn opj_j2k_merge_ppt(mut p_tcp: *mut opj_tcp_t, mut p_manager: &mut opj_event_mg
  * @param       p_stream                                the stream to write data to.
  * @param       p_j2k                           J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_write_tlm(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -3920,7 +3920,7 @@ fn opj_j2k_write_tlm(
  * @param       p_data_written   Number of bytes written into stream
  * @param       p_stream         the stream to write data to.
  * @param       p_manager        the user event manager.
-*/
+ */
 fn opj_j2k_write_sot(
   mut p_j2k: &mut opj_j2k,
   mut p_data: *mut OPJ_BYTE,
@@ -4016,7 +4016,7 @@ fn opj_j2k_get_sot_values(
  * @param       p_j2k           the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the PPT marker.
  * @param       p_manager       the user event manager.
-*/
+ */
 fn opj_j2k_read_sot(
   mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -4492,7 +4492,7 @@ fn opj_j2k_write_plt_in_memory(
  * @param       total_data_size   FIXME DOC
  * @param       p_stream            the stream to write data to.
  * @param       p_manager           the user event manager.
-*/
+ */
 fn opj_j2k_write_sod(
   mut p_j2k: &mut opj_j2k,
   mut p_data: *mut OPJ_BYTE,
@@ -4638,7 +4638,7 @@ fn opj_j2k_write_sod(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_stream                FIXME DOC
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_sod(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -4843,7 +4843,7 @@ fn opj_j2k_read_sod(
  * @param       p_stream                the stream to write data to.
  * @param       p_j2k                   J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_write_rgn(
   mut p_j2k: &mut opj_j2k,
   mut p_tile_no: OPJ_UINT32,
@@ -4908,7 +4908,7 @@ fn opj_j2k_write_rgn(
  * @param       p_stream                the stream to write data to.
  * @param       p_j2k                   J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_write_eoc(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -4946,7 +4946,7 @@ fn opj_j2k_write_eoc(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the POC marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 /* *
  * Reads a RGN marker (Region Of Interest)
  *
@@ -4954,7 +4954,7 @@ fn opj_j2k_write_eoc(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the POC marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_rgn(
   mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -5035,7 +5035,7 @@ fn opj_j2k_get_default_stride(mut _p_tcp: *mut opj_tcp_t) -> OPJ_FLOAT32 {
  * @param       p_stream                                the stream to write data to.
  * @param       p_j2k                           J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_update_rates(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -5227,7 +5227,7 @@ fn opj_j2k_update_rates(
  * @param       p_stream                the stream to write data to.
  * @param       p_j2k                   J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_get_end_header(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -5246,7 +5246,7 @@ fn opj_j2k_get_end_header(
  * @param       p_stream                        the stream to write data to.
  * @param       p_j2k                   J2K codec.
  * @param       p_manager       the user event manager.
-*/
+ */
 fn opj_j2k_write_mct_data_group(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -5293,7 +5293,7 @@ fn opj_j2k_write_mct_data_group(
  * @param       p_stream                the stream to write data to.
  * @param       p_j2k                   J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_write_all_coc(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -5322,7 +5322,7 @@ fn opj_j2k_write_all_coc(
  * @param       p_stream                the stream to write data to.
  * @param       p_j2k                   J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_write_all_qcc(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -5351,7 +5351,7 @@ fn opj_j2k_write_all_qcc(
  * @param       p_stream                the stream to write data to.
  * @param       p_j2k                   J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_write_regions(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -5389,7 +5389,7 @@ fn opj_j2k_write_regions(
  * @param       p_stream                the stream to write data to.
  * @param       p_j2k                   J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_write_epc(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -5422,7 +5422,7 @@ fn opj_j2k_write_epc(
  * @param       p_manager               the user event manager.
  *
  * @return      true                    if the marker could be deduced.
-*/
+ */
 fn opj_j2k_read_unk(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -5497,7 +5497,7 @@ fn opj_j2k_read_unk(
  * @param       p_mct_record    FIXME DOC
  * @param       p_stream        the stream to write data to.
  * @param       p_manager       the user event manager.
-*/
+ */
 fn opj_j2k_write_mct_record(
   mut p_j2k: &mut opj_j2k,
   mut p_mct_record: *mut opj_mct_data_t,
@@ -5574,7 +5574,7 @@ fn opj_j2k_write_mct_record(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the MCT marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 /* *
  * Reads a MCT marker (Multiple Component Transform)
  *
@@ -5582,7 +5582,7 @@ fn opj_j2k_write_mct_record(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the MCT marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_mct(
   mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -5741,7 +5741,7 @@ fn opj_j2k_read_mct(
  * @param       p_mcc_record            FIXME DOC
  * @param       p_stream                the stream to write data to.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_write_mcc_record(
   mut p_j2k: &mut opj_j2k,
   mut p_mcc_record: *mut opj_simple_mcc_decorrelation_data,
@@ -5862,7 +5862,7 @@ fn opj_j2k_write_mcc_record(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the MCC marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_mcc(
   mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -6129,7 +6129,7 @@ fn opj_j2k_read_mcc(
  * @param       p_stream                                the stream to write data to.
  * @param       p_j2k                           J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_write_mco(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -6203,7 +6203,7 @@ fn opj_j2k_write_mco(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the MCO marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 /* *
  * Reads a MCO marker (Multiple Component Transform Ordering)
  *
@@ -6211,7 +6211,7 @@ fn opj_j2k_write_mco(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the MCO marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_mco(
   mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -6375,7 +6375,7 @@ fn opj_j2k_add_mct(
  * @param       p_stream                                the stream to write data to.
  * @param       p_j2k                           J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_write_cbd(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -6452,14 +6452,14 @@ fn opj_j2k_write_cbd(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the CBD marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 /* *
  * Reads a CBD marker (Component bit depth definition)
  * @param       p_header_data   the data contained in the CBD box.
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the CBD marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_cbd(
   mut p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -6514,7 +6514,7 @@ fn opj_j2k_read_cbd(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the CAP marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 /* *
  * Reads a CAP marker (extended capabilities definition). Empty implementation.
  * Found in HTJ2K files.
@@ -6523,7 +6523,7 @@ fn opj_j2k_read_cbd(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the CAP marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_cap(
   mut _p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -6542,14 +6542,14 @@ fn opj_j2k_read_cap(
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the CPF marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 /* *
  * Reads a CPF marker (corresponding profile). Empty implementation. Found in HTJ2K files
  * @param       p_header_data   the data contained in the CPF box.
  * @param       p_j2k                   the jpeg2000 codec.
  * @param       p_header_size   the size of the data contained in the CPF marker.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_read_cpf(
   mut _p_j2k: &mut opj_j2k,
   mut p_header_data: *mut OPJ_BYTE,
@@ -11036,7 +11036,7 @@ fn opj_j2k_compare_SPCod_SPCoc(
  * @param       p_manager       the user event manager.
  *
  * @return FIXME DOC
-*/
+ */
 fn opj_j2k_write_SPCod_SPCoc(
   mut p_j2k: &mut opj_j2k,
   mut p_tile_no: OPJ_UINT32,
@@ -11107,7 +11107,7 @@ fn opj_j2k_write_SPCod_SPCoc(
  * @param       p_header_data   the data contained in the COM box.
  * @param       p_header_size   the size of the data contained in the COM marker.
  * @param       p_manager       the user event manager.
-*/
+ */
 fn opj_j2k_read_SPCod_SPCoc(
   mut p_j2k: &mut opj_j2k,
   mut compno: OPJ_UINT32,
@@ -11416,7 +11416,7 @@ fn opj_j2k_compare_SQcd_SQcc(
  * @param       p_j2k                   J2K codec.
  * @param       p_manager               the user event manager.
  *
-*/
+ */
 fn opj_j2k_write_SQcd_SQcc(
   mut p_j2k: &mut opj_j2k,
   mut p_tile_no: OPJ_UINT32,
@@ -11510,7 +11510,7 @@ fn opj_j2k_write_SQcd_SQcc(
  * @param       p_header_size   pointer to the size of the data buffer, it is changed by the function.
  * @param       p_manager       the user event manager.
  *
-*/
+ */
 fn opj_j2k_read_SQcd_SQcc(
   mut p_j2k: &mut opj_j2k,
   mut p_comp_no: OPJ_UINT32,
@@ -13889,7 +13889,7 @@ fn opj_j2k_write_all_tile_parts(
  * @param       p_stream                the stream to write data to.
  * @param       p_j2k                   J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_write_updated_tlm(
   mut p_j2k: &mut opj_j2k,
   mut p_stream: &mut Stream,
@@ -13936,7 +13936,7 @@ fn opj_j2k_write_updated_tlm(
  * @param       p_stream                the stream to write data to.
  * @param       p_j2k                   J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_end_encoding(
   mut p_j2k: &mut opj_j2k,
   mut _p_stream: &mut Stream,
@@ -14002,7 +14002,7 @@ fn opj_j2k_destroy_header_memory(
  * @param       p_stream                the stream to write data to.
  * @param       p_j2k                   J2K codec.
  * @param       p_manager               the user event manager.
-*/
+ */
 fn opj_j2k_init_info(
   mut p_j2k: &mut opj_j2k,
   mut _p_stream: &mut Stream,
@@ -14069,7 +14069,7 @@ fn opj_j2k_init_info(
  * @param       p_stream                        the stream to write data to.
  * @param       p_j2k                           J2K codec.
  * @param       p_manager                   the user event manager.
-*/
+ */
 fn opj_j2k_create_tcd(
   mut p_j2k: &mut opj_j2k,
   mut _p_stream: &mut Stream,

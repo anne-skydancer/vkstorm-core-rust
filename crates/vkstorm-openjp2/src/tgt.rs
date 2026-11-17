@@ -163,7 +163,7 @@ pub(crate) fn opj_tgt_create(
  * @param       p_num_leafs_h           the width of the array of leafs of the tree
  * @param       p_num_leafs_v           the height of the array of leafs of the tree
  * @return      a new tag-tree if successful, NULL otherwise
-*/
+ */
 
 pub(crate) fn opj_tgt_init(
   p_tree: *mut opj_tgt_tree_t,
