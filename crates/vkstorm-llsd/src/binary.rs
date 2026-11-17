@@ -19,7 +19,9 @@
 //! Kept quirks: a short integer, real or UUID is zero-padded and accepted
 //! (the C++ only logs); a map key with an unknown tag byte is the empty key;
 //! a negative binary size is an empty blob; counts are checked against the
-//! declared sizes exactly as the C++ loops do.
+//! declared sizes exactly as the C++ loops do. An array count that is
+//! negative or larger than the bytes left is a parse failure (the C++
+//! hotfix); no container reserves memory from its count.
 
 use crate::reader::Reader;
 use crate::sink::Sink;
@@ -261,6 +263,14 @@ impl<S: Sink> Parser<'_, '_, S> {
             }
             b'[' => {
                 let size = read_i32(self.r)?;
+                // The count is attacker-controlled and every element takes at
+                // least one byte: a negative count, or one above the bytes
+                // left, cannot be valid (the C++ fix rejects them before it
+                // reserves from the count; nothing here reserves from it, but
+                // the parse result must agree).
+                if size < 0 || self.bytes_left().is_some_and(|left| size as i64 > left) {
+                    return Err(());
+                }
                 self.sink.begin_array();
                 return Ok(Outcome::OpenArray(size));
             }
@@ -366,6 +376,43 @@ mod tests {
         assert_eq!(p(b"s\x00\x00\x00\x07abc321").0, PARSE_FAILURE);
         assert_eq!(p(b"t").0, PARSE_FAILURE);
         assert_eq!(p(b"").0, 0);
+    }
+
+    #[test]
+    fn hostile_array_counts_fail_without_reserving() {
+        for count in [0xFFFF_FFFFu32, 0x7FFF_FFFF, 0x8000_0000, 1_000_000] {
+            let mut tiny = b"[".to_vec();
+            tiny.extend_from_slice(&count.to_be_bytes());
+            tiny.push(b']');
+            assert_eq!(p(&tiny).0, PARSE_FAILURE, "count {count:#x}");
+        }
+        // Nested huge counts over zero padding: a ~64 KiB block, each level
+        // claiming more elements than the bytes left.
+        let mut nested = Vec::new();
+        for _ in 0..8 {
+            nested.push(b'[');
+            nested.extend_from_slice(&0x7FFF_FFFFu32.to_be_bytes());
+        }
+        nested.resize(64 * 1024, 0);
+        assert_eq!(p(&nested).0, PARSE_FAILURE);
+        // Without a byte limit only a negative count is known to be bad.
+        let mut src = SliceSource::new(&[b'[', 0xff, 0xff, 0xff, 0xff, b']']);
+        let mut r = Reader::new(&mut src);
+        let mut b = ValueBuilder::new(KeyPolicy::FirstWins);
+        let n = parse(
+            &mut r,
+            &mut b,
+            Limits {
+                max_bytes: None,
+                max_depth: -1,
+            },
+        );
+        assert_eq!(n, PARSE_FAILURE);
+        // A valid count at the bytes-left bound still parses.
+        assert_eq!(
+            p(b"[\x00\x00\x00\x02i\x00\x00\x00\x01i\x00\x00\x00\x02]").1,
+            Some(Value::Array(vec![Value::Integer(1), Value::Integer(2)]))
+        );
     }
 
     #[test]

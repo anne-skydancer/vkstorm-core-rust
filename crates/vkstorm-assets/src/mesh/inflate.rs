@@ -17,10 +17,16 @@ pub enum ZipResult {
     VersionError = 3,
     DataError = 4,
     ParseError = 5,
+    /// The output would pass the cap (`ZR_SIZE_ERROR`): a decompression bomb.
+    SizeError = 6,
 }
 
 /// `UNZIP_LLSD_MAX_DEPTH`.
 pub const UNZIP_LLSD_MAX_DEPTH: i32 = 96;
+/// `UNZIP_ASSET_MAX_OUT`: the output cap for mesh LODs, skin and
+/// decomposition blocks and materials. The largest real LOD block is about
+/// 15 to 22 MB inflated; 64 MiB leaves a wide margin and stops a bomb early.
+pub const UNZIP_ASSET_MAX_OUT: usize = 64 * 1024 * 1024;
 /// The inflate output chunk of `unzip_llsd` (`CHUNK = 1024 * 512`).
 const CHUNK: usize = 1024 * 512;
 
@@ -46,7 +52,17 @@ pub fn strip_deprecated_header(data: &[u8]) -> (&[u8], usize) {
 /// ends before its end marker `BufferError` (zlib's `Z_BUF_ERROR` when the
 /// input runs out), and a stream that stops being `Z_OK` without reaching
 /// the end `DataError`.
+///
+/// The output is capped at [`UNZIP_ASSET_MAX_OUT`]; more is `SizeError`.
 pub fn inflate_all(input: &[u8]) -> Result<Vec<u8>, ZipResult> {
+    inflate_capped(input, UNZIP_ASSET_MAX_OUT)
+}
+
+/// [`inflate_all`] with an explicit output cap (`max_out` bytes; an output of
+/// exactly `max_out` is accepted, one byte more is `SizeError`). The check
+/// runs on every chunk before it is kept, so memory never passes
+/// `max_out` plus one chunk whatever the stream claims.
+pub fn inflate_capped(input: &[u8], max_out: usize) -> Result<Vec<u8>, ZipResult> {
     let mut inflate = Inflate::new(true, 15);
     let mut result: Vec<u8> = Vec::new();
     let mut chunk = vec![0u8; CHUNK];
@@ -57,6 +73,9 @@ pub fn inflate_all(input: &[u8]) -> Result<Vec<u8>, ZipResult> {
         let status = inflate.decompress(&input[consumed..], &mut chunk, InflateFlush::NoFlush);
         consumed += (inflate.total_in() - before_in) as usize;
         let have = (inflate.total_out() - before_out) as usize;
+        if result.len().saturating_add(have) > max_out {
+            return Err(ZipResult::SizeError);
+        }
         match status {
             Err(InflateError::NeedDict { .. }) | Err(InflateError::DataError) => {
                 return Err(ZipResult::DataError);
@@ -152,5 +171,62 @@ mod tests {
         let zipped = zip_bytes(&big);
         assert!(zipped.len() < 50_000);
         assert_eq!(inflate_all(&zipped).unwrap(), big);
+    }
+
+    /// Deflates `total` zero bytes fed to the encoder in 1 MiB pieces, so the
+    /// bomb is never held inflated.
+    fn zero_bomb(total: usize) -> Vec<u8> {
+        use zlib_rs::{Deflate, DeflateFlush};
+        let mut deflate = Deflate::new(9, true, 15);
+        let zeros = vec![0u8; 1 << 20];
+        let mut out: Vec<u8> = Vec::new();
+        let mut chunk = vec![0u8; 65536];
+        let mut fed = 0usize;
+        loop {
+            let piece = &zeros[..(total - fed).min(zeros.len())];
+            let flush = if fed + piece.len() == total {
+                DeflateFlush::Finish
+            } else {
+                DeflateFlush::NoFlush
+            };
+            let mut off = 0usize;
+            loop {
+                let (bi, bo) = (deflate.total_in(), deflate.total_out());
+                let st = deflate
+                    .compress(&piece[off..], &mut chunk, flush)
+                    .expect("deflate");
+                off += (deflate.total_in() - bi) as usize;
+                out.extend_from_slice(&chunk[..(deflate.total_out() - bo) as usize]);
+                if st == Status::StreamEnd || (off == piece.len() && flush != DeflateFlush::Finish)
+                {
+                    break;
+                }
+            }
+            fed += piece.len();
+            if fed == total {
+                return out;
+            }
+        }
+    }
+
+    #[test]
+    fn bomb_above_the_cap_is_refused() {
+        let bomb = zero_bomb(UNZIP_ASSET_MAX_OUT + 1);
+        assert!(bomb.len() < 1 << 20, "the bomb is small: {}", bomb.len());
+        assert_eq!(inflate_all(&bomb), Err(ZipResult::SizeError));
+        assert_eq!(unzip_llsd(&bomb), Err(ZipResult::SizeError));
+    }
+
+    #[test]
+    fn output_exactly_at_the_cap_succeeds() {
+        // Multi-chunk, and a size that is not a chunk multiple.
+        let cap = 3 * CHUNK + 1234;
+        let data: Vec<u8> = (0..cap).map(|i| (i % 251) as u8).collect();
+        let zipped = zip_bytes(&data);
+        assert_eq!(inflate_capped(&zipped, cap).unwrap(), data);
+        assert_eq!(inflate_capped(&zipped, cap - 1), Err(ZipResult::SizeError));
+        // The real cap, at the boundary.
+        let at = zero_bomb(UNZIP_ASSET_MAX_OUT);
+        assert_eq!(inflate_all(&at).unwrap().len(), UNZIP_ASSET_MAX_OUT);
     }
 }
