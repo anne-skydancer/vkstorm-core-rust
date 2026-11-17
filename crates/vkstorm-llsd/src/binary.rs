@@ -268,6 +268,8 @@ impl<S: Sink> Parser<'_, '_, S> {
                 // left, cannot be valid (the C++ fix rejects them before it
                 // reserves from the count; nothing here reserves from it, but
                 // the parse result must agree).
+                // Observable mainly for negative counts: an oversized one would
+                // also fail later, on the elements that are not there.
                 if size < 0 || self.bytes_left().is_some_and(|left| size as i64 > left) {
                     return Err(());
                 }
@@ -379,7 +381,7 @@ mod tests {
     }
 
     #[test]
-    fn hostile_array_counts_fail_without_reserving() {
+    fn hostile_array_counts_fail() {
         for count in [0xFFFF_FFFFu32, 0x7FFF_FFFF, 0x8000_0000, 1_000_000] {
             let mut tiny = b"[".to_vec();
             tiny.extend_from_slice(&count.to_be_bytes());
@@ -395,6 +397,15 @@ mod tests {
         }
         nested.resize(64 * 1024, 0);
         assert_eq!(p(&nested).0, PARSE_FAILURE);
+        // Counts that each pass the guard (60000 <= bytes left), nested 8
+        // deep over zero padding: a clean failure, no reservation, no panic.
+        let mut deep = Vec::new();
+        for _ in 0..8 {
+            deep.push(b'[');
+            deep.extend_from_slice(&60000u32.to_be_bytes());
+        }
+        deep.resize(64 * 1024, 0);
+        assert_eq!(p(&deep).0, PARSE_FAILURE);
         // Without a byte limit only a negative count is known to be bad.
         let mut src = SliceSource::new(&[b'[', 0xff, 0xff, 0xff, 0xff, b']']);
         let mut r = Reader::new(&mut src);

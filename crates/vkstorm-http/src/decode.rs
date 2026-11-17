@@ -147,11 +147,16 @@ fn run_member(
             let mut first = true;
             loop {
                 // grow only when full: a size taken from the gzip trailer is exact.
-                // Never past limit + 1 bytes, so one byte over the limit is
-                // seen and the buffer cannot grow beyond it.
+                // The final capacity never passes limit + 1 bytes, so one byte
+                // over the limit is seen and the buffer cannot end larger (a
+                // regrowth may briefly hold the old and the new buffer). A
+                // failed allocation refuses the reply instead of aborting.
                 if out.capacity() == out.len() {
-                    let room = (limit + 1).saturating_sub(out.len());
-                    out.reserve_exact(out.len().max(16384).min(room.max(1)));
+                    let room = limit.saturating_add(1).saturating_sub(out.len());
+                    let want = out.len().max(16384).min(room.max(1));
+                    if out.try_reserve_exact(want).is_err() {
+                        return (used, None, false);
+                    }
                 }
                 let (in0, out0) = (d.total_in(), d.total_out());
                 let status = d.decompress_vec(&input[used..], out, FlushDecompress::None);
@@ -207,7 +212,13 @@ fn size_hint(body: &[u8], wrapper: Wrapper) -> usize {
 
 /// `inflate_reply()`: an error when the data does not decode.
 fn inflate_reply(body: &[u8], wrapper: Wrapper, limit: usize) -> Result<Vec<u8>, Failure> {
-    let mut out = Vec::with_capacity(size_hint(body, wrapper).min(limit));
+    let mut out: Vec<u8> = Vec::new();
+    if out
+        .try_reserve_exact(size_hint(body, wrapper).min(limit))
+        .is_err()
+    {
+        return Err(Failure::Bad);
+    }
     let mut pos = 0usize;
     let mut next_member = false;
     loop {
@@ -315,8 +326,33 @@ mod tests {
         e.finish().unwrap()
     }
 
+    /// The two 256 MiB tests would each hold 256 MiB at once: one at a time.
+    static BIG: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    #[test]
+    fn an_over_limit_bomb_is_bad_not_a_raw_retry_and_stays_within_limit_plus_one() {
+        let small = gz_zero_bomb(5 << 20);
+        let limit = 1usize << 20;
+        assert_eq!(
+            inflate_reply(&small, Wrapper::Auto, limit),
+            Err(Failure::Bad)
+        );
+        let mut out = Vec::new();
+        let (_, end, at_start) =
+            run_member(new_member(&small, Wrapper::Auto), &small, &mut out, limit);
+        assert_eq!((end, at_start), (None, false));
+        assert_eq!(out.len(), limit + 1);
+        assert!(out.capacity() <= limit + 1, "capacity {}", out.capacity());
+        // A limit that cannot be added to does not overflow.
+        assert_eq!(
+            decode_reply_limited("gzip", &gz(b"x"), usize::MAX),
+            Decoded::Body(b"x".to_vec())
+        );
+    }
+
     #[test]
     fn a_bomb_over_the_limit_is_refused() {
+        let _g = BIG.lock().unwrap_or_else(|e| e.into_inner());
         let bomb = gz_zero_bomb(HTTP_REPLY_MAX_DECODED + 1);
         assert!(bomb.len() < 1 << 20, "the bomb is small: {}", bomb.len());
         assert_eq!(decode_reply("gzip", &bomb), Decoded::Refused);
@@ -359,6 +395,7 @@ mod tests {
                 "{enc} one byte over"
             );
         }
+        let _g = BIG.lock().unwrap_or_else(|e| e.into_inner());
         let at = gz_zero_bomb(HTTP_REPLY_MAX_DECODED);
         match decode_reply("gzip", &at) {
             Decoded::Body(b) => assert_eq!(b.len(), HTTP_REPLY_MAX_DECODED),

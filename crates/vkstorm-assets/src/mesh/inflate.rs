@@ -7,24 +7,24 @@ use zlib_rs::{Inflate, InflateError, InflateFlush, Status};
 
 use super::llsd::parse_binary;
 
-/// `LLUZipHelper::EZipRresult`.
+/// The names and numbers of `LLUZipHelper::EZipRresult`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(i32)]
 pub enum ZipResult {
     Ok = 0,
     MemError = 1,
-    BufferError = 2,
-    VersionError = 3,
-    DataError = 4,
-    ParseError = 5,
     /// The output would pass the cap (`ZR_SIZE_ERROR`): a decompression bomb.
-    SizeError = 6,
+    SizeError = 2,
+    DataError = 3,
+    ParseError = 4,
+    BufferError = 5,
+    VersionError = 6,
 }
 
 /// `UNZIP_LLSD_MAX_DEPTH`.
 pub const UNZIP_LLSD_MAX_DEPTH: i32 = 96;
 /// `UNZIP_ASSET_MAX_OUT`: the output cap for mesh LODs, skin and
-/// decomposition blocks and materials. The largest real LOD block is about
+/// decomposition blocks. The largest real LOD block is about
 /// 15 to 22 MB inflated; 64 MiB leaves a wide margin and stops a bomb early.
 pub const UNZIP_ASSET_MAX_OUT: usize = 64 * 1024 * 1024;
 /// The inflate output chunk of `unzip_llsd` (`CHUNK = 1024 * 512`).
@@ -60,12 +60,16 @@ pub fn inflate_all(input: &[u8]) -> Result<Vec<u8>, ZipResult> {
 
 /// [`inflate_all`] with an explicit output cap (`max_out` bytes; an output of
 /// exactly `max_out` is accepted, one byte more is `SizeError`). The check
-/// runs on every chunk before it is kept, so memory never passes
-/// `max_out` plus one chunk whatever the stream claims.
+/// runs on every chunk before it is kept, so kept output never passes
+/// `max_out`. An allocation that fails is `MemError`, not an abort.
 pub fn inflate_capped(input: &[u8], max_out: usize) -> Result<Vec<u8>, ZipResult> {
     let mut inflate = Inflate::new(true, 15);
     let mut result: Vec<u8> = Vec::new();
-    let mut chunk = vec![0u8; CHUNK];
+    let mut chunk: Vec<u8> = Vec::new();
+    if chunk.try_reserve_exact(CHUNK).is_err() {
+        return Err(ZipResult::MemError);
+    }
+    chunk.resize(CHUNK, 0);
     let mut consumed = 0usize;
     loop {
         let before_in = inflate.total_in();
@@ -73,9 +77,15 @@ pub fn inflate_capped(input: &[u8], max_out: usize) -> Result<Vec<u8>, ZipResult
         let status = inflate.decompress(&input[consumed..], &mut chunk, InflateFlush::NoFlush);
         consumed += (inflate.total_in() - before_in) as usize;
         let have = (inflate.total_out() - before_out) as usize;
-        if result.len().saturating_add(have) > max_out {
-            return Err(ZipResult::SizeError);
-        }
+        // The cap is checked where the C++ checks it: once the status is not an error.
+        let over_cap = || {
+            crate::ll_warns!(
+                "Failed to unzip LLSD block: output exceeds the cap of {} bytes; input size: {} bytes.",
+                max_out,
+                input.len()
+            );
+            ZipResult::SizeError
+        };
         match status {
             Err(InflateError::NeedDict { .. }) | Err(InflateError::DataError) => {
                 return Err(ZipResult::DataError);
@@ -84,9 +94,21 @@ pub fn inflate_capped(input: &[u8], max_out: usize) -> Result<Vec<u8>, ZipResult
             Ok(Status::BufError) => return Err(ZipResult::BufferError),
             Err(InflateError::MemError) => return Err(ZipResult::MemError),
             Ok(Status::Ok) => {
+                if result.len().saturating_add(have) > max_out {
+                    return Err(over_cap());
+                }
+                if result.try_reserve(have).is_err() {
+                    return Err(ZipResult::MemError);
+                }
                 result.extend_from_slice(&chunk[..have]);
             }
             Ok(Status::StreamEnd) => {
+                if result.len().saturating_add(have) > max_out {
+                    return Err(over_cap());
+                }
+                if result.try_reserve(have).is_err() {
+                    return Err(ZipResult::MemError);
+                }
                 result.extend_from_slice(&chunk[..have]);
                 return Ok(result);
             }
@@ -215,6 +237,42 @@ mod tests {
         assert!(bomb.len() < 1 << 20, "the bomb is small: {}", bomb.len());
         assert_eq!(inflate_all(&bomb), Err(ZipResult::SizeError));
         assert_eq!(unzip_llsd(&bomb), Err(ZipResult::SizeError));
+    }
+
+    #[test]
+    fn consumers_refuse_a_bomb() {
+        use crate::mesh::skin::{Decomposition, SkinInfo};
+        use crate::mesh::unpack::{UnpackError, unpack_volume_faces};
+        let bomb = zero_bomb(UNZIP_ASSET_MAX_OUT + 1);
+        assert!(matches!(
+            unpack_volume_faces(&bomb, 0),
+            Err(UnpackError::Zip(ZipResult::SizeError))
+        ));
+        assert!(matches!(
+            SkinInfo::from_zipped(&bomb),
+            Err(ZipResult::SizeError)
+        ));
+        assert!(matches!(
+            Decomposition::from_zipped(&bomb),
+            Err(ZipResult::SizeError)
+        ));
+    }
+
+    #[test]
+    fn zip_result_numbers_are_the_cpp_ones() {
+        assert_eq!(
+            [
+                ZipResult::Ok,
+                ZipResult::MemError,
+                ZipResult::SizeError,
+                ZipResult::DataError,
+                ZipResult::ParseError,
+                ZipResult::BufferError,
+                ZipResult::VersionError
+            ]
+            .map(|z| z as i32),
+            [0, 1, 2, 3, 4, 5, 6]
+        );
     }
 
     #[test]
