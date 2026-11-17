@@ -694,6 +694,10 @@ impl<S: Sink> Parser<'_, '_, S> {
     fn start_element(&mut self, name: &[u8]) -> Option<Element> {
         self.depth += 1;
         if self.skipping {
+            // A descendant of a skipped root still costs the parser's element
+            // stack: it counts against the node budget (not `max_depth`, as
+            // in the C++, where a skipped subtree adds no level).
+            self.sink.skipped();
             return None;
         }
         let element = read_element(name);

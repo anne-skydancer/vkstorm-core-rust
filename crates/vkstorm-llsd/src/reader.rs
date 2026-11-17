@@ -10,8 +10,8 @@
 //! object, as the C++ parsers left it. Otherwise the reader pulls chunks and
 //! reports how many buffered bytes went unconsumed, for the caller to seek back.
 
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::cell::Cell;
+use std::rc::Rc;
 
 /// Supplies bytes to a [`Reader`].
 pub trait Source {
@@ -64,7 +64,7 @@ pub struct Reader<'a> {
     /// Bytes handed to the parser so far (prefix bytes included).
     consumed: usize,
     /// When set, the input ends at the next refill (see `set_abort`).
-    abort: Option<Arc<AtomicBool>>,
+    abort: Option<Rc<Cell<bool>>>,
 }
 
 impl<'a> Reader<'a> {
@@ -82,10 +82,20 @@ impl<'a> Reader<'a> {
         }
     }
 
-    /// Ends the input at the next refill once `flag` is set, so a parser whose
-    /// output was cut off stops within one buffered window.
-    pub fn set_abort(&mut self, flag: Option<Arc<AtomicBool>>) {
+    /// Ends the input once `flag` is set, so a parser whose output was cut off
+    /// stops within one buffered window (an exact source: at its next read).
+    pub fn set_abort(&mut self, flag: Option<Rc<Cell<bool>>>) {
         self.abort = flag;
+    }
+
+    /// True once the abort flag is set; the input then reads as ended.
+    #[inline]
+    fn aborted(&mut self) -> bool {
+        if self.abort.as_ref().is_some_and(|a| a.get()) {
+            self.eof = true;
+            return true;
+        }
+        false
     }
 
     /// A reader whose first bytes are `prefix`, followed by the source.
@@ -133,12 +143,7 @@ impl<'a> Reader<'a> {
         if self.eof {
             return 0;
         }
-        if self
-            .abort
-            .as_ref()
-            .is_some_and(|a| a.load(Ordering::Relaxed))
-        {
-            self.eof = true;
+        if self.aborted() {
             return 0;
         }
         if self.pos == self.end {
@@ -200,6 +205,9 @@ impl<'a> Reader<'a> {
     #[cold]
     fn peek_slow(&mut self) -> Option<u8> {
         if self.exact {
+            if self.aborted() {
+                return None;
+            }
             return self.src.peek();
         }
         if self.refill(1) == 0 {
@@ -269,6 +277,9 @@ impl<'a> Reader<'a> {
         }
         while got < n && !self.eof {
             if self.exact {
+                if self.aborted() {
+                    break;
+                }
                 let r = self.src.read(&mut out[got..]);
                 if r == 0 {
                     self.eof = true;
@@ -304,7 +315,7 @@ impl<'a> Reader<'a> {
                 got += take;
                 continue;
             }
-            if self.eof {
+            if self.eof || self.aborted() {
                 break;
             }
             let want = (n - got).min(READ_CHUNK);
@@ -354,6 +365,9 @@ impl<'a> Reader<'a> {
                 }
             }
             if self.exact {
+                if self.aborted() {
+                    return false;
+                }
                 match self.src.peek() {
                     None => return false,
                     Some(b) if b == delim => return true,

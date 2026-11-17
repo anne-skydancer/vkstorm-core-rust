@@ -26,13 +26,16 @@
 //!   unknown tags SoLoud keeps uninitialised memory as samples.
 //! - More than 8 channels is rejected (SoLoud overruns its 8-channel stack
 //!   block); an A-law/µ-law file whose frame size is not one byte per
-//!   channel is rejected (dr_wav divides by zero); a header claiming more
-//!   than the file holds is cut to the frames present (SoLoud would allocate
-//!   and zero-fill the claim: a 1 MB file could cost hundreds of MiB).
-//! - A data chunk longer than the file: SoLoud ignores the short read and
-//!   keeps whatever its stack block held; here the buffer ends with the last
-//!   whole frame present (a trailing partial frame is dropped). Within the
-//!   frames present, dr_wav's byte accounting is kept.
+//!   channel is rejected (dr_wav divides by zero); a block alignment smaller
+//!   than `channels * ceil(bits / 8)` is rejected (dr_wav would expand it
+//!   far beyond the file: 8 channels of 1-bit samples in a 1-byte block make
+//!   32 output bytes per input byte).
+//! - A header claiming more frames than the data holds (a data chunk longer
+//!   than the file): SoLoud allocates and zero-fills the claim (a 1 MB file
+//!   could cost hundreds of MiB) and keeps whatever its stack block held for
+//!   the short read; here the buffer ends with the last whole frame present,
+//!   and a trailing partial frame is dropped. A file with no whole frame
+//!   present is [`WavLoadError::Empty`].
 
 #![forbid(unsafe_code)]
 #![allow(clippy::needless_range_loop, clippy::excessive_precision)]
@@ -317,6 +320,11 @@ fn init(data: &[u8]) -> Result<Decoder<'_>, WavLoadError> {
         || fmt.bits_per_sample == 0
         || fmt.bits_per_sample > MAX_BITS_PER_SAMPLE
         || fmt.block_align == 0
+        // A frame cannot be smaller than its samples' bytes: a block of
+        // 1 byte for 8 channels of 1 bit would decode to 8 samples (32 bytes)
+        // per input byte.
+        || u32::from(fmt.block_align)
+            < u32::from(fmt.channels) * u32::from(fmt.bits_per_sample).div_ceil(8)
     {
         return Err(WavLoadError::Invalid);
     }
@@ -485,7 +493,8 @@ fn ieee_to_f32(out: &mut [f32], input: &[u8], count: usize, bytes_per_sample: us
 
 /// `drwav_read_pcm_frames_f32` into `out` (interleaved); returns the number
 /// of samples written (dr_wav returns frames, but its 32-bit float fast path
-/// also writes the complete samples of a trailing partial frame).
+/// also writes the complete samples of a trailing partial frame; [`decode`]
+/// asks only for frames the data holds, so a short read does not occur there).
 fn read_f32(dec: &mut Decoder, frames: u64, out: &mut [f32], raw: &mut [u8]) -> usize {
     let ch = dec.channels as usize;
     let bpf = dec.bytes_per_frame() as usize;
@@ -556,11 +565,14 @@ pub fn decode(bytes: &[u8]) -> Result<WavData, WavLoadError> {
     if samples == 0 {
         return Err(WavLoadError::Empty);
     }
-    // SoLoud stores the count in an unsigned int.
+    // SoLoud stores the count in an unsigned int. Defensive: the frames are
+    // backed by the file, so this needs a data chunk of several GiB.
     if samples * ch as u64 > u32::MAX as u64 {
         return Err(WavLoadError::Invalid);
     }
     let sample_count = samples as usize;
+    // One zeroing pass (the planar writes below are not sequential), and an
+    // allocation failure is an error, not an abort.
     let mut data = Vec::new();
     data.try_reserve_exact(sample_count * ch)
         .map_err(|_| WavLoadError::Invalid)?;
@@ -571,6 +583,7 @@ pub fn decode(bytes: &[u8]) -> Result<WavData, WavLoadError> {
     while i < sample_count {
         let block = (sample_count - i).min(512);
         let got = read_f32(&mut dec, block as u64, &mut tmp, &mut raw);
+        // Defensive: the frames asked for are present, so `got` is full.
         tmp[got.min(block * ch)..block * ch].fill(0.0);
         for j in 0..block {
             for k in 0..ch {

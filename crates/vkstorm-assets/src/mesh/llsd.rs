@@ -189,7 +189,7 @@ pub fn parse_binary(bytes: &[u8], max_bytes: i64, max_depth: i32) -> Option<(Val
         Format::Binary,
         &mut r,
         &mut b,
-        Limits::from_cpp(max_bytes, max_depth),
+        Limits::from_cpp(max_bytes, max_depth, vkstorm_llsd::ASSET_MAX_NODES),
         vkstorm_llsd::XmlMode::Parse,
     );
     if n > 0 {

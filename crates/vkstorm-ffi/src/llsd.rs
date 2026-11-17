@@ -73,6 +73,24 @@ pub struct VksLlsdParseResult {
     pub unconsumed: usize,
 }
 
+/// Installs the receiver of the parsers' warnings (the node budget running
+/// out): `f(msg, len)` is called with the UTF-8 message, not NUL-terminated.
+/// Installed once; a second call is ignored.
+#[unsafe(no_mangle)]
+pub extern "C" fn vks_llsd_set_log(
+    f: Option<unsafe extern "C" fn(*const std::ffi::c_char, usize)>,
+) {
+    if let Some(f) = f {
+        struct SendFn(unsafe extern "C" fn(*const std::ffi::c_char, usize));
+        unsafe impl Send for SendFn {}
+        unsafe impl Sync for SendFn {}
+        let f = SendFn(f);
+        vkstorm_llsd::set_warn_hook(Box::new(move |msg: &str| unsafe {
+            (f.0)(msg.as_ptr() as *const std::ffi::c_char, msg.len())
+        }));
+    }
+}
+
 /// A parsed document: a node array plus a byte arena. See `FlatNode` in
 /// vkstorm-llsd for the layout.
 pub struct VksLlsdDoc {
@@ -81,8 +99,16 @@ pub struct VksLlsdDoc {
 
 /// Parses one LLSD value of `format` from `src`, after the optional `prefix`
 /// bytes. `max_bytes` < 0 is unlimited; `max_depth` < 0 is unlimited;
-/// `xml_lines` selects the C++ `parseLines()` end-of-input rule. Fills `out`
-/// and returns the document when `out->count` is positive, else null.
+/// `xml_lines` selects the C++ `parseLines()` end-of-input rule.
+///
+/// `max_nodes` is the node budget in units, 0 for unlimited
+/// (`LLSDParser::MAX_NODES_UNLIMITED`): a map costs 4 units, every other
+/// value 1, and every element inside a skipped XML subtree 2 (not the root). A parse that spends
+/// the budget fails with count -1 (and a warning through `vks_llsd_set_log`).
+/// The C++ default is `LLSDParser::MAX_NODES_DEFAULT` (2^23 units).
+///
+/// Fills `out` and returns the document when `out->count` is positive, else
+/// null.
 ///
 /// # Safety
 /// `src` and `out` must be valid; `prefix` must point to `prefix_len` bytes
@@ -96,6 +122,7 @@ pub unsafe extern "C" fn vks_llsd_parse(
     max_bytes: i64,
     max_depth: i32,
     xml_lines: i32,
+    max_nodes: usize,
     out: *mut VksLlsdParseResult,
 ) -> *mut VksLlsdDoc {
     if src.is_null() || out.is_null() {
@@ -121,7 +148,7 @@ pub unsafe extern "C" fn vks_llsd_parse(
         let mut csrc = CSource(src);
         let mut reader = Reader::with_prefix(prefix, &mut csrc);
         let mut sink = FlatSink::new();
-        let limits = Limits::from_cpp(max_bytes, max_depth);
+        let limits = Limits::from_cpp(max_bytes, max_depth, max_nodes);
         let mode = if xml_lines != 0 {
             XmlMode::Lines
         } else {

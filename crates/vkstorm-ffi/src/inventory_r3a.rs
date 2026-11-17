@@ -162,7 +162,11 @@ pub unsafe extern "C" fn vks_inv_ais_reply_from_binary(
 ) -> *mut VksInvAisReply {
     guard(ptr::null_mut(), || {
         let input = unsafe { bytes(data, len) };
-        let (n, v) = vkstorm_llsd::parse(Format::Binary, input, Limits::for_len(input.len()));
+        let limits = Limits {
+            max_nodes: vkstorm_llsd::http_max_nodes(input.len()),
+            ..Limits::for_len(input.len())
+        };
+        let (n, v) = vkstorm_llsd::parse(Format::Binary, input, limits);
         if n < 0 {
             set_error("vks_inv_ais_reply_from_binary: the bytes do not parse");
             return ptr::null_mut();
