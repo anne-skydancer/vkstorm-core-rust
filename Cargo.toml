@@ -6,7 +6,7 @@ members = ["crates/*", "tools/*"]
 exclude = ["tools/llsd-fixtures", "tools/inventory-fixtures"]
 
 [workspace.package]
-version = "0.5.3"
+version = "0.5.4"
 edition = "2024"
 # GPL-3.0-or-later (NOTICE.md): the crates port Linden Lab and Firestorm code
 # (LGPL-2.1, used under the GPL) or are original; a vendored port that keeps
