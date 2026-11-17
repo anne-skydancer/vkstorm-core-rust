@@ -131,9 +131,9 @@ typedef struct VksLlsdDoc VksLlsdDoc;
  * max_bytes < 0 and max_depth < 0 are unlimited; xml_lines selects the
  * parseLines() end-of-input rule. max_nodes is the node budget in units,
  * 0 unlimited (LLSDParser::MAX_NODES_UNLIMITED): a map costs 4 units, every
- * other value 1, each element inside a skipped XML subtree 2; a parse that spends it
- * fails with count -1. Fills out; returns the document when out->count is
- * positive, else null. */
+ * other value 1, each element inside a skipped XML subtree 2; a parse that
+ * spends it fails with count -1. Fills out; returns the document when
+ * out->count is positive, else null. */
 VksLlsdDoc* vks_llsd_parse(int32_t format, const VksLlsdSource* src, const uint8_t* prefix, size_t prefix_len,
                            int64_t max_bytes, int32_t max_depth, int32_t xml_lines, size_t max_nodes,
                            VksLlsdParseResult* out);

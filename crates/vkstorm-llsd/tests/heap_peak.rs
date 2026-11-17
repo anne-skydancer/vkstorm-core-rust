@@ -2,7 +2,7 @@
 // Copyright (C) 2026, Anne Skydancer (Vulkanstorm)
 //! The peak heap of a parse that runs into its node budget, per payload
 //! shape and tier. Run with `--nocapture` to print the table that
-//! `DEFAULT_MAX_NODES` documents (its doc table). One test in its own binary: the counting
+//! `DEFAULT_MAX_NODES` documents. One test in its own binary: the counting
 //! allocator is process-wide.
 
 use std::alloc::{GlobalAlloc, Layout, System};

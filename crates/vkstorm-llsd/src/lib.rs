@@ -84,15 +84,15 @@ pub const NODE_WEIGHT_SKIPPED_ELEMENT: usize = 2;
 /// (the [`FlatSink`] of the C ABI needs 0.3 to 1 times as much), measured by
 /// `tests/heap_peak.rs` (release build, Windows):
 ///
-/// | shape                   | 2^20 units | 2^23 units |
-/// |-------------------------|-----------:|-----------:|
-/// | array of undefs         |     32 MiB |    256 MiB |
-/// | nested one-element arrays |   88 MiB |    704 MiB |
-/// | map of 4-byte keys, undefs | 112 MiB |    893 MiB |
-/// | array of one-key maps   |    135 MiB |   1077 MiB |
-/// | array of empty maps     |      8 MiB |     64 MiB |
-/// | nested maps             |     22 MiB |    178 MiB |
-/// | XML skipped descendants |     25 MiB |    200 MiB |
+/// | shape                      | 2^20 units | 2^23 units |
+/// |----------------------------|------------|------------|
+/// | array of undefs            |     32 MiB |    256 MiB |
+/// | nested one-element arrays  |     88 MiB |    704 MiB |
+/// | map of 4-byte keys, undefs |    112 MiB |    893 MiB |
+/// | array of one-key maps      |    135 MiB |   1077 MiB |
+/// | array of empty maps        |      8 MiB |     64 MiB |
+/// | nested maps                |     22 MiB |    178 MiB |
+/// | XML skipped descendants    |     25 MiB |    200 MiB |
 ///
 /// The weight of a map levels most shapes but not the one-key maps (about
 /// 134 bytes of heap per unit, against 32 for a flat array): the worst case
@@ -108,6 +108,10 @@ pub const ASSET_MAX_NODES: usize = 1 << 20;
 /// The budget for an HTTP or AIS reply body of `body_len` bytes: the default,
 /// or one unit per 16 body bytes when that is more, so a reply that really is
 /// large is not cut off by a ceiling sized for small ones.
+///
+/// A 256 MiB body therefore gets 2^24 units, about 2.1 GiB peak in the worst
+/// shape (a one-key-map chain at 134 bytes per unit): memory stays
+/// proportional to what the server actually sent.
 pub fn http_max_nodes(body_len: usize) -> usize {
     DEFAULT_MAX_NODES.max(body_len / 16)
 }

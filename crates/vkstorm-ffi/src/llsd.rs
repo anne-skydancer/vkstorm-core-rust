@@ -103,9 +103,10 @@ pub struct VksLlsdDoc {
 ///
 /// `max_nodes` is the node budget in units, 0 for unlimited
 /// (`LLSDParser::MAX_NODES_UNLIMITED`): a map costs 4 units, every other
-/// value 1, and every element inside a skipped XML subtree 2 (not the root). A parse that spends
-/// the budget fails with count -1 (and a warning through `vks_llsd_set_log`).
-/// The C++ default is `LLSDParser::MAX_NODES_DEFAULT` (2^23 units).
+/// value 1, and every element inside a skipped XML subtree 2 (not the root).
+/// A parse that spends the budget fails with count -1 (and a warning through
+/// `vks_llsd_set_log`). The C++ default is `LLSDParser::MAX_NODES_DEFAULT`
+/// (2^23 units).
 ///
 /// Fills `out` and returns the document when `out->count` is positive, else
 /// null.
