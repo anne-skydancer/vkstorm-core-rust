@@ -24,6 +24,13 @@
 
 use flate2::{Decompress, FlushDecompress, Status};
 
+/// `HTTP_REPLY_MAX_DECODED`: the most a Content-Encoded reply may decode to.
+/// A small gzip or deflate reply (a decompression bomb) cannot exhaust memory:
+/// over the limit the reply is refused like corrupt data. It is far above any
+/// legitimate LLSD reply and applies to every body that arrives with a gzip or
+/// deflate Content-Encoding.
+pub const HTTP_REPLY_MAX_DECODED: usize = 256 * 1024 * 1024;
+
 /// What became of a reply body.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Decoded {
@@ -70,6 +77,12 @@ fn coding(value: &str) -> Coding {
 
 /// `decode_reply()`: `encoding` is the reply's (last) Content-Encoding value.
 pub fn decode_reply(encoding: &str, body: &[u8]) -> Decoded {
+    decode_reply_limited(encoding, body, HTTP_REPLY_MAX_DECODED)
+}
+
+/// [`decode_reply`] with an explicit decoded-size limit (`limit` bytes are
+/// accepted, one more is refused).
+fn decode_reply_limited(encoding: &str, body: &[u8], limit: usize) -> Decoded {
     let coding = coding(encoding);
     if coding == Coding::None {
         return Decoded::Passthrough;
@@ -82,10 +95,10 @@ pub fn decode_reply(encoding: &str, body: &[u8]) -> Decoded {
     } else {
         Wrapper::Zlib
     };
-    match inflate_reply(body, wrapper) {
+    match inflate_reply(body, wrapper, limit) {
         Ok(out) => Decoded::Body(out),
         Err(Failure::NotAStream) => {
-            inflate_reply(body, Wrapper::Raw).map_or(Decoded::Refused, Decoded::Body)
+            inflate_reply(body, Wrapper::Raw, limit).map_or(Decoded::Refused, Decoded::Body)
         }
         Err(Failure::Bad) => Decoded::Refused,
     }
@@ -97,7 +110,7 @@ enum Failure {
     /// The first decompress call failed with no output: not a zlib or gzip
     /// stream (the raw-deflate fallback's case).
     NotAStream,
-    /// Any later failure.
+    /// Any later failure, and a decoded size over the limit.
     Bad,
 }
 
@@ -122,21 +135,37 @@ fn gzip_member() -> Member {
 /// whether the member ended (`Some(true)`), ran out of input
 /// (`Some(false)`), or is bad data (`None`), and whether bad data failed on
 /// the first decompress call with no output.
-fn run_member(member: Member, input: &[u8], out: &mut Vec<u8>) -> (usize, Option<bool>, bool) {
+fn run_member(
+    member: Member,
+    input: &[u8],
+    out: &mut Vec<u8>,
+    limit: usize,
+) -> (usize, Option<bool>, bool) {
     match member {
         Member::Flate(mut d) => {
             let mut used = 0usize;
             let mut first = true;
             loop {
-                // grow only when full: a size taken from the gzip trailer is exact
+                // grow only when full: a size taken from the gzip trailer is exact.
+                // The final capacity never passes limit + 1 bytes, so one byte
+                // over the limit is seen and the buffer cannot end larger (a
+                // regrowth may briefly hold the old and the new buffer). A
+                // failed allocation refuses the reply instead of aborting.
                 if out.capacity() == out.len() {
-                    out.reserve(out.len().max(16384));
+                    let room = limit.saturating_add(1).saturating_sub(out.len());
+                    let want = out.len().max(16384).min(room.max(1));
+                    if out.try_reserve_exact(want).is_err() {
+                        return (used, None, false);
+                    }
                 }
                 let (in0, out0) = (d.total_in(), d.total_out());
                 let status = d.decompress_vec(&input[used..], out, FlushDecompress::None);
                 let consumed = (d.total_in() - in0) as usize;
                 let produced = (d.total_out() - out0) as usize;
                 used += consumed;
+                if out.len() > limit {
+                    return (used, None, false); // over the limit: refused, never raw-decoded
+                }
                 let at_start = first && produced == 0;
                 first = false;
                 match status {
@@ -182,14 +211,20 @@ fn size_hint(body: &[u8], wrapper: Wrapper) -> usize {
 }
 
 /// `inflate_reply()`: an error when the data does not decode.
-fn inflate_reply(body: &[u8], wrapper: Wrapper) -> Result<Vec<u8>, Failure> {
-    let mut out = Vec::with_capacity(size_hint(body, wrapper));
+fn inflate_reply(body: &[u8], wrapper: Wrapper, limit: usize) -> Result<Vec<u8>, Failure> {
+    let mut out: Vec<u8> = Vec::new();
+    if out
+        .try_reserve_exact(size_hint(body, wrapper).min(limit))
+        .is_err()
+    {
+        return Err(Failure::Bad);
+    }
     let mut pos = 0usize;
     let mut next_member = false;
     loop {
         let rest = &body[pos..];
         let start = out.len();
-        let (used, end, at_start) = run_member(new_member(rest, wrapper), rest, &mut out);
+        let (used, end, at_start) = run_member(new_member(rest, wrapper), rest, &mut out, limit);
         match end {
             None if next_member && out.len() == start => {
                 out.truncate(start);
@@ -275,6 +310,97 @@ mod tests {
         body.extend_from_slice(&(64u32 << 20).to_le_bytes());
         assert!(size_hint(&body, Wrapper::Auto) <= body.len() * 64);
         assert_eq!(decode_reply("gzip", &body), Decoded::Body(b"x".to_vec()));
+    }
+
+    /// `total` zero bytes through a gzip encoder in 1 MiB pieces: the bomb is
+    /// never held inflated.
+    fn gz_zero_bomb(total: usize) -> Vec<u8> {
+        let mut e = GzEncoder::new(Vec::new(), Compression::best());
+        let zeros = vec![0u8; 1 << 20];
+        let mut left = total;
+        while left > 0 {
+            let n = left.min(zeros.len());
+            e.write_all(&zeros[..n]).unwrap();
+            left -= n;
+        }
+        e.finish().unwrap()
+    }
+
+    /// The two 256 MiB tests would each hold 256 MiB at once: one at a time.
+    static BIG: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    #[test]
+    fn an_over_limit_bomb_is_bad_not_a_raw_retry_and_stays_within_limit_plus_one() {
+        let small = gz_zero_bomb(5 << 20);
+        let limit = 1usize << 20;
+        assert_eq!(
+            inflate_reply(&small, Wrapper::Auto, limit),
+            Err(Failure::Bad)
+        );
+        let mut out = Vec::new();
+        let (_, end, at_start) =
+            run_member(new_member(&small, Wrapper::Auto), &small, &mut out, limit);
+        assert_eq!((end, at_start), (None, false));
+        assert_eq!(out.len(), limit + 1);
+        assert!(out.capacity() <= limit + 1, "capacity {}", out.capacity());
+        // A limit that cannot be added to does not overflow.
+        assert_eq!(
+            decode_reply_limited("gzip", &gz(b"x"), usize::MAX),
+            Decoded::Body(b"x".to_vec())
+        );
+    }
+
+    #[test]
+    fn a_bomb_over_the_limit_is_refused() {
+        let _g = BIG.lock().unwrap_or_else(|e| e.into_inner());
+        let bomb = gz_zero_bomb(HTTP_REPLY_MAX_DECODED + 1);
+        assert!(bomb.len() < 1 << 20, "the bomb is small: {}", bomb.len());
+        assert_eq!(decode_reply("gzip", &bomb), Decoded::Refused);
+        // The gzip trailer's size claim does not matter; a zlib and a raw
+        // deflate bomb are refused too, never raw-decoded either.
+        let small = gz_zero_bomb(5 << 20);
+        assert_eq!(
+            decode_reply_limited("gzip", &small, 1 << 20),
+            Decoded::Refused
+        );
+        assert_eq!(
+            decode_reply_limited("deflate", &zl(&vec![0u8; 5 << 20]), 1 << 20),
+            Decoded::Refused
+        );
+        assert_eq!(
+            decode_reply_limited("deflate", &raw(&vec![0u8; 5 << 20]), 1 << 20),
+            Decoded::Refused
+        );
+        // Several members whose sum passes the limit.
+        let two = [gz_zero_bomb(700_000), gz_zero_bomb(700_000)].concat();
+        assert_eq!(
+            decode_reply_limited("gzip", &two, 1 << 20),
+            Decoded::Refused
+        );
+    }
+
+    #[test]
+    fn output_exactly_at_the_limit_succeeds() {
+        // Multi-chunk and not a multiple of the growth step.
+        let t: Vec<u8> = (0..1_000_003u32).map(|i| (i % 251) as u8).collect();
+        for (enc, body) in [("gzip", gz(&t)), ("deflate", zl(&t)), ("deflate", raw(&t))] {
+            assert_eq!(
+                decode_reply_limited(enc, &body, t.len()),
+                Decoded::Body(t.clone()),
+                "{enc} at the limit"
+            );
+            assert_eq!(
+                decode_reply_limited(enc, &body, t.len() - 1),
+                Decoded::Refused,
+                "{enc} one byte over"
+            );
+        }
+        let _g = BIG.lock().unwrap_or_else(|e| e.into_inner());
+        let at = gz_zero_bomb(HTTP_REPLY_MAX_DECODED);
+        match decode_reply("gzip", &at) {
+            Decoded::Body(b) => assert_eq!(b.len(), HTTP_REPLY_MAX_DECODED),
+            other => panic!("at the real limit: {other:?}"),
+        }
     }
 
     #[test]
