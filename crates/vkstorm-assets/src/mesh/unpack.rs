@@ -138,6 +138,34 @@ pub fn unpack_volume_faces_llsd(mdl: &Value, sculpt_type: u8) -> Result<Vec<Face
         }
 
         let num_verts = pos.len() / 6;
+        // The C++ drops the whole face (`resizeIndices(0); continue;`) when
+        // the vertex count exceeds the U16 index range, when the normal or
+        // texcoord blob is shorter than the position blob claims, or when
+        // any triangle index is at or past the vertex count (which includes
+        // every index of a face with no vertices). Only that face is
+        // emptied; the other faces of the mesh survive.
+        let blobs_short = (!norm.is_empty() && norm.len() < num_verts * 6)
+            || (!tc.is_empty() && tc.len() < num_verts * 4);
+        if num_verts > 65535
+            || blobs_short
+            || face.indices.iter().any(|&ix| ix as usize >= num_verts)
+        {
+            crate::ll_warns!(
+                "Invalid vertex data (positions {} normals {} texcoords {} bytes, triangle indices {}) for face index: {} Total: {}",
+                pos.len(),
+                norm.len(),
+                tc.len(),
+                face.indices.len(),
+                i,
+                face_count
+            );
+            face.indices.clear();
+            face.num_indices = 0;
+            face.num_vertices = 0;
+            face.incomplete = true;
+            faces.push(face);
+            continue;
+        }
         face.num_vertices = num_verts as i32;
         face.positions = vec![[0.0; 4]; num_verts];
         face.normals = vec![[0.0; 4]; num_verts];
@@ -472,6 +500,69 @@ mod tests {
         let faces = unpack_volume_faces_llsd(&v, SCULPT_FLAG_MIRROR).unwrap();
         assert_eq!(faces[0].indices, vec![0, 2, 1]);
         assert_eq!(faces[0].normals[0][3], 1.0);
+    }
+
+    fn assert_dropped(f: &Face) {
+        assert_eq!(f.num_indices, 0);
+        assert!(f.indices.is_empty());
+        assert_eq!(f.num_vertices, 0);
+        assert!(f.positions.is_empty());
+        assert!(f.incomplete);
+    }
+
+    #[test]
+    fn out_of_range_indices_drop_the_face() {
+        let verts = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.5]];
+        let good = face_value(&verts, &[0, 1, 2], true);
+        for bad in [[0u16, 1, 3], [0, 1, 65535]] {
+            let v = Value::Array(vec![face_value(&verts, &bad, true), good.clone()]);
+            let faces = unpack_volume_faces_llsd(&v, 0).unwrap();
+            assert_dropped(&faces[0]);
+            // The next face of the mesh is untouched.
+            assert_eq!(faces[1].indices, vec![0, 1, 2]);
+            assert_eq!(faces[1].num_vertices, 3);
+        }
+    }
+
+    #[test]
+    fn a_face_without_vertices_is_dropped() {
+        let verts = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.5]];
+        let mut m = BTreeMap::new();
+        m.insert(b"Position".to_vec(), Value::Binary(Vec::new()));
+        let mut idx = Vec::new();
+        for t in [0u16, 1, 2] {
+            idx.extend_from_slice(&t.to_le_bytes());
+        }
+        m.insert(b"TriangleList".to_vec(), Value::Binary(idx));
+        let v = Value::Array(vec![Value::Map(m), face_value(&verts, &[0, 1, 2], true)]);
+        let faces = unpack_volume_faces_llsd(&v, 0).unwrap();
+        assert_dropped(&faces[0]);
+        assert_eq!(faces[1].num_indices, 3);
+    }
+
+    #[test]
+    fn short_blobs_and_too_many_vertices_drop_only_that_face() {
+        let verts = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.5]];
+        let good = face_value(&verts, &[0, 1, 2], true);
+        // A normal blob shorter than the positions claim.
+        let mut short = face_value(&verts, &[0, 1, 2], true);
+        let Value::Map(m) = &mut short else {
+            panic!("face_value is a map");
+        };
+        m.insert(b"Normal".to_vec(), Value::Binary(vec![0; 6]));
+        // 65536 vertices: past the U16 index range.
+        let mut big = BTreeMap::new();
+        big.insert(b"Position".to_vec(), Value::Binary(vec![0; 65536 * 6]));
+        let mut idx = Vec::new();
+        for t in [0u16, 1, 2] {
+            idx.extend_from_slice(&t.to_le_bytes());
+        }
+        big.insert(b"TriangleList".to_vec(), Value::Binary(idx));
+        let v = Value::Array(vec![short, Value::Map(big), good]);
+        let faces = unpack_volume_faces_llsd(&v, 0).unwrap();
+        assert_dropped(&faces[0]);
+        assert_dropped(&faces[1]);
+        assert_eq!(faces[2].indices, vec![0, 1, 2]);
     }
 
     #[test]

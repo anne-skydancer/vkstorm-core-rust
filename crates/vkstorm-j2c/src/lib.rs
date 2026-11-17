@@ -185,6 +185,92 @@ impl Drop for Handles {
 
 const STREAM_CHUNK: usize = 1 << 16;
 
+/// Largest width or height (after the discard factor) a decode may produce:
+/// the viewer's `MAX_IMAGE_SIZE` rule (`LLImageJ2COJ`).
+pub const MAX_DECODE_DIMENSION: u32 = 16384;
+
+/// Hard ceiling of the output type: `LLImageRaw` stores width and height as
+/// U16 (65535). Unreachable today because [`check_decode_size`] already caps
+/// decodes at [`MAX_DECODE_DIMENSION`]; kept so a raised decode cap cannot
+/// overflow the U16 raw image.
+const MAX_OUTPUT_DIMENSION: u32 = 65535;
+
+/// Most channels a decode may output, and most components a codestream may
+/// declare: the avatar bake carries 5 and the tests 6, so the usual 1..=4
+/// does not apply here (the viewer's own ceiling is `MAX_IMAGE_COMPONENTS`,
+/// 8).
+const MAX_OUTPUT_CHANNELS: usize = 16;
+
+/// `ceil((x1 - x0) / 2^reduce)`, the size of an axis after `reduce`
+/// resolution reductions, in the extent-based form of the C++ guard in
+/// `llimagej2coj.cpp`. OpenJPEG's own component size is
+/// `ceildivpow2(x1) - ceildivpow2(x0)`, which this bounds from above (they
+/// differ by at most 1 when `x0 != 0`).
+fn reduced_extent(x0: u32, x1: u32, reduce: u32) -> u64 {
+    let extent = u64::from(x1.saturating_sub(x0));
+    if reduce >= 32 {
+        return u64::from(extent > 0);
+    }
+    extent.div_ceil(1u64 << reduce)
+}
+
+/// Refuse a decode whose dimensions after the discard factor exceed
+/// [`MAX_DECODE_DIMENSION`] (also when the header gives an empty image).
+fn check_decode_size(x0: u32, x1: u32, y0: u32, y1: u32, reduce: u32) -> Result<(), Error> {
+    let w = reduced_extent(x0, x1, reduce);
+    let h = reduced_extent(y0, y1, reduce);
+    if w == 0
+        || h == 0
+        || w > u64::from(MAX_DECODE_DIMENSION)
+        || h > u64::from(MAX_DECODE_DIMENSION)
+    {
+        return Err(Error::Decode(format!(
+            "image size {w}x{h} (discard level {reduce}) is outside 1..={MAX_DECODE_DIMENSION}"
+        )));
+    }
+    Ok(())
+}
+
+/// Refuse a codestream that declares no component or more than
+/// [`MAX_OUTPUT_CHANNELS`]: OpenJPEG allocates the tile structures of every
+/// declared component before any data is read, so the count bounds the
+/// memory a small hostile header can drive.
+fn check_decode_components(numcomps: u32) -> Result<(), Error> {
+    if numcomps == 0 || numcomps as usize > MAX_OUTPUT_CHANNELS {
+        return Err(Error::Decode(format!(
+            "{numcomps} components are outside 1..={MAX_OUTPUT_CHANNELS}"
+        )));
+    }
+    Ok(())
+}
+
+/// `w * h * c` with every limit applied, or an error.
+fn output_len(w: usize, h: usize, c: usize) -> Result<usize, Error> {
+    if !(1..=MAX_OUTPUT_CHANNELS).contains(&c) {
+        return Err(Error::Decode(format!(
+            "{c} channels are outside 1..={MAX_OUTPUT_CHANNELS}"
+        )));
+    }
+    if w == 0 || h == 0 || w > MAX_OUTPUT_DIMENSION as usize || h > MAX_OUTPUT_DIMENSION as usize {
+        return Err(Error::Decode(format!(
+            "decoded size {w}x{h} is out of range"
+        )));
+    }
+    w.checked_mul(h)
+        .and_then(|n| n.checked_mul(c))
+        .ok_or_else(|| Error::Decode("decoded size overflows".into()))
+}
+
+/// A zeroed buffer of `len` bytes; an allocation failure is an error, not an
+/// abort.
+fn alloc_zeroed(len: usize) -> Result<Vec<u8>, Error> {
+    let mut v: Vec<u8> = Vec::new();
+    v.try_reserve_exact(len)
+        .map_err(|_| Error::Decode(format!("cannot allocate {len} bytes for the decoded image")))?;
+    v.resize(len, 0);
+    Ok(v)
+}
+
 fn open_decoder<'a>(mem: &mut ReadMem<'a>, reduce: u32) -> Result<Handles, Error> {
     unsafe {
         let stream = opj_stream_create(STREAM_CHUNK, 1);
@@ -303,6 +389,9 @@ pub fn decode_only(data: &[u8], max_bytes: usize, discard_level: u32) -> Result<
 /// Apply the discard level and decode the codestream into the image planes.
 unsafe fn run_decode(h: &Handles, discard_level: u32) -> Result<(), Error> {
     unsafe {
+        let img = &*h.image;
+        check_decode_size(img.x0, img.x1, img.y0, img.y1, discard_level)?;
+        check_decode_components(img.numcomps)?;
         if discard_level > 0 && opj_set_decoded_resolution_factor(h.codec, discard_level) == 0 {
             return Err(Error::Decode(format!(
                 "discard level {discard_level} not available"
@@ -322,7 +411,7 @@ unsafe fn run_decode(h: &Handles, discard_level: u32) -> Result<(), Error> {
 unsafe fn convert(img: &opj_image_t, fc: usize, c: usize) -> Result<(u32, u32, Vec<u8>), Error> {
     let comps = unsafe { std::slice::from_raw_parts(img.comps, img.numcomps as usize) };
     let (w, h) = (comps[0].w as usize, comps[0].h as usize);
-    let mut out = vec![0u8; w * h * c];
+    let mut out = alloc_zeroed(output_len(w, h, c)?)?;
     for (k, comp) in comps[fc..fc + c].iter().enumerate() {
         if comp.data.is_null() {
             return Err(Error::Decode("component without data".into()));
@@ -559,6 +648,73 @@ pub fn encode(
         drop(hnd);
         let bytes = std::mem::take(&mut sink.0.borrow_mut().0);
         Ok(bytes)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn decode_size_guard() {
+        // 16384 passes, 16385 does not; the discard factor is applied first.
+        assert!(check_decode_size(0, 16384, 0, 16384, 0).is_ok());
+        assert!(check_decode_size(0, 16385, 0, 16384, 0).is_err());
+        assert!(check_decode_size(0, 16385, 0, 16384, 1).is_ok());
+        assert!(check_decode_size(0, 70000, 0, 100, 3).is_ok());
+        // Sane sizes keep decoding.
+        assert!(check_decode_size(0, 5000, 0, 5000, 0).is_ok());
+        assert!(check_decode_size(0, 8192, 0, 8192, 0).is_ok());
+        // Empty and absurd discard factors.
+        assert!(check_decode_size(0, 0, 0, 10, 0).is_err());
+        assert!(check_decode_size(0, 100, 0, 100, 40).is_ok());
+        assert!(check_decode_size(0, u32::MAX, 0, 10, 0).is_err());
+    }
+
+    #[test]
+    fn output_len_is_checked() {
+        assert_eq!(output_len(8192, 8192, 4).unwrap(), 8192 * 8192 * 4);
+        assert!(output_len(65536, 1, 3).is_err());
+        assert!(output_len(1, 65536, 3).is_err());
+        assert!(output_len(0, 4, 3).is_err());
+        assert!(output_len(4, 4, 0).is_err());
+        assert!(output_len(4, 4, 5).is_ok());
+        assert!(output_len(4, 4, 17).is_err());
+    }
+
+    #[test]
+    fn allocation_failure_is_an_error() {
+        assert_eq!(alloc_zeroed(16).unwrap(), vec![0u8; 16]);
+        assert!(alloc_zeroed(usize::MAX).is_err());
+    }
+
+    #[test]
+    fn decode_component_guard() {
+        assert!(check_decode_components(1).is_ok());
+        assert!(check_decode_components(16).is_ok());
+        assert!(check_decode_components(0).is_err());
+        assert!(check_decode_components(17).is_err());
+        assert!(check_decode_components(16384).is_err());
+    }
+
+    /// The guards are wired into `decode` and `decode_only`: an image past
+    /// the cap is refused at discard 0 and decodes once the discard factor
+    /// brings it under; a wide but legal one decodes at full size.
+    #[test]
+    fn decode_applies_the_guards() {
+        let wide = vec![0x55u8; 16385 * 16];
+        let j2c = encode(&wide, 16385, 16, 1, None, true).unwrap();
+        assert!(matches!(decode(&j2c, 0, 0, 0, 1), Err(Error::Decode(_))));
+        assert!(matches!(decode_only(&j2c, 0, 0), Err(Error::Decode(_))));
+        let d = decode(&j2c, 0, 1, 0, 1).unwrap();
+        assert_eq!(d.width, 8193);
+        assert_eq!(d.data.len(), (d.width * d.height * d.channels) as usize);
+
+        let ok = vec![0x55u8; 5000 * 16];
+        let j2c = encode(&ok, 5000, 16, 1, None, true).unwrap();
+        let d = decode(&j2c, 0, 0, 0, 1).unwrap();
+        assert_eq!((d.width, d.height), (5000, 16));
+        assert_eq!(d.data.len(), 5000 * 16);
     }
 }
 

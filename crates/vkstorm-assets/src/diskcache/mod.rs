@@ -33,7 +33,8 @@ pub fn uuid_text_of_cache_file(path: &str) -> String {
         return String::new();
     }
     let end = (start + 36).min(base.len());
-    base[start..end].to_string()
+    // A non-ASCII name may put start or end inside a character.
+    base.get(start..end).unwrap_or_default().to_string()
 }
 
 fn mtime_secs(m: &fs::Metadata) -> i64 {
@@ -243,29 +244,33 @@ impl DiskCache {
                 report.skipped = skip;
                 return report;
             }
-            let mut should_remove = (file_size_total - deleted_size_total) > target_size;
-            if !should_remove {
+            if (file_size_total - deleted_size_total) <= target_size {
                 break;
             }
-            deleted_size_total += this_file_size;
             let uuid_as_string = uuid_text_of_cache_file(path);
             let action;
             if self.skip_list.iter().any(|s| *s == uuid_as_string) {
-                should_remove = false;
                 action = "STATIC";
                 skip += 1;
+                keep -= 1;
             } else {
-                action = "DELETE";
-                del += 1;
+                // Only a file that was removed counts as deleted; one that
+                // could not be removed stays in the kept count.
+                match fs::remove_file(path) {
+                    Ok(()) => {
+                        deleted_size_total += this_file_size;
+                        del += 1;
+                        keep -= 1;
+                        action = "DELETE";
+                    }
+                    Err(e) => {
+                        ll_warns!("Failed to delete cache file {}: {}", path, e);
+                        action = "FAILED";
+                    }
+                }
             }
-            keep -= 1;
             if self.enable_debug_info {
                 actions.push((path.clone(), action));
-            }
-            if should_remove {
-                if let Err(e) = fs::remove_file(path) {
-                    ll_warns!("Failed to delete cache file {}: {}", path, e);
-                }
             }
         }
         let execute_time = start.elapsed().as_millis();
@@ -281,15 +286,7 @@ impl DiskCache {
                 }
                 deleted_so_far += size;
                 let action = match actions.iter().find(|(p, _)| p == path) {
-                    Some((_, "DELETE")) => {
-                        del += 1;
-                        "DELETE"
-                    }
-                    Some((_, "STATIC")) => {
-                        skip += 1;
-                        "STATIC"
-                    }
-                    Some(_) => "UNKNOWN",
+                    Some((_, label)) => *label,
                     None => "KEEP",
                 };
                 ll_infos!(
@@ -482,6 +479,19 @@ mod tests {
     }
 
     #[test]
+    fn uuid_text_survives_non_ascii_names() {
+        // Start offset (9) inside a character.
+        assert_eq!(uuid_text_of_cache_file("/c/sl_cacheé_x.asset"), "");
+        // End offset (45) inside a character: 35 ASCII bytes after the
+        // prefix, then a two-byte character at bytes 44..46.
+        let end_inside = format!("/c/sl_cache_{}é.asset", "a".repeat(35));
+        assert_eq!(uuid_text_of_cache_file(&end_inside), "");
+        // Both offsets on character boundaries: the slice is returned.
+        let boundaries = format!("/c/sl_cache_{}.asset", "é".repeat(30));
+        assert_eq!(uuid_text_of_cache_file(&boundaries), "é".repeat(18));
+    }
+
+    #[test]
     fn purge_by_age() {
         let dir = std::env::temp_dir().join(format!("vks_diskcache_{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
@@ -507,17 +517,66 @@ mod tests {
         let r = cache.purge();
         assert!(r.purged);
         assert_eq!(r.files, 10);
-        // 1000 bytes > 900 high water; target 500: the five oldest go, the
-        // static one among them is skipped (and counted).
+        // 1000 bytes > 900 high water; target 500: the static file is
+        // skipped and its bytes are not freed, so five others go.
         assert_eq!(r.skipped, 1);
-        assert_eq!(r.deleted, 4);
-        assert_eq!(r.kept, 5);
+        assert_eq!(r.deleted, 5);
+        assert_eq!(r.deleted_size, 500);
+        assert_eq!(r.kept, 4);
         assert!(Path::new(&cache.filepath(&ids[0])).exists());
         assert!(!Path::new(&cache.filepath(&ids[1])).exists());
-        assert!(Path::new(&cache.filepath(&ids[5])).exists());
-        assert_eq!(cache.dir_file_size(true), 600);
+        assert!(!Path::new(&cache.filepath(&ids[5])).exists());
+        assert!(Path::new(&cache.filepath(&ids[6])).exists());
+        assert_eq!(cache.dir_file_size(true), 500);
         cache.clear_cache();
         assert_eq!(cache.dir_file_size(true), 0);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    /// A file that cannot be removed (held open on Windows) is neither
+    /// counted as deleted nor its bytes as freed, and the debug-info listing
+    /// does not double the counters.
+    #[cfg(windows)]
+    #[test]
+    fn purge_counts_only_removed_files() {
+        let dir = std::env::temp_dir().join(format!("vks_diskcache_fail_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        let dirs = dir.to_string_lossy().into_owned();
+        let delim = std::path::MAIN_SEPARATOR.to_string();
+        let mut cache = DiskCache::new(&dirs, &delim, 1000, true, 90.0, 50.0);
+        let mut paths = Vec::new();
+        for i in 0..10u8 {
+            let id = [i + 1; 16];
+            let p = cache.filepath(&id);
+            fs::write(&p, vec![0u8; 100]).unwrap();
+            let t = filetime_secs(1_600_000_000 + i as i64 * 10);
+            fs::File::options()
+                .write(true)
+                .open(&p)
+                .unwrap()
+                .set_modified(t)
+                .unwrap();
+            paths.push(p);
+        }
+        // The oldest file cannot be removed: it is held open without
+        // delete sharing.
+        let held = {
+            use std::os::windows::fs::OpenOptionsExt;
+            fs::File::options()
+                .read(true)
+                .share_mode(1)
+                .open(&paths[0])
+                .unwrap()
+        };
+        let r = cache.purge();
+        assert!(r.purged);
+        assert!(Path::new(&paths[0]).exists());
+        // The five files after it go; the stuck one stays in the kept count.
+        assert_eq!(r.deleted, 5);
+        assert_eq!(r.deleted_size, 500);
+        assert_eq!(r.skipped, 0);
+        assert_eq!(r.kept, 5);
+        drop(held);
         let _ = fs::remove_dir_all(&dir);
     }
 
