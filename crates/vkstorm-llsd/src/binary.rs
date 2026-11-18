@@ -417,6 +417,7 @@ mod tests {
             Limits {
                 max_bytes: None,
                 max_depth: -1,
+                max_nodes: 0,
             },
         );
         assert_eq!(n, PARSE_FAILURE);
